@@ -20,6 +20,11 @@ typedef struct {
 	t_fs_filetype ft;
 } t_fs_filetype_entry;
 
+typedef struct {
+	const char* fname;
+	t_fs_filetype ft;
+} t_fs_specfiletype_entry;
+
 t_fs_filetype_entry ft_table[] =
 {
 	{"lrc", fs_filetype_txt},
@@ -27,9 +32,11 @@ t_fs_filetype_entry ft_table[] =
 	{"log", fs_filetype_txt},
 	{"ini", fs_filetype_txt},
 	{"cfg", fs_filetype_txt},
+	{"conf", fs_filetype_txt},
 	{"inf", fs_filetype_txt},
 	{"xml", fs_filetype_txt},
 	{"cpp", fs_filetype_txt},
+	{"in", fs_filetype_txt},
 	{"c", fs_filetype_txt},
 	{"h", fs_filetype_txt},
 	{"hpp", fs_filetype_txt},
@@ -79,6 +86,20 @@ t_fs_filetype_entry ft_table[] =
 #endif
 	{"ebm", fs_filetype_ebm},
 	{NULL, fs_filetype_unknown}
+};
+
+t_fs_specfiletype_entry ft_spec_table[] = {
+  {"Makefile", fs_filetype_txt},
+  {"LICENSE", fs_filetype_txt},
+  {"TODO", fs_filetype_txt},
+  {"Configure", fs_filetype_txt},
+  {"Readme", fs_filetype_txt},
+  {"Version", fs_filetype_txt},
+  {"INSTALL", fs_filetype_txt},
+  {"CREDITS", fs_filetype_txt},
+  {"mpeg", fs_filetype_mp3},
+  {"mpea", fs_filetype_mp3},
+  {NULL, fs_filetype_unknown}
 };
 
 extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
@@ -594,14 +615,22 @@ extern dword fs_chm_to_menu(const char * chmfile, p_win_menuitem * mitem, dword 
 extern t_fs_filetype fs_file_get_type(const char * filename)
 {
 	const char * ext = utils_fileext(filename);
-	if(ext == NULL)
-		return fs_filetype_unknown;
 	t_fs_filetype_entry * entry = ft_table;
-	while(entry->ext != NULL)
+	t_fs_specfiletype_entry * entry2 = ft_spec_table;
+	if(ext)
 	{
-		if(stricmp(ext, entry->ext) == 0)
-			return entry->ft;
-		entry ++;
+	  while(entry->ext != NULL)
+	  {
+	    if(stricmp(ext, entry->ext) == 0)
+	      return entry->ft;
+	    entry ++;
+	  }
+	}
+	while(entry2->fname != NULL)
+	{
+	  if(stricmp(filename, entry2->fname) == 0)
+	    return entry2->ft;
+	  entry2 ++;
 	}
 	return fs_filetype_unknown;
 }
