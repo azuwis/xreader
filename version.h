@@ -1,0 +1,10 @@
+#ifndef _VERSION_H_
+#define _VERSION_H_
+
+#define EREADER_VERSION_NUM 0x010509C0
+#define EREADER_VERSION_SHORT "1.59 (1.6 alpha 2)"
+#define EREADER_VERSION_LONG "1.5.9.199 Built "  __TIME__ " " __DATE__ " (Xmas version)"
+#define EREADER_VERSION_STR_SHORT "eReader " EREADER_VERSION_SHORT
+#define EREADER_VERSION_STR_LONG "eReader " EREADER_VERSION_LONG
+
+#endif

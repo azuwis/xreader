@@ -1,0 +1,194 @@
+#! /bin/sh
+
+show_help(){
+cat << EOF
+Usage: $0 [OPTIONS]...
+
+Configuration:
+  -h, --help             display this help and exit
+
+Optional features:
+  --enable-fw2xx         Compile for PSP 2xx firmware [disable]
+  --enable-16bit         Use 16bit graphic color engine [disable]
+  --disable-image        disable image viewing support [enable]
+  --disable-bg           disable background support [enable]
+  --disable-usb          disable USB connection support [enable]
+  --disable-hprm         disable headphone remote control support [enable]
+  --disable-analog       disable analog controlling [enable]
+  --disable-music        disable music playback support [enable]
+  --disable-wma          disable wma support in music playback [enable]
+  --disable-lyric        disable lyric support in music playback [enable]
+  --disable-ttf          disable ttf support [enable]
+  --disable-pmpavc       disable pmpavc support [enable]
+  --enable-debug         enable debug functions [disable]
+EOF
+exit 0
+}
+
+for parm in "$@" ; do
+  case $parm in
+    --help|-help|-h)
+      show_help
+  esac
+done
+
+_fw2xx=no
+_16bit=no
+_image=yes
+_bg=yes
+_usb=yes
+_hprm=yes
+_analog=yes
+_music=yes
+_wma=yes
+_lyric=yes
+_ttf=yes
+_pmpavc=yes
+_debug=no
+
+for ac_option do
+  case "$ac_option" in
+  --enable-fw2xx)	_fw2xx=yes	;;
+  --disable-fw2xx)	_fw2xx=no	;;
+  --enable-16bit)	_16bit=yes	;;
+  --disable-16bit)	_16bit=no	;;
+  --enable-image)	_image=yes	;;
+  --disable-image)	_image=no	;;
+  --enable-bg)		_bg=yes		;;
+  --disable-bg)		_bg=no		;;
+  --enable-usb)		_usb=yes	;;
+  --disable-usb)	_usb=no		;;
+  --enable-hprm)	_hprm=yes	;;
+  --disable-hprm)	_hprm=no	;;
+  --enable-analog)	_analog=yes	;;
+  --disable-analog)	_analog=no	;;
+  --enable-music)	_music=yes	;;
+  --disable-music)	_music=no	;;
+  --enable-wma)		_wma=yes	;;
+  --disable-wma)	_wma=no		;;
+  --enable-lyric)	_lyric=yes	;;
+  --disable-lyric)	_lyric=no	;;
+  --enable-ttf)		_ttf=yes	;;
+  --disable-ttf)	_ttf=no		;;
+  --enable-pmpavc)	_pmpavc=yes	;;
+  --disable-pmpavc)	_pmpavc=no	;;
+  --enable-debug)	_debug=yes	;;
+  --disable-debug)	_debug=no	;;
+  *)
+    echo "Unknown parameter: $ac_option"
+    exit 1
+    ;;
+
+  esac
+done
+
+if test "$_fw2xx" = yes ; then
+  _mak_inc="include build.mak"
+  _build_prx="BUILD_PRX=1"
+  _prx_exports="PRX_EXPORTS=exports.exp"
+  _usb=no
+  _hprm=no
+  _pmpavc=no
+  _inc_fw2xx="#define HOMEBREW_2XX 1"
+else
+  _mak_inc="include \$(PSPSDK)/lib/build.mak"
+  _build_prx=""
+  _prx_exports=""
+  _inc_fw2xx="#undef HOMEBREW_2XX"
+fi
+
+if test "$_16bit" = yes ; then
+  _inc_16bit="#define COLOR16BIT 1"
+else
+  _inc_16bit="#undef COLOR16BIT"
+fi
+
+if test "$_image" = yes ; then
+  _inc_image="#define ENABLE_IMAGE 1"
+else
+  _inc_image="#undef ENABLE_IMAGE"
+fi
+
+if test "$_bg" = yes ; then
+  _inc_bg="#define ENABLE_BG 1"
+else
+  _inc_bg="#undef ENABLE_BG"
+fi
+
+if test "$_usb" = yes ; then
+  _inc_usb="#define ENABLE_USB 1"
+else
+  _inc_usb="#undef ENABLE_USB"
+fi
+
+if test "$_hprm" = yes ; then
+  _inc_hprm="#define ENABLE_HPRM 1"
+else
+  _inc_hprm="#undef ENABLE_HPRM"
+fi
+
+if test "$_analog" = yes ; then
+  _inc_analog="#define ENABLE_ANALOG 1"
+else
+  _inc_analog="#undef ENABLE_ANALOG"
+fi
+
+if test "$_music" = yes ; then
+  _inc_music="#define ENABLE_MUSIC 1"
+else
+  _inc_music="#undef ENABLE_MUSIC"
+  _wma=no
+  _lyric=no
+fi
+
+if test "$_wma" = yes ; then
+  _inc_wma="#define ENABLE_WMA 1"
+else
+  _inc_wma="#undef ENABLE_WMA"
+fi
+
+if test "$_lyric" = yes ; then
+  _inc_lyric="#define ENABLE_LYRIC 1"
+else
+  _inc_lyric="#undef ENABLE_LYRIC"
+fi
+
+if test "$_ttf" = yes ; then
+  _inc_ttf="#define ENABLE_TTF 1"
+else
+  _inc_ttf="#undef ENABLE_TTF"
+fi
+
+if test "$_pmpavc" = yes ; then
+  _inc_pmpavc="#define ENABLE_PMPAVC 1"
+else
+  _inc_pmpavc="#undef ENABLE_PMPAVC"
+fi
+
+echo "Creating config.mak"
+cat > config.mak << EOF
+$_build_prx
+$_prx_exports
+$_mak_inc
+EOF
+
+echo "Creating config.h"
+cat > config.h << EOF
+#ifndef _CONFIG_H
+#define _CONFIG_H
+
+$_inc_16bit
+$_inc_fw2xx
+$_inc_image
+$_inc_bg
+$_inc_usb
+$_inc_hprm
+$_inc_analog
+$_inc_music
+$_inc_wma
+$_inc_lyric
+$_inc_ttf
+$_inc_pmpavc
+
+#endif
+EOF
