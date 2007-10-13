@@ -37,6 +37,10 @@ t_fs_filetype_entry ft_table[] =
 	{"xml", fs_filetype_txt},
 	{"cpp", fs_filetype_txt},
 	{"in", fs_filetype_txt},
+	{"am", fs_filetype_txt},
+	{"mak", fs_filetype_txt},
+	{"exp", fs_filetype_txt},
+	{"sh", fs_filetype_txt},
 	{"c", fs_filetype_txt},
 	{"h", fs_filetype_txt},
 	{"hpp", fs_filetype_txt},
@@ -62,7 +66,6 @@ t_fs_filetype_entry ft_table[] =
 	{"jsp", fs_filetype_txt},
 	{"html", fs_filetype_html},
 	{"htm", fs_filetype_html},
-	{"js", fs_filetype_html},
 	{"shtml", fs_filetype_html},
 #ifdef ENABLE_PMPAVC
 	{"pmp", fs_filetype_pmp},
@@ -619,18 +622,18 @@ extern t_fs_filetype fs_file_get_type(const char * filename)
 	t_fs_specfiletype_entry * entry2 = ft_spec_table;
 	if(ext)
 	{
-	  while(entry->ext != NULL)
-	  {
-	    if(stricmp(ext, entry->ext) == 0)
-	      return entry->ft;
-	    entry ++;
-	  }
+		while(entry->ext != NULL)
+		{
+			if(stricmp(ext, entry->ext) == 0)
+				return entry->ft;
+			entry ++;
+		}
 	}
 	while(entry2->fname != NULL)
 	{
-	  if(stricmp(filename, entry2->fname) == 0)
-	    return entry2->ft;
-	  entry2 ++;
+		if(stricmp(filename, entry2->fname) == 0)
+			return entry2->ft;
+		entry2 ++;
 	}
 	return fs_filetype_unknown;
 }

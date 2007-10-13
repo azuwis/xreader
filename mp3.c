@@ -27,6 +27,7 @@
 #include "mp3info.h"
 #include "common/utils.h"
 #include "mp3.h"
+#include "win.h"
 #define MAXVOLUME 0x8000
 
 // resample from madplay, thanks to nj-zero
@@ -399,10 +400,10 @@ static int mp3_thread(unsigned int args, void * argp)
 				switch(key)
 				{
 				case PSP_HPRM_PLAYPAUSE:
+					scene_power_save(false);
 					if(mp3_nfiles == 0 || mp3_files == NULL)
 						break;
 					isPause = false;
-					scene_power_save(false);
 					break;
 				case PSP_HPRM_FORWARD:
 					mp3_next();
@@ -415,6 +416,7 @@ static int mp3_thread(unsigned int args, void * argp)
 			}
 			continue;
 		}
+		scene_power_save(false);
 #ifdef ENABLE_WMA
 		if(file_is_mp3)
 		{
@@ -754,7 +756,6 @@ extern void mp3_start()
 	eos = true;
 	manualSw = false;
 	isPlaying = true;
-	scene_power_save(false);
 	sceKernelStartThread(mp3_thid, 0, NULL);
 	sceKernelWakeupThread(mp3_thid);
 	sceKernelResumeThread(mp3_thid);
@@ -1003,6 +1004,7 @@ extern bool mp3_list_add(const char * filename, const char * longname)
 			mp3_files = (char(*)[512])malloc(512 * 256);
 		if(mp3_files == NULL)
 		{
+			win_msg("ÄÚ´æ²»×ã", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 			mp3_nfiles = 0;
 			mp3_stop();
 			return false;

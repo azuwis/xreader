@@ -21,6 +21,7 @@ extern void ctrl_analog(int * x, int * y);
 #endif
 extern dword ctrl_read_cont();
 extern dword ctrl_read();
+extern void ctrl_waitreleaseintime(int i);
 extern void ctrl_waitrelease();
 extern dword ctrl_waitany();
 extern dword ctrl_waitkey(dword keymask);

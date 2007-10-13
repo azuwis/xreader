@@ -2334,6 +2334,9 @@ static t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword 
 				return win_menu_op_cancel;
 		}
 		return win_menu_op_force_redraw;
+	case PSP_CTRL_SELECT:
+		ctrl_waitreleaseintime(10000);
+		return win_menu_op_cancel;
 	}
 	return win_menu_defcb(key, item, count, max_height, topindex, index);
 }
@@ -5122,6 +5125,7 @@ extern void scene_init()
 #ifdef ENABLE_HPRM
 	mp3_set_hprm(!config.hprmctrl);
 #endif
+	scene_power_save(true);
 	mp3_set_cycle(config.mp3cycle);
 	if(config.autoplay)
 		mp3_resume();
@@ -5183,7 +5187,7 @@ extern void scene_power_save(bool save)
 #ifdef ENABLE_MUSIC
 		&& mp3_paused()
 #endif
-		&& fs != NULL)
+		)
 		power_set_clock(36, 54);
 	else if(imgreading && (config.bicubic
 #ifdef ENABLE_MUSIC

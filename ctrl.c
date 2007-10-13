@@ -155,13 +155,18 @@ extern dword ctrl_read()
 	return last_btn;
 }
 
-extern void ctrl_waitrelease()
+extern void ctrl_waitreleaseintime(int i)
 {
 	SceCtrlData ctl;
 	do {
 		sceCtrlReadBufferPositive(&ctl,1);
-		sceKernelDelayThread(20000);
+		sceKernelDelayThread(i);
 	} while (ctl.Buttons != 0);
+}
+
+extern void ctrl_waitrelease()
+{
+	return ctrl_waitreleaseintime(20000);
 }
 
 extern dword ctrl_waitany()
