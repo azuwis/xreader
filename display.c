@@ -6,6 +6,7 @@
 #include <unzip.h>
 #include "ttfont.h"
 #include "display.h"
+#include "pspscreen.h"
 
 static pixel * vram_base = NULL;
 pixel * vram_start = NULL;
@@ -23,10 +24,10 @@ static void * ttfh = NULL;
 
 extern void disp_init()
 {
-	sceDisplaySetMode(0, 480, 272);
+	sceDisplaySetMode(0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 	vram_page = 0;
 	vram_base = (pixel *)0x04000000;
-	vram_start = (pixel *)(0x44000000 + 512 * 272 * PIXEL_BYTES);
+	vram_start = (pixel *)(0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 #ifdef COLOR16BIT
 	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_5551, PSP_DISPLAY_SETBUF_NEXTFRAME);
 #else
@@ -592,8 +593,8 @@ extern void disp_free_font()
 extern void disp_flip()
 {
 	vram_page ^= 1;
-	vram_base = (pixel *)0x04000000 + (vram_page ? (512 * 272) : 0);
-	vram_start = (pixel *)0x44000000 + (vram_page ? 0 : (512 * 272));
+	vram_base = (pixel *)0x04000000 + (vram_page ? (512 * PSP_SCREEN_HEIGHT) : 0);
+	vram_start = (pixel *)0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
 	disp_waitv();
 #ifdef COLOR16BIT
 	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_5551, PSP_DISPLAY_SETBUF_IMMEDIATE);
@@ -604,7 +605,7 @@ extern void disp_flip()
 
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf)
 {
-	pixel * lines = vram_base + 0x40000000 / PIXEL_BYTES, * linesend = lines + (min(272 - y, h) << 9);
+	pixel * lines = vram_base + 0x40000000 / PIXEL_BYTES, * linesend = lines + (min(PSP_SCREEN_HEIGHT - y, h) << 9);
 	dword rw = min(512 - x, w) * PIXEL_BYTES;
 	for(;lines < linesend; lines += 512)
 	{
@@ -615,7 +616,7 @@ extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf)
 
 extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx, dword starty, pixel * buf)
 {
-	pixel * lines = disp_get_vaddr(x, y), * linesend = lines + (min(272 - y, h - starty) << 9);
+	pixel * lines = disp_get_vaddr(x, y), * linesend = lines + (min(PSP_SCREEN_HEIGHT - y, h - starty) << 9);
 	buf = buf + starty * w + startx;
 	dword rw = min(512 - x, w - startx) * PIXEL_BYTES;
 	for(;lines < linesend; lines += 512)
@@ -627,17 +628,17 @@ extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx, dwor
 
 extern void disp_duptocache()
 {
-	memmove(vram_start, ((byte *)vram_base) + 0x40000000, 512 * 272 * PIXEL_BYTES);
+	memmove(vram_start, ((byte *)vram_base) + 0x40000000, 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 }
 
 extern void disp_duptocachealpha(int percent)
 {
 	pixel * vsrc = (pixel *)(((byte *)vram_base) + 0x40000000), * vdest = vram_start;
 	int i, j;
-	for(i = 0; i < 272; i ++)
+	for(i = 0; i < PSP_SCREEN_HEIGHT; i ++)
 	{
 		pixel * vput = vdest, * vget = vsrc;
-		for(j = 0; j < 480; j ++)
+		for(j = 0; j < PSP_SCREEN_WIDTH; j ++)
 		{
 			*vput ++ = disp_grayscale(*vget, 0, 0, 0, percent);
 			vget ++;
@@ -688,7 +689,7 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 	{
 		if(*str > 0x80)
 		{
-			if(x > 480 - DISP_RSPAN - DISP_FONTSIZE)
+			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE)
 			{
 				x = 0;
 				y += DISP_FONTSIZE;
@@ -723,7 +724,7 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 		}
 		else if(*str > 0x1F)
 		{
-			if(x > 480 - DISP_RSPAN - DISP_FONTSIZE / 2)
+			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2)
 			{
 				x = 0;
 				y += DISP_FONTSIZE;
@@ -758,7 +759,7 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 		}
 		else
 		{
-			if(x > 480 - DISP_RSPAN - DISP_FONTSIZE / 2)
+			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2)
 			{
 				x = 0;
 				y += DISP_FONTSIZE;
@@ -787,7 +788,7 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 	{
 		if(*str > 0x80)
 		{
-			if(x > 480 - DISP_RSPAN - DISP_BOOK_FONTSIZE)
+			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE)
 			{
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
@@ -833,7 +834,7 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 		}
 		else if(*str > 0x1F)
 		{
-			if(x > 480 - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
+			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
 			{
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
@@ -899,7 +900,7 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 		}
 		else
 		{
-			if(x > 480 - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
+			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
 			{
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
@@ -1066,7 +1067,7 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 	{
 		if(*str > 0x80)
 		{
-			if(y > 272 - DISP_RSPAN - DISP_BOOK_FONTSIZE)
+			if(y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE)
 			{
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
@@ -1112,7 +1113,7 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 		}
 		else if(*str > 0x1F)
 		{
-			if(y > 272 - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
+			if(y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
 			{
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
@@ -1178,7 +1179,7 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 		}
 		else
 		{
-			if(y > 272 - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
+			if(y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
 			{
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
@@ -1195,7 +1196,7 @@ extern void disp_fillvram(pixel color)
 	pixel *vram, *vram_end;
 
 	if(color == 0 || color == (pixel)-1)
-		memset(vram_start, (color & 0xFF), 512 * 272 * PIXEL_BYTES);
+		memset(vram_start, (color & 0xFF), 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 	else
 		for (vram = vram_start, vram_end = vram + 0x22000; vram < vram_end; vram ++)
 			* vram = color;

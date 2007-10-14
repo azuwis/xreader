@@ -7,8 +7,9 @@
 #include "display.h"
 #include "image.h"
 #include "bg.h"
+#include "pspscreen.h"
 
-static pixel * bg_start = (pixel *)(0x44000000 + 512 * 272 * PIXEL_BYTES * 2);
+static pixel * bg_start = (pixel *)(0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES * 2);
 static bool have_bg = false;
 static dword imgwidth, imgheight;
 
@@ -40,21 +41,21 @@ extern void bg_load(const char * filename, pixel bgcolor, t_fs_filetype ft, dwor
 	}
 	if(result != 0)
 		return;
-	if(width > 480)
+	if(width > PSP_SCREEN_WIDTH)
 	{
-		h2 = height * 480 / width;
-		if(h2 > 272)
+		h2 = height * PSP_SCREEN_WIDTH / width;
+		if(h2 > PSP_SCREEN_HEIGHT)
 		{
-			h2 = 272;
-			w2 = width * 272 / height;
+			h2 = PSP_SCREEN_HEIGHT;
+			w2 = width * PSP_SCREEN_HEIGHT / height;
 		}
 		else
-			w2 = 480;
+			w2 = PSP_SCREEN_WIDTH;
 	}
-	else if(height > 272)
+	else if(height > PSP_SCREEN_HEIGHT)
 	{
-		h2 = 272;
-		w2 = width * 272 / height;
+		h2 = PSP_SCREEN_HEIGHT;
+		w2 = width * PSP_SCREEN_HEIGHT / height;
 	}
 	else
 	{
@@ -74,12 +75,12 @@ extern void bg_load(const char * filename, pixel bgcolor, t_fs_filetype ft, dwor
 	else
 		imgshow = imgdata;
 
-	if(w2 < 480)
-		left = (480 - w2) / 2;
+	if(w2 < PSP_SCREEN_WIDTH)
+		left = (PSP_SCREEN_WIDTH - w2) / 2;
 	else
 		left = 0;
-	if(h2 < 272)
-		top = (272 - h2) / 2;
+	if(h2 < PSP_SCREEN_HEIGHT)
+		top = (PSP_SCREEN_HEIGHT - h2) / 2;
 	else
 		top = 0;
 
@@ -106,7 +107,7 @@ extern bool bg_display()
 {
 	if(have_bg)
 	{
-		memcpy(vram_start, bg_start, 512 * 272 * PIXEL_BYTES);
+		memcpy(vram_start, bg_start, 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 		return true;
 	}
 	return false;
@@ -125,10 +126,10 @@ extern void bg_cache()
 		return;
 	if(_cache != NULL)
 		free((void *)_cache);
-	_cache = malloc(512 * 272 * PIXEL_BYTES);
+	_cache = malloc(512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 	if(_cache == NULL)
 		return;
-	memcpy(_cache, bg_start, 512 * 272 * PIXEL_BYTES);
+	memcpy(_cache, bg_start, 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 }
 
 extern void bg_restore()
@@ -137,7 +138,7 @@ extern void bg_restore()
 		return;
 	if(_cache == NULL)
 		return;
-	memcpy(bg_start, _cache, 512 * 272 * PIXEL_BYTES);
+	memcpy(bg_start, _cache, 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 	free((void *)_cache);
 	_cache = NULL;
 }

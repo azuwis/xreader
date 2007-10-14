@@ -40,6 +40,7 @@
 #include "common/qsort.h"
 #include "common/utils.h"
 #include "scene.h"
+#include "pspscreen.h"
 
 #ifdef ENABLE_PMPAVC
 bool pmp_restart = false;
@@ -287,9 +288,9 @@ static void scene_mp3_list()
 static void scene_mp3bar()
 {
 	bool firstdup = true;
-	pixel * saveimage = (pixel *)malloc(480 * 272 * sizeof(pixel));
+	pixel * saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if(saveimage != NULL)
-		disp_getimage(0, 0, 480, 272, saveimage);
+		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 	while(1)
 	{
 		if(firstdup)
@@ -403,9 +404,9 @@ static void scene_mp3bar()
 			case PSP_CTRL_START:
 				if(saveimage != NULL)
 				{
-					disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 					disp_flip();
-					disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 					free((void *)saveimage);
 				}
 				else
@@ -1597,13 +1598,13 @@ static dword scene_boptions(dword * selidx)
 	dword result = 0;
 	if(orgibar != config.infobar || orgvert != config.vertread || orgrowspace != config.rowspace || orgborderspace != config.borderspace)
 	{
-		drperpage = ((config.vertread ? 480 : 272) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage = ((config.vertread ? 480 : 272) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		drperpage = ((config.vertread ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		rowsperpage = ((config.vertread ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	}
 	if(orgibar != config.infobar || orgvert != config.vertread || orgwordspace != config.wordspace || orgborderspace != config.borderspace || orgscrollbar != config.scrollbar)
 	{
 		dword orgpixelsperrow = pixelsperrow;
-		pixelsperrow = (config.vertread ? (config.scrollbar ? 267 : 272) : (config.scrollbar ? 475 : 480)) - config.borderspace * 2;
+		pixelsperrow = (config.vertread ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) - config.borderspace * 2;
 		if(orgpixelsperrow != pixelsperrow)
 			result = 4;
 	}
@@ -1843,9 +1844,9 @@ static dword scene_fontsel(dword * selidx)
 		if(orgfontindex != fontindex)
 			scene_load_font();
 		scene_load_book_font();
-		drperpage = ((config.vertread ? 480 : 272) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage = ((config.vertread ? 480 : 272) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		pixelsperrow = (config.vertread ? (config.scrollbar ? 267 : 272) : (config.scrollbar ? 475 : 480)) - config.borderspace * 2;
+		drperpage = ((config.vertread ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		rowsperpage = ((config.vertread ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		pixelsperrow = (config.vertread ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) - config.borderspace * 2;
 		return 2;
 	}
 	return 0;
@@ -2084,9 +2085,9 @@ static dword scene_moptions(dword * selidx)
 	{
 		scene_load_font();
 		scene_load_book_font();
-		drperpage = ((config.vertread ? 480 : 272) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage = ((config.vertread ? 480 : 272) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		pixelsperrow = (config.vertread ? (config.scrollbar ? 267 : 272) : (config.scrollbar ? 475 : 480)) - config.borderspace * 2;
+		drperpage = ((config.vertread ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		rowsperpage = ((config.vertread ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		pixelsperrow = (config.vertread ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) - config.borderspace * 2;
 		return 2;
 	}
 	if(orgshowhidden != config.showhidden || orgshowunknown != config.showunknown || orgarrange != config.arrange)
@@ -2687,14 +2688,14 @@ static dword scene_readbook(dword selidx)
 				for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
 				{
 					tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
-					disp_putnstringlvert((DISP_BOOK_FONTSIZE + config.rowspace) * cidx + config.borderspace - rowtop, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (479 -  DISP_BOOK_FONTSIZE) : 480);
+					disp_putnstringlvert((DISP_BOOK_FONTSIZE + config.rowspace) * cidx + config.borderspace - rowtop, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (479 -  DISP_BOOK_FONTSIZE) : PSP_SCREEN_WIDTH);
 				}
 				if(config.infobar == conf_infobar_info)
 				{
 					disp_line(479 - DISP_BOOK_FONTSIZE, 0, 479 - DISP_BOOK_FONTSIZE, 271, config.forecolor);
 					utils_dword2string(fs->crow + 1, ci, 7);
 					sprintf(cr, "%s/%s  %s  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname);
-					disp_putnstringlvert(480 - DISP_BOOK_FONTSIZE, 271, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
+					disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 				else if(config.infobar == conf_infobar_lyric)
@@ -2706,7 +2707,7 @@ static dword scene_readbook(dword selidx)
 					{
 						if(ss[0] > 544 / DISP_BOOK_FONTSIZE)
 							ss[0] = 544 / DISP_BOOK_FONTSIZE;
-						disp_putnstringlvert(480 - DISP_BOOK_FONTSIZE, 271 - (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+						disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271 - (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
 					}
 				}
 #endif
@@ -2745,14 +2746,14 @@ static dword scene_readbook(dword selidx)
 				for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
 				{
 					tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
-					disp_putnstringhorz(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (271 - DISP_BOOK_FONTSIZE) : 272);
+					disp_putnstringhorz(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (271 - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
 				}
 				if(config.infobar == conf_infobar_info)
 				{
 					disp_line(0, 271 - DISP_BOOK_FONTSIZE, 479, 271 - DISP_BOOK_FONTSIZE, config.forecolor);
 					utils_dword2string(fs->crow + 1, ci, 7);
 					sprintf(cr, "%s/%s  %s  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname);
-					disp_putnstringhorz(0, 272 - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
+					disp_putnstringhorz(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 				else if(config.infobar == conf_infobar_lyric)
@@ -2764,7 +2765,7 @@ static dword scene_readbook(dword selidx)
 					{
 						if(ss[0] > 960 / DISP_BOOK_FONTSIZE)
 							ss[0] = 960 / DISP_BOOK_FONTSIZE;
-						disp_putnstringhorz((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), 272 - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+						disp_putnstringhorz((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
 					}
 				}
 #endif
@@ -3108,9 +3109,9 @@ static dword scene_readimage(dword selidx)
 	imgreading = true;
 	scene_power_save(false);
 	if(config.imginfobar)
-		imgh = 272 - DISP_FONTSIZE;
+		imgh = PSP_SCREEN_HEIGHT - DISP_FONTSIZE;
 	else
-		imgh = 272;
+		imgh = PSP_SCREEN_HEIGHT;
 	while(1) {
 		if(needrf)
 		{
@@ -3259,7 +3260,7 @@ static dword scene_readimage(dword selidx)
 				}
 				else if(config.fit == conf_fit_width)
 				{
-					config.scale = 480 / width;
+					config.scale = PSP_SCREEN_WIDTH / width;
 					if(config.scale > 200)
 						config.scale = (config.scale / 50) * 50;
 					else
@@ -3268,8 +3269,8 @@ static dword scene_readimage(dword selidx)
 						if(config.scale < 10)
 							config.scale = 10;
 					}
-					w2 = 480;
-					h2 = height * 480 / width;
+					w2 = PSP_SCREEN_WIDTH;
+					h2 = height * PSP_SCREEN_WIDTH / width;
 				}
 				else if(config.fit == conf_fit_dblwidth)
 				{
@@ -3338,18 +3339,18 @@ static dword scene_readimage(dword selidx)
 			curleft = curtop = 0;
 			xpos = (int)config.viewpos % 3;
 			ypos = (int)config.viewpos / 3;
-			if(w2 < 480)
-				paintleft = (480 - w2) / 2;
+			if(w2 < PSP_SCREEN_WIDTH)
+				paintleft = (PSP_SCREEN_WIDTH - w2) / 2;
 			else
 			{
 				paintleft = 0;
 				switch(xpos)
 				{
 				case 1:
-					curleft = (w2 - 480) / 2;
+					curleft = (w2 - PSP_SCREEN_WIDTH) / 2;
 					break;
 				case 2:
-					curleft = w2 - 480;
+					curleft = w2 - PSP_SCREEN_WIDTH;
 					break;
 				}
 			}
@@ -3400,9 +3401,9 @@ static dword scene_readimage(dword selidx)
 				int ilen = strlen(infostr);
 				if(config.imginfobar)
 				{
-					disp_fillrect(0, 272 - DISP_FONTSIZE, 479, 271, 0);
-					disp_putnstring(0, 272 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filename, 960 / DISP_FONTSIZE - ilen - 1, 0, 0, DISP_FONTSIZE, 0);
-					disp_putnstring(480 - DISP_FONTSIZE / 2 * ilen, 272 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
+					disp_fillrect(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, 479, 271, 0);
+					disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filename, 960 / DISP_FONTSIZE - ilen - 1, 0, 0, DISP_FONTSIZE, 0);
+					disp_putnstring(PSP_SCREEN_WIDTH - DISP_FONTSIZE / 2 * ilen, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
 				}
 				else
 				{
@@ -3412,7 +3413,7 @@ static dword scene_readimage(dword selidx)
 			}
 			if(config.thumb == conf_thumb_always || thumb)
 			{
-				dword top = (272 - thumbh) / 2, bottom = top + thumbh;
+				dword top = (PSP_SCREEN_HEIGHT - thumbh) / 2, bottom = top + thumbh;
 				dword thumbl = 0, thumbr = 0, thumbt = 0, thumbb = 0;
 				if(paintleft > 0)
 				{
@@ -3501,9 +3502,9 @@ static dword scene_readimage(dword selidx)
 			if(lastbicubic != config.bicubic)
 				needrc = true;
 			if(config.imginfobar)
-				imgh = 272 - DISP_FONTSIZE;
+				imgh = PSP_SCREEN_HEIGHT - DISP_FONTSIZE;
 			else
-				imgh = 272;
+				imgh = PSP_SCREEN_HEIGHT;
 		}
 #ifdef ENABLE_MUSIC
 		else if(key == PSP_CTRL_START)
@@ -3548,11 +3549,11 @@ static dword scene_readimage(dword selidx)
 				{
 				case 0:
 				case 1:
-					if(curleft + 480 < w2)
+					if(curleft + PSP_SCREEN_WIDTH < w2)
 					{
-						curleft += 480;
-						if(curleft +480 > w2)
-							curleft = w2 - 480;
+						curleft += PSP_SCREEN_WIDTH;
+						if(curleft +PSP_SCREEN_WIDTH > w2)
+							curleft = w2 - PSP_SCREEN_WIDTH;
 						needrp = true;
 						continue;
 					}
@@ -3560,7 +3561,7 @@ static dword scene_readimage(dword selidx)
 				case 2:
 					if(curleft > 0)
 					{
-						curleft -= 480;
+						curleft -= PSP_SCREEN_WIDTH;
 						if(curleft < 0)
 							curleft = 0;
 						needrp = true;
@@ -3574,11 +3575,11 @@ static dword scene_readimage(dword selidx)
 				{
 				case 0:
 				case 1:
-					if(curleft + 480 < w2)
+					if(curleft + PSP_SCREEN_WIDTH < w2)
 					{
-						curleft += 480 - config.imgpagereserve;
-						if(curleft + 480 > w2)
-							curleft = w2 - 480;
+						curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
+						if(curleft + PSP_SCREEN_WIDTH > w2)
+							curleft = w2 - PSP_SCREEN_WIDTH;
 						needrp = true;
 						continue;
 					}
@@ -3586,7 +3587,7 @@ static dword scene_readimage(dword selidx)
 				case 2:
 					if(curleft > 0)
 					{
-						curleft -= 480 - config.imgpagereserve;
+						curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
 						if(curleft < 0)
 							curleft = 0;
 						needrp = true;
@@ -3595,8 +3596,8 @@ static dword scene_readimage(dword selidx)
 					break;
 				}
 				curleft = 0;
-				if(w2 > 480 && xpos == 2)
-					curleft = w2 - 480;
+				if(w2 > PSP_SCREEN_WIDTH && xpos == 2)
+					curleft = w2 - PSP_SCREEN_WIDTH;
 				switch(ypos)
 				{
 				case 0:
@@ -3672,7 +3673,7 @@ static dword scene_readimage(dword selidx)
 				case 1:
 					if(curleft > 0)
 					{
-						curleft -= 480;
+						curleft -= PSP_SCREEN_WIDTH;
 						if(curleft < 0)
 							curleft = 0;
 						needrp = true;
@@ -3680,11 +3681,11 @@ static dword scene_readimage(dword selidx)
 					}
 					break;
 				case 2:
-					if(curleft + 480 < w2)
+					if(curleft + PSP_SCREEN_WIDTH < w2)
 					{
-						curleft += 480;
-						if(curleft + 480 > w2)
-							curleft = w2 - 480;
+						curleft += PSP_SCREEN_WIDTH;
+						if(curleft + PSP_SCREEN_WIDTH > w2)
+							curleft = w2 - PSP_SCREEN_WIDTH;
 						needrp = true;
 						continue;
 					}
@@ -3698,7 +3699,7 @@ static dword scene_readimage(dword selidx)
 				case 1:
 					if(curleft > 0)
 					{
-						curleft -= 480 - config.imgpagereserve;
+						curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
 						if(curleft < 0)
 							curleft = 0;
 						needrp = true;
@@ -3706,19 +3707,19 @@ static dword scene_readimage(dword selidx)
 					}
 					break;
 				case 2:
-					if(curleft + 480 < w2)
+					if(curleft + PSP_SCREEN_WIDTH < w2)
 					{
-						curleft += 480 - config.imgpagereserve;
-						if(curleft + 480 > w2)
-							curleft = w2 - 480;
+						curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
+						if(curleft + PSP_SCREEN_WIDTH > w2)
+							curleft = w2 - PSP_SCREEN_WIDTH;
 						needrp = true;
 						continue;
 					}
 					break;
 				}
 				curleft = 0;
-				if(w2 > 480 && xpos < 2)
-					curleft = w2 - 480;
+				if(w2 > PSP_SCREEN_WIDTH && xpos < 2)
+					curleft = w2 - PSP_SCREEN_WIDTH;
 				switch(ypos)
 				{
 				case 0:
@@ -3769,8 +3770,8 @@ static dword scene_readimage(dword selidx)
 			if(curtop < 0)
 				curtop = 0;
 			curleft += x;
-			if(curleft + 480 > w2)
-				curleft = (int)w2 - 480;
+			if(curleft + PSP_SCREEN_WIDTH > w2)
+				curleft = (int)w2 - PSP_SCREEN_WIDTH;
 			if(curleft < 0)
 				curleft = 0;
 			thumb = (config.thumb == conf_thumb_scroll);
@@ -3803,11 +3804,11 @@ static dword scene_readimage(dword selidx)
 		}
 		else if(key == PSP_CTRL_RIGHT)
 		{
-			if(w2 > 480 && curleft < w2 - 480)
+			if(w2 > PSP_SCREEN_WIDTH && curleft < w2 - PSP_SCREEN_WIDTH)
 			{
 				curleft += (int)config.imgmvspd;
-				if(curleft > w2 - 480)
-					curleft = w2 - 480;
+				if(curleft > w2 - PSP_SCREEN_WIDTH)
+					curleft = w2 - PSP_SCREEN_WIDTH;
 				needrp = true;
 			}
 			thumb = (config.thumb == conf_thumb_scroll);
@@ -3856,9 +3857,9 @@ static dword scene_readimage(dword selidx)
 		{
 			config.imginfobar = !config.imginfobar;
 			if(config.imginfobar)
-				imgh = 272 - DISP_FONTSIZE;
+				imgh = PSP_SCREEN_HEIGHT - DISP_FONTSIZE;
 			else
-				imgh = 272;
+				imgh = PSP_SCREEN_HEIGHT;
 			if(h2 > imgh && curtop > h2 - imgh)
 				curtop = h2 - imgh;
 			needrc = (config.fit == conf_fit_height);
@@ -4018,9 +4019,9 @@ static t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword
 			return win_menu_op_continue;
 		if(selcount == 0)
 			item[selidx].selected = true;
-		pixel * saveimage = (pixel *)malloc(480 * 272 * sizeof(pixel));
+		pixel * saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 		if(saveimage)
-			disp_getimage(0, 0, 480, 272, saveimage);
+			disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 		disp_duptocachealpha(50);
 		disp_rectangle(240 - DISP_FONTSIZE * 3 - 1, 136 - DISP_FONTSIZE * 3 - 1, 240 + DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE * 4, COLOR_WHITE);
 		disp_fillrect(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 3, 240 + DISP_FONTSIZE * 3 - 1, 136 + DISP_FONTSIZE * 4 - 1, RGB(0x18, 0x28, 0x50));
@@ -4501,9 +4502,9 @@ static t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword
 			item[selidx].selected = false;
 		if(saveimage)
 		{
-			disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+			disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 			disp_flip();
-			disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+			disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 			free((void *)saveimage);
 		}
 		return retop;
@@ -4604,8 +4605,8 @@ static void scene_filelist_predraw(p_win_menuitem item, dword index, dword topin
 	disp_putnstring(240 - WRR * DISP_FONTSIZE, 139 - (HRR + 1) * (DISP_FONTSIZE + 1), COLOR_WHITE, (const byte *)config.path, 40, 0, 0, DISP_FONTSIZE, 0);
 	disp_line(240 - WRR * DISP_FONTSIZE, 138 - HRR * (DISP_FONTSIZE + 1), 242 + WRR * DISP_FONTSIZE, 138 - HRR * (DISP_FONTSIZE + 1), COLOR_WHITE);
 	disp_line(0, 271 - DISP_FONTSIZE, 479, 271 - DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(0, 272 - DISP_FONTSIZE, 479, 271, 0);
-	disp_putstring(0, 272 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)"START 音乐播放控制   SELECT 选项   选项内按□进入按键设置");
+	disp_fillrect(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, 479, 271, 0);
+	disp_putstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)"START 音乐播放控制   SELECT 选项   选项内按□进入按键设置");
 }
 
 static void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
@@ -5095,9 +5096,9 @@ extern void scene_init()
 		ctrl_waitany();
 		sceKernelExitGame();
 	}
-	drperpage = ((config.vertread ? 480 : 272) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-	rowsperpage = ((config.vertread ? 480 : 272) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-	pixelsperrow = (config.vertread ? (config.scrollbar ? 267 : 272) : (config.scrollbar ? 475 : 480)) - config.borderspace * 2;
+	drperpage = ((config.vertread ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+	rowsperpage = ((config.vertread ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+	pixelsperrow = (config.vertread ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) - config.borderspace * 2;
 
 	ctrl_init();
 #ifdef ENABLE_HPRM

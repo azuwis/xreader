@@ -5,6 +5,7 @@
 #include "display.h"
 #include "ctrl.h"
 #include "win.h"
+#include "pspscreen.h"
 
 extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
 {
@@ -60,9 +61,9 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 	pixel * saveimage = NULL;
 	if(redraw)
 	{
-		saveimage = (pixel *)malloc(480 * 272 * sizeof(pixel));
+		saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 		if(saveimage)
-			disp_getimage(0, 0, 480, 272, saveimage);
+			disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 		disp_duptocachealpha(50);
 	}
 	topindex = (index >= max_height) ? (index - max_height + 1) : 0;
@@ -114,18 +115,18 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 		case win_menu_op_ok:
 			if(saveimage)
 			{
-				disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 				disp_flip();
-				disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 				free((void *)saveimage);
 			}
 			return index;
 		case win_menu_op_cancel:
 			if(saveimage)
 			{
-				disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 				disp_flip();
-				disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 				free((void *)saveimage);
 			}
 			return INVALID;
@@ -153,9 +154,9 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 extern bool win_msgbox(const char * prompt, const char * yesstr, const char * nostr, pixel fontcolor, pixel bordercolor, pixel bgcolor)
 {
 	dword width = strlen(prompt) * DISP_FONTSIZE / 4; dword yeswidth = strlen(yesstr) * (DISP_FONTSIZE / 2);
-	pixel * saveimage = (pixel *)malloc(480 * 272 * sizeof(pixel));
+	pixel * saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if(saveimage)
-		disp_getimage(0, 0, 480, 272, saveimage);
+		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 	disp_duptocachealpha(50);
 	disp_rectangle(219 - width, 99, 260 + width, 173, bordercolor);
 	disp_fillrect(220 - width, 100, 259 + width, 172, bgcolor);
@@ -170,9 +171,9 @@ extern bool win_msgbox(const char * prompt, const char * yesstr, const char * no
 	bool result = (ctrl_waitmask(PSP_CTRL_CIRCLE | PSP_CTRL_CROSS) == PSP_CTRL_CIRCLE);
 	if(saveimage)
 	{
-		disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+		disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 		disp_flip();
-		disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+		disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 		free((void *)saveimage);
 	}
 	return result;
@@ -181,9 +182,9 @@ extern bool win_msgbox(const char * prompt, const char * yesstr, const char * no
 extern void win_msg(const char * prompt, pixel fontcolor, pixel bordercolor, pixel bgcolor)
 {
 	dword width = strlen(prompt) * DISP_FONTSIZE / 4;
-	pixel * saveimage = (pixel *)malloc(480 * 272 * sizeof(pixel));
+	pixel * saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if(saveimage)
-		disp_getimage(0, 0, 480, 272, saveimage);
+		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 	disp_duptocachealpha(50);
 	disp_rectangle(219 - width, 118, 260 + width, 154, bordercolor);
 	disp_fillrect(220 - width, 119, 259 + width, 153, bgcolor);
@@ -194,9 +195,9 @@ extern void win_msg(const char * prompt, pixel fontcolor, pixel bordercolor, pix
 	ctrl_waitany();
 	if(saveimage)
 	{
-		disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+		disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 		disp_flip();
-		disp_putimage(0, 0, 480, 272, 0, 0, saveimage);
+		disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 		free((void *)saveimage);
 	}
 }
