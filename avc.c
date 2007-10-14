@@ -32,15 +32,15 @@ extern bool avc_init()
 	m2 = valloc(4 * 512 * 272);
 
 	av_register_all();
-	int id1 = pspSdkLoadStartModule("flash0:/kd/audiocodec.prx", PSP_MEMORY_PARTITION_KERNEL);
+	int id1 = pspSdkLoadStartModule("flash0:/kd/audiocodec_260.prx", PSP_MEMORY_PARTITION_KERNEL);
 	if (id1 < 0)
 		return false;
 
-	id2 = pspSdkLoadStartModule("flash0:/kd/videocodec.prx", PSP_MEMORY_PARTITION_KERNEL);
+	id2 = pspSdkLoadStartModule("flash0:/kd/videocodec_260.prx", PSP_MEMORY_PARTITION_KERNEL);
 	if (id2 < 0)
 		return false;
 
-	id3 = pspSdkLoadStartModule("flash0:/kd/mpegbase.prx", PSP_MEMORY_PARTITION_KERNEL);
+	id3 = pspSdkLoadStartModule("flash0:/kd/mpegbase_260.prx", PSP_MEMORY_PARTITION_KERNEL);
 	if (id3 < 0)
 		return false;
 
