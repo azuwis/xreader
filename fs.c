@@ -110,7 +110,7 @@ extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem 
 	strcpy((char *)sdir, dir);
 	dword cur_count = 0;
 	p_win_menuitem item = NULL;
-	cur_count = 3;
+	cur_count = 1;
 	* mitem = (p_win_menuitem)malloc(sizeof(t_win_menuitem) * 3);
 	if(* mitem == NULL)
 		return 0;
@@ -124,24 +124,6 @@ extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem 
 	item[0].selicolor = selicolor;
 	item[0].selrcolor = selrcolor;
 	item[0].selbcolor = selbcolor;
-	strcpy(item[1].name, "<NandFlash 0>");
-	strcpy(item[1].compname, "flash0:");
-	item[1].data = (void *)fs_filetype_dir;
-	item[1].width = 13;
-	item[1].selected = false;
-	item[1].icolor = icolor;
-	item[1].selicolor = selicolor;
-	item[1].selrcolor = selrcolor;
-	item[1].selbcolor = selbcolor;
-	strcpy(item[2].name, "<NandFlash 1>");
-	strcpy(item[2].compname, "flash1:");
-	item[2].data = (void *)fs_filetype_dir;
-	item[2].width = 13;
-	item[2].selected = false;
-	item[2].icolor = icolor;
-	item[2].selicolor = selicolor;
-	item[2].selrcolor = selrcolor;
-	item[2].selbcolor = selbcolor;
 	return cur_count;
 }
 
