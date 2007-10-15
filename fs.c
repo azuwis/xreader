@@ -41,6 +41,8 @@ t_fs_filetype_entry ft_table[] =
 	{"mak", fs_filetype_txt},
 	{"exp", fs_filetype_txt},
 	{"sh", fs_filetype_txt},
+	{"asm", fs_filetype_txt},
+	{"s", fs_filetype_txt},
 	{"c", fs_filetype_txt},
 	{"h", fs_filetype_txt},
 	{"hpp", fs_filetype_txt},
