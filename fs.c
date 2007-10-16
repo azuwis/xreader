@@ -43,6 +43,7 @@ t_fs_filetype_entry ft_table[] =
 	{"sh", fs_filetype_txt},
 	{"asm", fs_filetype_txt},
 	{"s", fs_filetype_txt},
+	{"patch", fs_filetype_txt},
 	{"c", fs_filetype_txt},
 	{"h", fs_filetype_txt},
 	{"hpp", fs_filetype_txt},
