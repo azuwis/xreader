@@ -256,7 +256,7 @@ extern p_text text_open_binary(const char * filename, bool vert)
 	txt->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
 	if(txt->size > 256 * 1024) txt->size = 256 * 1024;
 	byte * tmpbuf;
-	dword bpr = (vert ? 33 : 56);
+	dword bpr = (vert ? 43 : 66);
 	if((txt->buf = (char *)calloc(1, (txt->size + 15) / 16 * bpr)) == NULL || (tmpbuf = (byte *)calloc(1, txt->size)) == NULL)
 	{
 		sceIoClose(fd);
@@ -287,7 +287,7 @@ extern p_text text_open_binary(const char * filename, bool vert)
 		txt->rows[curs][i & 0x3FF].count = bpr;
 		if(vert)
 		{
-			sprintf(&txt->buf[bpr * i], "%02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X", cbuf[0], cbuf[1], cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+			sprintf(&txt->buf[bpr * i], "%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X", (unsigned int)i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
 			if((i + 1) * 16 > txt->size)
 			{
 				dword padding = (i + 1) * 16 - txt->size;
@@ -299,18 +299,18 @@ extern p_text text_open_binary(const char * filename, bool vert)
 		}
 		else
 		{
-			sprintf(&txt->buf[bpr * i], "%02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ", cbuf[0], cbuf[1], cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+			sprintf(&txt->buf[bpr * i], "%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ", (unsigned int)i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
 			dword j;
 			for(j = 0; j < 16; j ++)
-				txt->buf[bpr * i + 40 + j] = (cbuf[j] > 0x1F && cbuf[j] < 0x7F) ? cbuf[j] : '.';
+				txt->buf[bpr * i + 40 + 10 + j] = (cbuf[j] > 0x1F && cbuf[j] < 0x7F) ? cbuf[j] : '.';
 			if((i + 1) * 16 > txt->size)
 			{
 				dword padding = (i + 1) * 16 - txt->size;
 				memset(&txt->buf[bpr * i + bpr - padding], 0x20, padding);
 				if((padding & 1) > 0)
-					memset(&txt->buf[bpr * i + 40 - padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
+					memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
 				else
-					memset(&txt->buf[bpr * i + 40 - padding / 2 * 5], 0x20, padding / 2 * 5);
+					memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5], 0x20, padding / 2 * 5);
 			}
 		}
 		cbuf += 16;
