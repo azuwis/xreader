@@ -2838,7 +2838,6 @@ static dword scene_readbook(dword selidx)
 				break;
 			}
 #endif
-			// 5 seconds...
 			if(config.autopage && ++ticks >= 50 * config.autopage) {
 				ticks = 0;
 				nextpage = true;
@@ -2847,7 +2846,6 @@ static dword scene_readbook(dword selidx)
 		}
 		if(nextpage) {
 			nextpage = false;
-			// next page
 			rowtop = 0;
 			if(fs->crow >= fs->row_count - 1)
 			{
