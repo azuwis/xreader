@@ -1464,6 +1464,10 @@ static t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword
 		case 10:
 			config.pagetonext = !config.pagetonext;
 			break;
+		case 11:
+			if(--config.autopage<0)
+				config.autopage = 0;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_RIGHT:
@@ -1524,6 +1528,9 @@ static t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword
 		case 10:
 			config.pagetonext = !config.pagetonext;
 			break;
+		case 11:
+			if(++config.autopage > 1000)
+				config.autopage = 1000;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_CIRCLE:
@@ -1536,11 +1543,11 @@ static t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword
 static void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char number[5];
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"阅读选项");
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 135 + 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 135 + 7 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	memset(number, ' ', 4);
 	utils_dword2string(config.wordspace, number, 4);
 	disp_putstring(242, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
@@ -1558,11 +1565,19 @@ static void scene_boptions_predraw(p_win_menuitem item, dword index, dword topin
 	disp_putstring(242 + DISP_FONTSIZE, 132 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autobm ? "是" : "否"));
 	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.reordertxt ? "是" : "否"));
 	disp_putstring(242 + DISP_FONTSIZE, 134 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.pagetonext ? "下篇文章" : "无动作"));
+	if(config.autopage) {
+		memset(number, ' ', 4);
+		utils_dword2string(config.autopage, number, 4);
+		disp_putstring(242 + DISP_FONTSIZE, 134 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+	}
+	else {
+		disp_putstring(242 + DISP_FONTSIZE, 134 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"已关闭");
+	}
 }
 
 static dword scene_boptions(dword * selidx)
 {
-	t_win_menuitem item[11];
+	t_win_menuitem item[12];
 	dword i;
 	strcpy(item[0].name, "      字间距");
 	strcpy(item[1].name, "      行间距");
@@ -1575,7 +1590,8 @@ static dword scene_boptions(dword * selidx)
 	strcpy(item[8].name, "自动保存书签");
 	strcpy(item[9].name, "重新编排文本");
 	strcpy(item[10].name, "文章末尾翻页");
-	for(i = 0; i < 11; i ++)
+	strcpy(item[11].name, "自动翻页(秒)");
+	for(i = 0; i < 12; i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1594,7 +1610,7 @@ static dword scene_boptions(dword * selidx)
 	dword orgborderspace = config.borderspace;
 	dword orgreordertxt = config.reordertxt;
 	dword orgencode = config.encode;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 11, item, 11, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_boptions_predraw, NULL, scene_boptions_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 12, item, 12, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_boptions_predraw, NULL, scene_boptions_menucb)) != INVALID);
 	dword result = 0;
 	if(orgibar != config.infobar || orgvert != config.vertread || orgrowspace != config.rowspace || orgborderspace != config.borderspace)
 	{
@@ -2600,6 +2616,8 @@ static dword scene_readbook(dword selidx)
 {
 	dword ctlkey[12], ctlkey2[12], ku, kd, kl, kr;
 	dword cidx, rrow = INVALID;
+	int ticks = 0;
+	bool nextpage = false;
 	int rowtop = 0;
 	char tr[8], * trow = NULL;
 	bool needrf = true, needrp = true, needrb = false;
@@ -2809,11 +2827,57 @@ static dword scene_readbook(dword selidx)
 			disp_flip();
 			needrp = false;
 		}
-		dword key = 
+		
+		dword key;
+		while((key = ctrl_read()) == 0) 
+		{
+			sceKernelDelayThread(20000);
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
-			config.infobar == conf_infobar_lyric ? ctrl_waitlyric() : 
+			if(config.infobar == conf_infobar_lyric && lyric_check_changed(mp3_get_lyric())) 
+			{
+				break;
+			}
 #endif
-			ctrl_waitany();
+			// 5 seconds...
+			if(config.autopage && ++ticks >= 50 * config.autopage) {
+				ticks = 0;
+				nextpage = true;
+				break;
+			}
+		}
+		if(nextpage) {
+			nextpage = false;
+			// next page
+			rowtop = 0;
+			if(fs->crow >= fs->row_count - 1)
+			{
+				if(config.pagetonext && key != kr && fs_is_txtbook((t_fs_filetype)filelist[selidx].data))
+				{
+					dword orgidx = selidx;
+					do {
+						if(selidx < filecount - 1)
+							selidx ++;
+						else
+							selidx = 0;
+					} while(!fs_is_txtbook((t_fs_filetype)filelist[selidx].data));
+					if(selidx != orgidx)
+					{
+						if(config.autobm)
+							bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
+						needrf = needrp = true;
+						needrb = false;
+						rrow = INVALID;
+					}
+				}
+				else
+					fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+				continue;
+			}
+			fs->crow += (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
+			if(fs->crow > fs->row_count - 1)
+				fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+			needrp = true;
+		} else
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 		if(key == 0 && config.infobar == conf_infobar_lyric)
 		{
@@ -3083,6 +3147,8 @@ static dword scene_readbook(dword selidx)
 		}
 		else
 			needrp = needrb = needrf = false;
+		// reset ticks
+		ticks = 0;
 	}
 	scene_power_save(false);
 	if(config.autobm)

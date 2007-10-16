@@ -166,6 +166,7 @@ static void conf_default(p_conf conf)
 	conf->bookfontsize = 0;
 	conf->reordertxt = false;
 	conf->pagetonext = false;
+	conf->autopage = 0;
 	conf->thumb = conf_thumb_scroll;
 	conf->imgpagereserve = 0;
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
