@@ -19,7 +19,7 @@ LIBS = ./lib/unrar.a ./lib/unzip.a ./lib/libchm.a ./lib/libpng.a \
 
 EXTRA_TARGETS = EBOOT.PBP
 EXTRA_CLEAN = -r __SCE__eReader %__SCE__eReader eReader eReader% eReader.prx
-PSP_EBOOT_TITLE = eReader
+PSP_EBOOT_TITLE = xReader
 PSP_EBOOT_ICON = ICON0.png
 
 PSPSDK=$(shell psp-config --pspsdk-path)
