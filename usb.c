@@ -39,7 +39,7 @@ extern void usb_close()
 
 extern bool usb_activate()
 {
-	if (sceUsbGetState() & PSP_USB_ACTIVATED)
+	if (usb_isactive())
 		return false;
 
 	return (sceUsbActivate(0x1c8) == 0);
@@ -47,7 +47,7 @@ extern bool usb_activate()
 
 extern bool usb_deactivate()
 {
-	if (sceUsbGetState() & PSP_USB_ACTIVATED)
+	if (usb_isactive())
 		return (sceUsbDeactivate(0x1c8) == 0);
 
 	return false;
