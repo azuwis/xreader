@@ -71,6 +71,7 @@ typedef struct {
 
 static t_fonts fonts[5], bookfonts[21];
 static int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex = 0, ttfsize = 0;
+static int offset = 0;
 
 static bool scene_load_font()
 {
@@ -2710,9 +2711,19 @@ static dword scene_readbook(dword selidx)
 				}
 				if(config.infobar == conf_infobar_info)
 				{
+					char soffset[8] = "        ";
+					int i;
+					offset = 0;
+					for(i=0; i<fs->crow && i<fs->row_count; ++i) {
+						p_textrow tr;
+						tr = fs->rows[i >> 10] + (i & 0x3FF);
+						offset += tr->count;
+					}
+					offset = offset / 1023 + 1;
+					utils_dword2string(offset, soffset, 7);
 					disp_line(479 - DISP_BOOK_FONTSIZE, 0, 479 - DISP_BOOK_FONTSIZE, 271, config.forecolor);
 					utils_dword2string(fs->crow + 1, ci, 7);
-					sprintf(cr, "%s/%s  %s  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname);
+					sprintf(cr, "%s/%s  %s  %s %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, soffset);
 					disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -2739,9 +2750,19 @@ static dword scene_readbook(dword selidx)
 				}
 				if(config.infobar == conf_infobar_info)
 				{
+					char soffset[8] = "        ";
+					int i;
+					offset = 0;
+					for(i=0; i<fs->crow && i<fs->row_count; ++i) {
+						p_textrow tr;
+						tr = fs->rows[i >> 10] + (i & 0x3FF);
+						offset += tr->count;
+					}
+					offset = offset / 1023 + 1;
+					utils_dword2string(offset, soffset, 7);
 					disp_line(DISP_BOOK_FONTSIZE, 0, DISP_BOOK_FONTSIZE, 271, config.forecolor);
 					utils_dword2string(fs->crow + 1, ci, 7);
-					sprintf(cr, "%s/%s  %s  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname);
+					sprintf(cr, "%s/%s  %s  %s %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, soffset);
 					disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, 0, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -2768,9 +2789,17 @@ static dword scene_readbook(dword selidx)
 				}
 				if(config.infobar == conf_infobar_info)
 				{
+					int i;
+					offset = 0;
+					for(i=0; i<fs->crow && i<fs->row_count; ++i) {
+						p_textrow tr;
+						tr = fs->rows[i >> 10] + (i & 0x3FF);
+						offset += tr->count;
+					}
+					offset = offset / 1023 + 1;
 					disp_line(0, 271 - DISP_BOOK_FONTSIZE, 479, 271 - DISP_BOOK_FONTSIZE, config.forecolor);
 					utils_dword2string(fs->crow + 1, ci, 7);
-					sprintf(cr, "%s/%s  %s  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname);
+					sprintf(cr, "%s/%s  %s  %s  GI: %d", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset);
 					disp_putnstringhorz(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)

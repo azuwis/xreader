@@ -131,7 +131,6 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace)
 				curp --;
 			}
 		}*/
-		txt->rows[curs][txt->row_count & 0x3FF].count = pos - startp;
 		if(bytetable[*(byte *)pos] == 1)
 		{
 			if(*pos == '\r' && *(pos + 1) == '\n')
@@ -139,6 +138,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace)
 			else
 				++ pos;
 		}
+		txt->rows[curs][txt->row_count & 0x3FF].count = pos - startp;
 		txt->row_count ++;
 	}
 	return true;
