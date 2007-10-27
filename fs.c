@@ -103,8 +103,10 @@ t_fs_specfiletype_entry ft_spec_table[] = {
   {"Version", fs_filetype_txt},
   {"INSTALL", fs_filetype_txt},
   {"CREDITS", fs_filetype_txt},
+#ifdef ENABLE_MUSIC
   {"mpeg", fs_filetype_mp3},
   {"mpea", fs_filetype_mp3},
+#endif
   {NULL, fs_filetype_unknown}
 };
 
