@@ -2,7 +2,7 @@
 
 #ifdef ENABLE_PMPAVC
 
-#include <pspsdk.h>
+#include <kubridge.h>
 #include <pspdisplay.h>
 #include <pspge.h>
 #include <psppower.h>
@@ -32,23 +32,23 @@ extern bool avc_init()
 	m2 = valloc(4 * 512 * 272);
 
 	av_register_all();
-	int id1 = pspSdkLoadStartModule("flash0:/kd/audiocodec_260.prx", PSP_MEMORY_PARTITION_KERNEL);
+	id1 = sceKernelStartModule(kuKernelLoadModule("flash0:/kd/audiocodec_260.prx", 0, NULL), 0, NULL, 0, NULL);
 	if (id1 < 0)
 		return false;
 
-	id2 = pspSdkLoadStartModule("flash0:/kd/videocodec_260.prx", PSP_MEMORY_PARTITION_KERNEL);
+	id2 = sceKernelStartModule(kuKernelLoadModule("flash0:/kd/videocodec_260.prx", 0, NULL), 0, NULL, 0, NULL);
 	if (id2 < 0)
 		return false;
 
-	id3 = pspSdkLoadStartModule("flash0:/kd/mpegbase_260.prx", PSP_MEMORY_PARTITION_KERNEL);
+	id3 = sceKernelStartModule(kuKernelLoadModule("flash0:/kd/mpegbase_260.prx", 0, NULL), 0, NULL, 0, NULL);
 	if (id3 < 0)
 		return false;
 
-	id4 = pspSdkLoadStartModule("flash0:/kd/mpeg_vsh.prx", PSP_MEMORY_PARTITION_USER);
+	id4 = sceKernelStartModule(kuKernelLoadModule("flash0:/kd/mpeg_vsh.prx", 0, NULL), 0, NULL, 0, NULL);
 	if (id4 < 0)
 		return false;
 
-	pspSdkFixupImports(id4);
+//	pspSdkFixupImports(id4);
 
 	gu_font_init();
 	char ftn[256];
