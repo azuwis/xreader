@@ -308,7 +308,7 @@ static void scene_mp3bar()
 		sceRtcGetCurrentClockLocalTime(&tm);
 		dword cpu, bus;
 		power_get_clock(&cpu, &bus);
-		sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus);
+		sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d   剩余内存: %.1fMB", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus, sceKernelTotalFreeMemSize() / 1048576.0);
 		disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE, (const byte *)timestr);
 		int percent, lifetime, tempe, volt;
 		char battstr[80];
