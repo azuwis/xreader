@@ -5,17 +5,19 @@ SRCS = avc.c bg.c bookmark.c charsets.c conf.c copy.c ctrl.c display.c fat.c \
 	./common/log.c ./common/qsort.c ./common/utils.c ./common/psp_utils.c
 OBJS = $(SRCS:.c=.o)
 
-INCDIR = $(PSPSDK)/../include ./include ./include/freetype2
+INCDIR = $(PSPSDK)/../include ./include ./include/freetype2 ../m33-sdk/include
 
 CFLAGS = -O2 -G0 -Wall
 CXXFLAGS = $(CFLAGS) -fno-rtti
 
+
+LIBDIR = ../m33-sdk/lib
 LIBS = ./lib/unrar.a ./lib/unzip.a ./lib/libchm.a ./lib/libpng.a \
 	./lib/libgif.a ./lib/libjpeg.a ./lib/libbmp.a ./lib/libtga.a \
 	./lib/libmad.a ./lib/libz.a ./lib/libfreetype.a ./lib/libwmadec.a \
 	./lib/pmpmodavc/pmpmodavclib.a ./lib/pmpmodavc/libavformat.a ./lib/pmpmodavc/libavcodec.a ./lib/pmpmodavc/libavutil.a ./lib/pmpmodavc/libpspmpeg.a ./lib/pmpmodavc/pmpmodavclib.a \
 	-lm -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc \
-	-lpspusb -lpspusbstor -lstdc++
+	-lpspusb -lpspusbstor -lstdc++ -lpspkubridge
 
 EXTRA_TARGETS = EBOOT.PBP
 EXTRA_CLEAN = -r __SCE__eReader %__SCE__eReader eReader eReader% eReader.prx
