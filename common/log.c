@@ -11,7 +11,7 @@ extern bool log_open(const char * logfile)
 	if(logstrm != NULL)
 		fclose(logstrm);
 
-	logstrm = fopen(logfile, "at");
+	logstrm = fopen(logfile, "a");
 	if(!logstrm)
 		return false;
 
