@@ -218,6 +218,16 @@ extern dword ctrl_waitlyric()
 #ifdef ENABLE_HPRM
 extern dword ctrl_hprm()
 {
+	u32 key = ctrl_hprm_raw();
+	if(key == lasthprmkey)
+		return 0;
+
+	lasthprmkey = key;
+	return (dword)key;
+}
+
+extern dword ctrl_hprm_raw()
+{
 /*	if(sceKernelDevkitVersion() >= 0x02000010)
 		return 0;*/
 	if(!sceHprmIsRemoteExist())
@@ -228,10 +238,6 @@ extern dword ctrl_hprm()
 	u32 key;
 	sceHprmPeekCurrentKey(&key);
 	sceKernelSignalSema(hprm_sema, 1);
-	if(key == lasthprmkey)
-		return 0;
-
-	lasthprmkey = key;
 	return (dword)key;
 }
 #endif
