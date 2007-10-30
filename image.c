@@ -12,6 +12,7 @@
 #include <chm_lib.h>
 #include <unzip.h>
 #include <unrar.h>
+#include <setjmp.h>
 #include "image.h"
 
 /* 
@@ -397,12 +398,10 @@ static int image_readpng2(void *infile, dword *pwidth, dword *pheight, pixel ** 
 		return 4;
 	}
 
-
 	if (setjmp(png_ptr->jmpbuf)) {
 		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 		return 1;
 	}
-
 
 	png_set_read_fn(png_ptr, infile, read_fn);
 
@@ -802,8 +801,11 @@ extern int image_readgif_in_rar(const char * rarfile, const char * filename, dwo
 	return -1;
 }
 
+static jmp_buf jmp;
+
 static void my_error_exit(j_common_ptr cinfo)
 {
+	longjmp(jmp, 1);
 }
 
 static void output_no_message(j_common_ptr cinfo)
@@ -821,10 +823,14 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 	jerr.output_message = output_no_message;
 	jpeg_create_decompress(&cinfo);
 	jpeg_stdio_src(&cinfo, infile, jfread);
+	if(setjmp(jmp)) {
+		jpeg_destroy_decompress(&cinfo);
+		return 1;
+	}
 	if(jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
 	{
 		jpeg_destroy_decompress(&cinfo);
-		return 1;
+		return 2;
 	}
 	cinfo.out_color_space = JCS_RGB;
 	cinfo.quantize_colors = FALSE;
@@ -835,7 +841,7 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 	if(!jpeg_start_decompress(&cinfo))
 	{
 		jpeg_destroy_decompress(&cinfo);
-		return 1;
+		return 3;
 	}
 	*bgcolor = 0;
 	*pwidth = cinfo.output_width;
@@ -844,14 +850,14 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 	{
 		jpeg_abort_decompress(&cinfo);
 		jpeg_destroy_decompress(&cinfo);
-		return 1;
+		return 4;
 	}
 	if((*image_data = (pixel *)malloc(sizeof(pixel) * cinfo.output_width * cinfo.output_height)) == NULL)
 	{
 		free((void *)sline);
 		jpeg_abort_decompress(&cinfo);
 		jpeg_destroy_decompress(&cinfo);
-		return 1;
+		return 5;
 	}
 	pixel * imgdata = *image_data;
 	while(cinfo.output_scanline < cinfo.output_height)
