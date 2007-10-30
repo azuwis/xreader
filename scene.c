@@ -3318,9 +3318,29 @@ static dword scene_readimage(dword selidx)
 			}
 			if(result != 0)
 			{
+				char infomsg[80];
+				const char *errstr;
+				switch(result) {
+					case 1:
+					case 2:
+					case 3:
+						errstr = "格式错误";
+						break;
+					case 4:
+					case 5:
+						errstr = "内存不足";
+						break;
+					default:
+						errstr = "不明";
+						break;
+				}
+				sprintf(infomsg, "图像无法装载, 原因: %s", errstr);
+				win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 				imgreading = false;
 				scene_power_save(false);
-				if(imgshow != NULL && imgshow != imgdata)
+
+				// imgshow double freed bug fix
+				if(imgshow != NULL && imgdata != NULL && imgshow != imgdata)
 				{
 					free((void *)imgshow);
 					imgshow = NULL;
@@ -5198,6 +5218,9 @@ extern void scene_init()
 	ctrl_enablehprm(config.hprmctrl);
 #endif
 	disp_init();
+	disp_fillvram(0);
+	disp_flip();
+	disp_fillvram(0);
 	fat_init();
 
 	strcpy(bmfile, appdir);
