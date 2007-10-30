@@ -381,6 +381,30 @@ static bool mp3_load()
 	return true;
 }
 
+static void hprm_fb(int flag)
+{
+	if(flag != PSP_HPRM_FORWARD && flag != PSP_HPRM_BACK)
+		return;
+	sceKernelDelayThread(500000);
+	if(ctrl_hprm_raw() != flag) {
+		if(flag == PSP_HPRM_FORWARD)
+			mp3_next();
+		else 
+			mp3_prev();
+		return;
+	}
+}
+
+static void hprm_forward()
+{
+	hprm_fb(PSP_HPRM_FORWARD);
+}
+
+static void hprm_backward()
+{
+	hprm_fb(PSP_HPRM_BACK);
+}
+
 static int mp3_thread(unsigned int args, void * argp)
 {
 #ifdef ENABLE_HPRM
@@ -602,10 +626,10 @@ static int mp3_thread(unsigned int args, void * argp)
 					scene_power_save(true);
 					break;
 				case PSP_HPRM_FORWARD:
-					mp3_next();
+					hprm_forward();
 					break;
 				case PSP_HPRM_BACK:
-					mp3_prev();
+					hprm_backward();
 					break;
 				}
 			}
@@ -703,10 +727,10 @@ static int mp3_thread(unsigned int args, void * argp)
 						scene_power_save(true);
 						break;
 					case PSP_HPRM_FORWARD:
-						mp3_next();
+						hprm_forward();
 						break;
 					case PSP_HPRM_BACK:
-						mp3_prev();
+						hprm_backward();
 						break;
 					}
 				}
@@ -734,7 +758,7 @@ extern bool mp3_init()
 	manualSw = false;
 	mp3_direct = -1;
 	Resampled = (mad_fixed_t (*)[2][MAX_NSAMPLES])malloc(sizeof(*Resampled));
-	mp3_thid = sceKernelCreateThread( "mp3 thread", mp3_thread, 0x10, 0x40000, PSP_THREAD_ATTR_USER, NULL );
+	mp3_thid = sceKernelCreateThread( "mp3 thread", mp3_thread, 0x08, 0x40000, PSP_THREAD_ATTR_USER, NULL );
 	if(mp3_thid < 0)
 		return false;
 	strcpy(mp3_tag, "");
