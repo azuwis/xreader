@@ -13,6 +13,10 @@
 #ifndef JPEGLIB_H
 #define JPEGLIB_H
 
+/* Add by xreader to support archieve file extraction*/
+typedef unsigned (*jpeg_fread)(void *buf, unsigned r, unsigned n, void *stream);
+extern jpeg_fread jp_fread;
+
 /*
  * First we include the configuration files that record how this
  * installation of the JPEG library is set up.  jconfig.h can be
@@ -814,16 +818,11 @@ typedef JMETHOD(boolean, jpeg_marker_parser_method, (j_decompress_ptr cinfo));
  * Note JPP requires double parentheses.
  */
 
-typedef unsigned (*jpeg_fread)(void *buf, unsigned r, unsigned n, void *stream);
-
-extern jpeg_fread jp_fread;
-
 #ifdef HAVE_PROTOTYPES
 #define JPP(arglist)	arglist
 #else
 #define JPP(arglist)	()
 #endif
-
 
 /* Short forms of external names for systems with brain-damaged linkers.
  * We shorten external names to be unique in the first six letters, which
