@@ -9,4 +9,17 @@ extern void scene_power_save(bool save);
 extern void scene_exception();
 extern const char * scene_appdir();
 
+enum {
+	scene_in_dir,
+	scene_in_zip,
+	scene_in_chm,
+	scene_in_rar
+} where;
+
+typedef struct {
+	int size;
+	bool zipped;
+} t_fonts;
+
+
 #endif
