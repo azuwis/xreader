@@ -29,6 +29,7 @@ extern dword ctrl_waitmask(dword keymask);
 extern dword ctrl_waitlyric();
 #ifdef ENABLE_HPRM
 extern dword ctrl_hprm();
+extern dword ctrl_hprm_raw();
 #endif
 extern dword ctrl_waittime(dword t);
 #ifdef ENABLE_HPRM
