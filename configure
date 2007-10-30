@@ -86,9 +86,6 @@ if test "$_fw2xx" = yes ; then
   _mak_inc="include build.mak"
   _build_prx="BUILD_PRX=1"
   _prx_exports="PRX_EXPORTS=exports.exp"
-  _usb=no
-  _hprm=no
-  _pmpavc=no
   _inc_fw2xx="#define HOMEBREW_2XX 1"
 else
   _mak_inc="include \$(PSPSDK)/lib/build.mak"
@@ -165,6 +162,12 @@ else
   _inc_pmpavc="#undef ENABLE_PMPAVC"
 fi
 
+if test "$_debug" = yes ; then
+  _def_debug="#define _DEBUG 1"
+else
+  _def_debug="#undef _DEBUG"
+fi
+
 echo "Creating config.mak"
 cat > config.mak << EOF
 $_build_prx
@@ -189,6 +192,7 @@ $_inc_wma
 $_inc_lyric
 $_inc_ttf
 $_inc_pmpavc
+$_def_debug
 
 #endif
 EOF
