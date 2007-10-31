@@ -425,6 +425,17 @@ int scene_printimage()
 	return 0;
 }
 
+int ctrl_waitreleasekey(int key)
+{
+	SceCtrlData pad;
+	sceCtrlReadBufferPositive(&pad,1);
+	while(pad.Buttons == key) {
+		sceKernelDelayThread(20000);
+		sceCtrlReadBufferPositive(&pad,1);
+	}
+	return 0;
+}
+
 int image_handle_input(dword *selidx, dword key)
 {
 	if(key == 0)
@@ -864,6 +875,7 @@ int image_handle_input(dword *selidx, dword key)
 		else
 			config.rotate --;
 		img_needrc = img_needrp = true;
+		ctrl_waitreleasekey(config.imgkey[5]);
 	}
 	else if(key == config.imgkey[6] || key == config.imgkey2[6])
 	{
@@ -872,6 +884,7 @@ int image_handle_input(dword *selidx, dword key)
 		else
 			config.rotate ++;
 		img_needrc = img_needrp = true;
+		ctrl_waitreleasekey(config.imgkey[6]);
 	}
 	else if(key == config.imgkey[3] || key == config.imgkey2[3])
 	{
@@ -883,6 +896,7 @@ int image_handle_input(dword *selidx, dword key)
 			goto next;
 		config.fit = conf_fit_custom;
 		img_needrc = img_needrp = true;
+		ctrl_waitreleasekey(config.imgkey[3]);
 	}
 	else if(key == config.imgkey[4] || key == config.imgkey2[4])
 	{
@@ -894,6 +908,7 @@ int image_handle_input(dword *selidx, dword key)
 			goto next;
 		config.fit = conf_fit_custom;
 		img_needrc = img_needrp = true;
+		ctrl_waitreleasekey(config.imgkey[4]);
 	}
 	else
 		img_needrf = img_needrc = false;
