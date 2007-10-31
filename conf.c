@@ -177,6 +177,18 @@ static void conf_default(p_conf conf)
 	conf->savesucc = false;
 	conf->autoplay = false;
 	conf->usettf = 0;
+	conf->cpufreq[0] = 35;
+	conf->busfreq[0] = 54;
+	conf->cpufreq[1] = 222;
+	conf->busfreq[1] = 111;
+	if(sceKernelDevkitVersion() >= 0x02000010) {
+		conf->cpufreq[2] = 300;
+		conf->busfreq[2] = 150;
+	}
+	else {
+		conf->cpufreq[2] = 333;
+		conf->busfreq[2] = 166;
+	}
 }
 
 extern bool conf_load(p_conf conf)

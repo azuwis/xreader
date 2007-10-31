@@ -126,6 +126,7 @@ typedef struct {
 	bool savesucc;
 	bool autoplay;
 	bool usettf;
+	int cpufreq[3], busfreq[3];
 } t_conf, * p_conf;
 
 /* txt key:
