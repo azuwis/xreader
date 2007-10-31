@@ -187,7 +187,6 @@ int scene_reloadimage(dword selidx)
 		sprintf(infomsg, "图像无法装载, 原因: %s", errstr);
 		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		imgreading = false;
-		scene_power_save(true);
 		// imgshow double freed bug fix
 		if(imgshow != NULL && imgdata != NULL && imgshow != imgdata)
 		{
@@ -200,6 +199,7 @@ int scene_reloadimage(dword selidx)
 			imgdata = NULL;
 		}
 		disp_duptocachealpha(50);
+		scene_power_save(true);	
 		return -1;
 	}
 	strcpy(config.lastfile, filelist[selidx].compname);
@@ -210,6 +210,7 @@ int scene_reloadimage(dword selidx)
 
 dword scene_rotateimage()
 {
+	scene_power_save(false);
 	image_rotate(imgdata, &width, &height, oldangle, (dword)config.rotate * 90);
 	oldangle = (dword)config.rotate * 90;
 	if(config.fit > 0 && (config.fit != conf_fit_custom || config.scale != 100))
@@ -348,6 +349,7 @@ dword scene_rotateimage()
 
 	if(slideshow)
 		lasttime = time(NULL);
+	scene_power_save(true);
 	return 0;
 }
 
