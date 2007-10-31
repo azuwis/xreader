@@ -61,6 +61,17 @@ t_fonts fonts[5], bookfonts[21];
 int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex = 0, ttfsize = 0;
 int offset = 0;
 
+int freq_list[][2] = {
+	{ 33, 111 },
+	{ 66, 111 },
+	{ 111, 111 },
+	{ 166, 111 },
+	{ 222, 111 },
+	{ 266, 111 },
+	{ 300, 150 },
+	{ 333, 166 }
+};
+
 bool scene_load_font()
 {
 	char fontzipfile[256], efontfile[256], cfontfile[256];
@@ -1602,18 +1613,10 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 6:
 		case 7:
 		case 8:
-			config.cpufreq[*index-6] -= 33;
-			if(config.cpufreq[*index-6] < 33)
-				config.cpufreq[*index-6] = 33;
-			config.busfreq[*index-6] = 111;
-			if(config.cpufreq[*index-6] > 222) {
-				if(sceKernelDevkitVersion() >= 0x02000010) {
-					config.busfreq[*index-6] = 150;
-				}
-				else {
-					config.busfreq[*index-6] = 166;
-				}
-			}
+			if(config.freqs[*index-6] > 0)
+				config.freqs[*index-6]--;
+			if(config.freqs[*index-6] > 7)
+				config.freqs[*index-6] = 7;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1646,24 +1649,10 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 6:
 		case 7:
 		case 8:
-			config.cpufreq[*index-6] += 33;
-			if(sceKernelDevkitVersion() >= 0x02000010) {
-				if(config.cpufreq[*index-6] > 300)
-					config.cpufreq[*index-6] = 300;
-			}
-			else {
-				if(config.cpufreq[*index-6] > 333)
-					config.cpufreq[*index-6] = 333;
-			}
-			config.busfreq[*index-6] = 111;
-			if(config.cpufreq[*index-6] > 222) {
-				if(sceKernelDevkitVersion() >= 0x02000010) {
-					config.busfreq[*index-6] = 150;
-				}
-				else {
-					config.busfreq[*index-6] = 166;
-				}
-			}
+			if(config.freqs[*index-6] < 7)
+				config.freqs[*index-6]++;
+			if(config.freqs[*index-6] < 0)
+				config.freqs[*index-6] = 0;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1692,11 +1681,11 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)"²»Ö§³Ö");
 #endif
 	char infomsg[80];
-	sprintf(infomsg, "%d/%d", config.cpufreq[0], config.busfreq[0]);
+	sprintf(infomsg, "%d/%d", freq_list[config.freqs[0]][0], freq_list[config.freqs[0]][1]);
 	disp_putstring(242 + DISP_FONTSIZE, 130 + DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
-	sprintf(infomsg, "%d/%d", config.cpufreq[1], config.busfreq[1]);
+	sprintf(infomsg, "%d/%d", freq_list[config.freqs[1]][0], freq_list[config.freqs[1]][1]);
 	disp_putstring(242 + DISP_FONTSIZE, 131 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
-	sprintf(infomsg, "%d/%d", config.cpufreq[2], config.busfreq[2]);
+	sprintf(infomsg, "%d/%d", freq_list[config.freqs[2]][0], freq_list[config.freqs[2]][1]);
 	disp_putstring(242 + DISP_FONTSIZE, 132 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
 }
 
@@ -3488,17 +3477,17 @@ extern void scene_power_save(bool save)
 		&& mp3_paused()
 #endif
 		)
-		power_set_clock(config.cpufreq[0], config.busfreq[0]);
+		power_set_clock(freq_list[config.freqs[0]][0], freq_list[config.freqs[0]][1]);
 	else if(imgreading && 
 #ifdef ENABLE_MUSIC
 		!mp3_paused()
 #endif
 		)
 	{
-		power_set_clock(config.cpufreq[2], config.busfreq[2]);
+		power_set_clock(freq_list[config.freqs[2]][0], freq_list[config.freqs[2]][1]);
 	}
 	else
-		power_set_clock(config.cpufreq[1], config.busfreq[1]);
+		power_set_clock(freq_list[config.freqs[1]][0], freq_list[config.freqs[1]][1]);
 }
 
 extern void scene_exception()
