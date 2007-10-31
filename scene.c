@@ -42,6 +42,8 @@
 #include "scene_impl.h"
 #include "pspscreen.h"
 
+#define NELEMS(a)       (sizeof (a) / sizeof ((a)[0]))
+
 #ifdef ENABLE_PMPAVC
 bool pmp_restart = false;
 #endif
@@ -269,7 +271,7 @@ dword scene_txtkey(dword * selidx)
 	strcpy(item[10].name, "下一文件");
 	strcpy(item[11].name, "退出阅读");
 	dword i;
-	for(i = 0; i < 12; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 8;
 		item[i].selected = false;
@@ -280,7 +282,7 @@ dword scene_txtkey(dword * selidx)
 		item[i].data = NULL;
 	}
 	dword index;
-	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, 12, item, 12, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_txtkey_predraw, NULL, scene_txtkey_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_txtkey_predraw, NULL, scene_txtkey_menucb)) != INVALID);
 	return 0;
 }
 
@@ -392,7 +394,7 @@ dword scene_flkey(dword * selidx)
 	strcpy(item[5].name, "文件操作");
 	strcpy(item[6].name, "选择文件");
 	dword i;
-	for(i = 0; i < 7; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 8;
 		item[i].selected = false;
@@ -403,7 +405,7 @@ dword scene_flkey(dword * selidx)
 		item[i].data = NULL;
 	}
 	dword index;
-	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, 7, item, 7, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_flkey_predraw, NULL, scene_flkey_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_flkey_predraw, NULL, scene_flkey_menucb)) != INVALID);
 	return 0;
 }
 
@@ -678,7 +680,7 @@ dword scene_ioptions(dword * selidx)
 	strcpy(item[5].name, "翻动保留宽度");
 	strcpy(item[6].name, "  缩略图查看");
 	strcpy(item[7].name, "    图像亮度");
-	for(i = 0; i < 8; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -688,7 +690,7 @@ dword scene_ioptions(dword * selidx)
 		item[i].selbcolor = RGB(0x20, 0x20, 0xDF);
 		item[i].data = NULL;
 	}
-	while(win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 8, item, 8, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_ioptions_predraw, NULL, scene_ioptions_menucb) != INVALID);
+	while(win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_ioptions_predraw, NULL, scene_ioptions_menucb) != INVALID);
 	return 0;
 }
 #endif
@@ -1001,7 +1003,7 @@ dword scene_color(dword * selidx)
 #endif
 	strcpy(item[5].name, "          蓝");
 	strcpy(item[6].name, "  背景图灰度");
-	for(i = 0; i < 7; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1015,7 +1017,7 @@ dword scene_color(dword * selidx)
 	dword orgbgcolor = config.bgcolor;
 	dword orggrayscale = config.grayscale;
 #endif
-	while(win_menu(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 12, 7, item, 7, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_color_predraw, NULL, scene_color_menucb) != INVALID);
+	while(win_menu(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_color_predraw, NULL, scene_color_menucb) != INVALID);
 #ifdef ENABLE_BG
 	if(orgbgcolor != config.bgcolor || orggrayscale != config.grayscale)
 		bg_load(config.bgfile, config.bgcolor, fs_file_get_type(config.bgfile), config.grayscale);
@@ -1221,7 +1223,7 @@ dword scene_boptions(dword * selidx)
 	strcpy(item[9].name, "重新编排文本");
 	strcpy(item[10].name, "文章末尾翻页");
 	strcpy(item[11].name, "自动翻页(秒)");
-	for(i = 0; i < 12; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1240,7 +1242,7 @@ dword scene_boptions(dword * selidx)
 	dword orgborderspace = config.borderspace;
 	dword orgreordertxt = config.reordertxt;
 	dword orgencode = config.encode;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 12, item, 12, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_boptions_predraw, NULL, scene_boptions_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_boptions_predraw, NULL, scene_boptions_menucb)) != INVALID);
 	dword result = 0;
 	if(orgibar != config.infobar || orgvert != config.vertread || orgrowspace != config.rowspace || orgborderspace != config.borderspace)
 	{
@@ -1320,7 +1322,7 @@ dword scene_ctrlset(dword * selidx)
 	t_win_menuitem item[1];
 	dword i;
 	strcpy(item[0].name, "    线控模式");
-	for(i = 0; i < 1; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1334,7 +1336,7 @@ dword scene_ctrlset(dword * selidx)
 #ifdef ENABLE_HPRM
 	bool orghprmctrl = config.hprmctrl;
 #endif
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 1, item, 1, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_ctrlset_predraw, NULL, scene_ctrlset_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_ctrlset_predraw, NULL, scene_ctrlset_menucb)) != INVALID);
 #ifdef ENABLE_HPRM
 	if(orghprmctrl != config.hprmctrl)
 	{
@@ -1469,7 +1471,7 @@ dword scene_fontsel(dword * selidx)
 	strcpy(item[0].name, "菜单字体大小");
 	strcpy(item[1].name, "阅读字体大小");
 	strcpy(item[2].name, " 使用TTF字体");
-	for(i = 0; i < 3; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1484,7 +1486,7 @@ dword scene_fontsel(dword * selidx)
 	int orgbookfontindex = bookfontindex;
 	int orgttfsize = ttfsize;
 	bool orgusettf = config.usettf;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 3, item, 3, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_fontsel_predraw, NULL, scene_fontsel_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_fontsel_predraw, NULL, scene_fontsel_menucb)) != INVALID);
 	if(orgfontindex != fontindex || orgusettf != config.usettf || (!config.usettf && orgbookfontindex != bookfontindex) || (config.usettf && orgttfsize != ttfsize))
 	{
 		if(orgfontindex != fontindex)
@@ -1583,7 +1585,7 @@ dword scene_musicopt(dword * selidx)
 	dword i;
 	strcpy(item[0].name, "自动开始播放");
 	strcpy(item[1].name, "歌词显示行数");
-	for(i = 0; i < 2; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1594,7 +1596,7 @@ dword scene_musicopt(dword * selidx)
 		item[i].data = NULL;
 	}
 	dword index;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 2, item, 2, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_musicopt_predraw, NULL, scene_musicopt_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_musicopt_predraw, NULL, scene_musicopt_menucb)) != INVALID);
 	return 0;
 }
 #endif
@@ -1643,8 +1645,8 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 8:
 			if(config.freqs[*index-6] > 0)
 				config.freqs[*index-6]--;
-			if(config.freqs[*index-6] > 7)
-				config.freqs[*index-6] = 7;
+			if(config.freqs[*index-6] > NELEMS(freq_list) - 1)
+				config.freqs[*index-6] = NELEMS(freq_list) - 1;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1677,7 +1679,7 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 6:
 		case 7:
 		case 8:
-			if(config.freqs[*index-6] < 7)
+			if(config.freqs[*index-6] < NELEMS(freq_list) - 1)
 				config.freqs[*index-6]++;
 			if(config.freqs[*index-6] < 0)
 				config.freqs[*index-6] = 0;
@@ -1730,7 +1732,7 @@ dword scene_moptions(dword * selidx)
 	strcpy(item[6].name, "设置最低频率");
 	strcpy(item[7].name, "设置普通频率");
 	strcpy(item[8].name, "设置最高频率");
-	for(i = 0; i < 9; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1746,7 +1748,7 @@ dword scene_moptions(dword * selidx)
 	int orgfontindex = fontindex;
 	int orgbookfontindex = bookfontindex;
 	t_conf_arrange orgarrange = config.arrange;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 9, item, 9, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_moptions_predraw, NULL, scene_moptions_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_moptions_predraw, NULL, scene_moptions_menucb)) != INVALID);
 #ifdef ENABLE_USB
 	if(config.enableusb)
 		usb_activate();
@@ -1832,7 +1834,7 @@ dword scene_locsave(dword * selidx)
 {
 	t_win_menuitem item[10];
 	dword i;
-	for(i = 0; i < 10; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		strcpy(item[i].name, "未使用");
 		item[i].width = strlen(item[i].name);
@@ -1846,7 +1848,7 @@ dword scene_locsave(dword * selidx)
 	location_enum(scene_loc_enum, item);
 	dword index;
 	item[1].data = (void *)*selidx;
-	index = win_menu(238 - DISP_FONTSIZE * 10, 124 - 4 * DISP_FONTSIZE, 40, 10, item, 10, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_locsave_predraw, NULL, scene_locsave_menucb);
+	index = win_menu(238 - DISP_FONTSIZE * 10, 124 - 4 * DISP_FONTSIZE, 40, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_locsave_predraw, NULL, scene_locsave_menucb);
 	return 0;
 }
 
@@ -1939,7 +1941,7 @@ dword scene_locload(dword * selidx)
 {
 	t_win_menuitem item[10];
 	dword i;
-	for(i = 0; i < 10; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		strcpy(item[i].name, "未使用");
 		item[i].width = strlen(item[i].name);
@@ -1954,7 +1956,7 @@ dword scene_locload(dword * selidx)
 	dword index;
 	item[0].data = (void *)false;
 	item[1].data = (void *)*selidx;
-	index = win_menu(238 - DISP_FONTSIZE * 10, 124 - 4 * DISP_FONTSIZE, 40, 10, item, 10, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_locload_predraw, NULL, scene_locload_menucb);
+	index = win_menu(238 - DISP_FONTSIZE * 10, 124 - 4 * DISP_FONTSIZE, 40, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_locload_predraw, NULL, scene_locload_menucb);
 	*selidx = (dword)item[1].data;
 	return (bool)item[0].data;
 }
@@ -2048,7 +2050,7 @@ dword scene_options(dword * selidx)
 	strcpy(item[10].name, "保存文件位置");
 	strcpy(item[11].name, "读取文件位置");
 	strcpy(item[12].name, "  退出软件");
-	for(i = 0; i < 13; i ++)
+	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -2061,7 +2063,7 @@ dword scene_options(dword * selidx)
 	item[0].data = (void *)0;
 	item[1].data = (void *)selidx;
 	dword index = 0;
-	while((index = win_menu(238 - DISP_FONTSIZE * 3, 122 - 6 * DISP_FONTSIZE, 12, 13, item, 13, index, 0, RGB(0x10, 0x30, 0x20), true, scene_options_predraw, NULL, scene_options_menucb)) != INVALID);
+	while((index = win_menu(238 - DISP_FONTSIZE * 3, 122 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), index, 0, RGB(0x10, 0x30, 0x20), true, scene_options_predraw, NULL, scene_options_menucb)) != INVALID);
 	return (dword)item[0].data;
 }
 
