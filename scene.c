@@ -72,6 +72,8 @@ int freq_list[][2] = {
 	{ 333, 166 }
 };
 
+extern bool img_needrf, img_needrp, img_needrc;
+
 bool scene_load_font()
 {
 	char fontzipfile[256], efontfile[256], cfontfile[256];
@@ -529,6 +531,11 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 			else
 				config.thumb --;
 			break;
+		case 7:
+			if(--config.imgbrightness < 0)
+				config.imgbrightness = 0;
+			img_needrf = img_needrc = img_needrp = true;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_RIGHT:
@@ -573,6 +580,11 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 			else
 				config.thumb ++;
 			break;
+		case 7:
+			if(++config.imgbrightness > 100)
+				config.imgbrightness = 100;
+			img_needrf = img_needrc = img_needrp = true;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_LTRIGGER:
@@ -589,6 +601,12 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 				config.imgpagereserve = 0;
 			else
 				config.imgpagereserve -= 10;
+			break;
+		case 7:
+			config.imgbrightness -= 10;
+			if(config.imgbrightness < 0)
+				config.imgbrightness = 0;
+			img_needrf = img_needrc = img_needrp = true;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -607,6 +625,12 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 			else
 				config.imgpagereserve += 10;
 			break;
+		case 7:
+			config.imgbrightness += 10;
+			if(config.imgbrightness > 100)
+				config.imgbrightness = 100;
+			img_needrf = img_needrc = img_needrp = true;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_CIRCLE:
@@ -619,11 +643,11 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char number[7];
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 132 + 2 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 133 + 3 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"看图选项");
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 131 + 2 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 132 + 3 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.bicubic ? "三次立方" : "两次线性"));
 	memset(number, ' ', 4);
 	utils_dword2string(config.slideinterval, number, 4);
@@ -636,12 +660,15 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_putstring(240 + DISP_FONTSIZE, 128 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_imgpagingname(config.imgpaging));
 	utils_dword2string(config.imgpagereserve, number, 4);
 	disp_putstring(242, 129, COLOR_WHITE, (const byte *)number);
-	disp_putstring(240 + DISP_FONTSIZE, 130 + DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_thumbname(config.thumb));
+	disp_putstring(240 + DISP_FONTSIZE, 129 + DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_thumbname(config.thumb));
+	char infomsg[80];
+	sprintf(infomsg, "%d", config.imgbrightness);
+	disp_putstring(240 + DISP_FONTSIZE, 130 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
 }
 
 dword scene_ioptions(dword * selidx)
 {
-	t_win_menuitem item[7];
+	t_win_menuitem item[8];
 	dword i;
 	strcpy(item[0].name, "    缩放算法");
 	strcpy(item[1].name, "幻灯播放间隔");
@@ -650,7 +677,8 @@ dword scene_ioptions(dword * selidx)
 	strcpy(item[4].name, "    翻页模式");
 	strcpy(item[5].name, "翻动保留宽度");
 	strcpy(item[6].name, "  缩略图查看");
-	for(i = 0; i < 7; i ++)
+	strcpy(item[7].name, "    图像亮度");
+	for(i = 0; i < 8; i ++)
 	{
 		item[i].width = 12;
 		item[i].selected = false;
@@ -660,7 +688,7 @@ dword scene_ioptions(dword * selidx)
 		item[i].selbcolor = RGB(0x20, 0x20, 0xDF);
 		item[i].data = NULL;
 	}
-	while(win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 7, item, 7, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_ioptions_predraw, NULL, scene_ioptions_menucb) != INVALID);
+	while(win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, 8, item, 8, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_ioptions_predraw, NULL, scene_ioptions_menucb) != INVALID);
 	return 0;
 }
 #endif
@@ -2005,7 +2033,7 @@ dword scene_options(dword * selidx)
 	strcpy(item[4].name, "  阅读选项");
 	strcpy(item[5].name, "  阅读按键");
 #ifdef ENABLE_IMAGE
-	strcpy(item[6].name, "  看图设置");
+	strcpy(item[6].name, "  看图选项");
 	strcpy(item[7].name, "  看图按键");
 #else
 	strcpy(item[6].name, "*看图已关闭*");

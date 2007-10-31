@@ -127,6 +127,7 @@ typedef struct {
 	bool autoplay;
 	bool usettf;
 	int freqs[3];
+	short imgbrightness;
 } t_conf, * p_conf;
 
 /* txt key:

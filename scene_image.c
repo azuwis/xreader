@@ -50,7 +50,8 @@ pixel bgcolor = 0, thumbimg[128 * 128];
 dword oldangle = 0;
 char filename[256];
 int curtop = 0, curleft = 0, xpos = 0, ypos = 0;
-static bool needrf = true, needrc = true, needrp = true, showinfo = false, thumb = false;
+bool img_needrf = true, img_needrc = true, img_needrp = true;
+static bool showinfo = false, thumb = false;
 int imgh;
 bool slideshow = false;
 time_t now = 0, lasttime = 0;
@@ -201,6 +202,18 @@ int scene_reloadimage(dword selidx)
 		disp_duptocachealpha(50);
 		scene_power_save(true);	
 		return -1;
+	}
+	if(config.imgbrightness != 100) {
+		int i;
+		if(imgdata) {
+			pixel *t = imgdata;
+			for(i = 0; i < height * width; i ++)
+			{
+				short b = config.imgbrightness;
+				pixel x = RGB(RGB_R(*t) * b / 100, RGB_G(*t) * b / 100, RGB_B(*t) * b / 100);
+				*t++ = x;
+			}
+		}
 	}
 	strcpy(config.lastfile, filelist[selidx].compname);
 	oldangle = 0;
@@ -426,7 +439,7 @@ int image_handle_input(dword *selidx, dword key)
 	}
 	else if(key == PSP_CTRL_SELECT)
 	{
-		needrp = true;
+		img_needrp = true;
 		bool lastbicubic = config.bicubic;
 		if(scene_options(selidx))
 		{
@@ -446,7 +459,7 @@ int image_handle_input(dword *selidx, dword key)
 			return *selidx;
 		}
 		if(lastbicubic != config.bicubic)
-			needrc = true;
+			img_needrc = true;
 		if(config.imginfobar)
 			imgh = PSP_SCREEN_HEIGHT - DISP_FONTSIZE;
 		else
@@ -456,7 +469,7 @@ int image_handle_input(dword *selidx, dword key)
 	else if(key == PSP_CTRL_START)
 	{
 		scene_mp3bar();
-		needrp = true;
+		img_needrp = true;
 	}
 #endif
 	else if(key == config.imgkey[1] || key == config.imgkey2[1] || key == CTRL_FORWARD)
@@ -473,7 +486,7 @@ int image_handle_input(dword *selidx, dword key)
 							curtop += imgh - config.imgpagereserve;
 							if(curtop + imgh > h2)
 								curtop = h2 - imgh;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -483,7 +496,7 @@ int image_handle_input(dword *selidx, dword key)
 							curtop -= imgh - config.imgpagereserve;
 							if(curtop < 0)
 								curtop = 0;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -500,7 +513,7 @@ int image_handle_input(dword *selidx, dword key)
 							curleft += PSP_SCREEN_WIDTH;
 							if(curleft +PSP_SCREEN_WIDTH > w2)
 								curleft = w2 - PSP_SCREEN_WIDTH;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -510,7 +523,7 @@ int image_handle_input(dword *selidx, dword key)
 							curleft -= PSP_SCREEN_WIDTH;
 							if(curleft < 0)
 								curleft = 0;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -526,7 +539,7 @@ int image_handle_input(dword *selidx, dword key)
 							curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
 							if(curleft + PSP_SCREEN_WIDTH > w2)
 								curleft = w2 - PSP_SCREEN_WIDTH;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -536,7 +549,7 @@ int image_handle_input(dword *selidx, dword key)
 							curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
 							if(curleft < 0)
 								curleft = 0;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -553,7 +566,7 @@ int image_handle_input(dword *selidx, dword key)
 							curtop += imgh;
 							if(curtop + imgh > h2)
 								curtop = h2 - imgh;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -563,7 +576,7 @@ int image_handle_input(dword *selidx, dword key)
 							curtop -= imgh;
 							if(curtop < 0)
 								curtop = 0;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -579,7 +592,7 @@ int image_handle_input(dword *selidx, dword key)
 				*selidx = 0;
 		} while(!fs_is_image((t_fs_filetype)filelist[*selidx].data));
 		if(*selidx != orgidx)
-			needrf = needrc = needrp = true;
+			img_needrf = img_needrc = img_needrp = true;
 	}
 	else if(key == config.imgkey[0] || key == config.imgkey2[0] || key == CTRL_BACK)
 	{
@@ -595,7 +608,7 @@ int image_handle_input(dword *selidx, dword key)
 							curtop -= imgh - config.imgpagereserve;
 							if(curtop < 0)
 								curtop = 0;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -605,7 +618,7 @@ int image_handle_input(dword *selidx, dword key)
 							curtop += imgh - config.imgpagereserve;
 							if(curtop + imgh > h2)
 								curtop = h2 - imgh;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -622,7 +635,7 @@ int image_handle_input(dword *selidx, dword key)
 							curleft -= PSP_SCREEN_WIDTH;
 							if(curleft < 0)
 								curleft = 0;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -632,7 +645,7 @@ int image_handle_input(dword *selidx, dword key)
 							curleft += PSP_SCREEN_WIDTH;
 							if(curleft + PSP_SCREEN_WIDTH > w2)
 								curleft = w2 - PSP_SCREEN_WIDTH;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -648,7 +661,7 @@ int image_handle_input(dword *selidx, dword key)
 							curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
 							if(curleft < 0)
 								curleft = 0;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -658,7 +671,7 @@ int image_handle_input(dword *selidx, dword key)
 							curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
 							if(curleft + PSP_SCREEN_WIDTH > w2)
 								curleft = w2 - PSP_SCREEN_WIDTH;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -675,7 +688,7 @@ int image_handle_input(dword *selidx, dword key)
 							curtop -= imgh;
 							if(curtop < 0)
 								curtop = 0;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -685,7 +698,7 @@ int image_handle_input(dword *selidx, dword key)
 							curtop += imgh;
 							if(curtop + imgh > h2)
 								curtop = h2 - imgh;
-							needrp = true;
+							img_needrp = true;
 							goto next;
 						}
 						break;
@@ -701,7 +714,7 @@ int image_handle_input(dword *selidx, dword key)
 				*selidx = filecount - 1;
 		} while(!fs_is_image((t_fs_filetype)filelist[*selidx].data));
 		if(*selidx != orgidx)
-			needrf = needrc = needrp = true;
+			img_needrf = img_needrc = img_needrp = true;
 	}
 #ifdef ENABLE_ANALOG
 	else if(key == CTRL_ANALOG)
@@ -721,7 +734,7 @@ int image_handle_input(dword *selidx, dword key)
 		if(curleft < 0)
 			curleft = 0;
 		thumb = (config.thumb == conf_thumb_scroll);
-		needrp = (thumb || orgtop != curtop || orgleft != curleft);
+		img_needrp = (thumb || orgtop != curtop || orgleft != curleft);
 	}
 #endif
 	else if(key == PSP_CTRL_LEFT)
@@ -731,10 +744,10 @@ int image_handle_input(dword *selidx, dword key)
 			curleft -= (int)config.imgmvspd;
 			if(curleft < 0)
 				curleft = 0;
-			needrp = true;
+			img_needrp = true;
 		}
 		thumb = (config.thumb == conf_thumb_scroll);
-		needrp = thumb | needrp;
+		img_needrp = thumb | img_needrp;
 	}
 	else if(key == PSP_CTRL_UP)
 	{
@@ -743,10 +756,10 @@ int image_handle_input(dword *selidx, dword key)
 			curtop -= (int)config.imgmvspd;
 			if(curtop < 0)
 				curtop = 0;
-			needrp = true;
+			img_needrp = true;
 		}
 		thumb = (config.thumb == conf_thumb_scroll);
-		needrp = thumb | needrp;
+		img_needrp = thumb | img_needrp;
 	}
 	else if(key == PSP_CTRL_RIGHT)
 	{
@@ -755,10 +768,10 @@ int image_handle_input(dword *selidx, dword key)
 			curleft += (int)config.imgmvspd;
 			if(curleft > w2 - PSP_SCREEN_WIDTH)
 				curleft = w2 - PSP_SCREEN_WIDTH;
-			needrp = true;
+			img_needrp = true;
 		}
 		thumb = (config.thumb == conf_thumb_scroll);
-		needrp = thumb | needrp;
+		img_needrp = thumb | img_needrp;
 	}
 	else if(key == PSP_CTRL_DOWN)
 	{
@@ -767,10 +780,10 @@ int image_handle_input(dword *selidx, dword key)
 			curtop += (int)config.imgmvspd;
 			if(curtop > h2 - imgh)
 				curtop = h2 - imgh;
-			needrp = true;
+			img_needrp = true;
 		}
 		thumb = (config.thumb == conf_thumb_scroll);
-		needrp = thumb | needrp;
+		img_needrp = thumb | img_needrp;
 	}
 	else if(key == config.imgkey[2] || key == config.imgkey2[2])
 	{
@@ -778,12 +791,12 @@ int image_handle_input(dword *selidx, dword key)
 			config.fit = conf_fit_none;
 		else
 			config.fit ++;
-		needrc = needrp = true;
+		img_needrc = img_needrp = true;
 	}
 	else if(key == config.imgkey[10] || key == config.imgkey2[10])
 	{
 		config.bicubic = !config.bicubic;
-		needrc = needrp = true;
+		img_needrc = img_needrp = true;
 	}
 	else if(key == config.imgkey[11] || key == config.imgkey2[11])
 	{
@@ -808,8 +821,8 @@ int image_handle_input(dword *selidx, dword key)
 			imgh = PSP_SCREEN_HEIGHT;
 		if(h2 > imgh && curtop > h2 - imgh)
 			curtop = h2 - imgh;
-		needrc = (config.fit == conf_fit_height);
-		needrp = true;
+		img_needrc = (config.fit == conf_fit_height);
+		img_needrp = true;
 	}
 	else if(key == config.imgkey[9] || key == config.imgkey2[9] || key == CTRL_PLAYPAUSE)
 	{
@@ -840,7 +853,7 @@ int image_handle_input(dword *selidx, dword key)
 	{
 		if(!showinfo)
 		{
-			needrp = true;
+			img_needrp = true;
 			showinfo = true;
 		}
 	}
@@ -850,7 +863,7 @@ int image_handle_input(dword *selidx, dword key)
 			config.rotate = conf_rotate_270;
 		else
 			config.rotate --;
-		needrc = needrp = true;
+		img_needrc = img_needrp = true;
 	}
 	else if(key == config.imgkey[6] || key == config.imgkey2[6])
 	{
@@ -858,7 +871,7 @@ int image_handle_input(dword *selidx, dword key)
 			config.rotate = conf_rotate_0;
 		else
 			config.rotate ++;
-		needrc = needrp = true;
+		img_needrc = img_needrp = true;
 	}
 	else if(key == config.imgkey[3] || key == config.imgkey2[3])
 	{
@@ -869,7 +882,7 @@ int image_handle_input(dword *selidx, dword key)
 		else
 			goto next;
 		config.fit = conf_fit_custom;
-		needrc = needrp = true;
+		img_needrc = img_needrp = true;
 	}
 	else if(key == config.imgkey[4] || key == config.imgkey2[4])
 	{
@@ -880,10 +893,10 @@ int image_handle_input(dword *selidx, dword key)
 		else
 			goto next;
 		config.fit = conf_fit_custom;
-		needrc = needrp = true;
+		img_needrc = img_needrp = true;
 	}
 	else
-		needrf = needrc = false;
+		img_needrf = img_needrc = false;
 next:
 	return -1;
 }
@@ -894,7 +907,7 @@ dword scene_readimage(dword selidx)
 	imgdata = NULL, imgshow = NULL;
 	oldangle = 0;
 	curtop = 0, curleft = 0, xpos = 0, ypos = 0;
-	needrf = true, needrc = true, needrp = true, showinfo = false, thumb = false;
+	img_needrf = true, img_needrc = true, img_needrp = true, showinfo = false, thumb = false;
 	slideshow = false;
 	now = 0, lasttime = 0;
 	imgreading = true;
@@ -903,29 +916,29 @@ dword scene_readimage(dword selidx)
 	else
 		imgh = PSP_SCREEN_HEIGHT;
 	while(1) {
-		if(needrf)
+		if(img_needrf)
 		{
 			dword ret = scene_reloadimage(selidx);
 			if(ret == -1)
 				return selidx;
-			needrf = false;
+			img_needrf = false;
 		}
-		if(needrc)
+		if(img_needrc)
 		{
 			scene_rotateimage();
-			needrc = false;
+			img_needrc = false;
 		}
-		if(needrp)
+		if(img_needrp)
 		{
 			scene_printimage();
-			needrp = false;
+			img_needrp = false;
 		}
 		now = time(NULL);
 		dword key = 0;
 		if(config.thumb == conf_thumb_scroll && thumb)
 		{
 			thumb = false;
-			needrp = true;
+			img_needrp = true;
 			key = ctrl_read_cont();
 		}
 		else if(!slideshow || now - lasttime < config.slideinterval)
@@ -941,7 +954,7 @@ dword scene_readimage(dword selidx)
 		}
 		if(showinfo && (key & PSP_CTRL_CIRCLE) == 0)
 		{
-			needrp = true;
+			img_needrp = true;
 			showinfo = false;
 		}
 		int ret = image_handle_input(&selidx, key);
