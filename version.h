@@ -2,8 +2,8 @@
 #define _VERSION_H_
 
 #define EREADER_VERSION_NUM 0x010509C0
-#define EREADER_VERSION_SHORT "1.00"
-#define EREADER_VERSION_LONG "1.0.0.0 Built "  __TIME__ " " __DATE__ " (hrimfaxi 自制版)"
+#define EREADER_VERSION_SHORT "1.01"
+#define EREADER_VERSION_LONG "1.0.1.0 Built "  __TIME__ " " __DATE__ " (hrimfaxi 自制版)"
 #define EREADER_VERSION_STR_SHORT "xReader " EREADER_VERSION_SHORT
 #define EREADER_VERSION_STR_LONG "xReader " EREADER_VERSION_LONG
 
