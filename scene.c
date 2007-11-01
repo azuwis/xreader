@@ -664,7 +664,7 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_putstring(242, 129, COLOR_WHITE, (const byte *)number);
 	disp_putstring(240 + DISP_FONTSIZE, 129 + DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_thumbname(config.thumb));
 	char infomsg[80];
-	sprintf(infomsg, "%d", config.imgbrightness);
+	sprintf(infomsg, "%d%%", config.imgbrightness);
 	disp_putstring(240 + DISP_FONTSIZE, 130 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
 }
 
