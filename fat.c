@@ -38,20 +38,21 @@ extern bool fat_init()
 		fatfd = -1;
 		return false;
 	}
-	if(mbr.dpt[0].id == 1)
+	// Add Vista Format fat32 support
+	if ( dbr.root_entry == 0 )
+	{
+		fat_type = fat32;
+		clus_max = 0x0FFFFFF0;
+	}
+	else if(mbr.dpt[0].id == 0x1)
 	{
 		fat_type = fat12;
 		clus_max = 0x0FF0;
 	}
-	else if(mbr.dpt[0].id == 0x04 || mbr.dpt[0].id == 0x06 || mbr.dpt[0].id == 0x0E)
+	else //if(mbr.dpt[0].id == 0x4 || mbr.dpt[0].id == 0x6 || mbr.dpt[0].id == 0xE || mbr.dpt[0].id == 0xB )
 	{
 		fat_type = fat16;
 		clus_max = 0xFFF0;
-	}
-	else
-	{
-		fat_type = fat32;
-		clus_max = 0x0FFFFFF0;
 	}
 	bytes_per_clus = dbr.sec_per_clus * dbr.bytes_per_sec;
 	if(fat_type == fat32)
