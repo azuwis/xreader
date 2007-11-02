@@ -56,26 +56,10 @@ int imgh;
 bool slideshow = false;
 time_t now = 0, lasttime = 0;
 
-int scene_reloadimage(dword selidx)
+int open_image(dword selidx) 
 {
-	scene_power_save(false);
-	if(imgshow != NULL && imgshow != imgdata)
-	{
-		free((void *)imgshow);
-		imgshow = NULL;
-	}
-	if(imgdata != NULL)
-	{
-		free((void *)imgdata);
-		imgdata = NULL;
-	}
-	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
-		strcpy(filename, filelist[selidx].compname);
-	else
-	{
-		strcpy(filename, config.shortpath);
-		strcat(filename, filelist[selidx].shortname);
-	}
+	// if imgshow share memory with imgdata, and loads image fail (imgdata = 0), we must reset imgshow.
+	bool shareimg = (imgshow == imgdata) ? true : false;
 	int result;
 	switch((t_fs_filetype)filelist[selidx].data)
 	{
@@ -167,53 +151,86 @@ int scene_reloadimage(dword selidx)
 		default:
 			result = -1;
 	}
+	if(imgdata == NULL && shareimg) {
+		imgshow = NULL;
+	}
+	return result;
+}
+
+void reset_image_ptr(void)
+{
+	if(imgshow != NULL && imgshow != imgdata) {
+		free((void *)imgshow);
+		imgshow = NULL;
+	}
+	if(imgdata != NULL)
+	{
+		if(imgshow == imgdata)
+			imgshow = NULL;
+		free((void *)imgdata);
+		imgdata = NULL;
+	}
+}
+
+void report_image_error(int status)
+{
+	char infomsg[80];
+	const char *errstr;
+	switch(status) {
+		case 1:
+		case 2:
+		case 3:
+			errstr = "格式错误";
+			break;
+		case 4:
+		case 5:
+			errstr = "内存不足";
+			break;
+		default:
+			errstr = "不明";
+			break;
+	}
+	sprintf(infomsg, "图像无法装载, 原因: %s", errstr);
+	win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+	imgreading = false;
+	reset_image_ptr();
+	disp_duptocachealpha(50);
+	scene_power_save(true);	
+}
+
+void recalc_brightness()
+{
+	int i;
+	if(imgdata) {
+		pixel *t = imgdata;
+		short b = config.imgbrightness;
+		for(i = 0; i < height * width; i ++)
+		{
+			pixel x = RGB(RGB_R(*t) * b / 100, RGB_G(*t) * b / 100, RGB_B(*t) * b / 100);
+			*t++ = x;
+		}
+	}
+}
+
+int scene_reloadimage(dword selidx)
+{
+	scene_power_save(false);
+	reset_image_ptr();
+	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
+		strcpy(filename, filelist[selidx].compname);
+	else
+	{
+		strcpy(filename, config.shortpath);
+		strcat(filename, filelist[selidx].shortname);
+	}
+	int result = open_image(selidx);
 	if(result != 0)
 	{
-		char infomsg[80];
-		const char *errstr;
-		switch(result) {
-			case 1:
-			case 2:
-			case 3:
-				errstr = "格式错误";
-				break;
-			case 4:
-			case 5:
-				errstr = "内存不足";
-				break;
-			default:
-				errstr = "不明";
-				break;
-		}
-		sprintf(infomsg, "图像无法装载, 原因: %s", errstr);
-		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
-		imgreading = false;
-		// imgshow double freed bug fix
-		if(imgshow != NULL && imgdata != NULL && imgshow != imgdata)
-		{
-			free((void *)imgshow);
-			imgshow = NULL;
-		}
-		if(imgdata != NULL)
-		{
-			free((void *)imgdata);
-			imgdata = NULL;
-		}
-		disp_duptocachealpha(50);
-		scene_power_save(true);	
+		report_image_error(result);
 		return -1;
 	}
 	if(config.imgbrightness != 100) {
-		int i;
-		if(imgdata) {
-			pixel *t = imgdata;
-			for(i = 0; i < height * width; i ++)
-			{
-				short b = config.imgbrightness;
-				pixel x = RGB(RGB_R(*t) * b / 100, RGB_G(*t) * b / 100, RGB_B(*t) * b / 100);
-				*t++ = x;
-			}
-		}
+		recalc_brightness();
 	}
 	strcpy(config.lastfile, filelist[selidx].compname);
 	oldangle = 0;
@@ -434,6 +451,68 @@ int ctrl_waitreleasekey(int key)
 		sceCtrlReadBufferPositive(&pad,1);
 	}
 	return 0;
+}
+
+void image_up(void)
+{
+	if(curtop > 0)
+	{
+		curtop -= (int)config.imgmvspd * 2;
+		if(curtop < 0)
+			curtop = 0;
+		img_needrp = true;
+	}
+}
+
+void image_down(void)
+{
+	if(h2 > imgh && curtop < h2 - imgh)
+	{
+		curtop += (int)config.imgmvspd * 2;
+		if(curtop > h2 - imgh)
+			curtop = h2 - imgh;
+		img_needrp = true;
+	}
+}
+
+void image_left(void)
+{
+	if(curleft > 0)
+	{
+		curleft -= (int)config.imgmvspd * 2;
+		if(curleft < 0)
+			curleft = 0;
+		img_needrp = true;
+	}
+}
+
+void image_right(void)
+{
+	if(w2 > PSP_SCREEN_WIDTH && curleft < w2 - PSP_SCREEN_WIDTH)
+	{
+		curleft += (int)config.imgmvspd * 2;
+		if(curleft > w2 - PSP_SCREEN_WIDTH)
+			curleft = w2 - PSP_SCREEN_WIDTH;
+		img_needrp = true;
+	}
+}	
+
+void image_move(dword key)
+{
+	if(key & PSP_CTRL_LEFT && !(key & PSP_CTRL_RIGHT)) {
+		image_left();
+	}
+	if(key & PSP_CTRL_RIGHT && !(key & PSP_CTRL_LEFT)) {
+		image_right();
+	}
+	if(key & PSP_CTRL_UP && !(key & PSP_CTRL_DOWN)) {
+		image_up();
+	}
+	if(key & PSP_CTRL_DOWN && !(key & PSP_CTRL_UP)) {
+		image_down();
+	}
+	thumb = (config.thumb == conf_thumb_scroll);
+	img_needrp = thumb | img_needrp;
 }
 
 int image_handle_input(dword *selidx, dword key)
@@ -748,53 +827,9 @@ int image_handle_input(dword *selidx, dword key)
 		img_needrp = (thumb || orgtop != curtop || orgleft != curleft);
 	}
 #endif
-	else if(key == PSP_CTRL_LEFT)
+	else if(key & PSP_CTRL_LEFT || key & PSP_CTRL_RIGHT || key & PSP_CTRL_UP || key & PSP_CTRL_DOWN)
 	{
-		if(curleft > 0)
-		{
-			curleft -= (int)config.imgmvspd;
-			if(curleft < 0)
-				curleft = 0;
-			img_needrp = true;
-		}
-		thumb = (config.thumb == conf_thumb_scroll);
-		img_needrp = thumb | img_needrp;
-	}
-	else if(key == PSP_CTRL_UP)
-	{
-		if(curtop > 0)
-		{
-			curtop -= (int)config.imgmvspd;
-			if(curtop < 0)
-				curtop = 0;
-			img_needrp = true;
-		}
-		thumb = (config.thumb == conf_thumb_scroll);
-		img_needrp = thumb | img_needrp;
-	}
-	else if(key == PSP_CTRL_RIGHT)
-	{
-		if(w2 > PSP_SCREEN_WIDTH && curleft < w2 - PSP_SCREEN_WIDTH)
-		{
-			curleft += (int)config.imgmvspd;
-			if(curleft > w2 - PSP_SCREEN_WIDTH)
-				curleft = w2 - PSP_SCREEN_WIDTH;
-			img_needrp = true;
-		}
-		thumb = (config.thumb == conf_thumb_scroll);
-		img_needrp = thumb | img_needrp;
-	}
-	else if(key == PSP_CTRL_DOWN)
-	{
-		if(h2 > imgh && curtop < h2 - imgh)
-		{
-			curtop += (int)config.imgmvspd;
-			if(curtop > h2 - imgh)
-				curtop = h2 - imgh;
-			img_needrp = true;
-		}
-		thumb = (config.thumb == conf_thumb_scroll);
-		img_needrp = thumb | img_needrp;
+		image_move(key);
 	}
 	else if(key == config.imgkey[2] || key == config.imgkey2[2])
 	{
