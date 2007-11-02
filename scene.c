@@ -414,7 +414,7 @@ int scene_filelist_compare_ext(void * data1, void * data2)
 	t_fs_filetype ft1 = (t_fs_filetype)((p_win_menuitem)data1)->data, ft2 = (t_fs_filetype)((p_win_menuitem)data2)->data;
 	if(ft1 != ft2)
 		return ((int)ft1) - ((int)ft2);
-	return stricmp(((p_win_menuitem)data1)->name, ((p_win_menuitem)data2)->name);
+	return stricmp(((p_win_menuitem)data1)->compname, ((p_win_menuitem)data2)->compname);
 }
 
 int scene_filelist_compare_name(void * data1, void * data2)
@@ -427,7 +427,7 @@ int scene_filelist_compare_name(void * data1, void * data2)
 	}
 	else if(ft2 == fs_filetype_dir)
 		return 1;
-	return stricmp(((p_win_menuitem)data1)->name, ((p_win_menuitem)data2)->name);
+	return stricmp(((p_win_menuitem)data1)->compname, ((p_win_menuitem)data2)->compname);
 }
 
 int scene_filelist_compare_size(void * data1, void * data2)
