@@ -194,7 +194,6 @@ void report_image_error(int status)
 	win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 	imgreading = false;
 	reset_image_ptr();
-	disp_duptocachealpha(50);
 	scene_power_save(true);	
 }
 
