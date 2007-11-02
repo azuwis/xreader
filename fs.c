@@ -110,6 +110,21 @@ t_fs_specfiletype_entry ft_spec_table[] = {
   {NULL, fs_filetype_unknown}
 };
 
+#define MAX_ITEM_NAME_LEN 50
+
+void filename_to_itemname(p_win_menuitem item, int cur_count, const char* filename)
+{
+	if((item[cur_count].width = strlen(filename)) > MAX_ITEM_NAME_LEN)
+	{
+		strncpy(item[cur_count].name, filename, MAX_ITEM_NAME_LEN - 3);
+		item[cur_count].name[MAX_ITEM_NAME_LEN - 3] = item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '.';
+		item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
+		item[cur_count].width = MAX_ITEM_NAME_LEN;
+	}
+	else
+		strcpy(item[cur_count].name, filename);
+}
+
 extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
 {
 	strcpy((char *)sdir, dir);
@@ -181,17 +196,13 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 			item[cur_count].data = (void *)fs_filetype_dir;
 			strcpy(item[cur_count].compname, info.d_name);
 			item[cur_count].name[0] = '<';
-			if((item[cur_count].width = strlen(info.d_name) + 2) > 40)
+			filename_to_itemname(item, cur_count, info.d_name);
+			if((item[cur_count].width = strlen(info.d_name) + 2) > MAX_ITEM_NAME_LEN)
 			{
-				strncpy(&item[cur_count].name[1], info.d_name, 35);
-				item[cur_count].name[36] = item[cur_count].name[37] = item[cur_count].name[38] = '.';
 				item[cur_count].name[39] = '>';
-				item[cur_count].name[40] = 0;
-				item[cur_count].width = 40;
 			}
 			else
 			{
-				strcpy(&item[cur_count].name[1], info.d_name);
 				item[cur_count].name[item[cur_count].width - 1] = '>';
 				item[cur_count].name[item[cur_count].width] = 0;
 			}
@@ -212,15 +223,7 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 			item[cur_count].data = (void *)ft;
 			strcpy(item[cur_count].compname, info.d_name);
 			strcpy(item[cur_count].shortname, info.d_name);
-			if((item[cur_count].width = strlen(info.d_name)) > 40)
-			{
-				strncpy(item[cur_count].name, info.d_name, 37);
-				item[cur_count].name[37] = item[cur_count].name[38] = item[cur_count].name[39] = '.';
-				item[cur_count].name[40] = 0;
-				item[cur_count].width = 40;
-			}
-			else
-				strcpy(item[cur_count].name, info.d_name);
+			filename_to_itemname(item, cur_count, info.d_name);
 		}
 		item[cur_count].icolor = icolor;
 		item[cur_count].selicolor = selicolor;
@@ -300,17 +303,15 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 			strcpy(item[cur_count].shortname, info[i].filename);
 			strcpy(item[cur_count].compname, info[i].longname);
 			item[cur_count].name[0] = '<';
-			if((item[cur_count].width = strlen(info[i].longname) + 2) > 40)
+			filename_to_itemname(item, cur_count, info[i].longname);
+			if((item[cur_count].width = strlen(info[i].longname) + 2) > MAX_ITEM_NAME_LEN)
 			{
-				strncpy(&item[cur_count].name[1], info[i].longname, 35);
-				item[cur_count].name[36] = item[cur_count].name[37] = item[cur_count].name[38] = '.';
-				item[cur_count].name[39] = '>';
-				item[cur_count].name[40] = 0;
-				item[cur_count].width = 40;
+				item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '>';
+				item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
+				item[cur_count].width = MAX_ITEM_NAME_LEN;
 			}
 			else
 			{
-				strcpy(&item[cur_count].name[1], info[i].longname);
 				item[cur_count].name[item[cur_count].width - 1] = '>';
 				item[cur_count].name[item[cur_count].width] = 0;
 			}
@@ -325,15 +326,7 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 			item[cur_count].data = (void *)ft;
 			strcpy(item[cur_count].shortname, info[i].filename);
 			strcpy(item[cur_count].compname, info[i].longname);
-			if((item[cur_count].width = strlen(info[i].longname)) > 40)
-			{
-				strncpy(item[cur_count].name, info[i].longname, 37);
-				item[cur_count].name[37] = item[cur_count].name[38] = item[cur_count].name[39] = '.';
-				item[cur_count].name[40] = 0;
-				item[cur_count].width = 40;
-			}
-			else
-				strcpy(item[cur_count].name, info[i].longname);
+			filename_to_itemname(item, cur_count, info[i].longname);
 		}
 		item[cur_count].icolor = icolor;
 		item[cur_count].selicolor = selicolor;
@@ -404,15 +397,7 @@ extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword 
 		item[cur_count].data = (void *)ft;
 		strcpy(item[cur_count].compname, fname);
 		sprintf(item[cur_count].shortname, "%u", (unsigned int)file_info.uncompressed_size);
-		if((item[cur_count].width = strlen(fname)) > 40)
-		{
-			strncpy(item[cur_count].name, fname, 37);
-			item[cur_count].name[37] = item[cur_count].name[38] = item[cur_count].name[39] = '.';
-			item[cur_count].name[40] = 0;
-			item[cur_count].width = 40;
-		}
-		else
-			strcpy(item[cur_count].name, fname);
+		filename_to_itemname(item, cur_count, fname);
 		item[cur_count].selected = false;
 		item[cur_count].icolor = icolor;
 		item[cur_count].selicolor = selicolor;
@@ -478,15 +463,7 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 		item[cur_count].data = (void *)ft;
 		strcpy(item[cur_count].compname, header.FileName);
 		sprintf(item[cur_count].shortname, "%u", (unsigned int)header.UnpSize);
-		if((item[cur_count].width = strlen(header.FileName)) > 40)
-		{
-			strncpy(item[cur_count].name, header.FileName, 37);
-			item[cur_count].name[37] = item[cur_count].name[38] = item[cur_count].name[39] = '.';
-			item[cur_count].name[40] = 0;
-			item[cur_count].width = 40;
-		}
-		else
-			strcpy(item[cur_count].name, header.FileName);
+		filename_to_itemname(item, cur_count, header.FileName);
 		item[cur_count].selected = false;
 		item[cur_count].icolor = icolor;
 		item[cur_count].selicolor = selicolor;
@@ -543,15 +520,7 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 		strcpy(fname, ui->path);
 
 	item[cur_count].data = (void *)ft;
-	if((item[cur_count].width = strlen(fname)) > 40)
-	{
-		strncpy(item[cur_count].name, fname, 37);
-		item[cur_count].name[37] = item[cur_count].name[38] = item[cur_count].name[39] = '.';
-		item[cur_count].name[40] = 0;
-		item[cur_count].width = 40;
-	}
-	else
-		strcpy(item[cur_count].name, fname);
+	filename_to_itemname(item, cur_count, fname);
 	item[cur_count].selected = false;
 	item[cur_count].icolor = ((p_fs_chm_enum)context)->icolor;
 	item[cur_count].selicolor = ((p_fs_chm_enum)context)->selicolor;
