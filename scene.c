@@ -3508,9 +3508,9 @@ extern void scene_power_save(bool save)
 #endif
 		)
 		power_set_clock(freq_list[config.freqs[0]][0], freq_list[config.freqs[0]][1]);
-	else if(imgreading && 
+	else if(imgreading 
 #ifdef ENABLE_MUSIC
-		!mp3_paused()
+	&&	!mp3_paused()
 #endif
 		)
 	{
