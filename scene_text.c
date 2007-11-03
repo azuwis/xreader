@@ -283,58 +283,21 @@ int scene_printbook(dword selidx)
 	return 0;
 }
 
-void move_line_up()
+void move_line_up(int line)
 {
 	rowtop = 0;
-	if (fs->crow > 0)
-		fs->crow --;
+	if (fs->crow > line)
+		fs->crow -= line;
+	else
+		fs->crow = 0;
 	needrp = true;
 }
 
-void move_line_down()
+void move_line_down(int line)
 {
 	rowtop = 0;
+	fs->crow += line;
 	if(fs->crow >= fs->row_count - 1)
-		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-	else
-		fs->crow ++;
-	needrp = true;
-}
-
-void move_line_up_100()
-{
-	rowtop = 0;
-	if (fs->crow > 100)
-		fs->crow -= 100;
-	else
-		fs->crow = 0;
-	needrp = true;
-}
-
-void move_line_down_100()
-{
-	rowtop = 0;
-	fs->crow += 100;
-	if (fs->crow >= fs->row_count - 1)
-		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-	needrp = true;
-}
-
-void move_line_up_500()
-{
-	rowtop = 0;
-	if (fs->crow > 500)
-		fs->crow -= 500;
-	else
-		fs->crow = 0;
-	needrp = true;
-}
-
-void move_line_down_500()
-{
-	rowtop = 0;
-	fs->crow += 500;
-	if(fs->crow > fs->row_count - 1)
 		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
 	needrp = true;
 }
@@ -352,8 +315,15 @@ void move_line_to_start()
 void move_line_to_end()
 {
 	rowtop = 0;
-	fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-	needrp = true;
+	if(fs->row_count > 0) {
+		if(fs->crow != fs->row_count - 1) {
+			fs->crow = fs->row_count - 1;
+			needrp = true;
+		}
+	}
+	else {
+		fs->crow = 0;
+	}
 }
 
 int book_handle_input(dword *selidx, dword key)
@@ -493,11 +463,11 @@ int book_handle_input(dword *selidx, dword key)
 #endif
 			else if(key == ku)
 			{
-				move_line_up();
+				move_line_up(1);
 			}
 			else if(key == kd)
 			{
-				move_line_down();
+				move_line_down(1);
 			}
 			else if(key == ctlkey[1] || key == ctlkey2[1] || key == kl || key == CTRL_BACK)
 			{
@@ -564,19 +534,19 @@ int book_handle_input(dword *selidx, dword key)
 			}
 			else if(key == ctlkey[5] || key == ctlkey2[5])
 			{
-				move_line_up_500();
+				move_line_up(500);
 			}
 			else if(key == ctlkey[6] || key == ctlkey2[6])
 			{
-				move_line_down_500();
+				move_line_down(500);
 			}
 			else if(key == ctlkey[3] || key == ctlkey2[3])
 			{
-				move_line_up_100();
+				move_line_up(100);
 			}
 			else if(key == ctlkey[4] || key == ctlkey2[4])
 			{
-				move_line_down_100();
+				move_line_down(100);
 			}
 			else if(key == ctlkey[7] || key == ctlkey2[7])
 			{
