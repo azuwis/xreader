@@ -64,8 +64,8 @@ int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex = 0, ttfsize 
 int offset = 0;
 
 int freq_list[][2] = {
-	{ 33, 111 },
-	{ 66, 111 },
+	{ 33, 54},
+	{ 66, 54 },
 	{ 111, 111 },
 	{ 166, 111 },
 	{ 222, 111 },
@@ -954,11 +954,15 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count, 
 void scene_color_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char number[5];
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 120 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 131 + DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 120 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	int pad = 0;
+	if(config.fontsize <= 10) {
+		pad = 6 * (12 - config.fontsize);
+	}
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 120 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6 + pad, 131 + DISP_FONTSIZE, COLOR_WHITE);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 120 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"ÑÕÉ«Ñ¡Ïî");
-	disp_line(240 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 130 + DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_line(240 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 121 - 6 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_fillrect(241, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 130 + DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_fillrect(280, 127 - 6 * DISP_FONTSIZE, 310, 157 - 6 * DISP_FONTSIZE, config.forecolor);
 	disp_fillrect(280, 130 - 3 * DISP_FONTSIZE, 310, 160 - 3 * DISP_FONTSIZE, config.bgcolor);
 	memset(number, ' ', 4);
