@@ -107,7 +107,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace)
 				width += DISP_BOOK_FONTSIZE;
 				if(width > rowpixels)
 					break;
-				width += wordspace;
+				width += wordspace * 2;
 				pos += 2;
 			}
 			else
