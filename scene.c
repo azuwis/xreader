@@ -41,6 +41,7 @@
 #include "common/utils.h"
 #include "scene_impl.h"
 #include "pspscreen.h"
+#include "msgresource.h"
 
 #define NELEMS(a)       (sizeof (a) / sizeof ((a)[0]))
 
@@ -163,7 +164,7 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+		if(win_msgbox(getmsgbyid(EXIT_PROMPT), getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 		{
 			scene_exit();
 			return win_menu_op_continue;
@@ -174,7 +175,7 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 		disp_waitv();
 		disp_rectangle(239 - DISP_FONTSIZE * 3, 135 - DISP_FONTSIZE / 2, 240 + DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE / 2, COLOR_WHITE);
 		disp_fillrect(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2, 239 + DISP_FONTSIZE * 3, 135 + DISP_FONTSIZE / 2, RGB(0x8, 0x18, 0x10));
-		disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2, COLOR_WHITE, (const byte *)"请按对应按键");
+		disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2, COLOR_WHITE, (const byte *)getmsgbyid(BUTTON_PRESS_PROMPT));
 		disp_flip();
 		dword key, key2;
 		SceCtrlData ctl;
@@ -238,7 +239,7 @@ void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex, dwor
 	disp_rectangle(239 - DISP_FONTSIZE * 10, 128 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 144 + 6 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 143 + 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"按键设置   △ 删除");
+	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(BUTTON_SETTING_PROMPT));
 	disp_line(240 - DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 	dword i;
 	for (i = topindex; i < topindex + max_height; i ++)
@@ -248,7 +249,7 @@ void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex, dwor
 		{
 			char keyname2[256];
 			conf_get_keyname(config.txtkey2[i], keyname2);
-			strcat(keyname, " | ");
+			strcat(keyname, getmsgbyid(BUTTON_SETTING_SEP));
 			strcat(keyname, keyname2);
 		}
 		disp_putstring(238 - DISP_FONTSIZE * 5, 131 - 6 * DISP_FONTSIZE + (1 + DISP_FONTSIZE) * i, COLOR_WHITE, (const byte *)keyname);
@@ -258,18 +259,18 @@ void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex, dwor
 dword scene_txtkey(dword * selidx)
 {
 	t_win_menuitem item[12];
-	strcpy(item[0].name, "书签菜单");
-	strcpy(item[1].name, "  上一页");
-	strcpy(item[2].name, "  下一页");
-	strcpy(item[3].name, " 前100行");
-	strcpy(item[4].name, " 后100行");
-	strcpy(item[5].name, " 前500行");
-	strcpy(item[6].name, " 后500行");
-	strcpy(item[7].name, "  第一页");
-	strcpy(item[8].name, "最后一页");
-	strcpy(item[9].name, "上一文件");
-	strcpy(item[10].name, "下一文件");
-	strcpy(item[11].name, "退出阅读");
+	strcpy(item[0].name, getmsgbyid(BOOKMARK_MENU_KEY));
+	strcpy(item[1].name, getmsgbyid(PREV_PAGE_KEY));
+	strcpy(item[2].name, getmsgbyid(NEXT_PAGE_KEY));
+	strcpy(item[3].name, getmsgbyid(PREV_100_LINE_KEY));
+	strcpy(item[4].name, getmsgbyid(NEXT_100_LINE_KEY));
+	strcpy(item[5].name, getmsgbyid(PREV_500_LINE_KEY));
+	strcpy(item[6].name, getmsgbyid(NEXT_500_LINE_KEY));
+	strcpy(item[7].name, getmsgbyid(TO_START_KEY));
+	strcpy(item[8].name, getmsgbyid(TO_END_KEY));
+	strcpy(item[9].name, getmsgbyid(PREV_FILE));
+	strcpy(item[10].name, getmsgbyid(NEXT_FILE));
+	strcpy(item[11].name, getmsgbyid(EXIT_KEY));
 	dword i;
 	for(i = 0; i < NELEMS(item); i ++)
 	{
@@ -286,17 +287,23 @@ dword scene_txtkey(dword * selidx)
 	return 0;
 }
 
+t_win_menu_op exit_confirm()
+{
+	if(win_msgbox(getmsgbyid(EXIT_PROMPT), getmsgbyid(YES), getmsgbyid(NO),
+			   	COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+	{
+		scene_exit();
+		return win_menu_op_continue;
+	}
+	return win_menu_op_force_redraw;
+}
+
 t_win_menu_op scene_flkey_menucb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
 {
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_CIRCLE:
 		disp_waitv();
 		disp_rectangle(239 - DISP_FONTSIZE * 3, 135 - DISP_FONTSIZE / 2, 240 + DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE / 2, COLOR_WHITE);
@@ -386,13 +393,13 @@ void scene_flkey_predraw(p_win_menuitem item, dword index, dword topindex, dword
 dword scene_flkey(dword * selidx)
 {
 	t_win_menuitem item[7];
-	strcpy(item[0].name, "    选定");
-	strcpy(item[1].name, "  第一项");
-	strcpy(item[2].name, "最后一项");
-	strcpy(item[3].name, "上级目录");
-	strcpy(item[4].name, "刷新列表");
-	strcpy(item[5].name, "文件操作");
-	strcpy(item[6].name, "选择文件");
+	strcpy(item[0].name, getmsgbyid(FL_SELECTED));
+	strcpy(item[1].name, getmsgbyid(FL_FIRST));
+	strcpy(item[2].name, getmsgbyid(FL_LAST));
+	strcpy(item[3].name, getmsgbyid(FL_PARENT));
+	strcpy(item[4].name, getmsgbyid(FL_REFRESH));
+	strcpy(item[5].name, getmsgbyid(FL_FILE_OPS));
+	strcpy(item[6].name, getmsgbyid(FL_SELECT_FILE));
 	dword i;
 	for(i = 0; i < NELEMS(item); i ++)
 	{
@@ -483,12 +490,7 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_SELECT:
 		return win_menu_op_cancel;
 	case PSP_CTRL_LEFT:
@@ -647,13 +649,13 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	char number[7];
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 133 + 3 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"看图选项");
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(IMG_OPT));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 132 + 3 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.bicubic ? "三次立方" : "两次线性"));
+	disp_putstring(240 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.bicubic ? getmsgbyid(IMG_OPT_CUBE) : getmsgbyid(IMG_OPT_LINEAR)));
 	memset(number, ' ', 4);
 	utils_dword2string(config.slideinterval, number, 4);
-	strcat(number, "秒");
+	strcat(number, getmsgbyid(IMG_OPT_SECOND));
 	disp_putstring(242, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
 	disp_putstring(240 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_viewposname(config.viewpos));
 	memset(number, ' ', 4);
@@ -672,14 +674,14 @@ dword scene_ioptions(dword * selidx)
 {
 	t_win_menuitem item[8];
 	dword i;
-	strcpy(item[0].name, "    缩放算法");
-	strcpy(item[1].name, "幻灯播放间隔");
-	strcpy(item[2].name, "图片起始位置");
-	strcpy(item[3].name, "    卷动速度");
-	strcpy(item[4].name, "    翻页模式");
-	strcpy(item[5].name, "翻动保留宽度");
-	strcpy(item[6].name, "  缩略图查看");
-	strcpy(item[7].name, "    图像亮度");
+	strcpy(item[0].name, getmsgbyid(IMG_OPT_ALGO));
+	strcpy(item[1].name, getmsgbyid(IMG_OPT_DELAY));
+	strcpy(item[2].name, getmsgbyid(IMG_OPT_START_POS));
+	strcpy(item[3].name, getmsgbyid(IMG_OPT_FLIP_SPEED));
+	strcpy(item[4].name, getmsgbyid(IMG_OPT_FLIP_MODE));
+	strcpy(item[5].name, getmsgbyid(IMG_OPT_REVERSE_WIDTH));
+	strcpy(item[6].name, getmsgbyid(IMG_OPT_THUMB_VIEW));
+	strcpy(item[7].name, getmsgbyid(IMG_OPT_BRIGHTNESS));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -701,12 +703,7 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count, 
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_LEFT:
 		switch (* index)
 		{
@@ -960,7 +957,7 @@ void scene_color_predraw(p_win_menuitem item, dword index, dword topindex, dword
 	}
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 120 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6 + pad, 131 + DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 120 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"颜色选项");
+	disp_putstring(240 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(TEXT_COLOR_OPT));
 	disp_line(240 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 121 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 130 + DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_fillrect(280, 127 - 6 * DISP_FONTSIZE, 310, 157 - 6 * DISP_FONTSIZE, config.forecolor);
@@ -988,25 +985,33 @@ void scene_color_predraw(p_win_menuitem item, dword index, dword topindex, dword
 	utils_dword2string(config.grayscale, number, 4);
 	disp_putstring(242, 129, COLOR_WHITE, (const byte *)number);
 #else
-	disp_putstring(248, 129, COLOR_WHITE, (const byte *)"不支持");
+	disp_putstring(248, 129, COLOR_WHITE, (const byte *)getmsgbyid(NO_SUPPORT));
 #endif
 }
 
 dword scene_color(dword * selidx)
 {
+	char infomsg[80];
 	t_win_menuitem item[7];
 	dword i;
-	strcpy(item[0].name, "字体颜色：红");
-	strcpy(item[1].name, "          绿");
-	strcpy(item[2].name, "          蓝");
-	strcpy(item[3].name, "背景颜色：红");
+	sprintf(infomsg, "%s：%s", getmsgbyid(FONT_COLOR), getmsgbyid(FONT_COLOR_RED));
+	strcpy(item[0].name, infomsg);
+	sprintf(infomsg, "%10s%s", " ", getmsgbyid(FONT_COLOR_GREEN));
+	strcpy(item[1].name, infomsg);
+	sprintf(infomsg, "%10s%s", " ", getmsgbyid(FONT_COLOR_BLUE));
+	strcpy(item[2].name, infomsg);
+	sprintf(infomsg, "%s：%s", getmsgbyid(FONT_BACK_COLOR), getmsgbyid(FONT_COLOR_RED));
+	strcpy(item[3].name, infomsg);
 #ifdef ENABLE_BG
-	strcpy(item[4].name, "(灰度色)  绿");
+	sprintf(infomsg, "(%s)  %s", getmsgbyid(FONT_COLOR_GRAY), getmsgbyid(FONT_COLOR_GREEN));
+	strcpy(item[4].name, infomsg);
 #else
-	strcpy(item[4].name, "          绿");
+	sprintf(infomsg, "%10s%s", " ", getmsgbyid(FONT_COLOR_GREEN));
+	strcpy(item[4].name, infomsg);
 #endif
-	strcpy(item[5].name, "          蓝");
-	strcpy(item[6].name, "  背景图灰度");
+	sprintf(infomsg, "%10s%s", " ", getmsgbyid(FONT_COLOR_BLUE));
+	strcpy(item[5].name, infomsg);
+	strcpy(item[6].name, getmsgbyid(FONT_BACK_GRAY));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1034,12 +1039,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			return win_menu_op_continue;
-			scene_exit();
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_SELECT:
 		return win_menu_op_cancel;
 	case PSP_CTRL_LEFT:
@@ -1181,7 +1181,7 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	char number[5];
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"阅读选项");
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(READ_OPTION));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 135 + 7 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	memset(number, ' ', 4);
@@ -1194,20 +1194,20 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	utils_dword2string(config.borderspace, number, 4);
 	disp_putstring(242, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
 	disp_putstring(242 + DISP_FONTSIZE, 127 - 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_infobarname(config.infobar));
-	disp_putstring(242 + DISP_FONTSIZE, 128 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.rlastrow ? "是" : "否"));
-	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)((config.vertread == 2) ? "左向" : (config.vertread == 1 ? "右向" : "无")));
+	disp_putstring(242 + DISP_FONTSIZE, 128 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.rlastrow ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)((config.vertread == 2) ? getmsgbyid(LEFT_DIRECT) : (config.vertread == 1 ? getmsgbyid(RIGHT_DIRECT) : getmsgbyid(NONE_DIRECT))));
 	disp_putstring(242 + DISP_FONTSIZE, 130 + DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_encodename(config.encode));
-	disp_putstring(242 + DISP_FONTSIZE, 131 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.scrollbar ? "是" : "否"));
-	disp_putstring(242 + DISP_FONTSIZE, 132 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autobm ? "是" : "否"));
-	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.reordertxt ? "是" : "否"));
-	disp_putstring(242 + DISP_FONTSIZE, 134 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.pagetonext ? "下篇文章" : "无动作"));
+	disp_putstring(242 + DISP_FONTSIZE, 131 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.scrollbar ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 132 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autobm ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.reordertxt ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 134 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.pagetonext ? getmsgbyid(NEXT_ARTICLE) : getmsgbyid(NO_ACTION)));
 	if(config.autopage) {
 		memset(number, ' ', 4);
 		utils_dword2string(config.autopage, number, 4);
 		disp_putstring(242 + DISP_FONTSIZE, 134 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
 	}
 	else {
-		disp_putstring(242 + DISP_FONTSIZE, 134 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"已关闭");
+		disp_putstring(242 + DISP_FONTSIZE, 134 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(AUTOPAGE_SHUTDOWN));
 	}
 }
 
@@ -1215,8 +1215,8 @@ dword scene_boptions(dword * selidx)
 {
 	t_win_menuitem item[12];
 	dword i;
-	strcpy(item[0].name, "      字间距");
-	strcpy(item[1].name, "      行间距");
+	strcpy(item[0].name, getmsgbyid(WORD_SPACE));
+	strcpy(item[1].name, getmsgbyid(LINE_SPACE));
 	strcpy(item[2].name, "    保留边距");
 	strcpy(item[3].name, "      信息栏");
 	strcpy(item[4].name, "翻页保留一行");
@@ -1272,12 +1272,7 @@ t_win_menu_op scene_ctrlset_menucb(dword key, p_win_menuitem item, dword * count
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_SELECT:
 		return win_menu_op_cancel;
 	case PSP_CTRL_LEFT:
@@ -1358,12 +1353,7 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item, dword * count
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_SELECT:
 		return win_menu_op_cancel;
 	case PSP_CTRL_LEFT:
@@ -1510,12 +1500,7 @@ t_win_menu_op scene_musicopt_menucb(dword key, p_win_menuitem item, dword * coun
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_SELECT:
 		return win_menu_op_cancel;
 	case PSP_CTRL_LEFT:
@@ -1610,12 +1595,7 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_SELECT:
 		return win_menu_op_cancel;
 	case PSP_CTRL_LEFT:
@@ -1778,12 +1758,7 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item, dword * count
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_CIRCLE:
 		if(*index < 10)
 		{
@@ -1861,12 +1836,7 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item, dword * count
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_CIRCLE:
 		if(*index < 10)
 		{
@@ -1997,12 +1967,7 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_CIRCLE:
 		if(*index == 12 && win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 			scene_exit();
@@ -2076,12 +2041,7 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item, dword * coun
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_SELECT:
 		bookmark_delete(bm);
 		memset(&bm->row[0], 0xFF, 10 * sizeof(dword));
@@ -2280,12 +2240,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 	t_win_menu_op op = win_menu_op_continue;
 	if(key == (PSP_CTRL_SELECT | PSP_CTRL_START))
 	{
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	}
 	else if(key == config.flkey[3] || key == config.flkey2[3])
 	{
