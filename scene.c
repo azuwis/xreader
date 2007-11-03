@@ -3360,10 +3360,10 @@ extern void scene_init()
 	strcpy(fontzipfile, appdir);
 	strcat(fontzipfile, "fonts.zip");
 	int _fsize;
-	for(_fsize = 12; _fsize <= 32; _fsize += 2)
+	for(_fsize = 10; _fsize <= 32; _fsize += 2)
 	{
-		sprintf(efontfile, "ASC%d", _fsize);
-		sprintf(cfontfile, "GBK%d", _fsize);
+		sprintf(efontfile, "ASC%02d", _fsize);
+		sprintf(cfontfile, "GBK%02d", _fsize);
 		if(disp_has_zipped_font(fontzipfile, efontfile, cfontfile))
 		{
 			if(_fsize <= 16)
