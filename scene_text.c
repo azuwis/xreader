@@ -527,7 +527,7 @@ int book_handle_input(dword *selidx, dword key)
 			{
 				rowtop = 0;
 				fs->crow += 100;
-				if (fs->row_count >= fs->row_count - 1)
+				if (fs->crow >= fs->row_count - 1)
 					fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
 				needrp = true;
 			}
