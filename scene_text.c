@@ -283,6 +283,79 @@ int scene_printbook(dword selidx)
 	return 0;
 }
 
+void move_line_up()
+{
+	rowtop = 0;
+	if (fs->crow > 0)
+		fs->crow --;
+	needrp = true;
+}
+
+void move_line_down()
+{
+	rowtop = 0;
+	if(fs->crow >= fs->row_count - 1)
+		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+	else
+		fs->crow ++;
+	needrp = true;
+}
+
+void move_line_up_100()
+{
+	rowtop = 0;
+	if (fs->crow > 100)
+		fs->crow -= 100;
+	else
+		fs->crow = 0;
+	needrp = true;
+}
+
+void move_line_down_100()
+{
+	rowtop = 0;
+	fs->crow += 100;
+	if (fs->crow >= fs->row_count - 1)
+		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+	needrp = true;
+}
+
+void move_line_up_500()
+{
+	rowtop = 0;
+	if (fs->crow > 500)
+		fs->crow -= 500;
+	else
+		fs->crow = 0;
+	needrp = true;
+}
+
+void move_line_down_500()
+{
+	rowtop = 0;
+	fs->crow += 500;
+	if(fs->crow > fs->row_count - 1)
+		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+	needrp = true;
+}
+
+void move_line_to_start()
+{
+	rowtop = 0;
+	if(fs->crow != 0)
+	{
+		fs->crow = 0;
+		needrp = true;
+	}
+}
+
+void move_line_to_end()
+{
+	rowtop = 0;
+	fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+	needrp = true;
+}
+
 int book_handle_input(dword *selidx, dword key)
 {
 	if(nextpage) {
@@ -420,19 +493,11 @@ int book_handle_input(dword *selidx, dword key)
 #endif
 			else if(key == ku)
 			{
-				rowtop = 0;
-				if (fs->crow > 0)
-					fs->crow --;
-				needrp = true;
+				move_line_up();
 			}
 			else if(key == kd)
 			{
-				rowtop = 0;
-				if(fs->crow >= fs->row_count - 1)
-					fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-				else
-					fs->crow ++;
-				needrp = true;
+				move_line_down();
 			}
 			else if(key == ctlkey[1] || key == ctlkey2[1] || key == kl || key == CTRL_BACK)
 			{
@@ -499,52 +564,27 @@ int book_handle_input(dword *selidx, dword key)
 			}
 			else if(key == ctlkey[5] || key == ctlkey2[5])
 			{
-				rowtop = 0;
-				if (fs->crow > 500)
-					fs->crow -= 500;
-				else
-					fs->crow = 0;
-				needrp = true;
+				move_line_up_500();
 			}
 			else if(key == ctlkey[6] || key == ctlkey2[6])
 			{
-				rowtop = 0;
-				fs->crow += 500;
-				if(fs->crow > fs->row_count - 1)
-					fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-				needrp = true;
+				move_line_down_500();
 			}
 			else if(key == ctlkey[3] || key == ctlkey2[3])
 			{
-				rowtop = 0;
-				if (fs->crow > 100)
-					fs->crow -= 100;
-				else
-					fs->crow = 0;
-				needrp = true;
+				move_line_up_100();
 			}
 			else if(key == ctlkey[4] || key == ctlkey2[4])
 			{
-				rowtop = 0;
-				fs->crow += 100;
-				if (fs->crow >= fs->row_count - 1)
-					fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-				needrp = true;
+				move_line_down_100();
 			}
 			else if(key == ctlkey[7] || key == ctlkey2[7])
 			{
-				rowtop = 0;
-				if(fs->crow != 0)
-				{
-					fs->crow = 0;
-					needrp = true;
-				}
+				move_line_to_start();
 			}
 			else if(key == ctlkey[8] || key == ctlkey2[8])
 			{
-				rowtop = 0;
-				fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-				needrp = true;
+				move_line_to_end();
 			}
 			else if(key == ctlkey[9] || key == ctlkey2[9])
 			{
