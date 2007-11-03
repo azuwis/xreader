@@ -110,7 +110,7 @@ t_fs_specfiletype_entry ft_spec_table[] = {
   {NULL, fs_filetype_unknown}
 };
 
-#define MAX_ITEM_NAME_LEN 50
+int MAX_ITEM_NAME_LEN = 40;
 
 void filename_to_itemname(p_win_menuitem item, int cur_count, const char* filename)
 {
@@ -196,13 +196,17 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 			item[cur_count].data = (void *)fs_filetype_dir;
 			strcpy(item[cur_count].compname, info.d_name);
 			item[cur_count].name[0] = '<';
-			filename_to_itemname(item, cur_count, info.d_name);
 			if((item[cur_count].width = strlen(info.d_name) + 2) > MAX_ITEM_NAME_LEN)
 			{
-				item[cur_count].name[39] = '>';
+				strncpy(&item[cur_count].name[1], info.d_name, MAX_ITEM_NAME_LEN - 5);
+				item[cur_count].name[MAX_ITEM_NAME_LEN - 4] = item[cur_count].name[MAX_ITEM_NAME_LEN - 3] = item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = '.';
+				item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '>';
+				item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
+				item[cur_count].width = MAX_ITEM_NAME_LEN;
 			}
 			else
 			{
+				strncpy(&item[cur_count].name[1], info.d_name, MAX_ITEM_NAME_LEN);
 				item[cur_count].name[item[cur_count].width - 1] = '>';
 				item[cur_count].name[item[cur_count].width] = 0;
 			}
@@ -303,15 +307,17 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 			strcpy(item[cur_count].shortname, info[i].filename);
 			strcpy(item[cur_count].compname, info[i].longname);
 			item[cur_count].name[0] = '<';
-			filename_to_itemname(item, cur_count, info[i].longname);
 			if((item[cur_count].width = strlen(info[i].longname) + 2) > MAX_ITEM_NAME_LEN)
 			{
+				strncpy(&item[cur_count].name[1], info[i].longname, MAX_ITEM_NAME_LEN - 5);
+				item[cur_count].name[MAX_ITEM_NAME_LEN - 4] = item[cur_count].name[MAX_ITEM_NAME_LEN - 3] = item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = '.';
 				item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '>';
 				item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
 				item[cur_count].width = MAX_ITEM_NAME_LEN;
 			}
 			else
 			{
+				strncpy(&item[cur_count].name[1], info[i].longname, MAX_ITEM_NAME_LEN);
 				item[cur_count].name[item[cur_count].width - 1] = '>';
 				item[cur_count].name[item[cur_count].width] = 0;
 			}
