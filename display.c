@@ -65,6 +65,9 @@ extern void disp_set_fontsize(int fontsize)
 	DISP_EFONTSIZE = DISP_FONTSIZE * DISP_EROWSIZE;
 	HRR = 100 / DISP_FONTSIZE;
 	WRR = 160 / DISP_FONTSIZE;
+
+	extern int MAX_ITEM_NAME_LEN;
+	MAX_ITEM_NAME_LEN = WRR * 4 - 1;
 }
 
 extern void disp_set_book_fontsize(int fontsize)
