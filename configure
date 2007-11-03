@@ -32,7 +32,7 @@ for parm in "$@" ; do
   esac
 done
 
-_fw2xx=no
+_fw2xx=yes
 _16bit=no
 _image=yes
 _bg=yes
@@ -43,7 +43,7 @@ _music=yes
 _wma=yes
 _lyric=yes
 _ttf=yes
-_pmpavc=yes
+_pmpavc=no
 _debug=no
 
 for ac_option do
