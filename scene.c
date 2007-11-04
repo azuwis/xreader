@@ -65,6 +65,7 @@ int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex = 0, ttfsize 
 int offset = 0;
 
 int freq_list[][2] = {
+	{ 15, 54},
 	{ 33, 54},
 	{ 66, 54 },
 	{ 111, 111 },
