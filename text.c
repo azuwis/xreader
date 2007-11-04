@@ -319,6 +319,57 @@ extern p_text text_open_binary(const char * filename, bool vert)
 	return txt;
 }
 
+extern p_text text_open_in_gz(const char * gzfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder)
+{
+	p_text txt = (p_text)calloc(1, sizeof(t_text));
+	if(txt == NULL)
+		return NULL;
+	gzFile unzf = gzopen(gzfile, "rb");
+	if(unzf == NULL)
+	{
+		text_close(txt);
+		return NULL;
+	}
+	strcpy(txt->filename, filename);
+	int len, cap = BUFSIZ;
+	if((txt->buf = (char *)calloc(1, BUFSIZ)) == NULL)
+	{
+		text_close(txt);
+		gzclose(unzf);
+		return NULL;
+	}
+	txt->size = 0;
+	while((len = gzread(unzf, txt->buf + txt->size, cap - txt->size)) > 0) {
+		txt->size += len;
+		if(txt->size >= cap) {
+			cap *= 2 + 16;
+			txt->buf = realloc(txt->buf, cap);
+			if(txt->buf == NULL) {
+				text_close(txt);
+				gzclose(unzf);
+				return NULL;
+			}
+		}
+	}
+	if(len < 0) {
+		text_close(txt);
+		gzclose(unzf);
+		return NULL;
+	}
+	gzclose(unzf);
+	text_decode(txt, encode);
+	if(ft == fs_filetype_html)
+		txt->size = html_to_text(txt->buf, txt->size, true);
+	if(reorder)
+		txt->size = text_reorder(txt->buf, txt->size);
+	if(!text_format(txt, rowpixels, wordspace))
+	{
+		text_close(txt);
+		return NULL;
+	}
+	return txt;
+}
+
 extern p_text text_open_in_zip(const char * zipfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder)
 {
 	p_text txt = (p_text)calloc(1, sizeof(t_text));
