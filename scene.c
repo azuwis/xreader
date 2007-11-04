@@ -3003,14 +3003,12 @@ void scene_filelist()
 #endif
 	while (1)
 	{
-		if(!config.isreading && !locreading && where != scene_in_gz)
+		if(!config.isreading && !locreading)
 			idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, RGB(0x10, 0x30, 0x20), false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
 		else
 		{
 			config.isreading = false;
 			locreading = false;
-			// TODO
-			idx = 0;
 		}
 		if(idx == INVALID)
 		{
@@ -3106,14 +3104,15 @@ void scene_filelist()
 			usb_deactivate();
 #endif
 			config.isreading = true;
+			bool prevplace = where;
 			where = scene_in_gz;
 			char prevdir[256], prevdir2[256];
 			strcpy(prevdir, config.path);
 			strcpy(prevdir2, config.shortpath);
 			strcat(config.path, filelist[idx].compname);
 			strcat(config.shortpath, filelist[idx].shortname);
-			filecount = 0;
 			idx = scene_readbook(idx);
+			where = prevplace;
 			config.isreading = false;
 			strcpy(config.path, prevdir);
 			strcpy(config.shortpath, prevdir2);
