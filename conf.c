@@ -162,8 +162,8 @@ static void conf_default(p_conf conf)
 	conf->viewpos = conf_viewpos_leftup;
 	conf->imgmvspd = 8;
 	conf->imgpaging = conf_imgpaging_direct;
-	conf->fontsize = 0;
-	conf->bookfontsize = 0;
+	conf->fontsize = 12;
+	conf->bookfontsize = 12;
 	conf->reordertxt = false;
 	conf->pagetonext = false;
 	conf->autopage = 0;
