@@ -649,8 +649,10 @@ dword scene_readbook(dword selidx)
 			}
 		}
 		int ret = book_handle_input(&selidx, key);
-		if(ret != -1)
+		if(ret != -1) {
+			scene_power_save(true);
 			return ret;
+		}
 	}
 	scene_power_save(false);
 	if(config.autobm)
@@ -658,5 +660,6 @@ dword scene_readbook(dword selidx)
 	text_close(fs);
 	fs = NULL;
 	disp_duptocachealpha(50);
+	scene_power_save(true);
 	return selidx;
 }
