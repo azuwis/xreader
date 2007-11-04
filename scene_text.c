@@ -48,12 +48,16 @@ int ticks = 0;
 bool nextpage = false;
 int rowtop = 0;
 char tr[8], * trow = NULL;
-static bool needrf = true, needrp = true, needrb = false;
+bool text_needrf = true, text_needrp = true, text_needrb = false;
 char filename[256], archname[256];
 
 int scene_book_reload(dword selidx)
 {
-	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
+	if(where == scene_in_gz) {
+		strcpy(filename, config.path);
+		strcpy(archname, config.shortpath);
+	}
+	else if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
 	{
 		strcpy(filename, filelist[selidx].compname);
 		strcpy(archname, config.shortpath);
@@ -70,7 +74,7 @@ int scene_book_reload(dword selidx)
 		if(config.autobm)
 		{
 			rrow = bookmark_autoload(archname);
-			needrb = true;
+			text_needrb = true;
 		}
 		else
 			rrow = 0;
@@ -83,6 +87,8 @@ int scene_book_reload(dword selidx)
 	scene_power_save(false);
 	if(where == scene_in_zip)
 		fs = text_open_in_zip(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
+	else if(where == scene_in_gz)
+		fs = text_open_in_gz(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_chm)
 		fs = text_open_in_chm(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_rar)
@@ -96,14 +102,14 @@ int scene_book_reload(dword selidx)
 		disp_duptocachealpha(50);
 		return 1;
 	}
-	if(needrb && (t_fs_filetype)filelist[selidx].data != fs_filetype_unknown)
+	if(text_needrb && (t_fs_filetype)filelist[selidx].data != fs_filetype_unknown)
 	{
 		rowtop = 0;
 		fs->crow = 1;
 		while(fs->crow < fs->row_count && (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf <= rrow)
 			fs->crow ++;
 		fs->crow --;
-		needrb = false;
+		text_needrb = false;
 	}
 	else
 		fs->crow = rrow;
@@ -290,7 +296,7 @@ void move_line_up(int line)
 		fs->crow -= line;
 	else
 		fs->crow = 0;
-	needrp = true;
+	text_needrp = true;
 }
 
 void move_line_down(int line)
@@ -299,7 +305,7 @@ void move_line_down(int line)
 	fs->crow += line;
 	if(fs->crow >= fs->row_count - 1)
 		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-	needrp = true;
+	text_needrp = true;
 }
 
 void move_line_to_start()
@@ -308,7 +314,7 @@ void move_line_to_start()
 	if(fs->crow != 0)
 	{
 		fs->crow = 0;
-		needrp = true;
+		text_needrp = true;
 	}
 }
 
@@ -318,7 +324,7 @@ void move_line_to_end()
 	if(fs->row_count > 0) {
 		if(fs->crow != fs->row_count - 1) {
 			fs->crow = fs->row_count - 1;
-			needrp = true;
+			text_needrp = true;
 		}
 	}
 	else {
@@ -346,8 +352,8 @@ int book_handle_input(dword *selidx, dword key)
 				{
 					if(config.autobm)
 						bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
-					needrf = needrp = true;
-					needrb = false;
+					text_needrf = text_needrp = true;
+					text_needrb = false;
 					rrow = INVALID;
 				}
 			}
@@ -358,13 +364,13 @@ int book_handle_input(dword *selidx, dword key)
 		fs->crow += (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
 		if(fs->crow > fs->row_count - 1)
 			fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-		needrp = true;
+		text_needrp = true;
 	} else
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 		if(key == 0 && config.infobar == conf_infobar_lyric)
 		{
-			needrp = true;
-			needrb = needrf = false;
+			text_needrp = true;
+			text_needrb = text_needrf = false;
 		} else
 #endif
 			if(key == (PSP_CTRL_SELECT | PSP_CTRL_START))
@@ -388,15 +394,15 @@ int book_handle_input(dword *selidx, dword key)
 			else if(key == ctlkey[0] || key == ctlkey2[0])
 			{
 				rrow = (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
-				needrb = scene_bookmark(&rrow);
-				needrf = needrb;
-				needrp = true;
+				text_needrb = scene_bookmark(&rrow);
+				text_needrf = text_needrb;
+				text_needrp = true;
 			}
 #ifdef ENABLE_MUSIC
 			else if(key == PSP_CTRL_START)
 			{
 				scene_mp3bar();
-				needrp = true;
+				text_needrp = true;
 			}
 #endif
 			else if(key == PSP_CTRL_SELECT)
@@ -405,11 +411,11 @@ int book_handle_input(dword *selidx, dword key)
 				{
 					case 2: case 4:
 						rrow = (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
-						needrb = needrf = true;
+						text_needrb = text_needrf = true;
 						break;
 					case 3:
 						rrow = fs->crow;
-						needrf = true;
+						text_needrf = true;
 						break;
 					case 1:
 						scene_power_save(false);
@@ -421,7 +427,7 @@ int book_handle_input(dword *selidx, dword key)
 						return *selidx;
 				}
 				scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
-				needrp = true;
+				text_needrp = true;
 			}
 #ifdef ENABLE_ANALOG
 			else if(key == CTRL_ANALOG)
@@ -458,7 +464,7 @@ int book_handle_input(dword *selidx, dword key)
 				}
 				if(rowtop < 0 || rowtop >= DISP_BOOK_FONTSIZE)
 					rowtop = 0;
-				needrp = true;
+				text_needrp = true;
 			}
 #endif
 			else if(key == ku)
@@ -487,8 +493,8 @@ int book_handle_input(dword *selidx, dword key)
 						{
 							if(config.autobm)
 								bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
-							needrf = needrp = true;
-							needrb = false;
+							text_needrf = text_needrp = true;
+							text_needrb = false;
 							rrow = INVALID;
 						}
 					}
@@ -498,7 +504,7 @@ int book_handle_input(dword *selidx, dword key)
 					fs->crow -= (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
 				else
 					fs->crow = 0;
-				needrp = true;
+				text_needrp = true;
 			}
 			else if(key == ctlkey[2] || key == ctlkey2[2] || key == kr || key == CTRL_FORWARD)
 			{
@@ -518,8 +524,8 @@ int book_handle_input(dword *selidx, dword key)
 						{
 							if(config.autobm)
 								bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
-							needrf = needrp = true;
-							needrb = false;
+							text_needrf = text_needrp = true;
+							text_needrb = false;
 							rrow = INVALID;
 						}
 					}
@@ -530,7 +536,7 @@ int book_handle_input(dword *selidx, dword key)
 				fs->crow += (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
 				if(fs->crow > fs->row_count - 1)
 					fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-				needrp = true;
+				text_needrp = true;
 			}
 			else if(key == ctlkey[5] || key == ctlkey2[5])
 			{
@@ -571,8 +577,8 @@ int book_handle_input(dword *selidx, dword key)
 				{
 					if(config.autobm)
 						bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
-					needrf = needrp = true;
-					needrb = false;
+					text_needrf = text_needrp = true;
+					text_needrb = false;
 					rrow = INVALID;
 				}
 			}
@@ -589,13 +595,13 @@ int book_handle_input(dword *selidx, dword key)
 				{
 					if(config.autobm)
 						bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
-					needrf = needrp = true;
-					needrb = false;
+					text_needrf = text_needrp = true;
+					text_needrb = false;
 					rrow = INVALID;
 				}
 			}
 			else
-				needrp = needrb = needrf = false;
+				text_needrp = text_needrb = text_needrf = false;
 		// reset ticks
 		ticks = 0;
 next:
@@ -609,21 +615,21 @@ dword scene_readbook(dword selidx)
 	nextpage = false;
 	rowtop = 0;
 	trow = NULL;
-	needrf = true, needrp = true, needrb = false;
+	text_needrf = true, text_needrp = true, text_needrb = false;
 	scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
 	while(1)
 	{
-		if(needrf)
+		if(text_needrf)
 		{
 			if(scene_book_reload(selidx)) {
 				return selidx;
 			}
-			needrf = false;
+			text_needrf = false;
 		}
-		if(needrp)
+		if(text_needrp)
 		{
 			scene_printbook(selidx);
-			needrp = false;
+			text_needrp = false;
 		}
 		
 		dword key;
