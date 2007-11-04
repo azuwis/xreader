@@ -427,8 +427,8 @@ static int mp3_thread(unsigned int args, void * argp)
 				switch(key)
 				{
 				case PSP_HPRM_PLAYPAUSE:
-					if(config.freqs[1] < 3)
-						config.freqs[1] = 3;
+					if(config.freqs[1] < 4)
+						config.freqs[1] = 4;
 					scene_power_save(false);
 					if(mp3_nfiles == 0 || mp3_files == NULL)
 						break;
@@ -445,8 +445,8 @@ static int mp3_thread(unsigned int args, void * argp)
 			}
 			continue;
 		}
-		if(config.freqs[1] < 3)
-			config.freqs[1] = 3;
+		if(config.freqs[1] < 4)
+			config.freqs[1] = 4;
 		scene_power_save(false);
 #ifdef ENABLE_WMA
 		if(file_is_mp3)
@@ -833,8 +833,8 @@ extern void mp3_resume()
 {
 	if(mp3_nfiles == 0 || mp3_files == NULL)
 		return;
-	if(config.freqs[1] < 3)
-		config.freqs[1] = 3;
+	if(config.freqs[1] < 4)
+		config.freqs[1] = 4;
 	scene_power_save(false);
 	isPause = false;
 }
@@ -878,8 +878,8 @@ extern void mp3_powerdown()
 	}
 #endif
 	lastindex = mp3_index;
-	if(config.freqs[1] < 3)
-		config.freqs[1] = 3;
+	if(config.freqs[1] < 4)
+		config.freqs[1] = 4;
 	scene_power_save(false);
 }
 
