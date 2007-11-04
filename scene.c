@@ -3100,6 +3100,13 @@ void scene_filelist()
 			break;
 		}
 		case fs_filetype_gz:
+			if(strlen(filelist[idx].compname) >= 7) {
+				int len = strlen(filelist[idx].compname) - 7;
+				if(stricmp(filelist[idx].compname + len, ".tar.gz") == 0) {
+//					win_msg("TODO: SUPPORT Tar ", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+//					break;
+				}
+			}
 #ifdef ENABLE_USB
 			usb_deactivate();
 #endif
