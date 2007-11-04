@@ -4,10 +4,14 @@
 #include <string.h>
 #include <pspkernel.h>
 #include <unzip.h>
+#include "conf.h"
 #include "ttfont.h"
 #include "display.h"
 #include "pspscreen.h"
 
+extern t_conf config;
+
+static bool auto_inc_wordspace_on_small_font = false;
 static pixel * vram_base = NULL;
 pixel * vram_start = NULL;
 static bool vram_page = 0;
@@ -96,6 +100,18 @@ extern void disp_set_book_fontsize(int fontsize)
 	}
 	DISP_BOOK_CFONTSIZE = DISP_BOOK_FONTSIZE * DISP_BOOK_CROWSIZE;
 	DISP_BOOK_EFONTSIZE = DISP_BOOK_FONTSIZE * DISP_BOOK_EROWSIZE;
+
+	// if set font size to very small one, set config.wordspace to 1
+	if(fontsize <= 10 && config.wordspace == 0) {
+		config.wordspace = 1;
+		auto_inc_wordspace_on_small_font = true;
+	}
+
+	// if previous have auto increased wordspace on small font, restore config.wordspace to 0
+	if(fontsize >= 12 && auto_inc_wordspace_on_small_font && config.wordspace == 1) {
+		config.wordspace = 0;
+		auto_inc_wordspace_on_small_font = false;
+	}
 }
 
 extern bool disp_has_zipped_font(const char * zipfile, const char * efont, const char * cfont)
