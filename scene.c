@@ -76,6 +76,7 @@ int freq_list[][2] = {
 };
 
 extern bool img_needrf, img_needrp, img_needrc;
+extern bool text_needrf, text_needrp, text_needrb;
 
 bool scene_load_font()
 {
@@ -1048,8 +1049,10 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 0:
 			if(config.wordspace == 0)
 				config.wordspace = 5;
-			else
+			else {
 				config.wordspace --;
+				text_needrf = true;
+			}
 			break;
 		case 1:
 			if(config.rowspace == 0)
@@ -1112,8 +1115,10 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 0:
 			if(config.wordspace == 5)
 				config.wordspace = 0;
-			else
+			else {
 				config.wordspace ++;
+				text_needrf = true;
+			}
 			break;
 		case 1:
 			if(config.rowspace == 20)
@@ -2051,7 +2056,7 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item, dword * coun
 		if(win_msgbox("是否要导出书签？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 		{
 			char bmfn[256];
-			if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
+			if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar || where == scene_in_gz)
 			{
 				strcpy(bmfn, config.shortpath);
 				strcat(bmfn, fs->filename);
@@ -2129,7 +2134,7 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex, dw
 bool scene_bookmark(dword * orgp)
 {
 	char archname[256];
-	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
+	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar || where == scene_in_gz)
 	{
 		strcpy(archname, config.shortpath);
 		strcat(archname, fs->filename);
@@ -2998,12 +3003,14 @@ void scene_filelist()
 #endif
 	while (1)
 	{
-		if(!config.isreading && !locreading)
+		if(!config.isreading && !locreading && where != scene_in_gz)
 			idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, RGB(0x10, 0x30, 0x20), false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
 		else
 		{
 			config.isreading = false;
 			locreading = false;
+			// TODO
+			idx = 0;
 		}
 		if(idx == INVALID)
 		{
@@ -3094,6 +3101,29 @@ void scene_filelist()
 			where = scene_in_dir;
 			break;
 		}
+		case fs_filetype_gz:
+#ifdef ENABLE_USB
+			usb_deactivate();
+#endif
+			config.isreading = true;
+			where = scene_in_gz;
+			char prevdir[256], prevdir2[256];
+			strcpy(prevdir, config.path);
+			strcpy(prevdir2, config.shortpath);
+			strcat(config.path, filelist[idx].compname);
+			strcat(config.shortpath, filelist[idx].shortname);
+			filecount = 0;
+			idx = scene_readbook(idx);
+			config.isreading = false;
+			strcpy(config.path, prevdir);
+			strcpy(config.shortpath, prevdir2);
+#ifdef ENABLE_USB
+			if(config.enableusb)
+				usb_activate();
+			else
+				usb_deactivate();
+#endif
+			break;
 		case fs_filetype_zip:
 			where = scene_in_zip;
 			strcat(config.path, filelist[idx].compname);
