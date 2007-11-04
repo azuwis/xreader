@@ -8,6 +8,7 @@
 typedef enum {
 	fs_filetype_dir = 0,
 	fs_filetype_chm,
+	fs_filetype_gz,
 	fs_filetype_zip,
 	fs_filetype_rar,
 	fs_filetype_txt,
