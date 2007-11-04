@@ -82,6 +82,7 @@ t_fs_filetype_entry ft_table[] =
 	{"tga", fs_filetype_tga},
 #endif
 	{"zip", fs_filetype_zip},
+	{"gz", fs_filetype_gz},
 	{"chm", fs_filetype_chm},
 	{"rar", fs_filetype_rar},
 #ifdef ENABLE_MUSIC
