@@ -3,7 +3,7 @@
 #include "scene.h"
 
 #ifdef ENABLE_PMPAVC
-extern bool pmp_restart = false;
+extern bool pmp_restart;
 #endif
 extern char appdir[256], copydir[256], cutdir[256];
 extern dword drperpage, rowsperpage, pixelsperrow;
