@@ -455,35 +455,7 @@ int book_handle_input(dword *selidx, dword key)
 {
 	if(nextpage) {
 		nextpage = false;
-		rowtop = 0;
-		if(fs->crow >= fs->row_count - 1)
-		{
-			if(config.pagetonext && key != kr && fs_is_txtbook((t_fs_filetype)filelist[*selidx].data))
-			{
-				dword orgidx = *selidx;
-				do {
-					if(*selidx < filecount - 1)
-						(*selidx) ++;
-					else
-						*selidx = 0;
-				} while(!fs_is_txtbook((t_fs_filetype)filelist[*selidx].data));
-				if(*selidx != orgidx)
-				{
-					if(config.autobm)
-						bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
-					text_needrf = text_needrp = true;
-					text_needrb = false;
-					rrow = INVALID;
-				}
-			}
-			else
-				fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-			goto next;
-		}
-		fs->crow += (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
-		if(fs->crow > fs->row_count - 1)
-			fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-		text_needrp = true;
+		move_page_down(key, selidx);
 	} else
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 		if(key == 0 && config.infobar == conf_infobar_lyric)
