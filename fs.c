@@ -610,5 +610,5 @@ extern bool fs_is_image(t_fs_filetype ft)
 
 extern bool fs_is_txtbook(t_fs_filetype ft)
 {
-	return ft == fs_filetype_txt || ft == fs_filetype_html;
+	return ft == fs_filetype_txt || ft == fs_filetype_html || ft == fs_filetype_gz;
 }
