@@ -57,6 +57,7 @@ MsgResource msg[] =
 	{"左向", LEFT_DIRECT},
 	{"右向", RIGHT_DIRECT},
 	{"无", NONE_DIRECT},
+	{"颠倒", REVERSAL_DIRECT},
 	{"下篇文章", NEXT_ARTICLE},
 	{"无动作", NO_ACTION},
 	{"已关闭", AUTOPAGE_SHUTDOWN},
