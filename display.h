@@ -74,6 +74,9 @@ extern void disp_rectduptocachealpha(dword x1, dword y1, dword x2, dword y2, int
 extern void disp_putnstring(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot);
 #define disp_putstring(x,y,color,str) disp_putnstring((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_FONTSIZE,0)
 
+extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot);
+#define disp_putstringreversal(x,y,color,str) disp_putnstringreversal((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
+
 extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot);
 #define disp_putstringhorz(x,y,color,str) disp_putnstringhorz((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
 
