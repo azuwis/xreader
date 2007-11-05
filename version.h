@@ -1,7 +1,7 @@
 #ifndef _VERSION_H_
 #define _VERSION_H_
 
-#define EREADER_VERSION_NUM 0x010509C0
+#define EREADER_VERSION_NUM 0x01060000
 #define EREADER_VERSION_SHORT "1.01"
 #define EREADER_VERSION_LONG "1.0.1.0 Built "  __TIME__ " " __DATE__ " (hrimfaxi ×ÔÖÆ°æ)"
 #define EREADER_VERSION_STR_SHORT "xReader " EREADER_VERSION_SHORT
