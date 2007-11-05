@@ -12238,7 +12238,7 @@ extern void charsets_sjis_conv(const byte *jis, byte **cjk, dword * newsize) {
 
 extern word charsets_gbk_to_ucs(const byte * cjk)
 {
-	ucs4_t u;
+	ucs4_t u = 0;
 	if(gbk_mbtowc(&u, cjk, 2) < 1)
 		u = 0x1FFF;
 	return u;
