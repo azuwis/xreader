@@ -178,8 +178,8 @@ static void conf_default(p_conf conf)
 	conf->autoplay = false;
 	conf->usettf = 0;
 	conf->freqs[0] = 1;
-	conf->freqs[1] = 4;
-	conf->freqs[2] = 7;
+	conf->freqs[1] = 5;
+	conf->freqs[2] = 8;
 	conf->imgbrightness = 100;
 }
 
