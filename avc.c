@@ -2,7 +2,7 @@
 
 #ifdef ENABLE_PMPAVC
 
-#include <kubridge.h>
+#include <psputility_avmodules.h>
 #include <pspdisplay.h>
 #include <pspge.h>
 #include <psppower.h>
@@ -13,12 +13,11 @@
 #include "bg.h"
 #include "avc.h"
 
-static int pmp_inited = 0, id1 = -1, id2 = -1, id3 = -1, id4 = -1;
+static int pmp_inited = 0;
 static void *m1 = NULL, *m2 = NULL;
 char* avc_static_init();
 void* valloc(size_t size);
 void vfree(void* ptr);
-void av_register_all();
 char* gu_font_init();
 char* gu_font_load(char* name);
 void gu_font_close();
@@ -32,23 +31,10 @@ extern bool avc_init()
 	m2 = valloc(4 * 512 * 272);
 
 	av_register_all();
-	id1 = sceKernelStartModule(kuKernelLoadModule("flash0:/kd/audiocodec_260.prx", 0, NULL), 0, NULL, 0, NULL);
-	if (id1 < 0)
-		return false;
-
-	id2 = sceKernelStartModule(kuKernelLoadModule("flash0:/kd/videocodec_260.prx", 0, NULL), 0, NULL, 0, NULL);
-	if (id2 < 0)
-		return false;
-
-	id3 = sceKernelStartModule(kuKernelLoadModule("flash0:/kd/mpegbase_260.prx", 0, NULL), 0, NULL, 0, NULL);
-	if (id3 < 0)
-		return false;
-
-	id4 = sceKernelStartModule(kuKernelLoadModule("flash0:/kd/mpeg_vsh.prx", 0, NULL), 0, NULL, 0, NULL);
-	if (id4 < 0)
-		return false;
-
-//	pspSdkFixupImports(id4);
+	sceUtilityLoadAvModule(PSP_AV_MODULE_AVCODEC);
+	sceUtilityLoadAvModule(PSP_AV_MODULE_ATRAC3PLUS);
+	sceUtilityLoadAvModule(PSP_AV_MODULE_MPEGBASE);
+	sceUtilityLoadAvModule(PSP_AV_MODULE_SASCORE);
 
 	gu_font_init();
 	char ftn[256];
@@ -71,30 +57,10 @@ extern void avc_free()
 	{
 		vfree(m2);
 	}
-	if (id1 >= 0)
-	{
-		sceKernelStopModule(id1, 0, 0, 0, 0);
-		sceKernelUnloadModule(id1);
-		id1 = -1;
-	}
-	if (id2 >= 0)
-	{
-		sceKernelStopModule(id2, 0, 0, 0, 0);
-		sceKernelUnloadModule(id2);
-		id2 = -1;
-	}
-	if (id3 >= 0)
-	{
-		sceKernelStopModule(id3, 0, 0, 0, 0);
-		sceKernelUnloadModule(id3);
-		id3 = -1;
-	}
-	if (id4 >= 0)
-	{
-		sceKernelStopModule(id4, 0, 0, 0, 0);
-		sceKernelUnloadModule(id4);
-		id4 = -1;
-	}
+	sceUtilityUnloadAvModule(PSP_AV_MODULE_ATRAC3PLUS);
+	sceUtilityUnloadAvModule(PSP_AV_MODULE_MPEGBASE);
+	sceUtilityUnloadAvModule(PSP_AV_MODULE_AVCODEC);
+	sceUtilityUnloadAvModule(PSP_AV_MODULE_SASCORE);
 }
 
 extern void avc_start()
