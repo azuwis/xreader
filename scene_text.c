@@ -94,7 +94,12 @@ int scene_book_reload(dword selidx)
 	else if(where == scene_in_rar)
 		fs = text_open_in_rar(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if((t_fs_filetype)filelist[selidx].data == fs_filetype_unknown)
-		fs = text_open_binary(filename, config.vertread);
+	{
+		int t = config.vertread;
+		if(t == 3)
+			t = 0;
+		fs = text_open_binary(filename, t);
+	}
 	else
 		fs = text_open(filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	if(fs == NULL)
@@ -134,6 +139,43 @@ int scene_printbook(dword selidx)
 	p_textrow tr = fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF);
 	switch(config.vertread)
 	{
+		case 3:
+			disp_putnstringreversal(config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, rowtop, DISP_BOOK_FONTSIZE - rowtop, 0);
+			for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
+			{
+				tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+				disp_putnstringreversal(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
+			}
+			if(config.infobar == conf_infobar_info)
+			{
+				int i;
+				offset = 0;
+				for(i=0; i<fs->crow && i<fs->row_count; ++i) {
+					p_textrow tr;
+					tr = fs->rows[i >> 10] + (i & 0x3FF);
+					offset += tr->count;
+				}
+				offset = offset / 1023 + 1;
+				disp_line(0, DISP_BOOK_FONTSIZE, 479, DISP_BOOK_FONTSIZE, config.forecolor);
+				utils_dword2string(fs->crow + 1, ci, 7);
+				sprintf(cr, "%s/%s  %s  %s  GI: %d", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset);
+				disp_putnstringreversal(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
+			}
+#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
+			else if(config.infobar == conf_infobar_lyric)
+			{
+				disp_line(480 - 1, 272 - 1 - 271 + DISP_BOOK_FONTSIZE, 480 - 1 - 479, 272 - 1 - 271 + DISP_BOOK_FONTSIZE, config.forecolor);
+				const char * ls[1];
+				dword ss[1];
+				if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
+				{
+					if(ss[0] > 960 / DISP_BOOK_FONTSIZE)
+						ss[0] = 960 / DISP_BOOK_FONTSIZE;
+					disp_putnstringreversal((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+				}
+			}
+#endif
+			break;			
 		case 2:
 			disp_putnstringlvert(config.borderspace, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, rowtop, DISP_BOOK_FONTSIZE - rowtop, 0);
 			for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
@@ -253,6 +295,16 @@ int scene_printbook(dword selidx)
 	{
 		switch(config.vertread)
 		{
+			case 3:
+				{
+					dword slen = config.infobar ? (270 - DISP_BOOK_FONTSIZE) : 271, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, startp = slen * fs->crow / fs->row_count, endp;
+					if(startp + bsize > slen)
+						startp = slen - bsize;
+					endp = startp + bsize;
+					disp_line(480 - 1 - 475, 272 - 1 - 0, 480 - 1 - 475, 272 - 1 - slen, config.forecolor);
+					disp_fillrect(480 - 1 - 476, 272 - 1 - startp, 480 - 1 - 479, 272 - 1 - endp, config.forecolor);
+				}
+				break;
 			case 2:
 				{
 					dword sright = 479 - (config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0), slen = sright, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, startp = slen * fs->crow / fs->row_count, endp;
@@ -330,6 +382,73 @@ void move_line_to_end()
 	else {
 		fs->crow = 0;
 	}
+}
+
+int move_page_up(dword key, dword *selidx)
+{
+	rowtop = 0;
+	if(fs->crow == 0)
+	{
+		if(config.pagetonext && key != kl && fs_is_txtbook((t_fs_filetype)filelist[*selidx].data))
+		{
+			dword orgidx = *selidx;
+			do {
+				if(*selidx > 0)
+					(*selidx) --;
+				else
+					*selidx = filecount - 1;
+			} while(!fs_is_txtbook((t_fs_filetype)filelist[*selidx].data));
+			if(*selidx != orgidx)
+			{
+				if(config.autobm)
+					bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
+				text_needrf = text_needrp = true;
+				text_needrb = false;
+				rrow = INVALID;
+			}
+		}
+		return 1;
+	}
+	if (fs->crow > (config.rlastrow ? (rowsperpage - 1) : rowsperpage))
+		fs->crow -= (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
+	else
+		fs->crow = 0;
+	text_needrp = true;
+	return 0;
+}
+
+int move_page_down(dword key, dword *selidx)
+{
+	rowtop = 0;
+	if(fs->crow >= fs->row_count - 1)
+	{
+		if(config.pagetonext && key != kr && fs_is_txtbook((t_fs_filetype)filelist[*selidx].data))
+		{
+			dword orgidx = *selidx;
+			do {
+				if(*selidx < filecount - 1)
+					(*selidx) ++;
+				else
+					*selidx = 0;
+			} while(!fs_is_txtbook((t_fs_filetype)filelist[*selidx].data));
+			if(*selidx != orgidx)
+			{
+				if(config.autobm)
+					bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
+				text_needrf = text_needrp = true;
+				text_needrb = false;
+				rrow = INVALID;
+			}
+		}
+		else
+			fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+		return 1;
+	}
+	fs->crow += (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
+	if(fs->crow > fs->row_count - 1)
+		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+	text_needrp = true;
+	return 0;
 }
 
 int book_handle_input(dword *selidx, dword key)
@@ -436,6 +555,8 @@ int book_handle_input(dword *selidx, dword key)
 				ctrl_analog(&x, &y);
 				switch(config.vertread)
 				{
+					case 3:
+						rowtop -= y / 8;
 					case 2:
 						rowtop += x / 8;
 						break;
@@ -475,92 +596,76 @@ int book_handle_input(dword *selidx, dword key)
 			{
 				move_line_down(1);
 			}
-			else if(key == ctlkey[1] || key == ctlkey2[1] || key == kl || key == CTRL_BACK)
-			{
-				rowtop = 0;
-				if(fs->crow == 0)
-				{
-					if(config.pagetonext && key != kl && fs_is_txtbook((t_fs_filetype)filelist[*selidx].data))
-					{
-						dword orgidx = *selidx;
-						do {
-							if(*selidx > 0)
-								(*selidx) --;
-							else
-								*selidx = filecount - 1;
-						} while(!fs_is_txtbook((t_fs_filetype)filelist[*selidx].data));
-						if(*selidx != orgidx)
-						{
-							if(config.autobm)
-								bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
-							text_needrf = text_needrp = true;
-							text_needrb = false;
-							rrow = INVALID;
-						}
-					}
-					goto next;
+			else if(key == ctlkey[1] || key == ctlkey2[1]) {
+				if(config.vertread == 3) {
+					if(move_page_down(key, selidx))
+						goto next;
 				}
-				if (fs->crow > (config.rlastrow ? (rowsperpage - 1) : rowsperpage))
-					fs->crow -= (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
-				else
-					fs->crow = 0;
-				text_needrp = true;
+				else {
+					if(move_page_up(key, selidx))
+						goto next;
+				}
+				
 			}
-			else if(key == ctlkey[2] || key == ctlkey2[2] || key == kr || key == CTRL_FORWARD)
+			else if(key == kl || key == CTRL_BACK)
 			{
-				rowtop = 0;
-				if(fs->crow >= fs->row_count - 1)
-				{
-					if(config.pagetonext && key != kr && fs_is_txtbook((t_fs_filetype)filelist[*selidx].data))
-					{
-						dword orgidx = *selidx;
-						do {
-							if(*selidx < filecount - 1)
-								(*selidx) ++;
-							else
-								*selidx = 0;
-						} while(!fs_is_txtbook((t_fs_filetype)filelist[*selidx].data));
-						if(*selidx != orgidx)
-						{
-							if(config.autobm)
-								bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
-							text_needrf = text_needrp = true;
-							text_needrb = false;
-							rrow = INVALID;
-						}
-					}
-					else
-						fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-					goto next;
+				move_page_up(key, selidx);
+			}
+			else if(key == ctlkey[2] || key == ctlkey2[2]) {
+				if(config.vertread == 3) {
+					if(move_page_up(key, selidx))
+						goto next;
 				}
-				fs->crow += (config.rlastrow ? (rowsperpage - 1) : rowsperpage);
-				if(fs->crow > fs->row_count - 1)
-					fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-				text_needrp = true;
+				else {
+					if(move_page_down(key, selidx))
+						goto next;
+				}
+			}
+			else if(key == kr || key == CTRL_FORWARD)
+			{
+				move_page_down(key, selidx);
 			}
 			else if(key == ctlkey[5] || key == ctlkey2[5])
 			{
-				move_line_up(500);
+				if(config.vertread == 3)
+					move_line_down(500);
+				else
+					move_line_up(500);
 			}
 			else if(key == ctlkey[6] || key == ctlkey2[6])
 			{
-				move_line_down(500);
+				if(config.vertread == 3)
+					move_line_up(500);
+				else
+					move_line_down(500);
 			}
 			else if(key == ctlkey[3] || key == ctlkey2[3])
 			{
-				move_line_up(100);
+				if(config.vertread == 3)
+					move_line_down(100);
+				else
+					move_line_up(100);
 			}
 			else if(key == ctlkey[4] || key == ctlkey2[4])
 			{
-				move_line_down(100);
+				if(config.vertread == 3)
+					move_line_up(100);
+				else
+					move_line_down(100);
 			}
 			else if(key == ctlkey[7] || key == ctlkey2[7])
 			{
-				move_line_to_start();
+				if(config.vertread == 3)
+					move_line_to_end();
+				else
+					move_line_to_start();
 			}
 			else if(key == ctlkey[8] || key == ctlkey2[8])
 			{
-				move_line_to_end();
+				if(config.vertread == 3)
+					move_line_to_start();
+				else
+					move_line_to_end();
 			}
 			else if(key == ctlkey[9] || key == ctlkey2[9])
 			{
@@ -645,6 +750,8 @@ dword scene_readbook(dword selidx)
 			if(config.autopage && ++ticks >= 50 * config.autopage) {
 				ticks = 0;
 				nextpage = true;
+				// prevent LCD shut down by setting counter = 0
+				scePowerTick(0);
 				break;
 			}
 		}
