@@ -398,13 +398,13 @@ int scene_printimage()
 		if(config.imginfobar)
 		{
 			disp_fillrect(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, 479, 271, 0);
-			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filename, 960 / DISP_FONTSIZE - ilen - 1, 0, 0, DISP_FONTSIZE, 0);
-			disp_putnstring(PSP_SCREEN_WIDTH - DISP_FONTSIZE / 2 * ilen, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
+			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filename, 960 / DISP_FONTSIZE - ilen - 1, config.wordspace, 0, DISP_FONTSIZE, 0);
+			disp_putnstring(PSP_SCREEN_WIDTH - DISP_FONTSIZE / 2 * ilen, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)infostr, ilen, config.wordspace, 0, DISP_FONTSIZE, 0);
 		}
 		else
 		{
 			disp_fillrect(11, 11, 10 + DISP_FONTSIZE / 2 * ilen, 10 + DISP_FONTSIZE, 0);
-			disp_putnstring(11, 11, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
+			disp_putnstring(11, 11, COLOR_WHITE, (const byte *)infostr, ilen, config.wordspace, 0, DISP_FONTSIZE, 0);
 		}
 	}
 	if(config.thumb == conf_thumb_always || thumb)
@@ -520,11 +520,7 @@ int image_handle_input(dword *selidx, dword key)
 		goto next;
 	if(key == (PSP_CTRL_SELECT | PSP_CTRL_START))
 	{
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
+		return exit_confirm();
 	}
 	else if(key == PSP_CTRL_SELECT)
 	{
@@ -1009,6 +1005,8 @@ dword scene_readimage(dword selidx)
 		int ret = image_handle_input(&selidx, key);
 		if(ret != -1)
 			return ret;
+		if(config.dis_scrsave)
+			scePowerTick(0);
 	}
 	imgreading = false;
 	scene_power_save(false);
@@ -1031,12 +1029,7 @@ t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item, dword * count,
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-		{
-			scene_exit();
-			return win_menu_op_continue;
-		}
-		return win_menu_op_force_redraw;
+		return exit_confirm();
 	case PSP_CTRL_CIRCLE:
 		disp_duptocache();
 		disp_waitv();

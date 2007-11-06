@@ -79,6 +79,17 @@ int freq_list[][2] = {
 extern bool img_needrf, img_needrp, img_needrc;
 extern bool text_needrf, text_needrp, text_needrb;
 
+t_win_menu_op exit_confirm()
+{
+	if(win_msgbox(getmsgbyid(EXIT_PROMPT), getmsgbyid(YES), getmsgbyid(NO),
+			   	COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+	{
+		scene_exit();
+		return win_menu_op_continue;
+	}
+	return win_menu_op_force_redraw;
+}
+
 bool scene_load_font()
 {
 	char fontzipfile[256], efontfile[256], cfontfile[256];
@@ -287,17 +298,6 @@ dword scene_txtkey(dword * selidx)
 	dword index;
 	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_txtkey_predraw, NULL, scene_txtkey_menucb)) != INVALID);
 	return 0;
-}
-
-t_win_menu_op exit_confirm()
-{
-	if(win_msgbox(getmsgbyid(EXIT_PROMPT), getmsgbyid(YES), getmsgbyid(NO),
-			   	COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-	{
-		scene_exit();
-		return win_menu_op_continue;
-	}
-	return win_menu_op_force_redraw;
 }
 
 t_win_menu_op scene_flkey_menucb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
@@ -1223,16 +1223,16 @@ dword scene_boptions(dword * selidx)
 	dword i;
 	strcpy(item[0].name, getmsgbyid(WORD_SPACE));
 	strcpy(item[1].name, getmsgbyid(LINE_SPACE));
-	strcpy(item[2].name, "    保留边距");
-	strcpy(item[3].name, "      信息栏");
-	strcpy(item[4].name, "翻页保留一行");
-	strcpy(item[5].name, "    文字竖看");
-	strcpy(item[6].name, "    文字编码");
-	strcpy(item[7].name, "      滚动条");
-	strcpy(item[8].name, "自动保存书签");
-	strcpy(item[9].name, "重新编排文本");
-	strcpy(item[10].name, "文章末尾翻页");
-	strcpy(item[11].name, "自动翻页(秒)");
+	strcpy(item[2].name, getmsgbyid(REVERSE_SPAN_SPACE));
+	strcpy(item[3].name, getmsgbyid(INFO_BAR_DISPLAY));
+	strcpy(item[4].name, getmsgbyid(REVERSE_ONE_LINE_WHEN_PAGE_DOWN));
+	strcpy(item[5].name, getmsgbyid(TEXT_DIRECTION));
+	strcpy(item[6].name, getmsgbyid(TEXT_ENCODING));
+	strcpy(item[7].name, getmsgbyid(SCROLLBAR));
+	strcpy(item[8].name, getmsgbyid(AUTOSAVE_BOOKMARK));
+	strcpy(item[9].name, getmsgbyid(TEXT_REALIGNMENT));
+	strcpy(item[10].name, getmsgbyid(TEXT_TAIL_PAGE_DOWN));
+	strcpy(item[11].name, getmsgbyid(AUTOPAGE));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1318,13 +1318,13 @@ void scene_ctrlset_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 {
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 126 - 4 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"操作设置");
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(OPERATION_SETTING));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 125 - 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 #ifdef ENABLE_HPRM
-	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.hprmctrl ? "控制翻页" : "控制音乐"));
+	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.hprmctrl ? getmsgbyid(CONTROL_PAGE) : getmsgbyid(CONTROL_MUSIC)));
 #else
-	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"不支持");
+	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(NO_SUPPORT));
 #endif
 }
 
@@ -1332,7 +1332,7 @@ dword scene_ctrlset(dword * selidx)
 {
 	t_win_menuitem item[1];
 	dword i;
-	strcpy(item[0].name, "    线控模式");
+	strcpy(item[0].name, getmsgbyid(LINE_CTRL_MODE));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1458,7 +1458,7 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 	char number[5];
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"字体设置");
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(FONT_SETTING));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 126 - 3 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	memset(number, ' ', 4);
@@ -1467,16 +1467,16 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 	memset(number, ' ', 4);
 	utils_dword2string(config.usettf ? ttfsize : bookfonts[bookfontindex].size, number, 4);
 	disp_putstring(242, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
-	disp_putstring(240 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.usettf ? "是" : "否"));
+	disp_putstring(240 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.usettf ? getmsgbyid(YES) : getmsgbyid(NO)));
 }
 
 dword scene_fontsel(dword * selidx)
 {
 	t_win_menuitem item[3];
 	dword i;
-	strcpy(item[0].name, "菜单字体大小");
-	strcpy(item[1].name, "阅读字体大小");
-	strcpy(item[2].name, " 使用TTF字体");
+	strcpy(item[0].name, getmsgbyid(MENU_FONT_SIZE));
+	strcpy(item[1].name, getmsgbyid(BOOK_FONT_SIZE));
+	strcpy(item[2].name, getmsgbyid(TTF_FONT_SIZE));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1574,9 +1574,9 @@ void scene_musicopt_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 126 - 3 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 #ifdef ENABLE_MUSIC
-	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autoplay ? "是" : "否"));
+	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autoplay ? getmsgbyid(YES) : getmsgbyid(NO)));
 #else
-	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"不支持");
+	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(NO_SUPPORT));
 #endif
 	memset(number, ' ', 4);
 	utils_dword2string(config.lyricex * 2 + 1, number, 4);
@@ -1646,6 +1646,10 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 				config.freqs[*index-6]--;
 			if(config.freqs[*index-6] > NELEMS(freq_list) - 1)
 				config.freqs[*index-6] = NELEMS(freq_list) - 1;
+			scene_power_save(true);
+			break;
+		case 9:
+			config.dis_scrsave = ! config.dis_scrsave;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1682,6 +1686,10 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 				config.freqs[*index-6]++;
 			if(config.freqs[*index-6] < 0)
 				config.freqs[*index-6] = 0;
+			scene_power_save(true);
+			break;
+		case 9:
+			config.dis_scrsave = ! config.dis_scrsave;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1694,20 +1702,20 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 
 void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 134 + 4 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"系统选项");
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 133 + 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 133 + 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showhidden ? "显示" : "隐藏"));
 	disp_putstring(242 + DISP_FONTSIZE, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showunknown ? "显示" : "隐藏"));
 	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showfinfo ? "显示" : "隐藏"));
-	disp_putstring(242 + DISP_FONTSIZE, 127 - 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.allowdelete ? "是" : "否"));
+	disp_putstring(242 + DISP_FONTSIZE, 127 - 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.allowdelete ? getmsgbyid(YES) : getmsgbyid(NO)));
 	disp_putstring(242 + DISP_FONTSIZE, 128 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_arrangename(config.arrange));
 #ifdef ENABLE_USB
-	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)(config.enableusb ? "是" : "否"));
+	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)(config.enableusb ? getmsgbyid(YES) : getmsgbyid(NO)));
 #else
-	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)"不支持");
+	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)getmsgbyid(NO_SUPPORT));
 #endif
 	char infomsg[80];
 	sprintf(infomsg, "%d/%d", freq_list[config.freqs[0]][0], freq_list[config.freqs[0]][1]);
@@ -1716,11 +1724,12 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_putstring(242 + DISP_FONTSIZE, 131 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
 	sprintf(infomsg, "%d/%d", freq_list[config.freqs[2]][0], freq_list[config.freqs[2]][1]);
 	disp_putstring(242 + DISP_FONTSIZE, 132 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
+	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.dis_scrsave ? getmsgbyid(YES) : getmsgbyid(NO)));
 }
 
 dword scene_moptions(dword * selidx)
 {
-	t_win_menuitem item[9];
+	t_win_menuitem item[10];
 	dword i;
 	strcpy(item[0].name, "    隐藏文件");
 	strcpy(item[1].name, "未知类型文件");
@@ -1731,6 +1740,7 @@ dword scene_moptions(dword * selidx)
 	strcpy(item[6].name, "设置最低频率");
 	strcpy(item[7].name, "设置普通频率");
 	strcpy(item[8].name, "设置最高频率");
+	strcpy(item[9].name, "禁用屏幕保护");
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1987,8 +1997,8 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
 		return exit_confirm();
 	case PSP_CTRL_CIRCLE:
-		if(*index == 12 && win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-			scene_exit();
+		if(*index == 12)
+			return exit_confirm();
 		if(scene_option_func[*index] != NULL)
 		{
 			item[0].data = (void *)scene_option_func[*index](item[1].data);
@@ -2066,7 +2076,7 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item, dword * coun
 		win_msg("已删除书签!", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		return win_menu_op_cancel;
 	case PSP_CTRL_START:
-		if(win_msgbox("是否要导出书签？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+		if(win_msgbox("是否要导出书签？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 		{
 			char bmfn[256];
 			if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar || where == scene_in_gz)
@@ -2441,7 +2451,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 			case PSP_CTRL_CROSS:
 				if(!config.allowdelete || where != scene_in_dir || strnicmp(config.path, "ms0:/", 5) != 0)
 					break;
-				if(win_msgbox("删除所选文件？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+				if(win_msgbox("删除所选文件？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 				{
 					char fn[256];
 					config.lastfile[0] = 0;
@@ -2477,7 +2487,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 					{
 #ifdef ENABLE_MUSIC
 					case fs_filetype_dir:
-						if(win_msgbox("添加目录内所有歌曲到播放列表？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+						if(win_msgbox("添加目录内所有歌曲到播放列表？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 						{
 							char cfn[256];
 							sprintf(cfn, "%s%s/", config.path, item[sidx].compname);
@@ -2489,7 +2499,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 #ifdef ENABLE_WMA
 					case fs_filetype_wma:
 #endif
-						if(win_msgbox("添加歌曲到播放列表？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+						if(win_msgbox("添加歌曲到播放列表？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 						{
 							char mp3name[256], mp3longname[256];
 							strcpy(mp3name, config.shortpath);
@@ -2522,7 +2532,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 							strcat(bgfile, item[*index].shortname);
 							if(stricmp(bgfile, config.bgfile) == 0)
 							{
-								if(win_msgbox("是否取消背景图？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+								if(win_msgbox("是否取消背景图？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 								{
 									strcpy(config.bgfile, " ");
 									bg_cancel();
@@ -2533,7 +2543,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 							}
 							else
 							{
-								if(win_msgbox("是否将当前图片文件设为背景图？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+								if(win_msgbox("是否将当前图片文件设为背景图？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 								{
 									strcpy(config.bgfile, bgfile);
 									bg_load(config.bgfile, config.bgcolor, (t_fs_filetype)item[*index].data, config.grayscale);
@@ -2556,12 +2566,12 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 						break;
 					if(bmcount > 0)
 					{
-						if(!win_msgbox("是否要导入书签？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+						if(!win_msgbox("是否要导入书签？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 							break;
 					}
 					else
 					{
-						if(!win_msgbox("添加歌曲到播放列表？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+						if(!win_msgbox("添加歌曲到播放列表？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 							break;
 					}
 					for(sidx = 0; sidx < filecount; sidx ++) if(item[sidx].selected)
@@ -2627,13 +2637,13 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 						break;
 					if(mp3count + dircount == 0)
 					{
-						if(!win_msgbox("是否要导入书签？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+						if(!win_msgbox("是否要导入书签？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 							break;
 					}
 #ifdef ENABLE_MUSIC
 					else
 					{
-						if(!win_msgbox("添加歌曲到播放列表？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+						if(!win_msgbox("添加歌曲到播放列表？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 							break;
 					}
 #endif
@@ -3119,13 +3129,15 @@ void scene_filelist()
 			break;
 		}
 		case fs_filetype_gz:
+#if 0
 			if(strlen(filelist[idx].compname) >= 7) {
 				int len = strlen(filelist[idx].compname) - 7;
 				if(stricmp(filelist[idx].compname + len, ".tar.gz") == 0) {
-//					win_msg("TODO: SUPPORT Tar ", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
-//					break;
+					win_msg("TODO: SUPPORT Tar ", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+					break;
 				}
 			}
+#endif
 #ifdef ENABLE_USB
 			usb_deactivate();
 #endif
@@ -3266,7 +3278,7 @@ void scene_filelist()
 			break;
 #endif
 		case fs_filetype_ebm:
-			if(win_msgbox("是否要导入书签？", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+			if(win_msgbox("是否要导入书签？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 			{
 				char bmfn[256];
 				strcpy(bmfn, config.shortpath);
@@ -3304,6 +3316,8 @@ void scene_filelist()
 #endif
 			break;
 		}
+		if(config.dis_scrsave)
+			scePowerTick(0);
 	}
 	if(filelist != NULL)
 	{

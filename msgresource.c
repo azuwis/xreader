@@ -63,7 +63,24 @@ MsgResource msg[] =
 	{"已关闭", AUTOPAGE_SHUTDOWN},
 	{"      字间距", WORD_SPACE},
 	{"      行间距", LINE_SPACE},
-	
+	{"    保留边距", REVERSE_SPAN_SPACE},
+	{"      信息栏", INFO_BAR_DISPLAY},
+	{"翻页保留一行", REVERSE_ONE_LINE_WHEN_PAGE_DOWN},
+	{"    文字竖看", TEXT_DIRECTION},
+	{"    文字编码", TEXT_ENCODING},
+	{"      滚动条", SCROLLBAR},
+	{"自动保存书签", AUTOSAVE_BOOKMARK},
+	{"重新编排文本", TEXT_REALIGNMENT},
+	{"文章末尾翻页", TEXT_TAIL_PAGE_DOWN},
+	{"自动翻页(秒)", AUTOPAGE},
+	{"    线控模式", LINE_CTRL_MODE},
+	{"操作设置", OPERATION_SETTING},
+	{"控制翻页", CONTROL_PAGE},
+	{"控制音乐", CONTROL_MUSIC},
+	{"字体设置", FONT_SETTING},
+	{"菜单字体大小", MENU_FONT_SIZE},
+	{"阅读字体大小", BOOK_FONT_SIZE},
+	{" 使用TTF字体", TTF_FONT_SIZE},
 	{NULL,   UNKNOWN}
 };
 

@@ -466,11 +466,7 @@ int book_handle_input(dword *selidx, dword key)
 #endif
 			if(key == (PSP_CTRL_SELECT | PSP_CTRL_START))
 			{
-				if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
-				{
-					scene_exit();
-					return win_menu_op_continue;
-				}
+				return exit_confirm();
 			}
 			else if(key == ctlkey[11] || key == ctlkey2[11] || key == CTRL_PLAYPAUSE)
 			{
@@ -725,6 +721,10 @@ dword scene_readbook(dword selidx)
 				// prevent LCD shut down by setting counter = 0
 				scePowerTick(0);
 				break;
+			}
+
+			if(config.dis_scrsave) {
+				scePowerTick(0);
 			}
 		}
 		int ret = book_handle_input(&selidx, key);

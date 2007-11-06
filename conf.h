@@ -128,6 +128,7 @@ typedef struct {
 	bool usettf;
 	int freqs[3];
 	short imgbrightness;
+	bool dis_scrsave;
 } t_conf, * p_conf;
 
 /* txt key:

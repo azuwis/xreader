@@ -21,6 +21,7 @@ extern t_fonts fonts[5], bookfonts[21];
 extern int fontcount, fontindex, bookfontcount, bookfontindex, ttfsize;
 extern int offset;
 
+t_win_menu_op exit_confirm();
 extern void scene_init();
 extern void scene_exit();
 extern void scene_power_save(bool save);
