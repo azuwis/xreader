@@ -1906,7 +1906,7 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item, dword * count
 						filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, RGB(0xDF, 0xDF, 0xDF), RGB(0xFF, 0xFF, 0x40), RGB(0x10, 0x30, 0x20), RGB(0x20, 0x20, 0xDF), config.showhidden, config.showunknown);
 						break;
 					}
-				if(filecount == 0)
+				if(filelist == 0)
 				{
 					strcpy(config.path, "ms0:/");
 					strcpy(config.shortpath, "ms0:/");
@@ -2971,6 +2971,30 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex, d
 	}
 }
 
+p_win_menuitem make_up_a_empty_dir(dword *filecount, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
+{
+	p_win_menuitem p;
+	p = (p_win_menuitem)malloc(sizeof(t_win_menuitem));
+	if(p == NULL)
+	{
+		*filecount = 0;
+		return NULL;
+	}
+	memset(p, 0, sizeof(t_win_menuitem));
+	strcpy(p->name, "<..>");
+	strcpy(p->compname, "..");
+	p->data = (void *)fs_filetype_dir;
+	p->width = 4;
+	p->selected = false;
+	p->icolor = icolor;
+	p->selicolor = selicolor;
+	p->selrcolor = selrcolor;
+	p->selbcolor = selbcolor;
+
+	*filecount = 1;
+	return p;
+}
+
 void scene_filelist()
 {
 	dword idx = 0;
@@ -3032,8 +3056,42 @@ void scene_filelist()
 #endif
 	while (1)
 	{
-		if(!config.isreading && !locreading)
-			idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, RGB(0x10, 0x30, 0x20), false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
+		if(!config.isreading && !locreading) {
+			if(filelist == 0)
+			{
+				// empty directory ?
+				if(where == scene_in_dir) {
+					filelist = make_up_a_empty_dir(&filecount,  RGB(0xDF, 0xDF, 0xDF), RGB(0xFF, 0xFF, 0x40), RGB(0x10, 0x30, 0x20), RGB(0x20, 0x20, 0xDF));
+					idx = 0;
+					idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, RGB(0x10, 0x30, 0x20), false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
+				}
+				else {
+					char infomsg[80];
+					sprintf(infomsg, "%sÑ¹Ëõ°ü¸ñÊ½Ëð»µ", config.path);
+					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+					int ll;
+					if((ll = strlen(config.path) - 1) >= 0)
+						while(config.path[ll] == '/' && ll >= 0)
+						{
+							config.path[ll] = 0;
+							ll --;
+						}
+					char * lps;
+					if((lps = strrchr(config.path, '/')) != NULL)
+					{
+						lps ++;
+						*lps = 0;
+					}
+					else
+						config.path[0] = 0;
+					where = scene_in_dir;
+					// when exit to menu specify idx to INVALID
+					idx = INVALID;
+				}
+			}
+			else 
+				idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, RGB(0x10, 0x30, 0x20), false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
+		}
 		else
 		{
 			config.isreading = false;
@@ -3054,13 +3112,12 @@ void scene_filelist()
 				break;
 			default:
 				filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, RGB(0xDF, 0xDF, 0xDF), RGB(0xFF, 0xFF, 0x40), RGB(0x10, 0x30, 0x20), RGB(0x20, 0x20, 0xDF), config.showhidden, config.showunknown);
-				if(filecount == 0)
-				{
-					strcpy(config.path, "ms0:/");
-					strcpy(config.shortpath, "ms0:/");
-					filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, RGB(0xDF, 0xDF, 0xDF), RGB(0xFF, 0xFF, 0x40), RGB(0x10, 0x30, 0x20), RGB(0x20, 0x20, 0xDF), config.showhidden, config.showunknown);
-				}
-				break;
+			}
+			if(filelist == 0)
+			{
+				strcpy(config.path, "ms0:/");
+				strcpy(config.shortpath, "ms0:/");
+				filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, RGB(0xDF, 0xDF, 0xDF), RGB(0xFF, 0xFF, 0x40), RGB(0x10, 0x30, 0x20), RGB(0x20, 0x20, 0xDF), config.showhidden, config.showunknown);
 			}
 			quicksort(filelist, (filecount > 0 && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1, sizeof(t_win_menuitem), compare_func[(int)config.arrange]);
 			idx = 0;
