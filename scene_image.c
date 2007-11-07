@@ -398,13 +398,13 @@ int scene_printimage()
 		if(config.imginfobar)
 		{
 			disp_fillrect(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, 479, 271, 0);
-			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filename, 960 / DISP_FONTSIZE - ilen - 1, config.wordspace, 0, DISP_FONTSIZE, 0);
-			disp_putnstring(PSP_SCREEN_WIDTH - DISP_FONTSIZE / 2 * ilen, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)infostr, ilen, config.wordspace, 0, DISP_FONTSIZE, 0);
+			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filename, 960 / DISP_FONTSIZE - ilen - 1, 0, 0, DISP_FONTSIZE, 0);
+			disp_putnstring(PSP_SCREEN_WIDTH - DISP_FONTSIZE / 2 * ilen, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
 		}
 		else
 		{
 			disp_fillrect(11, 11, 10 + DISP_FONTSIZE / 2 * ilen, 10 + DISP_FONTSIZE, 0);
-			disp_putnstring(11, 11, COLOR_WHITE, (const byte *)infostr, ilen, config.wordspace, 0, DISP_FONTSIZE, 0);
+			disp_putnstring(11, 11, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
 		}
 	}
 	if(config.thumb == conf_thumb_always || thumb)
@@ -822,7 +822,7 @@ int image_handle_input(dword *selidx, dword key)
 		img_needrp = (thumb || orgtop != curtop || orgleft != curleft);
 	}
 #endif
-	else if(key & PSP_CTRL_LEFT || key & PSP_CTRL_RIGHT || key & PSP_CTRL_UP || key & PSP_CTRL_DOWN)
+	else if(key == PSP_CTRL_LEFT || key == PSP_CTRL_RIGHT || key == PSP_CTRL_UP || key == PSP_CTRL_DOWN)
 	{
 		image_move(key);
 	}
