@@ -13,6 +13,7 @@
 #include <unzip.h>
 #include <unrar.h>
 #include <setjmp.h>
+#include "win.h"
 #include "image.h"
 
 /* 
@@ -228,8 +229,10 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight, dword
 	if(ca == 0)
 		return;
 	pixel * newdata = malloc(sizeof(pixel) * *pwidth * *pheight);
-	if(newdata == NULL)
+	if(newdata == NULL) {
+			win_msg("内存不足无法完成旋转!", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		return;
+	}
 	dword i, j;
 	switch(ca)
 	{

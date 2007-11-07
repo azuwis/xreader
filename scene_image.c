@@ -822,7 +822,7 @@ int image_handle_input(dword *selidx, dword key)
 		img_needrp = (thumb || orgtop != curtop || orgleft != curleft);
 	}
 #endif
-	else if(key == PSP_CTRL_LEFT || key == PSP_CTRL_RIGHT || key == PSP_CTRL_UP || key == PSP_CTRL_DOWN)
+	else if(key & (PSP_CTRL_LEFT | PSP_CTRL_RIGHT | PSP_CTRL_UP | PSP_CTRL_DOWN) && !(key & ~(PSP_CTRL_LEFT | PSP_CTRL_RIGHT | PSP_CTRL_UP | PSP_CTRL_DOWN)))
 	{
 		image_move(key);
 	}
@@ -905,7 +905,6 @@ int image_handle_input(dword *selidx, dword key)
 		else
 			config.rotate --;
 		img_needrc = img_needrp = true;
-		ctrl_waitreleasekey(config.imgkey[5]);
 	}
 	else if(key == config.imgkey[6] || key == config.imgkey2[6])
 	{
@@ -914,7 +913,6 @@ int image_handle_input(dword *selidx, dword key)
 		else
 			config.rotate ++;
 		img_needrc = img_needrp = true;
-		ctrl_waitreleasekey(config.imgkey[6]);
 	}
 	else if(key == config.imgkey[3] || key == config.imgkey2[3])
 	{
