@@ -714,15 +714,15 @@ dword scene_readbook(dword selidx)
 		dword key;
 		while((key = ctrl_read()) == 0) 
 		{
+			sceKernelDelayThread(20000);
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if(config.infobar == conf_infobar_lyric && lyric_check_changed(mp3_get_lyric())) 
 			{
 				break;
 			}
 #endif
-			sceKernelDelayThread(10000);			
 			if(config.autopage) {
-				if(++ticks >= 100 * config.autopage) {
+				if(++ticks >= 50 * config.autopage) {
 					ticks = 0;
 					move_page_down(key, &selidx);
 					// prevent LCD shut down by setting counter = 0
