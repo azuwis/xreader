@@ -3561,8 +3561,11 @@ extern void scene_init()
 
 	strcpy(mp3conf, appdir);
 	strcat(mp3conf, "music.lst");
-	if(config.confver < 0x00090100 || !mp3_list_load(mp3conf))
+	if(config.confver < 0x00090100 || !mp3_list_load(mp3conf)) {
+		mp3_list_add_dir("ms0:/MUSIC/");
+		mp3_list_add_dir("ms0:/MP3/");
 		mp3_list_add_dir("ms0:/PSP/MUSIC/");
+	}
 	mp3_start();
 	mp3_set_encode(config.mp3encode);
 #ifdef ENABLE_HPRM
