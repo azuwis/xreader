@@ -982,10 +982,8 @@ dword scene_readimage(dword selidx)
 		{
 			thumb = false;
 			img_needrp = true;
-			key = ctrl_read_cont();
 		}
-		else if(!slideshow || now - lasttime < config.slideinterval)
-			key = (showinfo ? ctrl_read_cont() : (slideshow ? ctrl_waittime(config.slideinterval - (now - lasttime)) : ctrl_waitany()));
+		key = ctrl_read_cont();
 		if(slideshow)
 		{
 			scePowerTick(0);
