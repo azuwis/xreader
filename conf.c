@@ -152,7 +152,7 @@ static void conf_default(p_conf conf)
 	conf->isreading = false;
 	conf->slideinterval = 5;
 	conf->hprmctrl = false;
-	conf->grayscale = 0;
+	conf->grayscale = 30;
 	conf->showhidden = true;
 	conf->showunknown = true;
 	conf->showfinfo = true;
@@ -167,6 +167,8 @@ static void conf_default(p_conf conf)
 	conf->reordertxt = false;
 	conf->pagetonext = false;
 	conf->autopage = 0;
+	conf->autopagetype = 0;
+	conf->autolinedelay = 0;
 	conf->thumb = conf_thumb_scroll;
 	conf->imgpagereserve = 0;
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)

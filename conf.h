@@ -116,6 +116,8 @@ typedef struct {
 	bool reordertxt;
 	bool pagetonext;
 	int  autopage;
+	int  autopagetype;
+	int  autolinedelay;
 	bool thumb;
 	int bookfontsize;
 	dword txtkey2[20];
