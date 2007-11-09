@@ -254,11 +254,22 @@ int scene_printbook(dword selidx)
 #endif
 			break;
 		default:
+			{
 			disp_putnstringhorz(config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, rowtop, DISP_BOOK_FONTSIZE - rowtop, 0);
 			for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
 			{
 				tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+				/*
+				if(!havedisplayed) {
+					char infomsg[80];
+					sprintf(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, cidx, rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - rowtop);
+					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+					
+					havedisplayed = true;
+				}
+				*/
 				disp_putnstringhorz(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (271 - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
+			}
 			}
 			if(config.infobar == conf_infobar_info)
 			{
@@ -415,15 +426,16 @@ void move_line_smooth(int inc)
 			fs->crow --;
 		}
 	}
-	else if(rowtop >= DISP_BOOK_FONTSIZE)
+	else if(rowtop >= DISP_BOOK_FONTSIZE + config.rowspace)
 	{
-		while(fs->crow < fs->row_count - 1 && rowtop >= DISP_BOOK_FONTSIZE)
+		while(fs->crow < fs->row_count - 1 && rowtop >= DISP_BOOK_FONTSIZE + config.rowspace)
 		{
 			rowtop -= DISP_BOOK_FONTSIZE;
 			fs->crow ++;
 		}
+		rowtop = 0;
 	}
-	if(rowtop < 0 || rowtop > DISP_BOOK_FONTSIZE)
+	if(rowtop < 0 || rowtop >= DISP_BOOK_FONTSIZE + config.rowspace)
 		rowtop = 0;
 	text_needrp = true;
 }
@@ -711,10 +723,11 @@ dword scene_readbook(dword selidx)
 			text_needrp = false;
 		}
 		
+		int delay = 20000;
 		dword key;
 		while((key = ctrl_read()) == 0) 
 		{
-			sceKernelDelayThread(20000);
+			sceKernelDelayThread(delay);
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if(config.infobar == conf_infobar_lyric && lyric_check_changed(mp3_get_lyric())) 
 			{
@@ -722,12 +735,25 @@ dword scene_readbook(dword selidx)
 			}
 #endif
 			if(config.autopage) {
-				if(++ticks >= 50 * config.autopage) {
-					ticks = 0;
-					move_page_down(key, &selidx);
-					// prevent LCD shut down by setting counter = 0
-					scePowerTick(0);
-					goto redraw;
+				if(config.autopagetype) {
+					if(++ticks >= config.autolinedelay) {
+						ticks = 0;
+						move_line_smooth(config.autopage);
+						// prevent LCD shut down by setting counter = 0
+						scePowerTick(0);
+						goto redraw;
+						delay = 0;
+					}
+				}
+				else {
+					if(++ticks >= 50 * config.autopage) {
+						ticks = 0;
+						move_page_down(key, &selidx);
+						// prevent LCD shut down by setting counter = 0
+						scePowerTick(0);
+						goto redraw;
+						delay = 20000;
+					}
 				}
 			}
 			if(config.dis_scrsave) {
