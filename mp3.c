@@ -765,7 +765,7 @@ extern bool mp3_init()
 	manualSw = false;
 	mp3_direct = -1;
 	Resampled = (mad_fixed_t (*)[2][MAX_NSAMPLES])malloc(sizeof(*Resampled));
-	mp3_thid = sceKernelCreateThread( "mp3 thread", mp3_thread, 0x08, 0x40000, PSP_THREAD_ATTR_USER, NULL );
+	mp3_thid = sceKernelCreateThread( "mp3 thread", mp3_thread, 0x08, 0x10000, PSP_THREAD_ATTR_USER, NULL );
 	if(mp3_thid < 0)
 		return false;
 	strcpy(mp3_tag, "");
