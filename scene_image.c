@@ -982,8 +982,11 @@ dword scene_readimage(dword selidx)
 		{
 			thumb = false;
 			img_needrp = true;
+			key = ctrl_read_cont();
 		}
-		key = ctrl_read_cont();
+		else if(!slideshow || now - lasttime < config.slideinterval) {
+			key = ctrl_read_cont();
+		}
 		if(slideshow)
 		{
 			scePowerTick(0);
