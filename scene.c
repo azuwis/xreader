@@ -1105,8 +1105,15 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 			config.pagetonext = !config.pagetonext;
 			break;
 		case 11:
-			if(--config.autopage<0)
+			config.autopagetype = !config.autopagetype;
+			break;
+		case 12:
+			if(--config.autopage < 0)
 				config.autopage = 0;
+			break;
+		case 13:
+			if(--config.autolinedelay < 0)
+				config.autolinedelay = 0;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1171,8 +1178,16 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 			config.pagetonext = !config.pagetonext;
 			break;
 		case 11:
+			config.autopagetype = !config.autopagetype;
+			break;
+		case 12:
 			if(++config.autopage > 1000)
 				config.autopage = 1000;
+			break;
+		case 13:
+			if(++config.autolinedelay > 1000)
+				config.autolinedelay = 1000;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_CIRCLE:
@@ -1185,41 +1200,55 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char number[5];
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(READ_OPTION));
-	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 135 + 7 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 139 + 8 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(READ_OPTION));
+	disp_line(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_fillrect(241, 123 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 138 + 8 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	memset(number, ' ', 4);
 	utils_dword2string(config.wordspace, number, 4);
-	disp_putstring(242, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+	disp_putstring(242, 124 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
 	memset(number, ' ', 4);
 	utils_dword2string(config.rowspace, number, 4);
-	disp_putstring(242, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+	disp_putstring(242, 125 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
 	memset(number, ' ', 4);
 	utils_dword2string(config.borderspace, number, 4);
-	disp_putstring(242, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
-	disp_putstring(242 + DISP_FONTSIZE, 127 - 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_infobarname(config.infobar));
-	disp_putstring(242 + DISP_FONTSIZE, 128 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.rlastrow ? getmsgbyid(YES) : getmsgbyid(NO)));
-	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)((config.vertread == 3) ? getmsgbyid(REVERSAL_DIRECT) : (config.vertread == 2) ? getmsgbyid(LEFT_DIRECT) : (config.vertread == 1 ? getmsgbyid(RIGHT_DIRECT) : getmsgbyid(NONE_DIRECT))));
-	disp_putstring(242 + DISP_FONTSIZE, 130 + DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_encodename(config.encode));
-	disp_putstring(242 + DISP_FONTSIZE, 131 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.scrollbar ? getmsgbyid(YES) : getmsgbyid(NO)));
-	disp_putstring(242 + DISP_FONTSIZE, 132 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autobm ? getmsgbyid(YES) : getmsgbyid(NO)));
-	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.reordertxt ? getmsgbyid(YES) : getmsgbyid(NO)));
-	disp_putstring(242 + DISP_FONTSIZE, 134 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.pagetonext ? getmsgbyid(NEXT_ARTICLE) : getmsgbyid(NO_ACTION)));
+	disp_putstring(242, 126 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+	disp_putstring(242 + DISP_FONTSIZE, 127 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_infobarname(config.infobar));
+	disp_putstring(242 + DISP_FONTSIZE, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.rlastrow ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 129 - 1 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)((config.vertread == 3) ? getmsgbyid(REVERSAL_DIRECT) : (config.vertread == 2) ? getmsgbyid(LEFT_DIRECT) : (config.vertread == 1 ? getmsgbyid(RIGHT_DIRECT) : getmsgbyid(NONE_DIRECT))));
+	disp_putstring(242 + DISP_FONTSIZE, 130, COLOR_WHITE, (const byte *)conf_get_encodename(config.encode));
+	disp_putstring(242 + DISP_FONTSIZE, 131 + 1 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.scrollbar ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 132 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autobm ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 133 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.reordertxt ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 134 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.pagetonext ? getmsgbyid(NEXT_ARTICLE) : getmsgbyid(NO_ACTION)));
+	if(config.autopagetype) {
+		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"自动换行");
+	}
+	else {
+		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"自动翻页");
+	}
 	if(config.autopage) {
 		memset(number, ' ', 4);
 		utils_dword2string(config.autopage, number, 4);
-		disp_putstring(242 + DISP_FONTSIZE, 134 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+		disp_putstring(242 + DISP_FONTSIZE, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
 	}
 	else {
-		disp_putstring(242 + DISP_FONTSIZE, 134 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(AUTOPAGE_SHUTDOWN));
+		disp_putstring(242 + DISP_FONTSIZE, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(HAVE_SHUTDOWN));
+	}
+	if(config.autolinedelay) {
+		memset(number, ' ', 4);
+		utils_dword2string(config.autolinedelay, number, 4);
+		disp_putstring(242 + DISP_FONTSIZE, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+	}
+	else {
+		disp_putstring(242 + DISP_FONTSIZE, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(HAVE_SHUTDOWN));
 	}
 }
 
 dword scene_boptions(dword * selidx)
 {
-	t_win_menuitem item[12];
+	t_win_menuitem item[14];
 	dword i;
 	strcpy(item[0].name, getmsgbyid(WORD_SPACE));
 	strcpy(item[1].name, getmsgbyid(LINE_SPACE));
@@ -1232,7 +1261,12 @@ dword scene_boptions(dword * selidx)
 	strcpy(item[8].name, getmsgbyid(AUTOSAVE_BOOKMARK));
 	strcpy(item[9].name, getmsgbyid(TEXT_REALIGNMENT));
 	strcpy(item[10].name, getmsgbyid(TEXT_TAIL_PAGE_DOWN));
-	strcpy(item[11].name, getmsgbyid(AUTOPAGE));
+	strcpy(item[11].name, "自动翻页模式");
+	if(config.autopagetype)
+		strcpy(item[12].name, getmsgbyid(AUTOLINE_STEP));
+	else
+		strcpy(item[12].name, getmsgbyid(AUTOPAGE_DELAY));
+	strcpy(item[13].name, "自动换行时延");
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1252,7 +1286,7 @@ dword scene_boptions(dword * selidx)
 	dword orgborderspace = config.borderspace;
 	dword orgreordertxt = config.reordertxt;
 	dword orgencode = config.encode;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_boptions_predraw, NULL, scene_boptions_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_boptions_predraw, NULL, scene_boptions_menucb)) != INVALID);
 	dword result = 0;
 	if(orgibar != config.infobar || orgvert != config.vertread || orgrowspace != config.rowspace || orgborderspace != config.borderspace)
 	{
@@ -1759,10 +1793,12 @@ dword scene_moptions(dword * selidx)
 	t_conf_arrange orgarrange = config.arrange;
 	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_moptions_predraw, NULL, scene_moptions_menucb)) != INVALID);
 #ifdef ENABLE_USB
-	if(config.enableusb)
-		usb_activate();
-	else
-		usb_deactivate();
+	if(config.isreading == false) {
+		if(config.enableusb)
+			usb_activate();
+		else
+			usb_deactivate();
+	}
 #endif
 	if(orgfontindex != fontindex || orgbookfontindex != bookfontindex)
 	{
