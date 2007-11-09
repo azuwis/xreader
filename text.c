@@ -12,6 +12,7 @@
 #include "display.h"
 #include "html.h"
 #include "text.h"
+#include "kubridge.h"
 
 static void text_decode(p_text txt, t_conf_encode encode)
 {
@@ -254,7 +255,17 @@ extern p_text text_open_binary(const char * filename, bool vert)
 	}
 	strcpy(txt->filename, filename);
 	txt->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	if(txt->size > 256 * 1024) txt->size = 256 * 1024;
+	if(txt->size > 256 * 1024) 
+	{
+		if (kuKernelGetModel() != PSP_MODEL_SLIM_AND_LITE)
+		{
+			txt->size = 256 * 1024;
+		}
+		else {
+			if(txt->size > 4 * 1024 * 1024)
+				txt->size = 4 * 1024 * 1024;
+		}
+	}
 	byte * tmpbuf;
 	dword bpr = (vert ? 43 : 66);
 	if((txt->buf = (char *)calloc(1, (txt->size + 15) / 16 * bpr)) == NULL || (tmpbuf = (byte *)calloc(1, txt->size)) == NULL)
