@@ -1223,7 +1223,7 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_putstring(242 + DISP_FONTSIZE, 133 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.reordertxt ? getmsgbyid(YES) : getmsgbyid(NO)));
 	disp_putstring(242 + DISP_FONTSIZE, 134 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.pagetonext ? getmsgbyid(NEXT_ARTICLE) : getmsgbyid(NO_ACTION)));
 	if(config.autopagetype) {
-		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"自动换行");
+		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"自动滚屏");
 	}
 	else {
 		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"自动翻页");
@@ -1266,7 +1266,7 @@ dword scene_boptions(dword * selidx)
 		strcpy(item[12].name, getmsgbyid(AUTOLINE_STEP));
 	else
 		strcpy(item[12].name, getmsgbyid(AUTOPAGE_DELAY));
-	strcpy(item[13].name, "自动换行时延");
+	strcpy(item[13].name, "    滚屏时间");
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
