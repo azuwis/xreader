@@ -433,7 +433,9 @@ void move_line_smooth(int inc)
 			rowtop -= DISP_BOOK_FONTSIZE;
 			fs->crow ++;
 		}
-		rowtop = 0;
+		// prevent dither when config.autolinestep < 5
+		if(config.autopagetype == 1 && config.autopage < 5)
+			rowtop = 0;
 	}
 	if(rowtop < 0 || rowtop >= DISP_BOOK_FONTSIZE + config.rowspace)
 		rowtop = 0;
