@@ -5,12 +5,16 @@ SRCS = avc.c bg.c bookmark.c charsets.c conf.c copy.c ctrl.c display.c fat.c \
 	./common/log.c ./common/qsort.c ./common/utils.c ./common/psp_utils.c
 OBJS = $(SRCS:.c=.o)
 
-INCDIR = $(PSPSDK)/../include ./include ./include/freetype2 ../m33-sdk/include
+INCDIR = $(PSPSDK)/../include ./include ./include/freetype2
 
-CFLAGS = -O3 -G0 -Wall
+CFLAGS = -O2 -G0 -Wall
 CXXFLAGS = $(CFLAGS) -fno-rtti
 
-LIBDIR = ../m33-sdk/lib
+PSP_FW_VERSION=371
+BUILD_PRX=1
+PSP_LARGE_MEMORY=1
+
+LIBDIR = ./lib
 LIBS = ./lib/unrar.a ./lib/unzip.a ./lib/libchm.a ./lib/libpng.a \
 	./lib/libgif.a ./lib/libjpeg.a ./lib/libbmp.a ./lib/libtga.a \
 	./lib/libmad.a ./lib/libz.a ./lib/libfreetype.a ./lib/libwmadec.a \
@@ -25,6 +29,6 @@ PSP_EBOOT_ICON = ICON0.png
 
 PSPSDK=$(shell psp-config --pspsdk-path)
 
-include config.mak
+include $(PSPSDK)/lib/build.mak
 
 #DEP
