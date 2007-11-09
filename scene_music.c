@@ -290,6 +290,7 @@ void scene_mp3bar()
 				scene_mp3_list();
 				break;
 			case PSP_CTRL_START:
+				sceKernelDelayThread(100000);
 				if(saveimage != NULL)
 				{
 					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
