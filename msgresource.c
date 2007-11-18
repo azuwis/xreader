@@ -1,4 +1,5 @@
 #include <psptypes.h>
+#include <stdlib.h>
 #include "msgresource.h"
 
 #define NELEMS(a)       (sizeof (a) / sizeof ((a)[0]))
@@ -87,18 +88,15 @@ MsgResource msg[] =
 
 // #endif
 
+static int searchid(const void* key, const void* p)
+{
+	return (int)key - ((MsgResource*)p)->id;
+}
+
 const char* getmsgbyid(int id)
 {
-	MsgResource *head = &msg[0];
-	int count = NELEMS(msg);
-	while(count -- > 0) {
-		if(id == head->id) {
-			return head->msg;
-		}
-		head++;
-	}
-
-	return "未知信息";
+	MsgResource *p = (MsgResource*)bsearch((void*)id, msg, NELEMS(msg), sizeof(MsgResource), &searchid);
+	return p ? p->msg : "未知信息";
 }
 
 void setmsglang(const char* langname)
