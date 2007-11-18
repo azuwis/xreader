@@ -1,11 +1,13 @@
 #include "config.h"
 
+#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
 #include <pspdebug.h>
+#include <psprtc.h>
 #include <pspkernel.h>
 #include <psppower.h>
 #include <psprtc.h>
@@ -55,6 +57,7 @@ static bool showinfo = false, thumb = false;
 int imgh;
 bool slideshow = false;
 time_t now = 0, lasttime = 0;
+extern void *framebuffer;
 
 int open_image(dword selidx) 
 {
@@ -197,6 +200,7 @@ void report_image_error(int status)
 	scene_power_save(true);	
 }
 
+// TODO: use GU to improve speed...
 void recalc_brightness()
 {
 	int i;
@@ -308,7 +312,8 @@ dword scene_rotateimage()
 			h2 = imgh;
 			w2 = width * imgh / height;
 		}
-		imgshow = (pixel *)malloc(sizeof(pixel) * w2 * h2);
+		// sceGuCopyImage need the length to be block aligned...
+		imgshow = (pixel *)memalign(16, sizeof(pixel) * w2 * h2);
 		if(imgshow != NULL)
 		{
 			if(config.bicubic)
@@ -802,7 +807,7 @@ int image_handle_input(dword *selidx, dword key)
 			img_needrf = img_needrc = img_needrp = true;
 	}
 #ifdef ENABLE_ANALOG
-	else if(key == CTRL_ANALOG)
+	else if(key == CTRL_ANALOG && config.img_enable_analog)
 	{
 		int x, y, orgtop = curtop, orgleft = curleft;
 		ctrl_analog(&x, &y);
@@ -944,6 +949,14 @@ next:
 	return -1;
 }
 
+double pspDiffTime(u64 *t1, u64 *t2)
+{
+	if(!t1 || !t2)
+		return 0.0;
+	double d = (*t1 - *t2) * 1.0 / sceRtcGetTickResolution();
+	return d;
+}
+
 dword scene_readimage(dword selidx)
 {
 	w2 = 0, h2 = 0, thumbw = 0, thumbh = 0, paintleft = 0, painttop = 0;
@@ -959,22 +972,39 @@ dword scene_readimage(dword selidx)
 	else
 		imgh = PSP_SCREEN_HEIGHT;
 	while(1) {
+		u64 dbgnow, dbglasttick;
+		char infomsg[80];
 		if(img_needrf)
 		{
+			sceRtcGetCurrentTick(&dbglasttick);
 			dword ret = scene_reloadimage(selidx);
 			if(ret == -1)
 				return selidx;
 			img_needrf = false;
+			sceRtcGetCurrentTick(&dbgnow);
+			sprintf(infomsg, "装载图像时间: %.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
+//			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+//			sceKernelDelayThread(100000);
 		}
 		if(img_needrc)
 		{
+			sceRtcGetCurrentTick(&dbglasttick);
 			scene_rotateimage();
 			img_needrc = false;
+			sceRtcGetCurrentTick(&dbgnow);
+			sprintf(infomsg, "旋转图像时间: %.2f秒",  pspDiffTime(&dbgnow, &dbglasttick));
+//			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+//			sceKernelDelayThread(100000);
 		}
 		if(img_needrp)
 		{
+			sceRtcGetCurrentTick(&dbglasttick);
 			scene_printimage();
+			sceRtcGetCurrentTick(&dbgnow);
 			img_needrp = false;
+			sprintf(infomsg, "绘制图像时间: %.2f秒",  pspDiffTime(&dbgnow, &dbglasttick));
+//			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+//			sceKernelDelayThread(100000);
 		}
 		now = time(NULL);
 		dword key = 0;
