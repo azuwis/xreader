@@ -47,7 +47,7 @@ static bool have_prompt = false;
 
 extern bool usb_activate()
 {
-	if(scePowerGetBusClockFrequency() < 100 && !have_prompt) {
+	if(scePowerGetBusClockFrequency() < 66 && !have_prompt) {
 		win_msg("USB转输时请提高总线频率以免传输失败(本提示不再提示)", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		have_prompt = true;
 	}
