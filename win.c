@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
 #include "display.h"
@@ -61,7 +62,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 	pixel * saveimage = NULL;
 	if(redraw)
 	{
-		saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
+		saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 		if(saveimage)
 			disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 		disp_duptocachealpha(50);
@@ -154,7 +155,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 extern bool win_msgbox(const char * prompt, const char * yesstr, const char * nostr, pixel fontcolor, pixel bordercolor, pixel bgcolor)
 {
 	dword width = strlen(prompt) * DISP_FONTSIZE / 4; dword yeswidth = strlen(yesstr) * (DISP_FONTSIZE / 2);
-	pixel * saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
+	pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if(saveimage)
 		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 	disp_duptocachealpha(50);
@@ -182,7 +183,7 @@ extern bool win_msgbox(const char * prompt, const char * yesstr, const char * no
 extern void win_msg(const char * prompt, pixel fontcolor, pixel bordercolor, pixel bgcolor)
 {
 	dword width = strlen(prompt) * DISP_FONTSIZE / 4;
-	pixel * saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
+	pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if(saveimage)
 		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 	disp_duptocachealpha(50);
