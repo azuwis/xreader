@@ -110,6 +110,10 @@ typedef struct {
 	byte attr;
 } __attribute__((aligned(16)))t_fat_info, * p_fat_info;
 
+void fat_lock();
+void fat_unlock();
+extern void fat_powerup();
+extern void fat_powerdown();
 extern bool fat_init();
 extern bool fat_locate(const char * name, char * sname, dword clus, p_fat_entry info);
 extern dword fat_readdir(const char * dir, char * sdir, p_fat_info * info);

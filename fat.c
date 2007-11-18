@@ -20,22 +20,52 @@ static enum {
 	fat16,
 	fat32
 } fat_type = fat16;
+static SceUID fat_sema;
+
+void fat_powerdown()
+{
+	fat_lock();
+	sceIoClose(fatfd);
+	fatfd = -1;
+}
+
+void fat_powerup()
+{
+	fatfd = sceIoOpen("msstor:", PSP_O_RDONLY, 0777);
+	fat_unlock();
+}
+
+void fat_lock()
+{
+	sceKernelWaitSema(fat_sema, 1, NULL);
+}
+
+void fat_unlock()
+{
+	sceKernelSignalSema(fat_sema, 1);
+}
 
 extern bool fat_init()
 {
+	fat_lock();
+	fat_sema = sceKernelCreateSema("FAT Sema", 0, 1, 1, NULL);
 	fatfd = sceIoOpen("msstor:", PSP_O_RDONLY, 0777);
-	if(fatfd < 0)
+	if(fatfd < 0) {
+		fat_unlock();
 		return false;
+	}
 	if(sceIoRead(fatfd, &mbr, sizeof(mbr)) != sizeof(mbr))
 	{
 		sceIoClose(fatfd);
 		fatfd = -1;
+		fat_unlock();
 		return false;
 	}
 	if(sceIoLseek(fatfd, mbr.dpt[0].start_sec * 0x200, PSP_SEEK_SET) != mbr.dpt[0].start_sec * 0x200 || sceIoRead(fatfd, &dbr, sizeof(dbr)) < sizeof(dbr))
 	{
 		sceIoClose(fatfd);
 		fatfd = -1;
+		fat_unlock();
 		return false;
 	}
 	// Add Vista Format fat32 support
@@ -66,6 +96,7 @@ extern bool fat_init()
 		data_pos = root_pos + dbr.root_entry * sizeof(t_fat_entry);
 	}
 	sceIoClose(fatfd);
+	fat_unlock();
 	return true;
 }
 
@@ -122,8 +153,9 @@ static bool fat_load_table()
 		return true;
 	}
 	fatfd = sceIoOpen("msstor:", PSP_O_RDONLY, 0777);
-	if(fatfd < 0)
+	if(fatfd < 0) {
 		return false;
+	}
 	if(sceIoLseek(fatfd, mbr.dpt[0].start_sec * 0x200 + dbr.reserved_sec * dbr.bytes_per_sec, PSP_SEEK_SET) != mbr.dpt[0].start_sec * 0x200 + dbr.reserved_sec * dbr.bytes_per_sec || (fat_table = (dword *)malloc(((fat_type == fat32) ? dbr.ufat.fat32.sec_per_fat : dbr.sec_per_fat) * dbr.bytes_per_sec)) == NULL)
 	{
 		sceIoClose(fatfd);
@@ -476,4 +508,5 @@ extern void fat_free()
 	loadcount = 0;
 	clus_max = 0;
 	fat_type = fat16;
+	sceKernelDeleteSema(fat_sema);
 }
