@@ -5,6 +5,7 @@
 #include <pspsdk.h>
 #include <psppower.h>
 #include <pspdisplay.h>
+#include "fat.h"
 #include "conf.h"
 #ifdef ENABLE_PMPAVC
 #include "avc.h"
@@ -63,10 +64,12 @@ static int power_callback(int arg1, int powerInfo, void * arg)
 	if((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0)
 	{
 		mp3_powerdown();
+		fat_powerdown();
 	}
 	else if((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0)
 	{
 		sceKernelDelayThread(1000000);
+		fat_powerup();
 		mp3_powerup();
 	}
 #endif
