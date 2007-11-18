@@ -42,13 +42,14 @@
 #include "scene_impl.h"
 #include "pspscreen.h"
 
-dword ctlkey[12], ctlkey2[12], ku, kd, kl, kr;
+dword ctlkey[13], ctlkey2[13], ku, kd, kl, kr;
 dword cidx, rrow = INVALID;
 volatile int ticks = 0;
 int rowtop = 0;
 char tr[8], * trow = NULL;
 bool text_needrf = true, text_needrp = true, text_needrb = false;
 char filename[256], archname[256];
+int autopage_prevsetting = 0;
 
 int scene_book_reload(dword selidx)
 {
@@ -425,6 +426,9 @@ void move_line_smooth(int inc)
 			rowtop += DISP_BOOK_FONTSIZE;
 			fs->crow --;
 		}
+		// prevent dither when config.autopage < 5
+		if(config.autopagetype == 1 && abs(config.autopage) < 5)
+			rowtop = DISP_BOOK_FONTSIZE + 1;
 	}
 	else if(rowtop >= DISP_BOOK_FONTSIZE + config.rowspace)
 	{
@@ -433,8 +437,8 @@ void move_line_smooth(int inc)
 			rowtop -= DISP_BOOK_FONTSIZE;
 			fs->crow ++;
 		}
-		// prevent dither when config.autolinestep < 5
-		if(config.autopagetype == 1 && config.autopage < 5)
+		// prevent dither when config.autopage < 5
+		if(config.autopagetype == 1 && abs(config.autopage) < 5)
 			rowtop = 0;
 	}
 	if(rowtop < 0 || rowtop >= DISP_BOOK_FONTSIZE + config.rowspace)
@@ -571,7 +575,7 @@ int book_handle_input(dword *selidx, dword key)
 			text_needrp = true;
 		}
 #ifdef ENABLE_ANALOG
-		else if(key == CTRL_ANALOG)
+		else if(key == CTRL_ANALOG && config.enable_analog)
 		{
 			int x, y;
 			ctrl_analog(&x, &y);
@@ -695,6 +699,15 @@ int book_handle_input(dword *selidx, dword key)
 				rrow = INVALID;
 			}
 		}
+		else if(key == ctlkey[12] || key == ctlkey2[12]) {
+			if(config.autopagetype == 2) {
+				config.autopagetype = autopage_prevsetting;
+			}
+			else {
+				autopage_prevsetting = config.autopagetype;
+				config.autopagetype = 2;
+			}
+		}
 		else
 			text_needrp = text_needrb = text_needrf = false;
 	// reset ticks
@@ -737,24 +750,29 @@ dword scene_readbook(dword selidx)
 			}
 #endif
 			if(config.autopage) {
-				if(config.autopagetype) {
-					if(++ticks >= config.autolinedelay) {
-						ticks = 0;
-						move_line_smooth(config.autopage);
-						// prevent LCD shut down by setting counter = 0
-						scePowerTick(0);
-						goto redraw;
-						delay = 0;
+				if(config.autopagetype != 2) {
+					if(config.autopagetype == 1) {
+						if(++ticks >= config.autolinedelay) {
+							ticks = 0;
+							move_line_smooth(config.autopage);
+							// prevent LCD shut down by setting counter = 0
+							scePowerTick(0);
+							goto redraw;
+							delay = 0;
+						}
 					}
-				}
-				else {
-					if(++ticks >= 50 * config.autopage) {
-						ticks = 0;
-						move_page_down(key, &selidx);
-						// prevent LCD shut down by setting counter = 0
-						scePowerTick(0);
-						goto redraw;
-						delay = 20000;
+					else {
+						if(++ticks >= 50 * abs(config.autopage)) {
+							ticks = 0;
+							if(config.autopage > 0)
+								move_page_down(key, &selidx);
+							else 
+								move_page_up(key, &selidx);
+							// prevent LCD shut down by setting counter = 0
+							scePowerTick(0);
+							goto redraw;
+							delay = 20000;
+						}
 					}
 				}
 			}
