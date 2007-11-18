@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -176,7 +177,7 @@ void scene_mp3_list()
 void scene_mp3bar()
 {
 	bool firstdup = true;
-	pixel * saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
+	pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if(saveimage != NULL)
 		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 	while(1)
@@ -195,7 +196,7 @@ void scene_mp3bar()
 		sceRtcGetCurrentClockLocalTime(&tm);
 		dword cpu, bus;
 		power_get_clock(&cpu, &bus);
-		sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d   剩余内存: %.1fMB", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus, sceKernelTotalFreeMemSize() / 1048576.0);
+		sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus);
 		disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE, (const byte *)timestr);
 		int percent, lifetime, tempe, volt;
 		char battstr[80];
