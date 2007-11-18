@@ -21,6 +21,7 @@ Optional features:
   --disable-ttf          disable ttf support [enable]
   --disable-pmpavc       disable pmpavc support [enable]
   --enable-debug         enable debug functions [disable]
+  --enable-ge			 enable ge library usage [enable]
 EOF
 exit 0
 }
@@ -45,6 +46,7 @@ _lyric=yes
 _ttf=yes
 _pmpavc=no
 _debug=no
+_ge=yes
 
 for ac_option do
   case "$ac_option" in
@@ -74,6 +76,8 @@ for ac_option do
   --disable-pmpavc)	_pmpavc=no	;;
   --enable-debug)	_debug=yes	;;
   --disable-debug)	_debug=no	;;
+  --enable-ge)	_ge=yes	;;
+  --disable-ge)	_ge=no	;;
   *)
     echo "Unknown parameter: $ac_option"
     exit 1
@@ -168,6 +172,12 @@ else
   _def_debug="#undef _DEBUG"
 fi
 
+if test "$_ge" = yes ; then
+  _def_ge="#define ENABLE_GE 1"
+else
+  _def_ge="#undef ENABLE_GE"
+fi
+
 echo "Creating config.mak"
 cat > config.mak << EOF
 $_build_prx
@@ -193,6 +203,7 @@ $_inc_lyric
 $_inc_ttf
 $_inc_pmpavc
 $_def_debug
+$_def_ge
 
 #endif
 EOF
