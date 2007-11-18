@@ -116,6 +116,8 @@ static void conf_default(p_conf conf)
 	conf->scrollbar = false;
 	conf->scale = 0;
 	conf->rotate = conf_rotate_0;
+	conf->enable_analog = true;
+	conf->img_enable_analog = true;
 	conf->txtkey[0] = PSP_CTRL_SQUARE;
 	conf->txtkey[1] = PSP_CTRL_LTRIGGER;
 	conf->txtkey[2] = PSP_CTRL_RTRIGGER;
@@ -128,6 +130,7 @@ static void conf_default(p_conf conf)
 	conf->txtkey[9] = 0;
 	conf->txtkey[10] = 0;
 	conf->txtkey[11] = PSP_CTRL_CROSS;
+	conf->txtkey[12] = 0;
 	conf->imgkey[0] = PSP_CTRL_LTRIGGER;
 	conf->imgkey[1] = PSP_CTRL_RTRIGGER;
 	conf->imgkey[2] = PSP_CTRL_TRIANGLE;
@@ -167,7 +170,7 @@ static void conf_default(p_conf conf)
 	conf->reordertxt = false;
 	conf->pagetonext = false;
 	conf->autopage = 0;
-	conf->autopagetype = 0;
+	conf->autopagetype = 2;
 	conf->autolinedelay = 0;
 	conf->thumb = conf_thumb_scroll;
 	conf->imgpagereserve = 0;

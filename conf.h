@@ -120,6 +120,8 @@ typedef struct {
 	int  autolinedelay;
 	bool thumb;
 	int bookfontsize;
+	int enable_analog;
+	int img_enable_analog;
 	dword txtkey2[20];
 	dword imgkey2[20];
 	dword flkey2[20];
