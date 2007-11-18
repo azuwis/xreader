@@ -2,6 +2,7 @@
 
 #if defined(ENABLE_IMAGE) || defined(ENABLE_BG)
 
+#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <png.h>
@@ -228,7 +229,7 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight, dword
 		ca = newangle - organgle;
 	if(ca == 0)
 		return;
-	pixel * newdata = malloc(sizeof(pixel) * *pwidth * *pheight);
+	pixel * newdata = memalign(16, sizeof(pixel) * *pwidth * *pheight);
 	if(newdata == NULL) {
 			win_msg("内存不足无法完成旋转!", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		return;
@@ -434,7 +435,7 @@ static int image_readpng2(void *infile, dword *pwidth, dword *pheight, pixel ** 
 		*bgcolor = RGB(info_ptr->background.red, info_ptr->background.green, info_ptr->background.blue);
 	}
 
-	if((*image_data = (pixel *)malloc(sizeof(pixel) * info_ptr->width * info_ptr->height)) == NULL)
+	if((*image_data = (pixel *)memalign(16, sizeof(pixel) * info_ptr->width * info_ptr->height)) == NULL)
 	{
 		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 		return 4;
@@ -648,7 +649,7 @@ static int image_readgif2(void * handle, dword *pwidth, dword *pheight, pixel **
 					DGifCloseFile(GifFileIn);
 					return 1;
 				}
-				if((*image_data = (pixel *)malloc(sizeof(pixel) * GifFileIn->Image.Width * GifFileIn->Image.Height)) == NULL)
+				if((*image_data = (pixel *)memalign(16, sizeof(pixel) * GifFileIn->Image.Width * GifFileIn->Image.Height)) == NULL)
 				{
 					free((void *)LineIn);
 					DGifCloseFile(GifFileIn);
@@ -855,7 +856,7 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 		jpeg_destroy_decompress(&cinfo);
 		return 4;
 	}
-	if((*image_data = (pixel *)malloc(sizeof(pixel) * cinfo.output_width * cinfo.output_height)) == NULL)
+	if((*image_data = (pixel *)memalign(16, sizeof(pixel) * cinfo.output_width * cinfo.output_height)) == NULL)
 	{
 		free((void *)sline);
 		jpeg_abort_decompress(&cinfo);
@@ -965,7 +966,7 @@ static int image_bmp_to_32color( DIB dib, dword * width, dword * height, pixel *
     RGBQUAD *palette;
 
     bi = (BITMAPINFOHEADER *)dib;
-	*imgdata = (pixel *)malloc(sizeof(pixel) * bi->biWidth * bi->biHeight);
+	*imgdata = (pixel *)memalign(16, sizeof(pixel) * bi->biWidth * bi->biHeight);
 	if(*imgdata == NULL)
 		return 1;
 
@@ -1173,7 +1174,7 @@ static int image_readtga2(void * handle, dword *pwidth, dword *pheight, pixel **
 	*pwidth = in->hdr.width;
 	*pheight = in->hdr.height;
 	*bgcolor = 0;
-	if((*image_data = (pixel *)malloc(sizeof(pixel) * *pwidth * *pheight)) == NULL)
+	if((*image_data = (pixel *)memalign(16, sizeof(pixel) * *pwidth * *pheight)) == NULL)
 	{
 		TGAClose(in);
 		image_freetgadata(data);
