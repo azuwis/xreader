@@ -1,5 +1,7 @@
 #include "config.h"
 
+#include <stdio.h>
+#include <win.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pspkernel.h>
@@ -24,6 +26,17 @@ static byte * cache = NULL;
 static void * ttfh = NULL;
 #endif
 
+typedef struct _VertexColor {
+	pixel color;
+	u16 x, y, z;
+} VertexColor;
+
+typedef struct _Vertex {
+	u16 u, v;
+	pixel color;
+	u16 x, y, z;
+} Vertex;
+
 #define DISP_RSPAN 0
 
 extern void disp_init()
@@ -36,6 +49,50 @@ extern void disp_init()
 	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_5551, PSP_DISPLAY_SETBUF_NEXTFRAME);
 #else
 	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
+#endif
+}
+
+unsigned int __attribute__((aligned(16))) list[262144];
+
+#ifdef ENABLE_GE
+extern void init_gu(void)
+{
+	sceGuInit();
+
+	sceGuStart(GU_DIRECT, list);
+	sceGuDrawBuffer(GU_PSM_8888, (void*)0 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES, 512);
+	sceGuDispBuffer(PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, (void*)0, 512);
+	sceGuDepthBuffer((void*)0 + (u32) 4 * 512 * PSP_SCREEN_HEIGHT + (u32) 2 * 512 * PSP_SCREEN_HEIGHT, 512);
+	sceGuOffset(2048 - (PSP_SCREEN_WIDTH/2),2048 - (PSP_SCREEN_HEIGHT/2));
+	sceGuViewport(2048,2048,PSP_SCREEN_WIDTH,PSP_SCREEN_HEIGHT);
+	sceGuDepthRange(65535,0);
+	sceGuScissor(0,0,PSP_SCREEN_WIDTH,PSP_SCREEN_HEIGHT);
+	sceGuEnable(GU_SCISSOR_TEST);
+	sceGuFrontFace(GU_CW);
+	sceGuClear(GU_COLOR_BUFFER_BIT|GU_DEPTH_BUFFER_BIT);
+	sceGuEnable(GU_TEXTURE_2D);
+	sceGuFinish();
+	sceGuSync(0,0);
+	
+	sceDisplayWaitVblankStart();
+	sceGuDisplay(1);
+}
+#endif
+
+extern void disp_putpixel(int x, int y, pixel color)
+{
+#ifndef ENABLE_GE
+	*(pixel*)disp_get_vaddr((x),(y)) = (color);
+#else
+	sceGuStart(GU_DIRECT, list);
+	VertexColor * vertices = (VertexColor *)sceGuGetMemory(sizeof(VertexColor));
+	vertices[0].color = color;
+	vertices[0].x = x;
+	vertices[0].y = y;
+	vertices[0].z = 0;
+	sceGuDrawArray(GU_POINTS, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 1, 0, vertices);
+	sceGuFinish();
+	sceGuSync(0,0);
 #endif
 }
 
@@ -609,6 +666,10 @@ extern void disp_free_font()
 #endif
 }
 
+#ifdef ENABLE_GE
+void *framebuffer = 0;
+#endif
+
 extern void disp_flip()
 {
 	vram_page ^= 1;
@@ -619,6 +680,9 @@ extern void disp_flip()
 	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_5551, PSP_DISPLAY_SETBUF_IMMEDIATE);
 #else
 	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_IMMEDIATE);
+#endif
+#ifdef ENABLE_GE
+	framebuffer = sceGuSwapBuffers();
 #endif
 }
 
@@ -633,6 +697,67 @@ extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf)
 	}
 }
 
+#ifndef ENABLE_GE
+extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx, int starty, int ow, int oh, pixel * buf, bool swizzled)
+{
+	int pitch = (w + 15) & ~15;
+	pixel * lines = disp_get_vaddr(x, y), * linesend = lines + (min(PSP_SCREEN_HEIGHT - y, h - starty) << 9);
+	buf = buf + starty * pitch + startx;
+	dword rw = min(512 - x, pitch - startx) * PIXEL_BYTES;
+	for(;lines < linesend; lines += 512)
+	{
+		memcpy(lines, buf, rw);
+		buf += w;
+	}
+}
+#else
+/**
+ * x: x 坐标
+ * y: y 坐标
+ * w: 图宽度
+ * h: 图高度
+ * bufw: 贴图线宽度
+ * startx: 开始x坐标
+ * starty: 开始y坐标 
+ * ow: ?
+ * oh: ?
+ * buf: 贴图缓存
+ * swizzled: 是否为为碎贴图
+ */
+extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx, int starty, int ow, int oh, pixel * buf, bool swizzled)
+{
+	sceGuStart(GU_DIRECT, list);
+	sceGuTexFilter(GU_LINEAR, GU_LINEAR);
+	sceGuShadeModel(GU_SMOOTH);
+	sceGuAmbientColor(0xFFFFFFFF);
+	Vertex* vertices = (Vertex*)sceGuGetMemory(2 * sizeof(Vertex));
+	sceGuTexMode(GU_PSM_8888, 0, 0, swizzled ? 1 : 0);
+	sceGuTexImage(0, 512, 512, bufw, buf);
+	sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA);
+	sceGuTexFilter(GU_LINEAR,GU_LINEAR);
+	vertices[0].u = startx;
+	vertices[0].v = starty;
+	vertices[0].x = x;
+	vertices[0].y = y;
+	vertices[0].z = 0;
+	vertices[0].color = 0;
+	vertices[1].u = startx + ((ow == 0) ? w : ow);
+	vertices[1].v = starty + ((oh == 0) ? h : oh);
+	vertices[1].x = x + w;
+	vertices[1].y = y + h;
+	vertices[1].z = 0;
+	vertices[1].color = 0;
+	sceGuDrawArray(GU_SPRITES, GU_TEXTURE_16BIT | GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vertices);
+	sceGuFinish();
+	sceGuSync(0, 0);
+}
+#endif
+
+
+// TODO: use Gu CopyImage
+// buf: 图像数据: 现在大小为(16-8对齐)
+// w: 要复制的宽度, 为图像
+// h: 要复制的高度
 extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx, dword starty, pixel * buf)
 {
 	pixel * lines = disp_get_vaddr(x, y), * linesend = lines + (min(PSP_SCREEN_HEIGHT - y, h - starty) << 9);
@@ -643,6 +768,7 @@ extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx, dwor
 		memcpy(lines, buf, rw);
 		buf += w;
 	}
+	return;
 }
 
 extern void disp_duptocache()
@@ -1358,6 +1484,7 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 
 extern void disp_fillvram(pixel color)
 {
+#ifndef ENABLE_GE 
 	pixel *vram, *vram_end;
 
 	if(color == 0 || color == (pixel)-1)
@@ -1365,10 +1492,18 @@ extern void disp_fillvram(pixel color)
 	else
 		for (vram = vram_start, vram_end = vram + 0x22000; vram < vram_end; vram ++)
 			* vram = color;
+#else
+	sceGuStart(GU_DIRECT, list);
+	sceGuClearColor(color);
+	sceGuClear(GU_COLOR_BUFFER_BIT);
+	sceGuFinish();
+	sceGuSync(0, 0);
+#endif
 }
 
 extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
+#ifndef ENABLE_GE
 	pixel * vsram, * vsram_end, * vram, * vram_end;
 	dword wdwords;
 	if(x1 > x2)
@@ -1385,10 +1520,32 @@ extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 	for(;vsram <= vsram_end; vsram += 512)
 		for(vram = vsram, vram_end = vram + wdwords; vram <= vram_end; vram ++)
 			* vram = color;
+#else
+	sceGuStart(GU_DIRECT,list);
+	VertexColor * vertices = (VertexColor*)sceGuGetMemory(2 * sizeof(VertexColor));
+
+	vertices[0].color = color;
+	vertices[0].x = x1;
+	vertices[0].y = y1;
+	vertices[0].z = 0;
+
+	vertices[1].color = color;
+	vertices[1].x = x2 + 1;
+	vertices[1].y = y2 + 1;
+	vertices[1].z = 0;
+
+	sceGuDisable(GU_TEXTURE_2D);
+	sceGuDrawArray(GU_SPRITES, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vertices);
+	sceGuEnable(GU_TEXTURE_2D);
+
+	sceGuFinish();
+	sceGuSync(0, 0);
+#endif
 }
 
 extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
+#ifndef ENABLE_GE
 	pixel *vsram, * vram, * vram_end;
 	if(x1 > x2)
 	{
@@ -1408,10 +1565,47 @@ extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 	for(vram_end = vram + (x2 - x1); vram < vram_end; vram ++)
 		* vram = color;
 	* vram = color;
+#else
+	sceGuStart(GU_DIRECT,list);
+	VertexColor * vertices = (VertexColor *)sceGuGetMemory(5 * sizeof(VertexColor));
+
+	vertices[0].color = color;
+	vertices[0].x = x1;
+	vertices[0].y = y1;
+	vertices[0].z = 0;
+
+	vertices[1].color = color;
+	vertices[1].x = x2; 
+	vertices[1].y = y1; 
+	vertices[1].z = 0;
+
+	vertices[2].color = color;
+	vertices[2].x = x2; 
+	vertices[2].y = y2; 
+	vertices[2].z = 0;
+
+	vertices[3].color = color;
+	vertices[3].x = x1; 
+	vertices[3].y = y2; 
+	vertices[3].z = 0;
+
+	vertices[4].color = color;
+	vertices[4].x = x1;
+	vertices[4].y = y1;
+	vertices[4].z = 0;
+
+	sceGuDisable(GU_TEXTURE_2D);
+	sceGuDrawArray(GU_LINE_STRIP, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 5, 0, vertices);
+	sceGuEnable(GU_TEXTURE_2D);
+
+	sceGuFinish();
+	sceGuSync(0, 0);
+#endif
 }
 
 extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
+#ifndef ENABLE_GE
 	pixel * vram;
 	int dy, dx, x, y, d;
 	dx = (int)x2 - (int)x1;
@@ -1499,4 +1693,25 @@ extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 			}
 		}
 	}
+#else
+	sceGuStart(GU_DIRECT,list);
+	VertexColor * vertices = (VertexColor *)sceGuGetMemory(2 * sizeof(VertexColor));
+
+	vertices[0].color = color;
+	vertices[0].x = x1;
+	vertices[0].y = y1;
+	vertices[0].z = 0;
+
+	vertices[1].color = color;
+	vertices[1].x = x2; 
+	vertices[1].y = y2; 
+	vertices[1].z = 0;
+
+	sceGuDisable(GU_TEXTURE_2D);
+	sceGuDrawArray(GU_LINES, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, vertices);
+	sceGuEnable(GU_TEXTURE_2D);
+
+	sceGuFinish();
+	sceGuSync(0,0);
+#endif
 }

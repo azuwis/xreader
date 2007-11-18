@@ -1,6 +1,9 @@
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
 
+#ifdef ENABLE_GE 
+#include <pspgu.h>
+#endif
 #include <pspdisplay.h>
 #include "common/datatype.h"
 
@@ -48,9 +51,9 @@ extern pixel * vram_start;
 
 #define disp_get_vaddr(x, y) (vram_start + (x) + ((y) << 9))
 
-#define disp_putpixel(x,y,c) *(pixel*)disp_get_vaddr((x),(y)) = (c)
-
+extern void disp_putpixel(int x, int y, pixel color);
 extern void disp_init();
+extern void init_gu(void);
 extern void disp_set_fontsize(int fontsize);
 extern void disp_set_book_fontsize(int fontsize);
 extern bool disp_has_zipped_font(const char * zipfile, const char * efont, const char * cfont);
@@ -65,6 +68,9 @@ extern void disp_assign_book_font();
 extern void disp_free_font();
 extern void disp_flip();
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf);
+#ifdef ENABLE_GE
+extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx, int starty, int ow, int oh, pixel * buf, bool swizzled);
+#endif
 extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx, dword starty, pixel * buf);
 extern void disp_duptocache();
 extern void disp_duptocachealpha(int percent);
