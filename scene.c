@@ -1,10 +1,12 @@
 #include "config.h"
 
+#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <pspsdk.h>
 #include <pspdebug.h>
 #include <pspkernel.h>
 #include <psppower.h>
@@ -65,19 +67,23 @@ int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex = 0, ttfsize 
 int offset = 0;
 
 int freq_list[][2] = {
-	{ 15, 54},
-	{ 33, 54},
-	{ 66, 54 },
-	{ 111, 111 },
-	{ 166, 111 },
+	{ 15,  33  },
+	{ 33,  16  },
+	{ 66,  33  },
+	{ 111, 55  },
+	{ 166, 83  },
 	{ 222, 111 },
-	{ 266, 111 },
+	{ 266, 133 },
 	{ 300, 150 },
 	{ 333, 166 }
 };
 
+extern bool use_prx_power_save;
+
 extern bool img_needrf, img_needrp, img_needrc;
 extern bool text_needrf, text_needrp, text_needrb;
+
+extern int autopage_prevsetting;
 
 t_win_menu_op exit_confirm()
 {
@@ -249,9 +255,9 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char keyname[256];
-	disp_rectangle(239 - DISP_FONTSIZE * 10, 128 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 144 + 6 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 10, 128 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 145 + 7 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 143 + 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 144 + 7 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(BUTTON_SETTING_PROMPT));
 	disp_line(240 - DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 	dword i;
@@ -271,7 +277,7 @@ void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex, dwor
 
 dword scene_txtkey(dword * selidx)
 {
-	t_win_menuitem item[12];
+	t_win_menuitem item[13];
 	strcpy(item[0].name, getmsgbyid(BOOKMARK_MENU_KEY));
 	strcpy(item[1].name, getmsgbyid(PREV_PAGE_KEY));
 	strcpy(item[2].name, getmsgbyid(NEXT_PAGE_KEY));
@@ -284,6 +290,7 @@ dword scene_txtkey(dword * selidx)
 	strcpy(item[9].name, getmsgbyid(PREV_FILE));
 	strcpy(item[10].name, getmsgbyid(NEXT_FILE));
 	strcpy(item[11].name, getmsgbyid(EXIT_KEY));
+	strcpy(item[12].name, "切换翻页");
 	dword i;
 	for(i = 0; i < NELEMS(item); i ++)
 	{
@@ -418,12 +425,22 @@ dword scene_flkey(dword * selidx)
 	return 0;
 }
 
+static const char * GetFileExt(const char * filename)
+{
+	const char * strExt = strrchr(filename, '.');
+	if(strExt == NULL)
+		return "";
+	else
+		return strExt;
+}
+
 int scene_filelist_compare_ext(void * data1, void * data2)
 {
-	t_fs_filetype ft1 = (t_fs_filetype)((p_win_menuitem)data1)->data, ft2 = (t_fs_filetype)((p_win_menuitem)data2)->data;
-	if(ft1 != ft2)
-		return ((int)ft1) - ((int)ft2);
-	return stricmp(((p_win_menuitem)data1)->compname, ((p_win_menuitem)data2)->compname);
+	const char *fn1 = ((p_win_menuitem)data1)->compname, *fn2 = ((p_win_menuitem)data2)->compname;
+	int cmp = stricmp(GetFileExt(fn1), GetFileExt(fn2));
+	if(cmp)
+		return cmp;
+	return stricmp(fn1, fn2);
 }
 
 int scene_filelist_compare_name(void * data1, void * data2)
@@ -542,6 +559,9 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 				config.imgbrightness = 0;
 			img_needrf = img_needrc = img_needrp = true;
 			break;
+		case 8:
+			config.img_enable_analog = !config.img_enable_analog;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_RIGHT:
@@ -591,6 +611,8 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 				config.imgbrightness = 100;
 			img_needrf = img_needrc = img_needrp = true;
 			break;
+		case 8:
+			config.img_enable_analog = !config.img_enable_analog;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_LTRIGGER:
@@ -649,11 +671,11 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char number[7];
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 133 + 3 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 134 + 4 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(IMG_OPT));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 132 + 3 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 133 + 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.bicubic ? getmsgbyid(IMG_OPT_CUBE) : getmsgbyid(IMG_OPT_LINEAR)));
 	memset(number, ' ', 4);
 	utils_dword2string(config.slideinterval, number, 4);
@@ -670,11 +692,12 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	char infomsg[80];
 	sprintf(infomsg, "%d%%", config.imgbrightness);
 	disp_putstring(240 + DISP_FONTSIZE, 130 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
+	disp_putstring(240 + DISP_FONTSIZE, 131 + 3 * DISP_FONTSIZE, COLOR_WHITE, config.img_enable_analog ? (const byte *) getmsgbyid(YES) : (const byte*) getmsgbyid(NO));
 }
 
 dword scene_ioptions(dword * selidx)
 {
-	t_win_menuitem item[8];
+	t_win_menuitem item[9];
 	dword i;
 	strcpy(item[0].name, getmsgbyid(IMG_OPT_ALGO));
 	strcpy(item[1].name, getmsgbyid(IMG_OPT_DELAY));
@@ -684,6 +707,7 @@ dword scene_ioptions(dword * selidx)
 	strcpy(item[5].name, getmsgbyid(IMG_OPT_REVERSE_WIDTH));
 	strcpy(item[6].name, getmsgbyid(IMG_OPT_THUMB_VIEW));
 	strcpy(item[7].name, getmsgbyid(IMG_OPT_BRIGHTNESS));
+	strcpy(item[8].name, "  启用类比键");
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1105,15 +1129,20 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 			config.pagetonext = !config.pagetonext;
 			break;
 		case 11:
-			config.autopagetype = !config.autopagetype;
+			if(--config.autopagetype < 0)
+				config.autopagetype = 2;
+			autopage_prevsetting = config.autopagetype;
 			break;
 		case 12:
-			if(--config.autopage < 0)
-				config.autopage = 0;
+			if(--config.autopage < -1000)
+				config.autopage = -1000;
 			break;
 		case 13:
 			if(--config.autolinedelay < 0)
 				config.autolinedelay = 0;
+			break;
+		case 14:
+			config.enable_analog = !config.enable_analog;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1178,7 +1207,8 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 			config.pagetonext = !config.pagetonext;
 			break;
 		case 11:
-			config.autopagetype = !config.autopagetype;
+			config.autopagetype = (config.autopagetype + 1) % 3;
+			autopage_prevsetting = config.autopagetype;
 			break;
 		case 12:
 			if(++config.autopage > 1000)
@@ -1187,6 +1217,9 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 13:
 			if(++config.autolinedelay > 1000)
 				config.autolinedelay = 1000;
+			break;
+		case 14:
+			config.enable_analog = !config.enable_analog;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1200,11 +1233,11 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char number[5];
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 139 + 8 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 140 + 9 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(READ_OPTION));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 138 + 8 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 139 + 9 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	memset(number, ' ', 4);
 	utils_dword2string(config.wordspace, number, 4);
 	disp_putstring(242, 124 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
@@ -1222,33 +1255,37 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_putstring(242 + DISP_FONTSIZE, 132 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autobm ? getmsgbyid(YES) : getmsgbyid(NO)));
 	disp_putstring(242 + DISP_FONTSIZE, 133 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.reordertxt ? getmsgbyid(YES) : getmsgbyid(NO)));
 	disp_putstring(242 + DISP_FONTSIZE, 134 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.pagetonext ? getmsgbyid(NEXT_ARTICLE) : getmsgbyid(NO_ACTION)));
-	if(config.autopagetype) {
+	if(config.autopagetype == 2) {
+		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"无");
+	}
+	else if(config.autopagetype == 1) {
 		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"自动滚屏");
 	}
 	else {
 		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"自动翻页");
 	}
 	if(config.autopage) {
-		memset(number, ' ', 4);
-		utils_dword2string(config.autopage, number, 4);
-		disp_putstring(242 + DISP_FONTSIZE, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+		char infomsg[80];
+		sprintf(infomsg, "%2d", config.autopage);
+		disp_putstring(242 + DISP_FONTSIZE, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
 	}
 	else {
 		disp_putstring(242 + DISP_FONTSIZE, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(HAVE_SHUTDOWN));
 	}
 	if(config.autolinedelay) {
 		memset(number, ' ', 4);
-		utils_dword2string(config.autolinedelay, number, 4);
+		utils_dword2string(config.autolinedelay, number, 2);
 		disp_putstring(242 + DISP_FONTSIZE, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
 	}
 	else {
 		disp_putstring(242 + DISP_FONTSIZE, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(HAVE_SHUTDOWN));
 	}
+	disp_putstring(242 + DISP_FONTSIZE, 138 + 8 * DISP_FONTSIZE, COLOR_WHITE, config.enable_analog ? (const byte *)getmsgbyid(YES) :  (const byte *)getmsgbyid(NO));
 }
 
 dword scene_boptions(dword * selidx)
 {
-	t_win_menuitem item[14];
+	t_win_menuitem item[15];
 	dword i;
 	strcpy(item[0].name, getmsgbyid(WORD_SPACE));
 	strcpy(item[1].name, getmsgbyid(LINE_SPACE));
@@ -1262,11 +1299,13 @@ dword scene_boptions(dword * selidx)
 	strcpy(item[9].name, getmsgbyid(TEXT_REALIGNMENT));
 	strcpy(item[10].name, getmsgbyid(TEXT_TAIL_PAGE_DOWN));
 	strcpy(item[11].name, "自动翻页模式");
-	if(config.autopagetype)
-		strcpy(item[12].name, getmsgbyid(AUTOLINE_STEP));
-	else
+	if(!config.autopagetype) {
 		strcpy(item[12].name, getmsgbyid(AUTOPAGE_DELAY));
+	}
+	else
+		strcpy(item[12].name, getmsgbyid(AUTOLINE_STEP));
 	strcpy(item[13].name, "    滚屏时间");
+	strcpy(item[14].name, "  启用类比键");
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -2236,8 +2275,8 @@ bool scene_bookmark(dword * orgp)
 void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd, dword * kl, dword * kr)
 {
 	dword i;
-	memcpy(ctlkey, config.txtkey, 12 * sizeof(dword));
-	memcpy(ctlkey2, config.txtkey2, 12 * sizeof(dword));
+	memcpy(ctlkey, config.txtkey, 13 * sizeof(dword));
+	memcpy(ctlkey2, config.txtkey2, 13 * sizeof(dword));
 	switch(config.vertread)
 	{
 	case 3:
@@ -2247,7 +2286,7 @@ void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd, d
 		*kr = PSP_CTRL_LEFT;
 		break;
 	case 2:
-		for (i = 0; i < 12; i ++)
+		for (i = 0; i < 13; i ++)
 		{
 			if((config.txtkey[i] & PSP_CTRL_LEFT) > 0)
 				ctlkey[i] = (ctlkey[i] & ~PSP_CTRL_LEFT) | PSP_CTRL_DOWN;
@@ -2272,7 +2311,7 @@ void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd, d
 		*kr = PSP_CTRL_UP;
 		break;
 	case 1:
-		for (i = 0; i < 12; i ++)
+		for (i = 0; i < 13; i ++)
 		{
 			if((config.txtkey[i] & PSP_CTRL_LEFT) > 0)
 				ctlkey[i] = (ctlkey[i] & ~PSP_CTRL_LEFT) | PSP_CTRL_UP;
@@ -2362,7 +2401,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 			return win_menu_op_continue;
 		if(selcount == 0)
 			item[selidx].selected = true;
-		pixel * saveimage = (pixel *)malloc(PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
+		pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 		if(saveimage)
 			disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 		disp_duptocachealpha(50);
@@ -3543,6 +3582,9 @@ extern void scene_init()
 #ifdef ENABLE_HPRM
 	ctrl_enablehprm(config.hprmctrl);
 #endif
+#ifdef ENABLE_GE
+	init_gu();
+#endif
 	disp_init();
 	disp_fillvram(0);
 	disp_flip();
@@ -3571,6 +3613,13 @@ extern void scene_init()
 #ifdef ENABLE_HPRM
 	mp3_set_hprm(!config.hprmctrl);
 #endif
+	if(sceKernelDevkitVersion() >= 0x03070110) {
+		char prxfn[256];
+		sprintf(prxfn, "%sxrPrx.prx", appdir);
+		SceUID uid = pspSdkLoadStartModule(prxfn, PSP_MEMORY_PARTITION_KERNEL);
+		if(uid >= 0)
+			use_prx_power_save = true;
+	}
 	scene_power_save(true);
 	mp3_set_cycle(config.mp3cycle);
 	if(config.autoplay)
@@ -3623,6 +3672,9 @@ extern void scene_exit()
 	ctrl_destroy();
 #ifdef _DEBUG
 	log_close();
+#endif
+#ifdef ENABLE_GE
+	sceGuTerm();
 #endif
 	sceKernelExitGame();
 }
