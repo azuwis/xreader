@@ -12101,7 +12101,8 @@ extern dword charsets_utf32_conv(const byte *ucs, byte *cjk)
 	int i = 0, j = 0;
 	if(cjk == NULL) cjk = (byte *)ucs;
 
-	while(*(ucs + i) != 0 || *(ucs + i + 1) != 0)
+	while(*(ucs + i) != 0 || *(ucs + i + 1) != 0 ||
+			*(ucs + i + 2) != 0 || *(ucs + i + 3) != 0)
 	{
 		j += gbk_wctomb(cjk + j, *(word *)(ucs + i), 2);
 		i += 4;
