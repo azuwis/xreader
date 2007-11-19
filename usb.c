@@ -10,6 +10,8 @@
 #include <win.h>
 #include "usb.h"
 
+static bool is_usb_inited = false;
+
 extern bool usb_open()
 {
 	sceKernelStartModule(kuKernelLoadModule("flash0:/kd/chkreg.prx", 0, NULL), 0, NULL, 0, NULL);
@@ -30,11 +32,16 @@ extern bool usb_open()
 	if (sceUsbstorBootSetCapacity( 0x800000 ) != 0)
 		return false;
 
+	is_usb_inited = true;
+
 	return true;
 }
 
 extern void usb_close()
 {
+	if(!is_usb_inited) {
+		usb_open();
+	}
 	if (usb_isactive())
 		usb_deactivate();
 
@@ -47,6 +54,9 @@ static bool have_prompt = false;
 
 extern bool usb_activate()
 {
+	if(!is_usb_inited) {
+		usb_open();
+	}
 	if(scePowerGetBusClockFrequency() < 66 && !have_prompt) {
 		win_msg("USB转输时请提高总线频率以免传输失败(本提示不再提示)", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		have_prompt = true;
@@ -59,6 +69,9 @@ extern bool usb_activate()
 
 extern bool usb_deactivate()
 {
+	if(!is_usb_inited) {
+		usb_open();
+	}
 	if (usb_isactive())
 		return (sceUsbDeactivate(0x1c8) == 0);
 
@@ -67,16 +80,28 @@ extern bool usb_deactivate()
 
 extern bool usb_isactive()
 {
+	if(!is_usb_inited) {
+		usb_open();
+	}
+	
 	return (sceUsbGetState() & PSP_USB_ACTIVATED);
 }
 
 extern bool usb_cableconnected()
 {
+	if(!is_usb_inited) {
+		usb_open();
+	}
+	
 	return (sceUsbGetState() & PSP_USB_CABLE_CONNECTED);
 }
 
 extern bool usb_connectionestablished()
 {
+	if(!is_usb_inited) {
+		usb_open();
+	}
+	
 	return (sceUsbGetState() & PSP_USB_CONNECTION_ESTABLISHED);
 }
 
