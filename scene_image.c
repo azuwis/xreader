@@ -10,7 +10,6 @@
 #include <psprtc.h>
 #include <pspkernel.h>
 #include <psppower.h>
-#include <psprtc.h>
 #include "display.h"
 #include "win.h"
 #include "ctrl.h"
@@ -869,6 +868,13 @@ int image_handle_input(dword *selidx, dword key)
 			curtop = h2 - imgh;
 		img_needrc = (config.fit == conf_fit_height);
 		img_needrp = true;
+		SceCtrlData ctl;
+		int t = 0;
+		do {
+			sceCtrlReadBufferPositive(&ctl,1);
+			sceKernelDelayThread(10000);
+			t += 10000;
+		} while (ctl.Buttons != 0 && t <= 500000);
 	}
 	else if(key == config.imgkey[9] || key == config.imgkey2[9] || key == CTRL_PLAYPAUSE)
 	{
