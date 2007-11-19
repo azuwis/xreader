@@ -14,7 +14,7 @@ enum {
 PSP_MODULE_INFO("xrPrx", PSP_MODULE_KERNEL, 1, 1);
 PSP_MAIN_THREAD_ATTR(0);
 
-int (* scePowerSetClockFrequency2)(int cpufreq, int ramfreq, int busfreq);
+int (* scePowerSetClockFrequency2)(int cpufreq, int ramfreq, int busfreq) = 0;
 
 unsigned long FindProc(const char* szMod, const char* szLib, unsigned long nid)
 {
@@ -81,7 +81,8 @@ void xrPlayerSetSpeed(int cpu, int bus)
 		inited = true;
 	}
 
-	scePowerSetClockFrequency2(cpu, cpu, bus);
+	if(scePowerSetClockFrequency2)
+		scePowerSetClockFrequency2(cpu, cpu, bus);
 	pspSdkSetK1(k);
 }
 
