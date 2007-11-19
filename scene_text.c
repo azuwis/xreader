@@ -158,7 +158,19 @@ int scene_printbook(dword selidx)
 				offset = offset / 1023 + 1;
 				disp_line(0, DISP_BOOK_FONTSIZE, 479, DISP_BOOK_FONTSIZE, config.forecolor);
 				utils_dword2string(fs->crow + 1, ci, 7);
-				sprintf(cr, "%s/%s  %s  %s  GI: %d", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset);
+				char autopageinfo[40];
+				if(config.autopagetype == 2)
+					autopageinfo[0] = 0;
+				else if(config.autopagetype == 1) {
+					sprintf(autopageinfo, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
+				}
+				else {
+					if(config.autopage != 0)
+						sprintf(autopageinfo, "每%d秒%s%s", abs(config.autopage), config.autopage > 0 ? "向前" : "向后", "自动翻页");
+					else
+						autopageinfo[0] = 0;
+				}
+				sprintf(cr, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
 				disp_putnstringreversal(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -284,7 +296,19 @@ int scene_printbook(dword selidx)
 				offset = offset / 1023 + 1;
 				disp_line(0, 271 - DISP_BOOK_FONTSIZE, 479, 271 - DISP_BOOK_FONTSIZE, config.forecolor);
 				utils_dword2string(fs->crow + 1, ci, 7);
-				sprintf(cr, "%s/%s  %s  %s  GI: %d", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset);
+				char autopageinfo[40];
+				if(config.autopagetype == 2)
+					autopageinfo[0] = 0;
+				else if(config.autopagetype == 1) {
+					sprintf(autopageinfo, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
+				}
+				else {
+					if(config.autopage != 0)
+						sprintf(autopageinfo, "每%d秒%s%s", abs(config.autopage), config.autopage > 0 ? "向前" : "向后", "自动翻页");
+					else
+						autopageinfo[0] = 0;
+				}
+				sprintf(cr, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
 				disp_putnstringhorz(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -707,6 +731,7 @@ int book_handle_input(dword *selidx, dword key)
 				autopage_prevsetting = config.autopagetype;
 				config.autopagetype = 2;
 			}
+			text_needrp = true;
 		}
 		else
 			text_needrp = text_needrb = text_needrf = false;
