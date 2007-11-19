@@ -14,8 +14,6 @@ enum {
 PSP_MODULE_INFO("xrPrx", PSP_MODULE_KERNEL, 1, 1);
 PSP_MAIN_THREAD_ATTR(0);
 
-int (* scePowerSetClockFrequency2)(int cpufreq, int ramfreq, int busfreq) = 0;
-
 unsigned long FindProc(const char* szMod, const char* szLib, unsigned long nid)
 {
 	unsigned int k = pspSdkSetK1(0);
@@ -70,6 +68,60 @@ unsigned long FindProc(const char* szMod, const char* szLib, unsigned long nid)
 	return 0;
 }
 
+int (* scePowerSetClockFrequency2)(int cpufreq, int ramfreq, int busfreq) = 0;
+int (* scePowerIsBatteryCharging)(void) = 0;
+void (* scePower_driver_A09FC577)(int) = 0;
+void (* scePower_driver_191A3848)(int) = 0;
+
+void xrPlayerSetSpeed(int cpu, int bus)
+{
+	unsigned int k = pspSdkSetK1(0);
+	static bool inited = false;
+
+	if(!inited)
+	{
+		scePowerSetClockFrequency2 = (void *)FindProc("scePower_Service", "scePower", 0x545A7F3C);
+		scePowerIsBatteryCharging = (void *)FindProc("scePower_Service", "scePower", 0x1E490401);
+		scePower_driver_A09FC577 = (void *)FindProc("scePower_Service", "scePower_driver", 0xA09FC577);
+		scePower_driver_191A3848 = (void *)FindProc("scePower_Service", "scePower_driver", 0x191A3848);
+		inited = true;
+	}
+
+	if(scePowerSetClockFrequency2 == 0 || scePowerIsBatteryCharging == 0 || scePower_driver_A09FC577 == 0 || scePower_driver_191A3848 == 0)
+	{
+		inited = false;
+		return;
+	}
+
+	scePowerSetClockFrequency2(cpu, cpu, bus);
+	if(scePowerIsBatteryCharging() != 0) {
+		pspSdkSetK1(k);
+		return;
+	}
+	static int ps1 = 0;
+	if(ps1 == 0)
+	{
+		scePower_driver_A09FC577(1);
+		ps1 = 1;
+		pspSdkSetK1(k);
+		return;
+	}
+
+	static int ps2 = 0;
+	if(ps2 == 0)
+	{
+		ps1 = 0;
+		ps2 = 1;
+		pspSdkSetK1(k);
+		return;
+	}
+	scePower_driver_191A3848(0);
+	ps1 = 0;
+	ps2 = 0;
+	pspSdkSetK1(k);
+}
+
+/*
 void xrPlayerSetSpeed(int cpu, int bus)
 {
 	unsigned int k = pspSdkSetK1(0);
@@ -85,6 +137,7 @@ void xrPlayerSetSpeed(int cpu, int bus)
 		scePowerSetClockFrequency2(cpu, cpu, bus);
 	pspSdkSetK1(k);
 }
+*/
 
 
 /* Entry point */
