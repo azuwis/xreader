@@ -12095,6 +12095,21 @@ static int charsets_bg5hk2cjk(const byte *big5hk, byte *cjk){
 	return transcount;
 }
 
+/* utf-32 (used in rar) string convert */
+extern dword charsets_utf32_conv(const byte *ucs, byte *cjk)
+{
+	int i = 0, j = 0;
+	if(cjk == NULL) cjk = (byte *)ucs;
+
+	while(*(ucs + i) != 0 || *(ucs + i + 1) != 0)
+	{
+		j += gbk_wctomb(cjk + j, *(word *)(ucs + i), 2);
+		i += 4;
+	}
+	cjk[j] = 0;
+	return j;
+}
+
 /* unicode string convert */
 extern dword charsets_ucs_conv(const byte *ucs, byte *cjk)
 {

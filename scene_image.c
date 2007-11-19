@@ -387,7 +387,7 @@ dword scene_rotateimage()
 	return 0;
 }
 
-int scene_printimage()
+int scene_printimage(int selidx)
 {
 	disp_waitv();
 	disp_fillvram(bgcolor);
@@ -403,7 +403,7 @@ int scene_printimage()
 		if(config.imginfobar)
 		{
 			disp_fillrect(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, 479, 271, 0);
-			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filename, 960 / DISP_FONTSIZE - ilen - 1, 0, 0, DISP_FONTSIZE, 0);
+			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filelist[selidx].name, 960 / DISP_FONTSIZE - ilen - 1, 0, 0, DISP_FONTSIZE, 0);
 			disp_putnstring(PSP_SCREEN_WIDTH - DISP_FONTSIZE / 2 * ilen, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
 		}
 		else
@@ -999,7 +999,7 @@ dword scene_readimage(dword selidx)
 		if(img_needrp)
 		{
 			sceRtcGetCurrentTick(&dbglasttick);
-			scene_printimage();
+			scene_printimage(selidx);
 			sceRtcGetCurrentTick(&dbgnow);
 			img_needrp = false;
 			sprintf(infomsg, "ªÊ÷∆ÕºœÒ ±º‰: %.2f√Î",  pspDiffTime(&dbgnow, &dbglasttick));

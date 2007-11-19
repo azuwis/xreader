@@ -450,10 +450,10 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 	item[0].selicolor = selicolor;
 	item[0].selrcolor = selrcolor;
 	item[0].selbcolor = selbcolor;
-	struct RARHeaderData header;
+	struct RARHeaderDataEx header;
 	do
 	{
-		if(RARReadHeader(hrar, &header) != 0)
+		if(RARReadHeaderEx(hrar, &header) != 0)
 			break;
 		if(header.UnpSize == 0)
 			continue;
@@ -468,9 +468,19 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 			item = *mitem;
 		}
 		item[cur_count].data = (void *)ft;
-		strcpy(item[cur_count].compname, header.FileName);
+		if(header.Flags & 0x200) {
+			char str[1024];
+			memset(str, 0, 1024);
+			const byte *uni = (byte*) header.FileNameW;
+			charsets_utf32_conv(uni, (byte*)str);
+			strcpy(item[cur_count].compname, header.FileName);
+			filename_to_itemname(item, cur_count, str);
+		}
+		else {
+			strcpy(item[cur_count].compname, header.FileName);
+			filename_to_itemname(item, cur_count, header.FileName);
+		}
 		sprintf(item[cur_count].shortname, "%u", (unsigned int)header.UnpSize);
-		filename_to_itemname(item, cur_count, header.FileName);
 		item[cur_count].selected = false;
 		item[cur_count].icolor = icolor;
 		item[cur_count].selicolor = selicolor;
