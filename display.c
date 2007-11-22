@@ -39,6 +39,25 @@ typedef struct _Vertex {
 
 #define DISP_RSPAN 0
 
+#define CHECK_AND_VALID(x, y) \
+{\
+	x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
+	y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
+}
+
+#define CHECK_AND_VALID_4(x1, y1, x2, y2) \
+{\
+	CHECK_AND_VALID(x1, y1);\
+	CHECK_AND_VALID(x2, y2);\
+}
+
+#define CHECK_AND_VALID_WH(x, y, w, h) \
+{\
+	CHECK_AND_VALID(x, y);\
+	w = x + w > PSP_SCREEN_WIDTH ? PSP_SCREEN_WIDTH - x : w; \
+	h = y + h > PSP_SCREEN_HEIGHT ? PSP_SCREEN_HEIGHT - y : h; \
+}
+
 extern void disp_init()
 {
 	sceDisplaySetMode(0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
@@ -81,6 +100,7 @@ extern void init_gu(void)
 
 extern void disp_putpixel(int x, int y, pixel color)
 {
+	CHECK_AND_VALID(x, y);
 #ifndef ENABLE_GE
 	*(pixel*)disp_get_vaddr((x),(y)) = (color);
 #else
@@ -688,6 +708,7 @@ extern void disp_flip()
 
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf)
 {
+	CHECK_AND_VALID_WH(x, y, w, h);
 	pixel * lines = vram_base + 0x40000000 / PIXEL_BYTES, * linesend = lines + (min(PSP_SCREEN_HEIGHT - y, h) << 9);
 	dword rw = min(512 - x, w) * PIXEL_BYTES;
 	for(;lines < linesend; lines += 512)
@@ -760,6 +781,7 @@ extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx, i
 // h: 要复制的高度
 extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx, dword starty, pixel * buf)
 {
+	CHECK_AND_VALID(x, y);
 	pixel * lines = disp_get_vaddr(x, y), * linesend = lines + (min(PSP_SCREEN_HEIGHT - y, h - starty) << 9);
 	buf = buf + starty * w + startx;
 	dword rw = min(512 - x, w - startx) * PIXEL_BYTES;
@@ -795,6 +817,7 @@ extern void disp_duptocachealpha(int percent)
 
 extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2)
 {
+	CHECK_AND_VALID_4(x1, y1, x2, y2);
 	pixel * lines = disp_get_vaddr(x1, y1), * linesend = disp_get_vaddr(x1, y2), * lined = vram_base + 0x40000000 / PIXEL_BYTES + x1 + (y1 << 9);
 	dword w = (x2 - x1 + 1) * PIXEL_BYTES;
 	for(;lines <= linesend; lines += 512, lined += 512)
@@ -803,6 +826,7 @@ extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2)
 
 extern void disp_rectduptocachealpha(dword x1, dword y1, dword x2, dword y2, int percent)
 {
+	CHECK_AND_VALID_4(x1, y1, x2, y2);
 	pixel * lines = disp_get_vaddr(x1, y1), * linesend = disp_get_vaddr(x1, y2), * lined = vram_base + 0x40000000 / PIXEL_BYTES + x1 + (y1 << 9);
 	dword w = x2 - x1 + 1;
 	for(;lines <= linesend; lines += 512, lined += 512)
@@ -1503,6 +1527,7 @@ extern void disp_fillvram(pixel color)
 
 extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
+	CHECK_AND_VALID_4(x1, y1, x2, y2);
 #ifndef ENABLE_GE
 	pixel * vsram, * vsram_end, * vram, * vram_end;
 	dword wdwords;
@@ -1545,6 +1570,7 @@ extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
+	CHECK_AND_VALID_4(x1, y1, x2, y2);
 #ifndef ENABLE_GE
 	pixel *vsram, * vram, * vram_end;
 	if(x1 > x2)
@@ -1605,6 +1631,7 @@ extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
+	CHECK_AND_VALID_4(x1, y1, x2, y2);
 #ifndef ENABLE_GE
 	pixel * vram;
 	int dy, dx, x, y, d;
