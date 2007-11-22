@@ -166,7 +166,7 @@ int scene_printbook(dword selidx)
 				}
 				else {
 					if(config.autopage != 0)
-						sprintf(autopageinfo, "每%d秒%s%s", abs(config.autopage), config.autopage > 0 ? "向前" : "向后", "自动翻页");
+						sprintf(autopageinfo, "自动翻页: 时间 %d", config.autopage);
 					else
 						autopageinfo[0] = 0;
 				}
@@ -197,7 +197,6 @@ int scene_printbook(dword selidx)
 			}
 			if(config.infobar == conf_infobar_info)
 			{
-				char soffset[8] = "        ";
 				int i;
 				offset = 0;
 				for(i=0; i<fs->crow && i<fs->row_count; ++i) {
@@ -206,10 +205,18 @@ int scene_printbook(dword selidx)
 					offset += tr->count;
 				}
 				offset = offset / 1023 + 1;
-				utils_dword2string(offset, soffset, 7);
 				disp_line(479 - DISP_BOOK_FONTSIZE, 0, 479 - DISP_BOOK_FONTSIZE, 271, config.forecolor);
 				utils_dword2string(fs->crow + 1, ci, 7);
-				sprintf(cr, "%s/%s  %s  %s %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, soffset);
+				char autopageinfo[40];
+				if(config.autopagetype == 2)
+					autopageinfo[0] = 0;
+				if(config.autopagetype == 1) {
+					sprintf(autopageinfo, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
+				}
+				if(config.autopagetype == 0) {
+					sprintf(autopageinfo, "翻页: 时%d", config.autopage);
+				}
+				sprintf(cr, "%s/%s  %s  %s  %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
 				disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -236,7 +243,6 @@ int scene_printbook(dword selidx)
 			}
 			if(config.infobar == conf_infobar_info)
 			{
-				char soffset[8] = "        ";
 				int i;
 				offset = 0;
 				for(i=0; i<fs->crow && i<fs->row_count; ++i) {
@@ -245,10 +251,18 @@ int scene_printbook(dword selidx)
 					offset += tr->count;
 				}
 				offset = offset / 1023 + 1;
-				utils_dword2string(offset, soffset, 7);
 				disp_line(DISP_BOOK_FONTSIZE, 0, DISP_BOOK_FONTSIZE, 271, config.forecolor);
 				utils_dword2string(fs->crow + 1, ci, 7);
-				sprintf(cr, "%s/%s  %s  %s %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, soffset);
+				char autopageinfo[40];
+				if(config.autopagetype == 2)
+					autopageinfo[0] = 0;
+				if(config.autopagetype == 1) {
+					sprintf(autopageinfo, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
+				}
+				if(config.autopagetype == 0) {
+					sprintf(autopageinfo, "翻页: 时%d", config.autopage);
+				}
+				sprintf(cr, "%s/%s  %s  %s  %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
 				disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, 0, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -304,7 +318,7 @@ int scene_printbook(dword selidx)
 				}
 				else {
 					if(config.autopage != 0)
-						sprintf(autopageinfo, "每%d秒%s%s", abs(config.autopage), config.autopage > 0 ? "向前" : "向后", "自动翻页");
+						sprintf(autopageinfo, "自动翻页: 时间 %d", config.autopage);
 					else
 						autopageinfo[0] = 0;
 				}
