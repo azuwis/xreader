@@ -13,7 +13,7 @@ extern void power_set_clock(dword cpu, dword bus)
 		xrPlayerSetSpeed(cpu, bus);
 		// 15Mhz can't use xrPlayerSetSpeed
 		if(cpu <= 15) {
-			scePowerSetBusClockFrequency(95);
+			power_set_clock(33, 16);
 			scePowerSetCpuClockFrequency(cpu);
 			scePowerSetBusClockFrequency(bus);
 		}
