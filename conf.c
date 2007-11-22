@@ -130,7 +130,7 @@ static void conf_default(p_conf conf)
 	conf->txtkey[9] = 0;
 	conf->txtkey[10] = 0;
 	conf->txtkey[11] = PSP_CTRL_CROSS;
-	conf->txtkey[12] = 0;
+	conf->txtkey[12] = PSP_CTRL_TRIANGLE;
 	conf->imgkey[0] = PSP_CTRL_LTRIGGER;
 	conf->imgkey[1] = PSP_CTRL_RTRIGGER;
 	conf->imgkey[2] = PSP_CTRL_TRIANGLE;
