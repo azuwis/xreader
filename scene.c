@@ -1610,8 +1610,9 @@ t_win_menu_op scene_musicopt_menucb(dword key, p_win_menuitem item, dword * coun
 #endif
 			break;
 		case 2:
-			config.lyricencode --;
-			if(config.lyricencode < 0)
+			if(config.lyricencode)
+				config.lyricencode --;
+			else
 				config.lyricencode = 4;
 			break;
 		}
