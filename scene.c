@@ -1609,6 +1609,11 @@ t_win_menu_op scene_musicopt_menucb(dword key, p_win_menuitem item, dword * coun
 			config.lyricex = 0;
 #endif
 			break;
+		case 2:
+			config.lyricencode --;
+			if(config.lyricencode < 0)
+				config.lyricencode = 4;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_RIGHT:
@@ -1629,6 +1634,11 @@ t_win_menu_op scene_musicopt_menucb(dword key, p_win_menuitem item, dword * coun
 			config.lyricex = 0;
 #endif
 			break;
+		case 2:
+			config.lyricencode ++;
+			if(config.lyricencode > 4)
+				config.lyricencode = 0;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_CIRCLE:
@@ -1641,11 +1651,11 @@ t_win_menu_op scene_musicopt_menucb(dword key, p_win_menuitem item, dword * coun
 void scene_musicopt_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char number[5];
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 127 - 3 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"选项  □按键设置");
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 123 - 3 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"音乐设置");
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 126 - 3 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 #ifdef ENABLE_MUSIC
 	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autoplay ? getmsgbyid(YES) : getmsgbyid(NO)));
 #else
@@ -1654,14 +1664,16 @@ void scene_musicopt_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	memset(number, ' ', 4);
 	utils_dword2string(config.lyricex * 2 + 1, number, 4);
 	disp_putstring(242, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_encodename(config.lyricencode));
 }
 
 dword scene_musicopt(dword * selidx)
 {
-	t_win_menuitem item[2];
+	t_win_menuitem item[3];
 	dword i;
 	strcpy(item[0].name, "自动开始播放");
 	strcpy(item[1].name, "歌词显示行数");
+	strcpy(item[2].name, "歌词显示编码");
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;

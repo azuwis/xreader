@@ -222,7 +222,9 @@ void scene_mp3bar()
 					{
 						if(ss[lidx] > cpl)
 							ss[lidx] = cpl;
-						disp_putnstring(6 + (cpl - ss[lidx]) * DISP_FONTSIZE / 4, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex) + (DISP_FONTSIZE + 1) * lidx + 1, (lidx == config.lyricex) ? COLOR_WHITE : RGB(0x7F, 0x7F, 0x7F), (const byte *)ly[lidx], ss[lidx], 0, 0, DISP_FONTSIZE, 0);
+						char t[BUFSIZ];
+						lyric_decode(ly[lidx], t, &ss[lidx]);
+						disp_putnstring(6 + (cpl - ss[lidx]) * DISP_FONTSIZE / 4, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex) + (DISP_FONTSIZE + 1) * lidx + 1, (lidx == config.lyricex) ? COLOR_WHITE : RGB(0x7F, 0x7F, 0x7F), (const byte *)t, ss[lidx], 0, 0, DISP_FONTSIZE, 0);
 					}
 			}
 		}
@@ -237,6 +239,10 @@ void scene_mp3bar()
 		else
 			sprintf(infostr, "%s", conf_get_cyclename(config.mp3cycle));
 		disp_putstring(6 + DISP_FONTSIZE, 263 - DISP_FONTSIZE * 4, COLOR_WHITE, (const byte *)"  SELECT 编辑列表   ←快速后退   →快速前进");
+		char lrctaginfo[80];
+		snprintf(lrctaginfo, 80, "%s  LRC  %s  ID3 %s", "  SELECT 编辑列表   ←快速后退   →快速前进", conf_get_encodename(config.lyricencode), conf_get_encodename(config.mp3encode));
+		disp_putnstring(6 + DISP_FONTSIZE, 263 - DISP_FONTSIZE * 4, COLOR_WHITE, (const byte *)lrctaginfo, (468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0, DISP_FONTSIZE, 0);
+		
 		disp_putstring(6 + DISP_FONTSIZE, 264 - DISP_FONTSIZE * 3, COLOR_WHITE, (const byte *)"○播放/暂停 ×循环 □停止 △曲名编码  L上一首  R下一首");
 		disp_putstring(6 + DISP_FONTSIZE, 265 - DISP_FONTSIZE * 2, COLOR_WHITE, (const byte *)infostr);
 		disp_putnstring(6 + DISP_FONTSIZE, 266 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)mp3_get_tag(), (468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0, DISP_FONTSIZE, 0);
@@ -267,9 +273,14 @@ void scene_mp3bar()
 				mp3_restart();
 				scene_power_save(true);
 				break;
-			case PSP_CTRL_TRIANGLE:
+			case (PSP_CTRL_LEFT | PSP_CTRL_TRIANGLE):
+				config.lyricencode ++;
+				if((dword)config.lyricencode > 4)
+					config.lyricencode = 0;
+				break;
+			case (PSP_CTRL_RIGHT | PSP_CTRL_TRIANGLE):
 				config.mp3encode ++;
-				if((dword)config.mp3encode > 3)
+				if((dword)config.mp3encode > 4)
 					config.mp3encode = 0;
 				mp3_set_encode(config.mp3encode);
 				break;

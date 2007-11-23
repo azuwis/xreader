@@ -7,6 +7,8 @@
 #include <string.h>
 #include "common/utils.h"
 #include <mad.h>
+#include "conf.h"
+#include "charsets.h"
 #include "lyric.h"
 
 __inline bool lyric_add(p_lyric l, dword sec, dword fra, const char * line, dword size)
@@ -272,6 +274,62 @@ extern bool lyric_check_changed(p_lyric l)
 	}
 	sceKernelSignalSema(l->sema, 1);
 	return false;
+}
+
+typedef dword ucs4_t;
+extern int charsets_bg5hk2cjk(const byte *big5hk, byte *cjk);
+extern int utf8_mbtowc(ucs4_t *pwc, const byte *s, int n);
+extern int gbk_wctomb(byte *r, ucs4_t wc, int n);
+
+extern t_conf config;
+
+void lyric_decode(const char* lrcsrc, char *lrcdst, dword* size)
+{
+	t_conf_encode enc = config.lyricencode;
+	switch(enc)
+	{
+		case conf_encode_gbk:
+			strncpy(lrcdst, lrcsrc, *size);
+			break;
+		case conf_encode_big5:
+			{
+				int ilen = strnlen((const char*)lrcsrc, *size);
+				int i = 0;
+				while(i < ilen)
+					i += charsets_bg5hk2cjk((const byte*)lrcsrc+i, (byte*)lrcdst+i);
+				lrcdst[i] = 0;
+			}
+			break;
+		case conf_encode_sjis:
+			{
+				byte * targ = NULL;
+				charsets_sjis_conv((const byte *)lrcsrc, (byte **)&targ, (dword*)size);
+				strncpy(lrcdst, (const char*)targ, *size);
+				free(targ);
+			}
+			break;
+		case conf_encode_utf8:
+			{
+				int i = 0, j = 0, l = strnlen((const char *)lrcsrc, *size);
+				while(i < l)
+				{
+					ucs4_t u = 0x1FFF;
+					int p = utf8_mbtowc(&u, (const byte*)lrcsrc + i, l - i);
+					if(p < 0)
+						break;
+					if(u > 0xFFFF)
+						u = 0x1FFF;
+					j += gbk_wctomb((byte*)lrcdst + j, u, 2);
+					i += p;
+				}
+				lrcdst[j] = 0;
+				*size = j;
+			}
+			break;
+		default:
+			strcpy(lrcdst, lrcsrc);
+			break;
+	}
 }
 
 #endif
