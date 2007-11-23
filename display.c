@@ -41,6 +41,8 @@ typedef struct _Vertex {
 
 #define CHECK_AND_VALID(x, y) \
 {\
+	x = (x < 0) ? 0 : x; \
+	y = (y < 0) ? 0 : y; \
 	x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
 	y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
 }
@@ -854,6 +856,8 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 			height = bot - y;
 	}
 
+	CHECK_AND_VALID(x, y);
+
 	while(*str != 0 && count > 0)
 	{
 		if(*str > 0x80)
@@ -952,6 +956,8 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, 
 		if(y + height > bot)
 			height = bot - y;
 	}
+
+	CHECK_AND_VALID(x, y);
 
 	x = PSP_SCREEN_WIDTH - x - 1, y = PSP_SCREEN_HEIGHT - y - 1;
 
@@ -1099,6 +1105,8 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 			height = bot - y;
 	}
 
+	CHECK_AND_VALID(x, y);
+
 	while(*str != 0 && count > 0)
 	{
 		if(*str > 0x80)
@@ -1240,6 +1248,8 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 			height = bot - x;
 	}
 
+	CHECK_AND_VALID(x, y);
+
 	while(*str != 0 && count > 0)
 	{
 		if(*str > 0x80)
@@ -1249,6 +1259,8 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
 			}
+			if(x >= PSP_SCREEN_WIDTH)
+				return;
 			vaddr = disp_get_vaddr(x, y);
 			dword pos = (((dword)(*str - 0x81)) * 0xBF + ((dword)(*(str + 1) - 0x40)));
 #ifdef ENABLE_TTF
@@ -1295,6 +1307,8 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
 			}
+			if(x >= PSP_SCREEN_WIDTH)
+				return;
 			vaddr = disp_get_vaddr(x, y);
 
 #ifdef ENABLE_TTF
@@ -1361,6 +1375,8 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
 			}
+			if(x >= PSP_SCREEN_WIDTH)
+				return;
 			str ++;
 			count --;
 			y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1372,6 +1388,8 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 {
 	pixel * vaddr;
 	const byte * ccur, * cend;
+
+	CHECK_AND_VALID(x, y);
 
 	if(x < bot)
 		return;
@@ -1387,7 +1405,10 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
 			}
+			if(x < 0)
+				return;
 			vaddr = disp_get_vaddr(x, y);
+			
 			dword pos = (((dword)(*str - 0x81)) * 0xBF + ((dword)(*(str + 1) - 0x40)));
 #ifdef ENABLE_TTF
 			if(use_ttf && !cache[pos])
@@ -1433,6 +1454,8 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
 			}
+			if(x < 0)
+				return;
 			vaddr = disp_get_vaddr(x, y);
 
 #ifdef ENABLE_TTF
