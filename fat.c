@@ -20,7 +20,7 @@ static enum {
 	fat16,
 	fat32
 } fat_type = fat16;
-static SceUID fat_sema;
+static SceUID fat_sema = -1;
 
 void fat_powerdown()
 {
@@ -47,8 +47,10 @@ void fat_unlock()
 
 extern bool fat_init()
 {
-	fat_lock();
 	fat_sema = sceKernelCreateSema("FAT Sema", 0, 1, 1, NULL);
+	if(fat_sema < 0)
+		return false;
+	fat_lock();
 	fatfd = sceIoOpen("msstor:", PSP_O_RDONLY, 0777);
 	if(fatfd < 0) {
 		fat_unlock();
