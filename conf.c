@@ -151,6 +151,7 @@ static void conf_default(p_conf conf)
 	conf->flkey[6] = PSP_CTRL_SQUARE;
 	conf->bicubic = true;
 	conf->mp3encode = conf_encode_gbk;
+	conf->lyricencode = conf_encode_gbk;
 	conf->mp3cycle = conf_cycle_repeat;
 	conf->isreading = false;
 	conf->slideinterval = 5;

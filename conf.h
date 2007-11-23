@@ -96,6 +96,7 @@ typedef struct {
 	dword borderspace;
 	char lastfile[256];
 	t_conf_encode mp3encode;
+	t_conf_encode lyricencode;
 	t_conf_cycle mp3cycle;
 	bool isreading;
 	char bgfile[256];
