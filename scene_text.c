@@ -183,7 +183,9 @@ int scene_printbook(dword selidx)
 				{
 					if(ss[0] > 960 / DISP_BOOK_FONTSIZE)
 						ss[0] = 960 / DISP_BOOK_FONTSIZE;
-					disp_putnstringreversal((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+					char t[BUFSIZ];
+					lyric_decode(ls[0], t, &ss[0]);
+					disp_putnstringreversal((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 			}
 #endif
@@ -229,7 +231,9 @@ int scene_printbook(dword selidx)
 				{
 					if(ss[0] > 544 / DISP_BOOK_FONTSIZE)
 						ss[0] = 544 / DISP_BOOK_FONTSIZE;
-					disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271 - (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+					char t[BUFSIZ];
+					lyric_decode(ls[0], t, &ss[0]);
+					disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271 - (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 			}
 #endif
@@ -275,7 +279,9 @@ int scene_printbook(dword selidx)
 				{
 					if(ss[0] > 544 / DISP_BOOK_FONTSIZE)
 						ss[0] = 544 / DISP_BOOK_FONTSIZE;
-					disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+					char t[BUFSIZ];
+					lyric_decode(ls[0], t, &ss[0]);
+					disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 			}
 #endif
@@ -335,7 +341,9 @@ int scene_printbook(dword selidx)
 				{
 					if(ss[0] > 960 / DISP_BOOK_FONTSIZE)
 						ss[0] = 960 / DISP_BOOK_FONTSIZE;
-					disp_putnstringhorz((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)ls[0], ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+					char t[BUFSIZ];
+					lyric_decode(ls[0], t, &ss[0]);
+					disp_putnstringhorz((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
 				}
 			}
 #endif
