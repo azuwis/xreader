@@ -11601,7 +11601,7 @@ static int shift_jisx0213_mbtowc (ucs4_t *pwc, const byte *s, int n)
 	}
 }
 
-static int utf8_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int utf8_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
 	byte c = s[0];
 
@@ -11672,7 +11672,7 @@ static int utf8_mbtowc(ucs4_t *pwc, const byte *s, int n)
 		return RET_ILSEQ;
 }
 
-static int utf16_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int utf16_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
 	ucs4_t state = istate;
 	int count = 0;
@@ -11704,7 +11704,7 @@ static int utf16_mbtowc(ucs4_t *pwc, const byte *s, int n)
 	return RET_TOOFEW(count);
 }
 
-static int utf16be_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int utf16be_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
 	int count = 0;
 	if (n >= 2) {
@@ -11728,7 +11728,7 @@ static int utf16be_mbtowc(ucs4_t *pwc, const byte *s, int n)
 }
 
 /* unicode <-> cjk */
-static int gbkext1_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int gbkext1_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
   byte c1 = s[0];
   if ((c1 >= 0x81 && c1 <= 0xa0)) {
@@ -11753,7 +11753,7 @@ static int gbkext1_mbtowc(ucs4_t *pwc, const byte *s, int n)
   return RET_ILSEQ;
 }
 
-static int gbkext2_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int gbkext2_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
   byte c1 = s[0];
   if ((c1 >= 0xa8 && c1 <= 0xfe)) {
@@ -11778,7 +11778,7 @@ static int gbkext2_mbtowc(ucs4_t *pwc, const byte *s, int n)
   return RET_ILSEQ;
 }
 
-static int gbkext_inv_wctomb(byte *r, ucs4_t wc, int n)
+int gbkext_inv_wctomb(byte *r, ucs4_t wc, int n)
 {
   if (n >= 2) {
     const Summary16 *summary = NULL;
@@ -11820,7 +11820,7 @@ static int gbkext_inv_wctomb(byte *r, ucs4_t wc, int n)
   return RET_TOOSMALL;
 }
 
-static int cp936ext_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int cp936ext_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
   byte c1 = s[0];
   if ((c1 == 0xa6) || (c1 == 0xa8)) {
@@ -11848,7 +11848,7 @@ static int cp936ext_mbtowc(ucs4_t *pwc, const byte *s, int n)
   return RET_ILSEQ;
 }
 
-static int cp936ext_wctomb(byte *r, ucs4_t wc, int n)
+int cp936ext_wctomb(byte *r, ucs4_t wc, int n)
 {
   if (n >= 2) {
     word c = 0;
@@ -11867,7 +11867,7 @@ static int cp936ext_wctomb(byte *r, ucs4_t wc, int n)
   return RET_TOOSMALL;
 }
 
-static int gb2312_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int gb2312_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
   byte c1 = s[0];
   if ((c1 >= 0x21 && c1 <= 0x29) || (c1 >= 0x30 && c1 <= 0x77)) {
@@ -11895,7 +11895,7 @@ static int gb2312_mbtowc(ucs4_t *pwc, const byte *s, int n)
   return RET_ILSEQ;
 }
 
-static int gb2312_wctomb(byte *r, ucs4_t wc, int n)
+int gb2312_wctomb(byte *r, ucs4_t wc, int n)
 {
   if (n >= 2) {
     const Summary16 *summary = NULL;
@@ -11933,7 +11933,7 @@ static int gb2312_wctomb(byte *r, ucs4_t wc, int n)
   return RET_TOOSMALL;
 }
 
-static int _gbk_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int _gbk_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
   byte c = *s;
 
@@ -11980,7 +11980,7 @@ static int _gbk_mbtowc(ucs4_t *pwc, const byte *s, int n)
   return RET_ILSEQ;
 }
 
-static int _gbk_wctomb(byte *r, ucs4_t wc, int n)
+int _gbk_wctomb(byte *r, ucs4_t wc, int n)
 {
   byte buf[2];
   int ret;
@@ -12037,7 +12037,7 @@ static int _gbk_wctomb(byte *r, ucs4_t wc, int n)
   return RET_ILUNI;
 }
 
-static int gbk_mbtowc(ucs4_t *pwc, const byte *s, int n)
+int gbk_mbtowc(ucs4_t *pwc, const byte *s, int n)
 {
   byte c = *s;
 
@@ -12053,7 +12053,7 @@ static int gbk_mbtowc(ucs4_t *pwc, const byte *s, int n)
   return RET_ILSEQ;
 }
 
-static int gbk_wctomb(byte *r, ucs4_t wc, int n)
+int gbk_wctomb(byte *r, ucs4_t wc, int n)
 {
   byte buf[2];
   int ret;
@@ -12080,7 +12080,7 @@ static int gbk_wctomb(byte *r, ucs4_t wc, int n)
 }
 
 /* bg5hk -> unicode */
-static int charsets_bg5hk2cjk(const byte *big5hk, byte *cjk){
+int charsets_bg5hk2cjk(const byte *big5hk, byte *cjk){
 	//if(cjk==NULL)cjk=jis;
 	int transcount = 0;
 
@@ -12203,7 +12203,7 @@ extern void charsets_big5_conv(const byte *big5, byte *cjk){
 }
 
 /* sjis -> unicode */
-static int charsets_sjis2cjk(const byte *jis, byte *cjk, int * pcount){
+int charsets_sjis2cjk(const byte *jis, byte *cjk, int * pcount){
 	dword iunic = 0x1fff;
 
 	*pcount = shift_jisx0213_mbtowc(&iunic, jis, 2);
