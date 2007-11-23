@@ -563,6 +563,8 @@ int image_handle_input(dword *selidx, dword key)
 #endif
 	else if(key == config.imgkey[1] || key == config.imgkey2[1] || key == CTRL_FORWARD)
 	{
+		if(config.imgpaging > conf_imgpaging_direct)
+			sceKernelDelayThread(200000);
 		switch(config.imgpaging)
 		{
 			case conf_imgpaging_updown:
@@ -685,6 +687,8 @@ int image_handle_input(dword *selidx, dword key)
 	}
 	else if(key == config.imgkey[0] || key == config.imgkey2[0] || key == CTRL_BACK)
 	{
+		if(config.imgpaging > conf_imgpaging_direct)
+			sceKernelDelayThread(200000);
 		switch(config.imgpaging)
 		{
 			case conf_imgpaging_updown:
