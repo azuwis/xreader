@@ -3695,10 +3695,8 @@ extern void scene_init()
 	sceRtcGetCurrentTick(&end);
 	if(printDebugInfo) 
 		printf("Load finished in %.2fs, press any key to continue\n", pspDiffTime(&end, &start));
-#ifdef _DEBUG
 	if(printDebugInfo) 
 		ctrl_waitany();
-#endif
 
 	disp_init();
 	disp_fillvram(0);
