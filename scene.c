@@ -44,6 +44,7 @@
 #include "scene_impl.h"
 #include "pspscreen.h"
 #include "msgresource.h"
+#include "dbg.h"
 
 #define NELEMS(a)       (sizeof (a) / sizeof ((a)[0]))
 
@@ -3486,17 +3487,34 @@ extern double pspDiffTime(u64 *t1, u64 *t2);
 #undef printf
 #define printf pspDebugScreenPrintf
 
+static const bool is_log = true;
+DBG *d = 0;
+
 extern void scene_init()
 {
+	char logfile[256];
+	getcwd(appdir, 256);
+	strcat(appdir, "/");
+	strcpy(logfile, appdir);
+	strcat(logfile, "log.txt");
 	bool printDebugInfo = false;
+	d = dbg_init();
+	dbg_open_psp_logfile(d, logfile);
+#ifdef _DEBUG
+	dbg_switch(d, 1);
+#else
+	dbg_switch(d, 0);
+#endif
+	dbg_printf(d, "¼ÇÂ¼¿ªÊ¼...");
 	power_set_clock(333, 166);
 	ctrl_init();
 	if(ctrl_read() == PSP_CTRL_LTRIGGER)
 		printDebugInfo = true;
 	if(printDebugInfo) {
 		pspDebugScreenInit();
-		printf("xReader now loading...\n");
+		dbg_open_psp(d);
 	}
+	dbg_printf(d, "xReader now loading...");
 	u64 dbgnow, dbglasttick;
 	u64 start, end;
 	sceRtcGetCurrentTick(&dbglasttick);
@@ -3506,8 +3524,7 @@ extern void scene_init()
 		usb_open();
 #endif
 	sceRtcGetCurrentTick(&dbgnow);
-	if(printDebugInfo) 
-		printf("usb_open(): %.2fs\n", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "usb_open(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 
 	sceRtcGetCurrentTick(&dbglasttick);
 	char fontzipfile[256], efontfile[256], cfontfile[256], conffile[256], locconf[256], bmfile[256]
@@ -3515,9 +3532,6 @@ extern void scene_init()
 		, mp3conf[256]
 #endif
 		;
-
-	getcwd(appdir, 256);
-	strcat(appdir, "/");
 #ifdef HOMEBREW_2XX
 	{
 		int i = 0, l = strlen(appdir);
@@ -3532,20 +3546,12 @@ extern void scene_init()
 	strcpy(config.path, "ms0:/");
 	strcpy(config.shortpath, "ms0:/");
 
-#ifdef _DEBUG
-	char logfile[256];
-	strcpy(logfile, appdir);
-	strcat(logfile, "ereader.log");
-	log_open(logfile);
-#endif
-
 	strcpy(conffile, appdir);
 	strcat(conffile, "ereader.conf");
 	conf_set_file(conffile);
 	conf_load(&config);
 	sceRtcGetCurrentTick(&dbgnow);
-	if(printDebugInfo) 
-		printf("conf_load() etc: %.2fs\n", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "conf_load() etc: %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 
 #ifdef ENABLE_BG
 	if(config.bgfile[0] == 0)
@@ -3556,8 +3562,7 @@ extern void scene_init()
 	sceRtcGetCurrentTick(&dbglasttick);
 	bg_load(config.bgfile, config.bgcolor, fs_file_get_type(config.bgfile), config.grayscale);
 	sceRtcGetCurrentTick(&dbgnow);
-	if(printDebugInfo) 
-		printf("bg_load(): %.2fs\n", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "bg_load(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 #endif
 
 	strcpy(fontzipfile, appdir);
@@ -3608,8 +3613,7 @@ extern void scene_init()
 			}
 		}
 		sceRtcGetCurrentTick(&dbgnow);
-		if(printDebugInfo) 
-			printf("has_font(%d): %.2f second\n", _fsize, pspDiffTime(&dbgnow, &dbglasttick));
+		dbg_printf(d, "has_font(%d): %.2f second", _fsize, pspDiffTime(&dbgnow, &dbglasttick));
 	}
 	sceRtcGetCurrentTick(&dbglasttick);
 	if(fontcount == 0 || !scene_load_font() || !scene_load_book_font())
@@ -3627,8 +3631,7 @@ extern void scene_init()
 	pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) - config.borderspace * 2;
 
 	sceRtcGetCurrentTick(&dbgnow);
-	if(printDebugInfo) 
-		printf("scene_load_font() & scene_load_book_font(): %.2f second\n", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "scene_load_font() & scene_load_book_font(): %.2f second", pspDiffTime(&dbgnow, &dbglasttick));
 	sceRtcGetCurrentTick(&dbglasttick);
 #ifdef ENABLE_HPRM
 	ctrl_enablehprm(config.hprmctrl);
@@ -3646,15 +3649,13 @@ extern void scene_init()
 	location_init(locconf, locaval);
 
 	sceRtcGetCurrentTick(&dbgnow);
-	if(printDebugInfo) 
-		printf("misc_init(): %.2f second\n", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "misc_init(): %.2f second", pspDiffTime(&dbgnow, &dbglasttick));
 
 #ifdef ENABLE_MUSIC
 	sceRtcGetCurrentTick(&dbglasttick);
 	mp3_init();
 	sceRtcGetCurrentTick(&dbgnow);
-	if(printDebugInfo) 
-		printf("mp3_init(): %.2fs\n", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "mp3_init(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 
 	strcpy(mp3conf, appdir);
 	strcat(mp3conf, "music.lst");
@@ -3662,8 +3663,7 @@ extern void scene_init()
 		sceRtcGetCurrentTick(&dbglasttick);
 		mp3_list_add_dir("ms0:/MUSIC/");
 		sceRtcGetCurrentTick(&dbgnow);
-		if(printDebugInfo) 
-			printf("mp3_list_add_dir(): %.2fs\n", pspDiffTime(&dbgnow, &dbglasttick));
+		dbg_printf(d, "mp3_list_add_dir(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 	}
 	sceRtcGetCurrentTick(&dbglasttick);
 	mp3_start();
@@ -3675,8 +3675,7 @@ extern void scene_init()
 	if(config.autoplay)
 		mp3_resume();
 	sceRtcGetCurrentTick(&dbgnow);
-	if(printDebugInfo) 
-		printf("mp3_start() etc: %.2fs\n", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "mp3_start() etc: %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 #endif
 
 	sceRtcGetCurrentTick(&dbglasttick);
@@ -3689,12 +3688,10 @@ extern void scene_init()
 	}
 	scene_power_save(true);
 	sceRtcGetCurrentTick(&dbgnow);
-	if(printDebugInfo) 
-		printf("pspSdkLoadStartModule(): %.2fs\n", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "pspSdkLoadStartModule(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 	
 	sceRtcGetCurrentTick(&end);
-	if(printDebugInfo) 
-		printf("Load finished in %.2fs, press any key to continue\n", pspDiffTime(&end, &start));
+	dbg_printf(d, "Load finished in %.2fs, press any key to continue", pspDiffTime(&end, &start));
 	if(printDebugInfo) 
 		ctrl_waitany();
 
@@ -3708,6 +3705,16 @@ extern void scene_init()
 
 extern void scene_exit()
 {
+	/*
+	const char* log = dbg_get_memorylog();
+	if(log) {
+		SceUID fd = sceIoOpen("ms0:/log.txt", PSP_O_WRONLY | PSP_O_CREAT, 0777);
+		if(fd >= 0) {
+			sceIoWrite(fd, log, strlen(log));
+		}
+	}
+	*/
+	dbg_close(d);
 	power_set_clock(222, 111);
 	if(bm != NULL)
 	{
