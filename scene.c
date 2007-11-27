@@ -38,7 +38,6 @@
 #include "avc.h"
 #endif
 #include "version.h"
-#include "common/log.h"
 #include "common/qsort.h"
 #include "common/utils.h"
 #include "scene_impl.h"
@@ -2995,7 +2994,10 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	}
 #endif
 	disp_fillrect(0, 0, 479, DISP_FONTSIZE - 1, 0);
-	disp_putstring(0, 0, COLOR_WHITE, (const byte *)EREADER_VERSION_STR_LONG);
+	char infomsg[80];
+	strcpy(infomsg, EREADER_VERSION_STR_LONG);
+	strcat(infomsg, " µ÷ÊÔ°æ");
+	disp_putstring(0, 0, COLOR_WHITE, (const byte *)infomsg);
 	disp_line(0, DISP_FONTSIZE, 479, DISP_FONTSIZE, COLOR_WHITE);
 	disp_rectangle(239 - WRR * DISP_FONTSIZE, 138 - (HRR + 1) * (DISP_FONTSIZE + 1), 243 + WRR * DISP_FONTSIZE, 141 + HRR * (DISP_FONTSIZE + 1), COLOR_WHITE);
 	disp_fillrect(240 - WRR * DISP_FONTSIZE, 139 - (HRR + 1) * (DISP_FONTSIZE + 1), 242 + WRR * DISP_FONTSIZE, 137 - HRR * (DISP_FONTSIZE + 1), RGB(0x30, 0x60, 0x30));
@@ -3754,9 +3756,6 @@ extern void scene_exit()
 	usb_close();
 #endif
 	ctrl_destroy();
-#ifdef _DEBUG
-	log_close();
-#endif
 #ifdef ENABLE_GE
 	sceGuTerm();
 #endif
