@@ -74,7 +74,7 @@ for ac_option do
   --disable-ttf)	_ttf=no		;;
   --enable-pmpavc)	_pmpavc=yes	;;
   --disable-pmpavc)	_pmpavc=no	;;
-  --enable-debug)	_debug=yes	;;
+  --enable-debug)	_debug=yes;_usb=no	;;
   --disable-debug)	_debug=no	;;
   --enable-ge)	_ge=yes	;;
   --disable-ge)	_ge=no	;;
