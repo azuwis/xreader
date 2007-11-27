@@ -40,6 +40,7 @@
 #include "common/utils.h"
 #include "scene_impl.h"
 #include "pspscreen.h"
+#include "dbg.h"
 
 dword ctlkey[13], ctlkey2[13], ku, kd, kl, kr;
 dword cidx, rrow = INVALID;
@@ -84,14 +85,18 @@ int scene_book_reload(dword selidx)
 		fs = NULL;
 	}
 	scene_power_save(false);
-	if(where == scene_in_zip)
+	if(where == scene_in_zip && ((t_fs_filetype)filelist[selidx].data == fs_filetype_txt || (t_fs_filetype)filelist[selidx].data == fs_filetype_html))
 		fs = text_open_in_zip(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
+	else if(where == scene_in_zip)
+		fs = text_open_binary_in_zip(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt, config.vertread);
 	else if(where == scene_in_gz)
 		fs = text_open_in_gz(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_chm)
 		fs = text_open_in_chm(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
-	else if(where == scene_in_rar)
+	else if(where == scene_in_rar && ((t_fs_filetype)filelist[selidx].data == fs_filetype_txt || (t_fs_filetype)filelist[selidx].data == fs_filetype_html))
 		fs = text_open_in_rar(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
+	else if(where == scene_in_rar) 
+		fs = text_open_binary_in_rar(config.shortpath, filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt, config.vertread);
 	else if((t_fs_filetype)filelist[selidx].data == fs_filetype_unknown)
 	{
 		int t = config.vertread;
