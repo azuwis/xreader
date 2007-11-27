@@ -16,6 +16,11 @@
 #include <setjmp.h>
 #include "win.h"
 #include "image.h"
+#include <psprtc.h>
+#include "DBG.h"
+#include "conf.h"
+
+extern t_conf config;
 
 /* 
 #define PB  (1.0f/3.0f)
@@ -818,6 +823,7 @@ static void output_no_message(j_common_ptr cinfo)
 
 static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor, jpeg_fread jfread)
 {
+	u64 dbglasttick, dbgnow;
 	struct jpeg_decompress_struct cinfo;
 	struct jpeg_error_mgr jerr;
 	JSAMPROW sline;
@@ -842,11 +848,14 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 	cinfo.scale_denom = 1;
 	cinfo.dct_method = JDCT_FASTEST;
 	cinfo.do_fancy_upsampling = FALSE;
+	sceRtcGetCurrentTick(&dbglasttick);
 	if(!jpeg_start_decompress(&cinfo))
 	{
 		jpeg_destroy_decompress(&cinfo);
 		return 3;
 	}
+	sceRtcGetCurrentTick(&dbgnow);
+	dbg_printf(d, "解压JPG完成耗时:%.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
 	*bgcolor = 0;
 	*pwidth = cinfo.output_width;
 	*pheight = cinfo.output_height;
@@ -863,14 +872,32 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 		jpeg_destroy_decompress(&cinfo);
 		return 5;
 	}
+	sceRtcGetCurrentTick(&dbglasttick);
 	pixel * imgdata = *image_data;
-	while(cinfo.output_scanline < cinfo.output_height)
-	{
-		int i;
-		jpeg_read_scanlines(&cinfo, &sline, (JDIMENSION) 1);
-		for(i = 0; i < cinfo.output_width; i ++)
-			*imgdata++ = RGB(sline[i * 3], sline[i * 3 + 1], sline[i * 3 + 2]);
+
+	if(config.imgbrightness != 100) {
+		while(cinfo.output_scanline < cinfo.output_height)
+		{
+			int i;
+			jpeg_read_scanlines(&cinfo, &sline, (JDIMENSION) 1);
+			int bright = 100 - config.imgbrightness;
+			for(i = 0; i < cinfo.output_width; i ++) {
+				*imgdata++ = disp_grayscale(RGB(sline[i * 3], sline[i * 3 + 1], sline[i * 3 + 2]), 0, 0, 0, bright);
+			}
+		}
 	}
+	else {
+		while(cinfo.output_scanline < cinfo.output_height)
+		{
+			int i;
+			jpeg_read_scanlines(&cinfo, &sline, (JDIMENSION) 1);
+			for(i = 0; i < cinfo.output_width; i ++) {
+				*imgdata++ = RGB(sline[i * 3], sline[i * 3 + 1], sline[i * 3 + 2]);
+			}
+		}
+	}
+	sceRtcGetCurrentTick(&dbgnow);
+	dbg_printf(d, "提取扫描线完成耗时:%.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
 	free((void *)sline);
 	jpeg_finish_decompress(&cinfo);
 	jpeg_destroy_decompress(&cinfo);
@@ -922,12 +949,14 @@ extern int image_readjpg_in_chm(const char * chmfile, const char * filename, dwo
 
 extern int image_readjpg_in_rar(const char * rarfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
 {
+	u64 dbglasttick, dbgnow;
 	t_image_rar rar;
 	struct RAROpenArchiveData arcdata;
 	arcdata.ArcName = (char *)rarfile;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
 	arcdata.CmtBuf = NULL;
 	arcdata.CmtBufSize = 0;
+	sceRtcGetCurrentTick(&dbglasttick);
 	HANDLE hrar = RAROpenArchive(&arcdata);
 	if(hrar == NULL)
 		return -1;
@@ -948,6 +977,8 @@ extern int image_readjpg_in_rar(const char * rarfile, const char * filename, dwo
 			}
 			RARCloseArchive(hrar);
 			rar.idx = 0;
+			sceRtcGetCurrentTick(&dbgnow);
+			dbg_printf(d, "找到RAR中JPG文件耗时%.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
 			int result = image_readjpg2((FILE *)&rar, pwidth, pheight, image_data, bgcolor, image_rar_fread);
 			free((void *)rar.buf);
 			return result;
