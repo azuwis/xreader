@@ -2996,7 +2996,9 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_fillrect(0, 0, 479, DISP_FONTSIZE - 1, 0);
 	char infomsg[80];
 	strcpy(infomsg, EREADER_VERSION_STR_LONG);
+#ifdef _DEBUG
 	strcat(infomsg, " µ÷ÊÔ°æ");
+#endif
 	disp_putstring(0, 0, COLOR_WHITE, (const byte *)infomsg);
 	disp_line(0, DISP_FONTSIZE, 479, DISP_FONTSIZE, COLOR_WHITE);
 	disp_rectangle(239 - WRR * DISP_FONTSIZE, 138 - (HRR + 1) * (DISP_FONTSIZE + 1), 243 + WRR * DISP_FONTSIZE, 141 + HRR * (DISP_FONTSIZE + 1), COLOR_WHITE);
