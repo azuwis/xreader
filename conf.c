@@ -162,7 +162,7 @@ static void conf_default(p_conf conf)
 	conf->showfinfo = true;
 	conf->allowdelete = true;
 	conf->arrange = conf_arrange_ext;
-	conf->enableusb = true;
+	conf->enableusb = false;
 	conf->viewpos = conf_viewpos_leftup;
 	conf->imgmvspd = 8;
 	conf->imgpaging = conf_imgpaging_direct;
