@@ -205,18 +205,17 @@ void recalc_brightness()
 	int i;
 	if(imgdata) {
 		pixel *t = imgdata;
-		short b = config.imgbrightness;
+		short b = 100 - config.imgbrightness;
 		for(i = 0; i < height * width; i ++)
 		{
-			pixel x = RGB(RGB_R(*t) * b / 100, RGB_G(*t) * b / 100, RGB_B(*t) * b / 100);
-			*t++ = x;
+			*t = disp_grayscale(*t, 0, 0, 0, b);
+			t++;
 		}
 	}
 }
 
 int scene_reloadimage(dword selidx)
 {
-//	u64 dbglasttick, dbgnow;
 	scene_power_save(false);
 	reset_image_ptr();
 	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
@@ -231,6 +230,9 @@ int scene_reloadimage(dword selidx)
 	{
 		report_image_error(result);
 		return -1;
+	}
+	if(config.imgbrightness != 100) {
+		recalc_brightness();
 	}
 	strcpy(config.lastfile, filelist[selidx].compname);
 	oldangle = 0;
@@ -972,9 +974,9 @@ dword scene_readimage(dword selidx)
 	else
 		imgh = PSP_SCREEN_HEIGHT;
 	while(1) {
+		u64 dbgnow, dbglasttick;
 		if(img_needrf)
 		{
-			u64 dbgnow, dbglasttick;
 			sceRtcGetCurrentTick(&dbglasttick);
 			dword ret = scene_reloadimage(selidx);
 			if(ret == -1)
@@ -985,7 +987,6 @@ dword scene_readimage(dword selidx)
 		}
 		if(img_needrc)
 		{
-			u64 dbgnow, dbglasttick;
 			sceRtcGetCurrentTick(&dbglasttick);
 			scene_rotateimage();
 			img_needrc = false;
@@ -994,11 +995,8 @@ dword scene_readimage(dword selidx)
 		}
 		if(img_needrp)
 		{
-//			sceRtcGetCurrentTick(&dbglasttick);
 			scene_printimage(selidx);
-//			sceRtcGetCurrentTick(&dbgnow);
 			img_needrp = false;
-//			dbg_printf(d, "»æÖÆÍ¼ÏñÊ±¼ä: %.2fÃë",  pspDiffTime(&dbgnow, &dbglasttick));
 		}
 		now = time(NULL);
 		dword key = 0;
