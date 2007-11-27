@@ -13,6 +13,7 @@
 #include "html.h"
 #include "text.h"
 #include "kubridge.h"
+#include "DBG.h"
 
 static void text_decode(p_text txt, t_conf_encode encode)
 {
@@ -381,6 +382,104 @@ extern p_text text_open_in_gz(const char * gzfile, const char * filename, t_fs_f
 	return txt;
 }
 
+extern p_text text_open_binary_in_zip(const char * zipfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder, bool vert)
+{
+	p_text txt = (p_text)calloc(1, sizeof(t_text));
+	if(txt == NULL)
+		return NULL;
+	unzFile unzf = unzOpen(zipfile);
+	if(unzf == NULL)
+	{
+		text_close(txt);
+		return NULL;
+	}
+	if(unzLocateFile(unzf, filename, 0) != UNZ_OK || unzOpenCurrentFile(unzf) != UNZ_OK)
+	{
+		text_close(txt);
+		unzClose(unzf);
+		return NULL;
+	}
+	strcpy(txt->filename, filename);
+	unz_file_info info;
+	if(unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK)
+	{
+		text_close(txt);
+		unzCloseCurrentFile(unzf);
+		unzClose(unzf);
+		return NULL;
+	}
+	txt->size = info.uncompressed_size;
+	if((txt->buf = (char *)calloc(1, txt->size)) == NULL)
+	{
+		text_close(txt);
+		unzCloseCurrentFile(unzf);
+		unzClose(unzf);
+		return NULL;
+	}
+	txt->size = unzReadCurrentFile(unzf, txt->buf, txt->size);
+	unzCloseCurrentFile(unzf);
+	unzClose(unzf);
+
+	byte * tmpbuf = (byte*) txt->buf;
+	dword bpr = (vert ? 43 : 66);
+	if((txt->buf = (char *)calloc(1, (txt->size + 15) / 16 * bpr)) == NULL)
+	{
+		free(tmpbuf);
+		text_close(txt);
+		return NULL;
+	}
+	dword curs = 0;
+	txt->row_count = (txt->size + 15) / 16;
+	byte * cbuf = tmpbuf;
+	dword i;
+	for(i = 0; i < txt->row_count; i ++)
+	{
+		if((i % 1024) == 0)
+		{
+			curs = i >> 10;
+			if((txt->rows[curs] = (p_textrow)calloc(1024, sizeof(t_textrow))) == NULL)
+			{
+				free((void *)tmpbuf);
+				text_close(txt);
+				return NULL;
+			}
+		}
+		txt->rows[curs][i & 0x3FF].start = &txt->buf[bpr * i];
+		txt->rows[curs][i & 0x3FF].count = bpr;
+		if(vert)
+		{
+			sprintf(&txt->buf[bpr * i], "%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X", (unsigned int)i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+			if((i + 1) * 16 > txt->size)
+			{
+				dword padding = (i + 1) * 16 - txt->size;
+				if(padding < 9)
+					memset(&txt->buf[bpr * i + bpr - padding * 2], 0x20, padding * 2);
+				else
+					memset(&txt->buf[bpr * i + bpr - 1 - padding * 2], 0x20, padding * 2 + 1);
+			}
+		}
+		else
+		{
+			sprintf(&txt->buf[bpr * i], "%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ", (unsigned int)i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+			dword j;
+			for(j = 0; j < 16; j ++)
+				txt->buf[bpr * i + 40 + 10 + j] = (cbuf[j] > 0x1F && cbuf[j] < 0x7F) ? cbuf[j] : '.';
+			if((i + 1) * 16 > txt->size)
+			{
+				dword padding = (i + 1) * 16 - txt->size;
+				memset(&txt->buf[bpr * i + bpr - padding], 0x20, padding);
+				if((padding & 1) > 0)
+					memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
+				else
+					memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5], 0x20, padding / 2 * 5);
+			}
+		}
+		cbuf += 16;
+	}
+	free((void *)tmpbuf);
+	return txt;
+}
+
 extern p_text text_open_in_zip(const char * zipfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder)
 {
 	p_text txt = (p_text)calloc(1, sizeof(t_text));
@@ -447,6 +546,107 @@ static int rarcbproc(UINT msg,LONG UserData,LONG P1,LONG P2)
 		curidx += P2;
 	}
 	return 0;
+}
+
+extern p_text text_open_binary_in_rar(const char * rarfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder, bool vert)
+{
+	byte * tmpbuf = 0;
+	p_text txt = (p_text)calloc(1, sizeof(t_text));
+	DBG_ASSERT(d, "txt != null", txt != NULL);
+	if(txt == NULL)
+		return NULL;
+	struct RAROpenArchiveData arcdata;
+	arcdata.ArcName = (char *)rarfile;
+	arcdata.OpenMode = RAR_OM_EXTRACT;
+	arcdata.CmtBuf = NULL;
+	arcdata.CmtBufSize = 0;
+	HANDLE hrar = RAROpenArchive(&arcdata);
+	DBG_ASSERT(d, "hrar != null", hrar != NULL);
+	if(hrar == NULL)
+	{
+		text_close(txt);
+		return NULL;
+	}
+	do {
+		struct RARHeaderData header;
+		if(RARReadHeader(hrar, &header) != 0)
+			break;
+		if(stricmp(header.FileName, filename) == 0)
+		{
+			curidx = 0;
+			strcpy(txt->filename, filename);
+			txt->size = header.UnpSize;
+			if((tmpbuf = (byte*)calloc(1, txt->size)) == NULL) 
+				return NULL;
+			txt->buf = (char*)tmpbuf;
+			RARSetCallback(hrar, rarcbproc, (LONG)txt);
+			dword bpr = (vert ? 43 : 66);
+			if( RARProcessFile(hrar, RAR_TEST, NULL, NULL) != 0 || (txt->buf = (char *)calloc(1, (txt->size + 15) / 16 * bpr)) == NULL)
+			{
+				DBG_ASSERT(d, "RARProcessFile", 0);
+				free(tmpbuf);
+				text_close(txt);
+				RARCloseArchive(hrar);
+				return NULL;
+			}
+			RARCloseArchive(hrar);
+			dword curs = 0;
+			txt->row_count = (txt->size + 15) / 16;
+			byte * cbuf = tmpbuf;
+			dword i;
+			for(i = 0; i < txt->row_count; i ++)
+			{
+				if((i % 1024) == 0)
+				{
+					curs = i >> 10;
+					if((txt->rows[curs] = (p_textrow)calloc(1024, sizeof(t_textrow))) == NULL)
+					{
+						free((void *)tmpbuf);
+						text_close(txt);
+						return NULL;
+					}
+				}
+				txt->rows[curs][i & 0x3FF].start = &txt->buf[bpr * i];
+				txt->rows[curs][i & 0x3FF].count = bpr;
+				if(vert)
+				{
+					sprintf(&txt->buf[bpr * i], "%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X", (unsigned int)i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+					if((i + 1) * 16 > txt->size)
+					{
+						dword padding = (i + 1) * 16 - txt->size;
+						if(padding < 9)
+							memset(&txt->buf[bpr * i + bpr - padding * 2], 0x20, padding * 2);
+						else
+							memset(&txt->buf[bpr * i + bpr - 1 - padding * 2], 0x20, padding * 2 + 1);
+					}
+				}
+				else
+				{
+					sprintf(&txt->buf[bpr * i], "%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ", (unsigned int)i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+					dword j;
+					for(j = 0; j < 16; j ++)
+						txt->buf[bpr * i + 40 + 10 + j] = (cbuf[j] > 0x1F && cbuf[j] < 0x7F) ? cbuf[j] : '.';
+					if((i + 1) * 16 > txt->size)
+					{
+						dword padding = (i + 1) * 16 - txt->size;
+						memset(&txt->buf[bpr * i + bpr - padding], 0x20, padding);
+						if((padding & 1) > 0)
+							memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
+						else
+							memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5], 0x20, padding / 2 * 5);
+					}
+				}
+				cbuf += 16;
+			}
+			free((void *)tmpbuf);
+
+			DBG_ASSERT(d, "txt != NULL", txt != NULL);
+			return txt;
+		}
+	} while(RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
+	text_close(txt);
+	RARCloseArchive(hrar);
+	return NULL;
 }
 
 extern p_text text_open_in_rar(const char * rarfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder)
