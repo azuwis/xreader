@@ -37,11 +37,11 @@
 #include "avc.h"
 #endif
 #include "version.h"
-#include "common/log.h"
 #include "common/qsort.h"
 #include "common/utils.h"
 #include "scene_impl.h"
 #include "pspscreen.h"
+#include "DBG.h"
 
 #ifdef ENABLE_IMAGE
 
@@ -216,6 +216,7 @@ void recalc_brightness()
 
 int scene_reloadimage(dword selidx)
 {
+//	u64 dbglasttick, dbgnow;
 	scene_power_save(false);
 	reset_image_ptr();
 	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
@@ -230,9 +231,6 @@ int scene_reloadimage(dword selidx)
 	{
 		report_image_error(result);
 		return -1;
-	}
-	if(config.imgbrightness != 100) {
-		recalc_brightness();
 	}
 	strcpy(config.lastfile, filelist[selidx].compname);
 	oldangle = 0;
@@ -959,14 +957,6 @@ next:
 	return -1;
 }
 
-double pspDiffTime(u64 *t1, u64 *t2)
-{
-	if(!t1 || !t2)
-		return 0.0;
-	double d = (*t1 - *t2) * 1.0 / sceRtcGetTickResolution();
-	return d;
-}
-
 dword scene_readimage(dword selidx)
 {
 	w2 = 0, h2 = 0, thumbw = 0, thumbh = 0, paintleft = 0, painttop = 0;
@@ -982,39 +972,33 @@ dword scene_readimage(dword selidx)
 	else
 		imgh = PSP_SCREEN_HEIGHT;
 	while(1) {
-		u64 dbgnow, dbglasttick;
-		char infomsg[80];
 		if(img_needrf)
 		{
+			u64 dbgnow, dbglasttick;
 			sceRtcGetCurrentTick(&dbglasttick);
 			dword ret = scene_reloadimage(selidx);
 			if(ret == -1)
 				return selidx;
 			img_needrf = false;
 			sceRtcGetCurrentTick(&dbgnow);
-			sprintf(infomsg, "装载图像时间: %.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
-//			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
-//			sceKernelDelayThread(100000);
+			dbg_printf(d, "装载图像时间: %.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
 		}
 		if(img_needrc)
 		{
+			u64 dbgnow, dbglasttick;
 			sceRtcGetCurrentTick(&dbglasttick);
 			scene_rotateimage();
 			img_needrc = false;
 			sceRtcGetCurrentTick(&dbgnow);
-			sprintf(infomsg, "旋转图像时间: %.2f秒",  pspDiffTime(&dbgnow, &dbglasttick));
-//			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
-//			sceKernelDelayThread(100000);
+			dbg_printf(d, "旋转图像时间: %.2f秒",  pspDiffTime(&dbgnow, &dbglasttick));
 		}
 		if(img_needrp)
 		{
-			sceRtcGetCurrentTick(&dbglasttick);
+//			sceRtcGetCurrentTick(&dbglasttick);
 			scene_printimage(selidx);
-			sceRtcGetCurrentTick(&dbgnow);
+//			sceRtcGetCurrentTick(&dbgnow);
 			img_needrp = false;
-			sprintf(infomsg, "绘制图像时间: %.2f秒",  pspDiffTime(&dbgnow, &dbglasttick));
-//			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
-//			sceKernelDelayThread(100000);
+//			dbg_printf(d, "绘制图像时间: %.2f秒",  pspDiffTime(&dbgnow, &dbglasttick));
 		}
 		now = time(NULL);
 		dword key = 0;
