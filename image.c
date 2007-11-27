@@ -874,27 +874,12 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 	}
 	sceRtcGetCurrentTick(&dbglasttick);
 	pixel * imgdata = *image_data;
-
-	if(config.imgbrightness != 100) {
-		while(cinfo.output_scanline < cinfo.output_height)
-		{
-			int i;
-			jpeg_read_scanlines(&cinfo, &sline, (JDIMENSION) 1);
-			int bright = 100 - config.imgbrightness;
-			for(i = 0; i < cinfo.output_width; i ++) {
-				*imgdata++ = disp_grayscale(RGB(sline[i * 3], sline[i * 3 + 1], sline[i * 3 + 2]), 0, 0, 0, bright);
-			}
-		}
-	}
-	else {
-		while(cinfo.output_scanline < cinfo.output_height)
-		{
-			int i;
-			jpeg_read_scanlines(&cinfo, &sline, (JDIMENSION) 1);
-			for(i = 0; i < cinfo.output_width; i ++) {
-				*imgdata++ = RGB(sline[i * 3], sline[i * 3 + 1], sline[i * 3 + 2]);
-			}
-		}
+	while(cinfo.output_scanline < cinfo.output_height)
+	{
+		int i;
+		jpeg_read_scanlines(&cinfo, &sline, (JDIMENSION) 1);
+		for(i = 0; i < cinfo.output_width; i ++)
+			*imgdata++ = RGB(sline[i * 3], sline[i * 3 + 1], sline[i * 3 + 2]);
 	}
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "提取扫描线完成耗时:%.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
