@@ -843,6 +843,11 @@ extern void disp_rectduptocachealpha(dword x1, dword y1, dword x2, dword y2, int
 	}
 }
 
+bool check_range(int x, int y)
+{
+	return x >= 0 && x < PSP_SCREEN_WIDTH && y >= 0 && y < PSP_SCREEN_HEIGHT;
+}
+
 extern void disp_putnstring(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot)
 {
 	pixel * vaddr;
@@ -867,6 +872,8 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 				x = 0;
 				y += DISP_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			vaddr = disp_get_vaddr(x, y);
 			ccur = cfont_buffer + (((dword)(*str - 0x81)) * 0xBF + ((dword)(*(str + 1) - 0x40))) * DISP_CFONTSIZE + top * DISP_CROWSIZE;
 		
@@ -902,6 +909,8 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 				x = 0;
 				y += DISP_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			vaddr = disp_get_vaddr(x, y);
 			ccur = efont_buffer + ((dword)*str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
 
@@ -937,6 +946,8 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 				x = 0;
 				y += DISP_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			str ++;
 			count --;
 			x += DISP_FONTSIZE / 2 + wordspace;
@@ -973,6 +984,8 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, 
 				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE;
 				y -= DISP_BOOK_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			vaddr = disp_get_vaddr(x, y);
 			dword pos = (((dword)(*str - 0x81)) * 0xBF + ((dword)(*(str + 1) - 0x40)));
 #ifdef ENABLE_TTF
@@ -1019,6 +1032,8 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, 
 				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2;
 				y -= DISP_BOOK_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			vaddr = disp_get_vaddr(x, y);
 
 #ifdef ENABLE_TTF
@@ -1085,6 +1100,8 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, 
 				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2;
 				y -= DISP_BOOK_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			str ++;
 			count --;
 			x -= DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1116,6 +1133,8 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			vaddr = disp_get_vaddr(x, y);
 			dword pos = (((dword)(*str - 0x81)) * 0xBF + ((dword)(*(str + 1) - 0x40)));
 #ifdef ENABLE_TTF
@@ -1162,6 +1181,8 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			vaddr = disp_get_vaddr(x, y);
 
 #ifdef ENABLE_TTF
@@ -1228,6 +1249,8 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			str ++;
 			count --;
 			x += DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1259,7 +1282,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
 			}
-			if(x >= PSP_SCREEN_WIDTH)
+			if(!check_range(x, y))
 				return;
 			vaddr = disp_get_vaddr(x, y);
 			dword pos = (((dword)(*str - 0x81)) * 0xBF + ((dword)(*(str + 1) - 0x40)));
@@ -1307,7 +1330,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
 			}
-			if(x >= PSP_SCREEN_WIDTH)
+			if(!check_range(x, y))
 				return;
 			vaddr = disp_get_vaddr(x, y);
 
@@ -1375,7 +1398,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
 			}
-			if(x >= PSP_SCREEN_WIDTH)
+			if(!check_range(x, y))
 				return;
 			str ++;
 			count --;
@@ -1405,7 +1428,7 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
 			}
-			if(x < 0)
+			if(!check_range(x, y))
 				return;
 			vaddr = disp_get_vaddr(x, y);
 			
@@ -1454,7 +1477,7 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
 			}
-			if(x < 0)
+			if(!check_range(x, y))
 				return;
 			vaddr = disp_get_vaddr(x, y);
 
@@ -1522,6 +1545,8 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
 			}
+			if(!check_range(x, y))
+				return;
 			str ++;
 			count --;
 			y += DISP_BOOK_FONTSIZE / 2 + wordspace;
