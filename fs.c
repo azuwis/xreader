@@ -100,6 +100,7 @@ t_fs_specfiletype_entry ft_spec_table[] = {
   {"LICENSE", fs_filetype_txt},
   {"TODO", fs_filetype_txt},
   {"Configure", fs_filetype_txt},
+  {"Changelog", fs_filetype_txt},
   {"Readme", fs_filetype_txt},
   {"Version", fs_filetype_txt},
   {"INSTALL", fs_filetype_txt},
@@ -604,7 +605,12 @@ extern t_fs_filetype fs_file_get_type(const char * filename)
 	}
 	while(entry2->fname != NULL)
 	{
-		if(stricmp(filename, entry2->fname) == 0)
+		const char* shortname = strrchr(filename, '/');
+		if(!shortname)
+			shortname = filename;
+		else
+			shortname++;
+		if(stricmp(shortname, entry2->fname) == 0)
 			return entry2->ft;
 		entry2 ++;
 	}
