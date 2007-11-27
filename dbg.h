@@ -62,7 +62,7 @@ extern const char *dbg_get_memorylog(void);
 void dbg_assert(DBG* d, char *info, int test, const char *func, const char* file, int line);
 #define DBG_ASSERT(d, info, test) dbg_assert(d, info, test, __FUNCTION__, __FILE__, __LINE__)
 
-enum { DBG_BUFSIZE = 80 };
+enum { DBG_BUFSIZE = 800 };
 
 extern DBG *d;
 double pspDiffTime(u64 *t1, u64 *t2);
