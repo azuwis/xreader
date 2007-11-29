@@ -44,6 +44,7 @@
 #include "pspscreen.h"
 #include "msgresource.h"
 #include "dbg.h"
+#include "eReader2Lib/musicwrapper.h"
 
 #define NELEMS(a)       (sizeof (a) / sizeof ((a)[0]))
 
@@ -3665,7 +3666,7 @@ extern void scene_init()
 	strcat(mp3conf, "music.lst");
 	if(config.confver < 0x00090100 || !mp3_list_load(mp3conf)) {
 		sceRtcGetCurrentTick(&dbglasttick);
-		mp3_list_add_dir("ms0:/MUSIC/");
+//		mp3_list_add_dir("ms0:/MUSIC/");
 		sceRtcGetCurrentTick(&dbgnow);
 		dbg_printf(d, "mp3_list_add_dir(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 	}
@@ -3742,6 +3743,9 @@ extern void scene_exit()
 
 #ifdef ENABLE_MUSIC
 	mp3_end();
+	extern void *pMMgr;
+	MusicMgrRelease(pMMgr);
+	DirRelease();
 	char mp3conf[256];
 	strcpy(mp3conf, appdir);
 	strcat(mp3conf, "music.lst");
