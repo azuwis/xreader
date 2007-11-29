@@ -4,9 +4,10 @@
 extern  "C" {
 #endif
 	/* 提供C调用C++接口 */
+	void DirRelease(void);
 	void MusicMgrInit(void);
-	void *CreateMusicMgrClass(void);
-	void DestroyMusicMgrClass(void* pMusicMgrClass);
+	void *MusicMgrCreateClass(void);
+	void MusicMgrDestroyClass(void* pMusicMgrClass);
 	void MusicMgrStart(void *pMusicMgrClass);
 	void MusicMgrPlay(void *pMusicMgrClass);
 	void MusicMgrPause(void *pMusicMgrClass);

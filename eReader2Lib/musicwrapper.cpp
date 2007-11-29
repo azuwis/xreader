@@ -7,13 +7,18 @@ typedef DWORD dword;
 #include "musicwrapper.h"
 
 extern "C" {
-	void *CreateMusicMgrClass(void)
+	void DirRelease(void)
+	{
+		Dir::Release();
+	}
+
+	void *MusicMgrCreateClass(void)
 	{
 		MusicManager *pNew = new MusicManager();
 		return pNew;
 	}
 
-	void DestroyMusicMgrClass(void* pMusicMgrClass)
+	void MusicMgrDestroyClass(void* pMusicMgrClass)
 	{
 		MusicManager *pMgr = (MusicManager*) pMusicMgrClass;
 		delete pMgr;
