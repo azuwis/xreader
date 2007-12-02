@@ -90,7 +90,6 @@ dbg_handle* dbg_gethandle(DBG *d, size_t index)
 	return &d->ot[index];
 }
 
-/** Buggy */
 int dbg_close_handle(DBG *d, size_t index)
 {
 	dbg_handle *newot = 0;

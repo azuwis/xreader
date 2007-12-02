@@ -23,6 +23,8 @@ typedef struct _Dbg {
 extern DBG* dbg_init();
 /** 关闭 */
 extern int  dbg_close(DBG* d);
+/** 关闭某一句柄 */
+int dbg_close_handle(DBG *d, size_t index);
 /** 输出到文件 */
 extern int  dbg_open_file(DBG *d, const char* fn);
 /** 输出到文件流 */
