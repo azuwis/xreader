@@ -93,7 +93,6 @@ dbg_handle* dbg_gethandle(DBG *d, size_t index)
 /** Buggy */
 int dbg_close_handle(DBG *d, size_t index)
 {
-	TODO;
 	dbg_handle *newot = 0;
 	if(!d || index >= d->otsize)
 		return -1;
@@ -109,7 +108,8 @@ int dbg_close_handle(DBG *d, size_t index)
 		memcpy(newot, d->ot+1, sizeof(dbg_handle) * (d->otsize - 1));
 	}
 
-	(*d->ot[index].cleanup)(d->ot[index].arg);
+	if((*d->ot[index].cleanup)) 
+		(*d->ot[index].cleanup)(d->ot[index].arg);
 	free(d->ot);
 	d->ot = newot;
 	d->otsize--;
