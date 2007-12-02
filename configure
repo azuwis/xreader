@@ -22,6 +22,7 @@ Optional features:
   --disable-pmpavc       disable pmpavc support [enable]
   --enable-debug         enable debug functions [disable]
   --enable-ge			 enable ge library usage [enable]
+  --enable-me			 enable me music playback [disable]
 EOF
 exit 0
 }
@@ -47,6 +48,7 @@ _ttf=yes
 _pmpavc=no
 _debug=no
 _ge=yes
+_me=no
 
 for ac_option do
   case "$ac_option" in
@@ -78,6 +80,8 @@ for ac_option do
   --disable-debug)	_debug=no	;;
   --enable-ge)	_ge=yes	;;
   --disable-ge)	_ge=no	;;
+  --enable-me)	_me=yes	;;
+  --disable-me)	_me=no	;;
   *)
     echo "Unknown parameter: $ac_option"
     exit 1
@@ -178,6 +182,12 @@ else
   _def_ge="#undef ENABLE_GE"
 fi
 
+if test "$_me" = yes ; then
+  _def_me="#define ENABLE_ME 1"
+else
+  _def_me="#undef ENABLE_ME"
+fi
+
 echo "Creating config.mak"
 cat > config.mak << EOF
 $_build_prx
@@ -204,6 +214,7 @@ $_inc_ttf
 $_inc_pmpavc
 $_def_debug
 $_def_ge
+$_def_me
 
 #endif
 EOF
