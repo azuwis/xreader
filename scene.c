@@ -3504,18 +3504,13 @@ extern void scene_init()
 	strcat(logfile, "log.txt");
 	bool printDebugInfo = false;
 	d = dbg_init();
-	dbg_open_psp_logfile(d, logfile);
-#ifdef _DEBUG
-	dbg_switch(d, 1);
-#else
 	dbg_switch(d, 0);
-#endif
-	dbg_printf(d, "¼ÇÂ¼¿ªÊ¼...");
 	power_set_clock(333, 166);
 	ctrl_init();
-	if(ctrl_read() == PSP_CTRL_LTRIGGER)
+	if(ctrl_read() == PSP_CTRL_LTRIGGER) {
 		printDebugInfo = true;
-	if(printDebugInfo) {
+		dbg_switch(d, 1);
+		dbg_open_psp_logfile(d, logfile);
 		pspDebugScreenInit();
 		dbg_open_psp(d);
 	}
@@ -3697,8 +3692,13 @@ extern void scene_init()
 	
 	sceRtcGetCurrentTick(&end);
 	dbg_printf(d, "Load finished in %.2fs, press any key to continue", pspDiffTime(&end, &start));
-	if(printDebugInfo) 
+	if(printDebugInfo) {
+		dbg_close_handle(d, 1);
+		while(ctrl_read() == PSP_CTRL_LTRIGGER) {
+			sceKernelDelayThread(100000);
+		}
 		ctrl_waitany();
+	}
 
 	disp_init();
 	disp_fillvram(0);
