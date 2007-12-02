@@ -204,7 +204,7 @@ int dbg_open_psp_logfile(DBG *d, const char *logfile)
 {
 	extern void dbg_write_psp_logfile(void *arg, const char* str);
 	extern void dbg_close_psp_logfile(void *arg);
-	SceUID fd = sceIoOpen(logfile, PSP_O_APPEND | PSP_O_CREAT, 0777);
+	SceUID fd = sceIoOpen(logfile, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_APPEND, 0777);
 	if(fd < 0) {
 		return -1;
 	}
