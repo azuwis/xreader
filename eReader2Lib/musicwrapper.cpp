@@ -2,6 +2,8 @@
 #include <malloc.h>
 #include <pspaudiocodec.h>
 #include <pspaudio.h>
+#include <vector>
+#include "MP3.h"
 #include "Music.h"
 typedef DWORD dword;
 #include "musicwrapper.h"
@@ -168,6 +170,49 @@ extern "C" {
 	int MusicMgrGetPause(void *pMusicMgrClass)
 	{
 		MusicManager *pMgr = (MusicManager*) pMusicMgrClass;		
-		return pMgr->GetPause();
+		if(pMgr)
+			return pMgr->GetPause();
+		else
+			return 0;
 	}
+
+	int MusicMgrGetCurPos(void *pMusicMgrClass)
+	{
+		MusicManager *pMgr = (MusicManager*) pMusicMgrClass;		
+		if(pMgr)
+			return pMgr->GetCurPos();
+		else
+			return 0;
+	}
+	
+
+	void MusicMgrForward(void *pMusicMgrClass)
+	{
+		MusicManager *pMgr = (MusicManager*) pMusicMgrClass;		
+		if(pMgr)
+			return pMgr->MP3Forward();
+	}
+
+	void MusicMgrBackward(void *pMusicMgrClass)
+	{
+		MusicManager *pMgr = (MusicManager*) pMusicMgrClass;		
+		if(pMgr)
+			return pMgr->MP3Backward();
+	}
+
+	void MusicMgrSetRepeat(void *pMusicMgrClass, int b)
+	{
+		MusicManager *pMgr = (MusicManager*) pMusicMgrClass;		
+		if(pMgr)
+			pMgr->SetRepeat(b);
+	}
+
+	int MusicMgrGetRepeat(void *pMusicMgrClass)
+	{
+		MusicManager *pMgr = (MusicManager*) pMusicMgrClass;		
+		if(pMgr)
+			return pMgr->GetRepeat();
+		return 0;
+	}
+	
 }

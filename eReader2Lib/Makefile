@@ -23,7 +23,7 @@ OBJS=AA3.o CharsetsCpp.o Compat.o Filesys.o IORead.o MP3Cpp.o Music.o Thread.o U
 INCDIR = $(PSPSDK)/../include ../
 
 PSP_FW_VERSION=371
-CFLAGS = -O0 -g -Wall #-DDISPLAY_16BIT_DEPTH
+CFLAGS = -O2 -G0 -Wall #-DDISPLAY_16BIT_DEPTH
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 

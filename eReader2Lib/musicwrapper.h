@@ -24,6 +24,7 @@ extern  "C" {
 	void MusicMgrClear(void *pMusicMgrClass);
 	void *MusicMgrGetAt(void *pMusicMgrClass, dword index);
 	void *MusicMgrGetCur(void *pMusicMgrClass);
+	int MusicMgrGetCurPos(void *pMusicMgrClass);
 	void MusicMgrSwap(void *pMusicMgrClass, dword idx1, dword idx2);
 	int MusicMgrGetCount(void *pMusicMgrClass);
 	void MusicMgrRelease(void *pMusicMgrClass);
@@ -31,6 +32,10 @@ extern  "C" {
 	void MusicMgrPowerUp(void *pMusicMgrClass);
 	const char* MusicMgrGetName(void *pMusicMgrClass, dword index);
 	int MusicMgrGetPause(void *pMusicMgrClass);	
+	void MusicMgrForward(void *pMusicMgrClass);
+	void MusicMgrBackward(void *pMusicMgrClass);
+	void MusicMgrSetRepeat(void *pMusicMgrClass, int b);
+	int MusicMgrGetRepeat(void *pMusicMgrClass);
 #ifdef __cplusplus
 }
 #endif

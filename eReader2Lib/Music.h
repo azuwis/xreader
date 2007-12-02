@@ -45,8 +45,8 @@ public:
 	virtual VOID Next();
 	virtual VOID Random();
 	virtual VOID SetPos(DWORD index);
-	virtual INT Add(CONST CHAR * filename);
-	virtual INT AddDir(CONST CHAR * dirname);
+	virtual INT Add(CONST CHAR * filename, BOOL unique = TRUE);
+	virtual INT AddDir(CONST CHAR * dirname, BOOL unqiue = TRUE);
 	virtual INT Insert(CONST CHAR * filename, DWORD index);
 	virtual INT Remove(CONST CHAR * filename);
 	virtual INT Remove(DWORD index);
@@ -57,14 +57,20 @@ public:
 	virtual INT GetCount();
 	virtual VOID Release();
 	virtual BOOL GetPause() { return m_pause; }
+	virtual INT GetCurPos() { return m_curidx; }
+	virtual VOID MP3Forward();
+	virtual VOID MP3Backward();
+	virtual VOID SetRepeat(BOOL b) { m_repeat = b; }
+	virtual BOOL GetRepeat() { return m_repeat; }
 	VOID PowerDown();
 	VOID PowerUp();
 	static VOID Init();
 protected:
+	INT searchForUnqiue(CONST CHAR *filename);
 	typedef vector<Music *> _MusicList;
 	_MusicList m_list;
 	DWORD m_curidx;
-	BOOL m_pause, m_stop, m_skip, m_release;
+	BOOL m_pause, m_stop, m_skip, m_release, m_repeat;
 	MusicThread * m_thread;
 	BOOL m_orgpause;
 	INT64 m_orgpos;

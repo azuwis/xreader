@@ -184,7 +184,7 @@ MusicManager::MusicManager()
 {
 	m_orgpos = -1;
 	m_curidx = 0;
-	m_pause = m_stop = m_skip = m_release = FALSE;
+	m_pause = m_stop = m_skip = m_repeat = m_release = FALSE;
 	m_thread = NULL;
 }
 
@@ -193,8 +193,24 @@ MusicManager::~MusicManager()
 	Release();
 }
 
-INT MusicManager::Add(CONST CHAR * filename)
+INT MusicManager::searchForUnqiue(CONST CHAR *filename)
 {
+	INT l = GetCount();
+	for(INT i=0; i<l; ++i) {
+		Music *pMusic = GetAt(i);
+		if(!pMusic)
+			continue;
+		if(stricmp(pMusic->GetFilename(), filename) == 0)
+			return i;
+	}
+	return -1;
+}
+
+INT MusicManager::Add(CONST CHAR * filename, BOOL unique)
+{
+	INT pos = searchForUnqiue(filename);
+	if(unique && pos != -1)
+		return pos;
 	Music * music = Music::Create(this, filename);
 	if(music == NULL)
 		return -1;
@@ -202,7 +218,7 @@ INT MusicManager::Add(CONST CHAR * filename)
 	return m_list.size() - 1;
 }
 
-INT MusicManager::AddDir(CONST CHAR * dirname)
+INT MusicManager::AddDir(CONST CHAR * dirname, BOOL unique)
 {
 	Dir dir;
 	FileInfo * info;
@@ -214,6 +230,9 @@ INT MusicManager::AddDir(CONST CHAR * dirname)
 		CHAR fname[256];
 		strcpy(fname, dirname);
 		strcat(fname, info[i].shortname);
+		INT pos = searchForUnqiue(fname);
+		if(unique && pos != -1)
+			continue;
 		Music * music = Music::Create(this, fname);
 		if(music == NULL)
 			continue;
@@ -278,10 +297,12 @@ VOID MusicManager::Prev()
 
 VOID MusicManager::Next()
 {
-	if(m_curidx == m_list.size() - 1)
-		m_curidx = 0;
-	else
-		m_curidx ++;
+	if(m_repeat != TRUE) {
+		if(m_curidx == m_list.size() - 1)
+			m_curidx = 0;
+		else
+			m_curidx ++;
+	}
 	m_skip = TRUE;
 }
 
@@ -304,6 +325,9 @@ VOID MusicManager::Play()
 {
 	m_pause = FALSE;
 	m_stop = FALSE;
+	if(m_thread == NULL) {
+		Start();
+	}
 }
 
 VOID MusicManager::Pause()
@@ -346,7 +370,8 @@ VOID MusicManager::Start()
 {
 	if(m_list.size() > 0)
 	{
-		m_thread = new MusicThread();
+		if(m_thread == NULL)
+			m_thread = new MusicThread();
 		m_thread->Start(0, this);
 	}
 }
@@ -362,4 +387,24 @@ VOID MusicManager::Release()
 		m_thread = NULL;
 		Clear();
 	}
+}
+
+//TODO
+VOID MusicManager::MP3Forward()
+{
+/*
+	MP3 *mp3 = (MP3*)m_list[m_curidx];
+	if(mp3)
+		mp3->jump = 1;
+		*/
+}
+
+//TODO
+VOID MusicManager::MP3Backward()
+{
+	/*
+	MP3 *mp3 = (MP3*)m_list[m_curidx];
+	if(mp3)
+		mp3->jump = -1;
+		*/
 }
