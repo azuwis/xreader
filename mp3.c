@@ -28,6 +28,8 @@
 #include "common/utils.h"
 #include "mp3.h"
 #include "win.h"
+#include "eReader2Lib/musicwrapper.h"
+
 #define MAXVOLUME 0x8000
 
 // resample from madplay, thanks to nj-zero
@@ -749,8 +751,13 @@ static int mp3_thread(unsigned int args, void * argp)
 	return 0;
 }
 
+#ifdef ENABLE_ME
+void *pMMgr = 0;
+#endif
+
 extern bool mp3_init()
 {
+#ifdef ENABLE_ME
 	srand((unsigned)time(NULL));
 #ifdef ENABLE_LYRIC
 	lyric_init(&lyric);
@@ -758,6 +765,14 @@ extern bool mp3_init()
 	mp3info_init(&mp3info);
 #ifdef ENABLE_WMA
 	wma_init();
+#endif
+	strcpy(mp3_tag, "");
+	
+	MusicMgrInit();
+	pMMgr = MusicMgrCreateClass();
+	if(pMMgr)
+		return true;
+	return false;
 #endif
 	isPlaying = true;
 	isPause = true;
@@ -768,7 +783,6 @@ extern bool mp3_init()
 	mp3_thid = sceKernelCreateThread( "mp3 thread", mp3_thread, 0x08, 0x10000, PSP_THREAD_ATTR_USER, NULL );
 	if(mp3_thid < 0)
 		return false;
-	strcpy(mp3_tag, "");
 	return true;
 }
 
@@ -783,6 +797,11 @@ static void mp3_freetune()
 
 extern void mp3_start()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+		MusicMgrStart(pMMgr);
+	return;
+#endif
 	mp3_direct = -1;
 	eos = true;
 	manualSw = false;
@@ -794,7 +813,13 @@ extern void mp3_start()
 
 extern void mp3_end()
 {
+#ifdef ENABLE_LYRIC
+	lyric_close(&lyric);
+#endif
+#ifdef ENABLE_ME
 	mp3_stop();
+	return;
+#endif
 #ifdef ENABLE_WMA
 	if(file_is_mp3)
 	{
@@ -815,9 +840,6 @@ extern void mp3_end()
 		}
 	}
 #endif
-#ifdef ENABLE_LYRIC
-	lyric_close(&lyric);
-#endif
 	mp3info_free(&mp3info);
 	mp3_freetune();
 	sceAudioChRelease(mp3_handle);
@@ -825,12 +847,22 @@ extern void mp3_end()
 
 extern void mp3_pause()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+		MusicMgrPause(pMMgr);
+	return;
+#endif
 	isPause = true;
 	scene_power_save(true);
 }
 
 extern void mp3_resume()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+		MusicMgrPlay(pMMgr);
+	return;
+#endif
 	if(mp3_nfiles == 0 || mp3_files == NULL)
 		return;
 	if(config.freqs[1] < 4)
@@ -841,6 +873,11 @@ extern void mp3_resume()
 
 extern void mp3_stop()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+		MusicMgrStop(pMMgr);
+	return;
+#endif
 	isPlaying = false;
 	isPause = false;
 	eos = true;
@@ -857,6 +894,11 @@ static dword lastpos, lastindex;
 
 extern void mp3_powerdown()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+		MusicMgrPowerDown(pMMgr);
+	return;
+#endif
 	lastpause = isPause;
 	isPause = true;
 #ifdef ENABLE_WMA
@@ -885,6 +927,11 @@ extern void mp3_powerdown()
 
 extern void mp3_powerup()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+		MusicMgrPowerUp(pMMgr);
+	return;
+#endif
 	mp3_index = lastindex;
 #ifdef ENABLE_WMA
 	if(file_is_mp3)
@@ -930,6 +977,7 @@ extern void mp3_list_add_dir(const char *comppath)
 #endif
 			))
 			continue;
+#ifndef ENABLE_ME 
 		if((mp3_nfiles % 256) == 0)
 		{
 			if(mp3_nfiles > 0)
@@ -951,12 +999,21 @@ extern void mp3_list_add_dir(const char *comppath)
 		if(j < mp3_nfiles)
 			continue;
 		mp3_nfiles ++;
+#else
+		char fn[512];
+		sprintf(fn, "%s%s", path, info[i].longname);
+		MusicMgrAdd(pMMgr, fn);
+#endif
 	}
 	free((void *)info);
 }
 
 extern void mp3_list_free()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+		MusicMgrClear(pMMgr);
+#endif
 	if(mp3_files != NULL)
 	{
 		free((void *)mp3_files);
@@ -997,6 +1054,9 @@ extern bool mp3_list_load(const char * filename)
 		}
 		strcpy(mp3_files[mp3_nfiles], fname);
 		strcpy(&mp3_files[mp3_nfiles][256], cname);
+#ifdef ENABLE_ME
+		MusicMgrAdd(pMMgr, cname);
+#endif
 		mp3_nfiles ++;
 	}
 	fclose(fp);
@@ -1005,6 +1065,39 @@ extern bool mp3_list_load(const char * filename)
 
 extern void mp3_list_save(const char * filename)
 {
+	FILE *fp;
+	dword i;
+#ifdef ENABLE_ME
+	if(!pMMgr)
+		return;
+	int mp3_nfiles = MusicMgrGetCount(pMMgr);
+	if(mp3_nfiles == 0) 
+	{
+		FILE * fp = fopen(filename, "wt");
+		if(fp == NULL)
+			return;
+		fclose(fp);
+		return;
+	}
+	fp = fopen(filename, "wt");
+	if(fp == NULL)
+		return;
+	for (i = 0; i < mp3_nfiles; i ++)
+	{
+		char shortname[256];
+		strcpy(shortname, mp3_list_get(i));
+		if(strrchr(shortname, '/')) {
+			char *p = strrchr(shortname, '/') + 1;
+			int l = strlen(p);
+			memmove(shortname, p, l);
+			shortname[l] = '\0';
+		}
+		fprintf(fp, "%s\n", shortname);
+		fprintf(fp, "%s\n", mp3_list_get(i));
+	}
+	fclose(fp);
+	return;	
+#endif
 	if(mp3_nfiles == 0 || mp3_files == NULL)
 	{
 		FILE * fp = fopen(filename, "wt");
@@ -1013,10 +1106,9 @@ extern void mp3_list_save(const char * filename)
 		fclose(fp);
 		return;
 	}
-	FILE * fp = fopen(filename, "wt");
+	fp = fopen(filename, "wt");
 	if(fp == NULL)
 		return;
-	dword i;
 	for (i = 0; i < mp3_nfiles; i ++)
 	{
 		fprintf(fp, "%s\n", mp3_files[i]);
@@ -1027,6 +1119,13 @@ extern void mp3_list_save(const char * filename)
 
 extern bool mp3_list_add(const char * filename, const char * longname)
 {
+#ifdef ENABLE_ME
+	if(pMMgr) {
+		if(MusicMgrAdd(pMMgr, longname) >= 0)
+			return true;
+	}
+	return false;
+#endif
 	dword i;
 	for(i = 0; i < mp3_nfiles; i ++)
 		if(stricmp(mp3_files[i], filename) == 0)
@@ -1053,6 +1152,12 @@ extern bool mp3_list_add(const char * filename, const char * longname)
 
 extern void mp3_list_delete(dword index)
 {
+#ifdef ENABLE_ME
+	if(pMMgr) {
+		MusicMgrRemoveByIndex(pMMgr, index);
+	}
+	return;
+#endif
 	if(index >= mp3_nfiles)
 		return;
 	bool orgPause = isPause;
@@ -1086,6 +1191,15 @@ extern void mp3_list_delete(dword index)
 
 extern void mp3_list_moveup(dword index)
 {
+#ifdef ENABLE_ME
+	if(!pMMgr || index == 0)
+		return;
+	int len = mp3_list_count();
+	if(index >= len)
+		return;
+	MusicMgrSwap(pMMgr, index, index-1);
+	return;
+#endif
 	if(index == 0)
 		return;
 	char tempname[512];
@@ -1100,6 +1214,15 @@ extern void mp3_list_moveup(dword index)
 
 extern void mp3_list_movedown(dword index)
 {
+#ifdef ENABLE_ME
+	if(!pMMgr)
+		return;
+	int len = MusicMgrGetCount(pMMgr);
+	if(index >= len - 1)
+		return;
+	MusicMgrSwap(pMMgr, index, index+1);
+	return;
+#endif
 	if(index >= mp3_nfiles - 1)
 		return;
 	char tempname[512];
@@ -1114,11 +1237,21 @@ extern void mp3_list_movedown(dword index)
 
 extern dword mp3_list_count()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+		return MusicMgrGetCount(pMMgr);
+	return 0;
+#endif
 	return mp3_nfiles;
 }
 
 extern const char * mp3_list_get(dword index)
 {
+#ifdef ENABLE_ME
+	if(!pMMgr || index >= MusicMgrGetCount(pMMgr))
+		return NULL;
+	return MusicMgrGetName(pMMgr, index);
+#endif
 	if(index >= mp3_nfiles)
 		return NULL;
 	return &mp3_files[index][256];
@@ -1126,6 +1259,15 @@ extern const char * mp3_list_get(dword index)
 
 extern void mp3_prev()
 {
+#ifdef ENABLE_ME
+	if(pMMgr) {
+		if(config.mp3cycle == conf_cycle_random)
+			MusicMgrRandom(pMMgr);
+		else
+			MusicMgrPrev(pMMgr);
+	}
+	return;
+#endif
 	mp3_direct = 0;
 	manualSw = true;
 	if(isPause)
@@ -1140,6 +1282,15 @@ extern void mp3_prev()
 
 extern void mp3_next()
 {
+#ifdef ENABLE_ME
+	if(pMMgr) {
+		if(config.mp3cycle == conf_cycle_random)
+			MusicMgrRandom(pMMgr);
+		else
+			MusicMgrNext(pMMgr);
+	}
+	return;
+#endif
 	mp3_direct = 1;
 	manualSw = true;
 	if(isPause)
@@ -1154,6 +1305,17 @@ extern void mp3_next()
 
 extern void mp3_directplay(const char * filename, const char * longname)
 {
+#ifdef ENABLE_ME
+	if(!pMMgr)
+		return;
+	mp3_stop();
+	int pos = MusicMgrAdd(pMMgr, longname);
+	if(pos >= 0) {
+		MusicMgrSetPos(pMMgr, pos);
+		mp3_resume();
+	}
+	return;
+#endif
 	dword i;
 	for(i = 0; i < mp3_nfiles; i ++)
 		if(stricmp(mp3_files[i], filename) == 0)
@@ -1188,26 +1350,76 @@ extern void mp3_directplay(const char * filename, const char * longname)
 
 extern void mp3_forward()
 {
+#ifdef ENABLE_ME
+	MusicMgrForward(pMMgr);
+	return;
+#endif
 	mp3_jump = 1;
 }
 
 extern void mp3_backward()
 {
+#ifdef ENABLE_ME
+	MusicMgrBackward(pMMgr);
+	return;
+#endif
 	mp3_jump = -1;
 }
 
 extern void mp3_restart()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+	{
+		MusicMgrStop(pMMgr);
+	}
+	return;
+#endif
 	mp3_jump = -2;
 }
 
 extern bool mp3_paused()
 {
+#ifdef ENABLE_ME
+	if(pMMgr)
+	{
+		return MusicMgrGetPause(pMMgr);
+	}
+	return true;
+#endif
 	return isPause;
 }
 
 extern char * mp3_get_tag()
 {
+#ifdef ENABLE_ME
+	/*
+	dword pos = MusicMgrGetCurPos(pMMgr);
+	struct MP3TagInfo info = MusicMgrGetMP3Info(pMMgr, pos);
+	if(info.title[0] != 0)
+	{
+		if(info.artist[0] != 0)
+			sprintf(mp3_tag, "%s - %s", (const char *)info.artist, (const char *)info.title);
+		else
+			sprintf(mp3_tag, "? - %s", (const char *)info.title);
+	}
+	else
+	{
+		if(MusicMgrGetName(pMMgr, pos) != NULL) {
+			char * mp3_tag2 = strrchr(MusicMgrGetName(pMMgr, pos), '/');
+			if(mp3_tag2 != NULL)
+				mp3_tag2 ++;
+			else
+				mp3_tag2 = "";
+			strcpy(mp3_tag, mp3_tag2);
+		}
+		else {
+			mp3_tag[0] = '\0';
+		}
+	}
+	mp3_set_encode(config.mp3encode);
+	*/
+#endif
 	return mp3_tag_encode;
 }
 
@@ -1240,6 +1452,12 @@ extern bool mp3_get_info(int * bitrate, int * sample, int * curlength, int * tot
 
 extern void mp3_set_cycle(t_conf_cycle cycle)
 {
+#ifdef ENABLE_ME
+	if(cycle == conf_cycle_repeat_one)
+		MusicMgrSetRepeat(pMMgr, 1);
+	else
+		MusicMgrSetRepeat(pMMgr, 0);
+#endif
 	mp3_cycle = cycle;
 }
 
