@@ -4,7 +4,7 @@ SRCS = avc.c bg.c bookmark.c charsets.c conf.c copy.c ctrl.c display.c fat.c \
 	scene.c scene_image.c scene_music.c scene_text.c text.c ttfont.c usb.c win.c \
 	./common/qsort.c ./common/utils.c ./common/psp_utils.c ./xrPrx/xrPrx.c dbg.c 
 OBJS = $(SRCS:.c=.o) 
-INCDIR = $(PSPSDK)/../include ./include ./include/freetype2
+INCDIR = ./include ./include/freetype2 $(PSPSDK)/../include 
 
 CFLAGS = -O2 -G0 -Wall
 CXXFLAGS = $(CFLAGS) -fno-rtti
