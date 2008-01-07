@@ -1040,6 +1040,7 @@ extern bool mp3_list_load(const char * filename)
 		}
 		else
 			continue;
+#ifndef ENABLE_ME
 		if(mp3_nfiles % 256 == 0)
 		{
 			if(mp3_nfiles == 0)
@@ -1054,7 +1055,7 @@ extern bool mp3_list_load(const char * filename)
 		}
 		strcpy(mp3_files[mp3_nfiles], fname);
 		strcpy(&mp3_files[mp3_nfiles][256], cname);
-#ifdef ENABLE_ME
+#else
 		MusicMgrAdd(pMMgr, cname);
 #endif
 		mp3_nfiles ++;

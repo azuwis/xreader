@@ -2396,6 +2396,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 					break;
 #ifdef ENABLE_MUSIC
 				case fs_filetype_mp3:
+				case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 				case fs_filetype_wma:
 #endif
@@ -2460,6 +2461,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 				break;
 #ifdef ENABLE_MUSIC
 			case fs_filetype_mp3:
+			case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 			case fs_filetype_wma:
 #endif
@@ -2585,6 +2587,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 						}
 						break;
 					case fs_filetype_mp3:
+					case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 					case fs_filetype_wma:
 #endif
@@ -2688,6 +2691,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 							break;
 #ifdef ENABLE_MUSIC
 						case fs_filetype_mp3:
+						case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 						case fs_filetype_wma:
 #endif
@@ -2761,6 +2765,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 							break;
 #ifdef ENABLE_MUSIC
 						case fs_filetype_mp3:
+						case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 						case fs_filetype_wma:
 #endif
@@ -3439,6 +3444,7 @@ void scene_filelist()
 			}
 #ifdef ENABLE_MUSIC
 		case fs_filetype_mp3:
+		case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 		case fs_filetype_wma:
 #endif

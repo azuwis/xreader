@@ -90,6 +90,7 @@ t_fs_filetype_entry ft_table[] =
 	{"rar", fs_filetype_rar},
 #ifdef ENABLE_MUSIC
 	{"mp3", fs_filetype_mp3},
+	{"aa3", fs_filetype_aa3},
 #ifdef ENABLE_WMA
 	{"wma", fs_filetype_wma},
 #endif
