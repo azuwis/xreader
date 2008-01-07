@@ -757,7 +757,7 @@ void *pMMgr = 0;
 
 extern bool mp3_init()
 {
-#ifdef ENABLE_ME
+#ifndef ENABLE_ME
 	srand((unsigned)time(NULL));
 #ifdef ENABLE_LYRIC
 	lyric_init(&lyric);
@@ -768,6 +768,7 @@ extern bool mp3_init()
 #endif
 	strcpy(mp3_tag, "");
 	
+#else
 	MusicMgrInit();
 	pMMgr = MusicMgrCreateClass();
 	if(pMMgr)
