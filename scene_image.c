@@ -41,7 +41,7 @@
 #include "common/utils.h"
 #include "scene_impl.h"
 #include "pspscreen.h"
-#include "DBG.h"
+#include "dbg.h"
 
 #ifdef ENABLE_IMAGE
 

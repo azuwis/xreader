@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "compat.h"
+#include "Compat.h"
 #include <string.h>
 
 CHAR * compat_strdup(CONST CHAR * str)

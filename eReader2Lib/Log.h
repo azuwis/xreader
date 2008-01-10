@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "datatype.h"
+#include "Datatype.h"
 
 class Log
 {

@@ -17,7 +17,7 @@
 #include "win.h"
 #include "image.h"
 #include <psprtc.h>
-#include "DBG.h"
+#include "dbg.h"
 #include "conf.h"
 
 extern t_conf config;

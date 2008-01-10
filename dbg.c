@@ -10,7 +10,7 @@
 #include <pspkernel.h>
 #include <psprtc.h>
 #include <psptypes.h>
-#include "DBG.h"
+#include "dbg.h"
 
 #ifdef _MSC_VER
 #define vsnprintf _vsnprintf

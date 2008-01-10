@@ -13,7 +13,7 @@
 #include "html.h"
 #include "text.h"
 #include "kubridge.h"
-#include "DBG.h"
+#include "dbg.h"
 
 static void text_decode(p_text txt, t_conf_encode encode)
 {
