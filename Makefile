@@ -17,9 +17,13 @@ LIBDIR = ./lib
 LIBS = ./lib/unrar.a ./lib/unzip.a ./lib/libchm.a ./lib/libpng.a \
 	./lib/libgif.a ./lib/libjpeg.a ./lib/libbmp.a ./lib/libtga.a \
 	./lib/libmad.a ./lib/libz.a ./lib/libfreetype.a ./lib/libwmadec.a \
-	./lib/pmpmodavc/pmpmodavclib.a ./lib/pmpmodavc/libavformat.a ./lib/pmpmodavc/libavcodec.a ./lib/pmpmodavc/libavutil.a ./lib/pmpmodavc/libpspmpeg.a ./lib/pmpmodavc/pmpmodavclib.a ./lib/libpspsystemctrl_kernel.a ./eReader2Lib/eReader2lib.a \
+	./lib/pmpmodavc/pmpmodavclib.a ./lib/pmpmodavc/libavformat.a ./lib/pmpmodavc/libavcodec.a ./lib/pmpmodavc/libavutil.a ./lib/pmpmodavc/libpspmpeg.a ./lib/pmpmodavc/pmpmodavclib.a ./lib/libpspsystemctrl_kernel.a  \
 	-lm -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc \
 	-lpspusb -lpspusbstor -lstdc++ -lpspkubridge -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg 
+
+ifeq ($(EREADER2), 1)
+	libs += ./eReader2Lib/eReader2lib.a
+endif
 
 EXTRA_TARGETS = EBOOT.PBP
 EXTRA_CLEAN = -r __SCE__eReader %__SCE__eReader eReader eReader% eReader.prx
