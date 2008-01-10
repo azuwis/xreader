@@ -785,6 +785,8 @@ next:
 
 dword scene_readbook(dword selidx)
 {
+	u64 timer_start, timer_end;
+	sceRtcGetCurrentTick(&timer_start);
 	rrow = INVALID;
 	rowtop = 0;
 	trow = NULL;
@@ -807,16 +809,21 @@ dword scene_readbook(dword selidx)
 		
 		int delay = 20000;
 		dword key;
+
+		sceRtcGetCurrentTick(&timer_end);
+		if(pspDiffTime(&timer_end, &timer_start) >= 1.0) {
+			sceRtcGetCurrentTick(&timer_start);
+			secticks++;
+		}
+		if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+			mp3_powerdown();
+			fat_powerdown();
+			scePowerRequestSuspend();
+			secticks = 0;
+		}
 		while((key = ctrl_read()) == 0) 
 		{
 			sceKernelDelayThread(delay);
-			secticks++;
-			if(config.autosleep != 0 && secticks > 50 * 60 * config.autosleep) {
-				mp3_powerdown();
-				fat_powerdown();
-				scePowerRequestSuspend();
-				secticks = 0;
-			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if(config.infobar == conf_infobar_lyric && lyric_check_changed(mp3_get_lyric())) 
 			{
