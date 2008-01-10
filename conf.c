@@ -188,6 +188,7 @@ static void conf_default(p_conf conf)
 	conf->freqs[2] = 8;
 	conf->imgbrightness = 100;
 	conf->dis_scrsave = false;
+	conf->autosleep = 0;
 }
 
 extern bool conf_load(p_conf conf)

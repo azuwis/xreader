@@ -44,7 +44,7 @@
 
 dword ctlkey[13], ctlkey2[13], ku, kd, kl, kr;
 dword cidx, rrow = INVALID;
-volatile int ticks = 0;
+static volatile int ticks = 0, secticks = 0;
 int rowtop = 0;
 char tr[8], * trow = NULL;
 bool text_needrf = true, text_needrp = true, text_needrb = false;
@@ -778,6 +778,7 @@ int book_handle_input(dword *selidx, dword key)
 			text_needrp = text_needrb = text_needrf = false;
 	// reset ticks
 	ticks = 0;
+	secticks = 0;
 next:
 	return -1;
 }
@@ -809,6 +810,13 @@ dword scene_readbook(dword selidx)
 		while((key = ctrl_read()) == 0) 
 		{
 			sceKernelDelayThread(delay);
+			secticks++;
+			if(config.autosleep != 0 && secticks > 50 * 60 * config.autosleep) {
+				mp3_powerdown();
+				fat_powerdown();
+				scePowerRequestSuspend();
+				secticks = 0;
+			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if(config.infobar == conf_infobar_lyric && lyric_check_changed(mp3_get_lyric())) 
 			{

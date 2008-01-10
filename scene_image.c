@@ -58,6 +58,8 @@ bool slideshow = false;
 time_t now = 0, lasttime = 0;
 extern void *framebuffer;
 
+static volatile int secticks = 0;
+
 int open_image(dword selidx) 
 {
 	// if imgshow share memory with imgdata, and loads image fail (imgdata = 0), we must reset imgshow.
@@ -522,6 +524,7 @@ int image_handle_input(dword *selidx, dword key)
 {
 	if(key == 0)
 		goto next;
+	secticks = 0;
 	if(key == (PSP_CTRL_SELECT | PSP_CTRL_START))
 	{
 		return exit_confirm();
@@ -973,6 +976,8 @@ dword scene_readimage(dword selidx)
 		imgh = PSP_SCREEN_HEIGHT - DISP_FONTSIZE;
 	else
 		imgh = PSP_SCREEN_HEIGHT;
+	u64 timer_start, timer_end;
+	sceRtcGetCurrentTick(&timer_start);
 	while(1) {
 		u64 dbgnow, dbglasttick;
 		if(img_needrf)
@@ -1024,6 +1029,17 @@ dword scene_readimage(dword selidx)
 			showinfo = false;
 		}
 		int ret = image_handle_input(&selidx, key);
+		sceRtcGetCurrentTick(&timer_end);
+		if(pspDiffTime(&timer_end, &timer_start) >= 1.0) {
+			sceRtcGetCurrentTick(&timer_start);
+			secticks++;
+		}
+		if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+			mp3_powerdown();
+			fat_powerdown();
+			scePowerRequestSuspend();
+			secticks = 0;
+		}
 		if(ret != -1)
 			return ret;
 		if(config.dis_scrsave)

@@ -134,6 +134,7 @@ typedef struct {
 	int freqs[3];
 	short imgbrightness;
 	bool dis_scrsave;
+	int  autosleep;
 } t_conf, * p_conf;
 
 /* txt key:

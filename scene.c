@@ -1727,15 +1727,19 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 #endif
 			break;
 		case 6:
+			if(config.autosleep > 0)
+				config.autosleep--;
+			break;
 		case 7:
 		case 8:
-			if(config.freqs[*index-6] > 0)
-				config.freqs[*index-6]--;
-			if(config.freqs[*index-6] > NELEMS(freq_list) - 1)
-				config.freqs[*index-6] = NELEMS(freq_list) - 1;
+		case 9:
+			if(config.freqs[*index-7] > 0)
+				config.freqs[*index-7]--;
+			if(config.freqs[*index-7] > NELEMS(freq_list) - 1)
+				config.freqs[*index-7] = NELEMS(freq_list) - 1;
 			scene_power_save(true);
 			break;
-		case 9:
+		case 10:
 			config.dis_scrsave = ! config.dis_scrsave;
 			break;
 		}
@@ -1767,15 +1771,19 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 #endif
 			break;
 		case 6:
+			if(config.autosleep < 1000)
+				config.autosleep++;
+			break;
 		case 7:
 		case 8:
-			if(config.freqs[*index-6] < NELEMS(freq_list) - 1)
-				config.freqs[*index-6]++;
-			if(config.freqs[*index-6] < 0)
-				config.freqs[*index-6] = 0;
+		case 9:
+			if(config.freqs[*index-7] < NELEMS(freq_list) - 1)
+				config.freqs[*index-7]++;
+			if(config.freqs[*index-7] < 0)
+				config.freqs[*index-7] = 0;
 			scene_power_save(true);
 			break;
-		case 9:
+		case 10:
 			config.dis_scrsave = ! config.dis_scrsave;
 			break;
 		}
@@ -1789,11 +1797,11 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 
 void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"系统选项");
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 133 + 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 135 + 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showhidden ? "显示" : "隐藏"));
 	disp_putstring(242 + DISP_FONTSIZE, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showunknown ? "显示" : "隐藏"));
 	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showfinfo ? "显示" : "隐藏"));
@@ -1805,18 +1813,25 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE, (const byte *)getmsgbyid(NO_SUPPORT));
 #endif
 	char infomsg[80];
+	if(config.autosleep == 0) {
+		strcpy(infomsg, "已关闭");
+	}
+	else {
+		sprintf(infomsg, "%d分钟", config.autosleep);
+	}
+	disp_putstring(242 + DISP_FONTSIZE, 130 + 1 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
 	sprintf(infomsg, "%d/%d", freq_list[config.freqs[0]][0], freq_list[config.freqs[0]][1]);
-	disp_putstring(242 + DISP_FONTSIZE, 130 + DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
-	sprintf(infomsg, "%d/%d", freq_list[config.freqs[1]][0], freq_list[config.freqs[1]][1]);
 	disp_putstring(242 + DISP_FONTSIZE, 131 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
-	sprintf(infomsg, "%d/%d", freq_list[config.freqs[2]][0], freq_list[config.freqs[2]][1]);
+	sprintf(infomsg, "%d/%d", freq_list[config.freqs[1]][0], freq_list[config.freqs[1]][1]);
 	disp_putstring(242 + DISP_FONTSIZE, 132 + 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
-	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.dis_scrsave ? getmsgbyid(YES) : getmsgbyid(NO)));
+	sprintf(infomsg, "%d/%d", freq_list[config.freqs[2]][0], freq_list[config.freqs[2]][1]);
+	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
+	disp_putstring(242 + DISP_FONTSIZE, 134 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.dis_scrsave ? getmsgbyid(YES) : getmsgbyid(NO)));
 }
 
 dword scene_moptions(dword * selidx)
 {
-	t_win_menuitem item[10];
+	t_win_menuitem item[11];
 	dword i;
 	strcpy(item[0].name, "    隐藏文件");
 	strcpy(item[1].name, "未知类型文件");
@@ -1824,10 +1839,11 @@ dword scene_moptions(dword * selidx)
 	strcpy(item[3].name, "    允许删除");
 	strcpy(item[4].name, "文件排序方式");
 	strcpy(item[5].name, "    USB 连接");
-	strcpy(item[6].name, "设置最低频率");
-	strcpy(item[7].name, "设置普通频率");
-	strcpy(item[8].name, "设置最高频率");
-	strcpy(item[9].name, "禁用屏幕保护");
+	strcpy(item[6].name, getmsgbyid(AUTO_SLEEP));
+	strcpy(item[7].name, "设置最低频率");
+	strcpy(item[8].name, "设置普通频率");
+	strcpy(item[9].name, "设置最高频率");
+	strcpy(item[10].name, "禁用屏幕保护");
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;

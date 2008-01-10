@@ -83,6 +83,7 @@ MsgResource msg[] =
 	{"菜单字体大小", MENU_FONT_SIZE},
 	{"阅读字体大小", BOOK_FONT_SIZE},
 	{" 使用TTF字体", TTF_FONT_SIZE},
+	{"    自动休眠", AUTO_SLEEP},
 	{NULL,   UNKNOWN}
 };
 
