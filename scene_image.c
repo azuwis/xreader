@@ -441,7 +441,8 @@ int scene_printimage(int selidx)
 		disp_line(34, bottom, 32 + thumbw, bottom, 0);
 		disp_line(32 + thumbw, top + 2, 32 + thumbw, bottom - 1, 0);
 		disp_rectangle(33 + thumbl, top + thumbt + 1, 33 + thumbr, top + thumbb + 1, 0);
-		disp_rectangle(32 + thumbl, top + thumbt, 32 + thumbr, top + thumbb, COLOR_WHITE);
+		short b = 75 - config.imgbrightness > 0 ? 75 - config.imgbrightness : 0;
+		disp_rectangle(32 + thumbl, top + thumbt, 32 + thumbr, top + thumbb, disp_grayscale(COLOR_WHITE, 0, 0, 0, b));
 	}
 	disp_flip();
 	return 0;
@@ -602,23 +603,50 @@ int image_handle_input(dword *selidx, dword key)
 				{
 					case 0:
 					case 1:
-						if(curleft + PSP_SCREEN_WIDTH < w2)
+						if(config.img_pos_topright)
 						{
-							curleft += PSP_SCREEN_WIDTH;
-							if(curleft +PSP_SCREEN_WIDTH > w2)
-								curleft = w2 - PSP_SCREEN_WIDTH;
-							img_needrp = true;
-							goto next;
+							if(curleft > 0)
+							{
+								curleft -= PSP_SCREEN_WIDTH;
+								if(curleft < 0)
+									curleft = 0;
+								img_needrp = true;
+								goto next;
+							}
+						}
+						else 
+						{
+							if(curleft + PSP_SCREEN_WIDTH < w2)
+							{
+								curleft += PSP_SCREEN_WIDTH;
+								if(curleft +PSP_SCREEN_WIDTH > w2)
+									curleft = w2 - PSP_SCREEN_WIDTH;
+								img_needrp = true;
+								goto next;
+							}
 						}
 						break;
 					case 2:
-						if(curleft > 0)
+						if(config.img_pos_topright)
 						{
-							curleft -= PSP_SCREEN_WIDTH;
-							if(curleft < 0)
-								curleft = 0;
-							img_needrp = true;
-							goto next;
+							if(curleft + PSP_SCREEN_WIDTH < w2)
+							{
+								curleft += PSP_SCREEN_WIDTH;
+								if(curleft +PSP_SCREEN_WIDTH > w2)
+									curleft = w2 - PSP_SCREEN_WIDTH;
+								img_needrp = true;
+								goto next;
+							}
+						}
+						else {
+							if(curleft > 0)
+							{
+								curleft -= PSP_SCREEN_WIDTH;
+								if(curleft < 0)
+									curleft = 0;
+								img_needrp = true;
+								goto next;
+							}
 						}
 						break;
 				}
@@ -628,28 +656,54 @@ int image_handle_input(dword *selidx, dword key)
 				{
 					case 0:
 					case 1:
-						if(curleft + PSP_SCREEN_WIDTH < w2)
-						{
-							curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
-							if(curleft + PSP_SCREEN_WIDTH > w2)
-								curleft = w2 - PSP_SCREEN_WIDTH;
-							img_needrp = true;
-							goto next;
+						if(config.img_pos_topright) {
+							if(curleft > 0)
+							{
+								curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
+								if(curleft < 0)
+									curleft = 0;
+								img_needrp = true;
+								goto next;
+							}
+						}
+						else {
+							if(curleft + PSP_SCREEN_WIDTH < w2)
+							{
+								curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
+								if(curleft + PSP_SCREEN_WIDTH > w2)
+									curleft = w2 - PSP_SCREEN_WIDTH;
+								img_needrp = true;
+								goto next;
+							}
 						}
 						break;
 					case 2:
-						if(curleft > 0)
-						{
-							curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
-							if(curleft < 0)
-								curleft = 0;
-							img_needrp = true;
-							goto next;
+						if(config.img_pos_topright) {
+							if(curleft + PSP_SCREEN_WIDTH < w2)
+							{
+								curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
+								if(curleft + PSP_SCREEN_WIDTH > w2)
+									curleft = w2 - PSP_SCREEN_WIDTH;
+								img_needrp = true;
+								goto next;
+							}
+						}						
+						else {
+							if(curleft > 0)
+							{
+								curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
+								if(curleft < 0)
+									curleft = 0;
+								img_needrp = true;
+								goto next;
+							}
 						}
 						break;
 				}
 				curleft = 0;
 				if(w2 > PSP_SCREEN_WIDTH && xpos == 2)
+					curleft = w2 - PSP_SCREEN_WIDTH;
+				if(config.img_pos_topright && xpos == 0) 
 					curleft = w2 - PSP_SCREEN_WIDTH;
 				switch(ypos)
 				{
@@ -997,6 +1051,9 @@ dword scene_readimage(dword selidx)
 			img_needrc = false;
 			sceRtcGetCurrentTick(&dbgnow);
 			dbg_printf(d, "Ðý×ªÍ¼ÏñÊ±¼ä: %.2fÃë",  pspDiffTime(&dbgnow, &dbglasttick));
+			if(config.img_pos_topright) {
+				curleft = w2 - PSP_SCREEN_WIDTH > 0 ? w2 - PSP_SCREEN_WIDTH : 0;
+			}
 		}
 		if(img_needrp)
 		{

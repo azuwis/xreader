@@ -118,6 +118,7 @@ static void conf_default(p_conf conf)
 	conf->rotate = conf_rotate_0;
 	conf->enable_analog = true;
 	conf->img_enable_analog = true;
+	conf->img_pos_topright = true;
 	conf->txtkey[0] = PSP_CTRL_SQUARE;
 	conf->txtkey[1] = PSP_CTRL_LTRIGGER;
 	conf->txtkey[2] = PSP_CTRL_RTRIGGER;
