@@ -1,5 +1,9 @@
 #include "config.h"
 
+#include <pspdebug.h>
+#include <pspkernel.h>
+#include <psppower.h>
+#include <psprtc.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +11,15 @@
 #include "ctrl.h"
 #include "win.h"
 #include "pspscreen.h"
+#include <stdio.h>
+#include "dbg.h"
+#include "conf.h"
+#include "fat.h"
+#include "mp3.h"
+
+static volatile int secticks = 0;
+
+extern t_conf config;
 
 extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
 {
@@ -55,6 +68,7 @@ extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item, dword * coun
 extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win_menuitem item, dword count, dword initindex, dword linespace, pixel bgcolor, bool redraw, t_win_menu_draw predraw, t_win_menu_draw postdraw, t_win_menu_callback cb)
 {
 	dword i, index = initindex, topindex, botindex, lastsel = index;
+	secticks = 0;
 	bool needrp = true;
 	if(cb == NULL)
 		cb = win_menu_defcb;
@@ -69,6 +83,9 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 	}
 	topindex = (index >= max_height) ? (index - max_height + 1) : 0;
 	botindex = (topindex + max_height > count) ? (count - 1) : (topindex + max_height - 1);
+
+	u64 timer_start, timer_end;
+	sceRtcGetCurrentTick(&timer_start);
 	while(1)
 	{
 		t_win_menu_op op;
@@ -110,7 +127,42 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 			firstdup = false;
 		}
 		lastsel = index;
-		while((op = cb(ctrl_waitany(), item, &count, max_height, &topindex, &index)) == win_menu_op_continue);
+		dword key;
+		while((key = ctrl_read()) == 0)
+		{
+			sceRtcGetCurrentTick(&timer_end);
+			if(pspDiffTime(&timer_end, &timer_start) >= 1.0) {
+				sceRtcGetCurrentTick(&timer_start);
+				secticks++;
+			}
+			if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+				mp3_powerdown();
+				fat_powerdown();
+				scePowerRequestSuspend();
+				secticks = 0;
+			}
+			sceKernelDelayThread(20000);
+		}
+		if(key != 0) {
+			secticks = 0;
+		}
+		while((op = cb(key, item, &count, max_height, &topindex, &index)) == win_menu_op_continue) {
+			while((key = ctrl_read()) == 0)
+			{
+				sceRtcGetCurrentTick(&timer_end);
+				if(pspDiffTime(&timer_end, &timer_start) >= 1.0) {
+					sceRtcGetCurrentTick(&timer_start);
+					secticks++;
+				}
+				if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+					mp3_powerdown();
+					fat_powerdown();
+					scePowerRequestSuspend();
+					secticks = 0;
+				}
+				sceKernelDelayThread(20000);
+			}
+		}
 		switch(op)
 		{
 		case win_menu_op_ok:

@@ -41,8 +41,12 @@
 #include "common/utils.h"
 #include "scene_impl.h"
 #include "pspscreen.h"
+#include "dbg.h"
 
 #ifdef ENABLE_MUSIC
+
+static volatile int secticks = 0;
+
 t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
 {
 	switch(key)
@@ -179,6 +183,8 @@ void scene_mp3bar()
 	pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if(saveimage != NULL)
 		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
+	u64 timer_start, timer_end;
+	sceRtcGetCurrentTick(&timer_start);
 	while(1)
 	{
 		if(firstdup)
@@ -246,7 +252,11 @@ void scene_mp3bar()
 		disp_putstring(6 + DISP_FONTSIZE, 265 - DISP_FONTSIZE * 2, COLOR_WHITE, (const byte *)infostr);
 		disp_putnstring(6 + DISP_FONTSIZE, 266 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)mp3_get_tag(), (468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0, DISP_FONTSIZE, 0);
 		disp_flip();
-		switch(ctrl_read())
+		dword key = ctrl_read();
+		if(key != 0) {
+			secticks = 0;
+		}
+		switch(key)
 		{
 			case (PSP_CTRL_SELECT | PSP_CTRL_START):
 				if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
@@ -320,6 +330,17 @@ void scene_mp3bar()
 					disp_duptocache();
 				}
 				return;
+		}
+		sceRtcGetCurrentTick(&timer_end);
+		if(pspDiffTime(&timer_end, &timer_start) >= 1.0) {
+			sceRtcGetCurrentTick(&timer_start);
+			secticks++;
+		}
+		if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+			mp3_powerdown();
+			fat_powerdown();
+			scePowerRequestSuspend();
+			secticks = 0;
 		}
 		sceKernelDelayThread(20000);
 	}

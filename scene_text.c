@@ -778,8 +778,8 @@ int book_handle_input(dword *selidx, dword key)
 			text_needrp = text_needrb = text_needrf = false;
 	// reset ticks
 	ticks = 0;
-	secticks = 0;
 next:
+	secticks = 0;
 	return -1;
 }
 
@@ -810,17 +810,6 @@ dword scene_readbook(dword selidx)
 		int delay = 20000;
 		dword key;
 
-		sceRtcGetCurrentTick(&timer_end);
-		if(pspDiffTime(&timer_end, &timer_start) >= 1.0) {
-			sceRtcGetCurrentTick(&timer_start);
-			secticks++;
-		}
-		if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
-			mp3_powerdown();
-			fat_powerdown();
-			scePowerRequestSuspend();
-			secticks = 0;
-		}
 		while((key = ctrl_read()) == 0) 
 		{
 			sceKernelDelayThread(delay);
@@ -830,6 +819,18 @@ dword scene_readbook(dword selidx)
 				break;
 			}
 #endif
+			sceRtcGetCurrentTick(&timer_end);
+			if(pspDiffTime(&timer_end, &timer_start) >= 1.0) {
+				sceRtcGetCurrentTick(&timer_start);
+				secticks++;
+			}
+			if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+				mp3_powerdown();
+				fat_powerdown();
+				scePowerRequestSuspend();
+				secticks = 0;
+			}
+			
 			if(config.autopage) {
 				if(config.autopagetype != 2) {
 					if(config.autopagetype == 1) {
