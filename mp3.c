@@ -28,7 +28,9 @@
 #include "common/utils.h"
 #include "mp3.h"
 #include "win.h"
+#ifdef ENABLE_ME
 #include "eReader2Lib/musicwrapper.h"
+#endif
 
 #define MAXVOLUME 0x8000
 

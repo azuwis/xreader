@@ -44,7 +44,9 @@
 #include "pspscreen.h"
 #include "msgresource.h"
 #include "dbg.h"
+#ifdef ENABLE_ME
 #include "eReader2Lib/musicwrapper.h"
+#endif
 
 #define NELEMS(a)       (sizeof (a) / sizeof ((a)[0]))
 
