@@ -1,3 +1,5 @@
+/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
+
 #ifndef _CHARSETS_H_
 #define _CHARSETS_HH
 

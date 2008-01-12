@@ -1,3 +1,5 @@
+/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
+
 #ifndef SCENE_IMP_H
 #define SCENE_IMP_H
 #include "scene.h"

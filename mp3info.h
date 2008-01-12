@@ -1,3 +1,5 @@
+/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
+
 #ifndef _MP3INFO_H_
 #define _MP3INFO_H_
 

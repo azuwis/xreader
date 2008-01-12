@@ -1,3 +1,5 @@
+/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
+
 #ifndef MSGRESOURCE_H
 #define MSGRESOURCE_H
 

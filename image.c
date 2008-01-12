@@ -1,3 +1,5 @@
+/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
+
 #include "config.h"
 
 #if defined(ENABLE_IMAGE) || defined(ENABLE_BG)

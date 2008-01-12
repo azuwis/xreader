@@ -1,3 +1,5 @@
+/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
+
 #include "config.h"
 
 #ifdef ENABLE_USB

@@ -1,3 +1,5 @@
+/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
+
 #include <psptypes.h>
 #include <stdlib.h>
 #include "msgresource.h"
