@@ -74,6 +74,7 @@ MsgResource msg[] =
 	{"重新编排文本", TEXT_REALIGNMENT},
 	{"文章末尾翻页", TEXT_TAIL_PAGE_DOWN},
 	{"    翻页时间", AUTOPAGE_DELAY},
+	{"    滚屏时间", AUTOLINE_TIME},
 	{"    滚屏速度", AUTOLINE_STEP},
 	{"    线控模式", LINE_CTRL_MODE},
 	{"操作设置", OPERATION_SETTING},
@@ -84,6 +85,18 @@ MsgResource msg[] =
 	{"阅读字体大小", BOOK_FONT_SIZE},
 	{" 使用TTF字体", TTF_FONT_SIZE},
 	{"    自动休眠", AUTO_SLEEP},
+	{"切换翻页"    , SWITCH_PAGE},
+	{"  启用类比键", ENABLE_ANALOG_KEY},
+	{"卷动方向反向", REVERSE_SCROLL_DIRECT},
+	{"自动翻页模式", AUTOPAGE_MODE},
+	{"音乐设置",     MUSIC_SETTING},
+	{"自动开始播放", AUTO_START_PLAYBACK},
+	{"歌词显示行数", LYRIC_DISPLAY_LINENUM},
+	{"歌词显示编码", LYRIC_DISPLAY_ENCODE},
+	{"系统选项", SYSTEM_OPTION},
+	{"显示", DISPLAY_OPTION},
+	{"隐藏", HIDDEN_OPTION},
+	{"设置选项", SETTING_OPTION},
 	{NULL,   UNKNOWN}
 };
 

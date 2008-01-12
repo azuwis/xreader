@@ -293,7 +293,7 @@ dword scene_txtkey(dword * selidx)
 	strcpy(item[9].name, getmsgbyid(PREV_FILE));
 	strcpy(item[10].name, getmsgbyid(NEXT_FILE));
 	strcpy(item[11].name, getmsgbyid(EXIT_KEY));
-	strcpy(item[12].name, "切换翻页");
+	strcpy(item[12].name, getmsgbyid(SWITCH_PAGE));
 	dword i;
 	for(i = 0; i < NELEMS(item); i ++)
 	{
@@ -320,7 +320,7 @@ t_win_menu_op scene_flkey_menucb(dword key, p_win_menuitem item, dword * count, 
 		disp_waitv();
 		disp_rectangle(239 - DISP_FONTSIZE * 3, 135 - DISP_FONTSIZE / 2, 240 + DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE / 2, COLOR_WHITE);
 		disp_fillrect(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2, 239 + DISP_FONTSIZE * 3, 135 + DISP_FONTSIZE / 2, RGB(0x8, 0x18, 0x10));
-		disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2, COLOR_WHITE, (const byte *)"请按对应按键");
+		disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2, COLOR_WHITE, (const byte *)getmsgbyid(BUTTON_PRESS_PROMPT));
 		disp_flip();
 		dword key, key2;
 		SceCtrlData ctl;
@@ -385,7 +385,7 @@ void scene_flkey_predraw(p_win_menuitem item, dword index, dword topindex, dword
 	disp_rectangle(239 - DISP_FONTSIZE * 10, 128 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 139 + DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 138 + DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"按键设置   △ 删除");
+	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(BUTTON_SETTING_PROMPT));
 	disp_line(240 - DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 	dword i;
 	for (i = topindex; i < topindex + max_height; i ++)
@@ -395,7 +395,7 @@ void scene_flkey_predraw(p_win_menuitem item, dword index, dword topindex, dword
 		{
 			char keyname2[256];
 			conf_get_keyname(config.flkey2[i], keyname2);
-			strcat(keyname, " | ");
+			strcat(keyname, getmsgbyid(BUTTON_SETTING_SEP));
 			strcat(keyname, keyname2);
 		}
 		disp_putstring(238 - DISP_FONTSIZE * 5, 131 - 6 * DISP_FONTSIZE + (1 + DISP_FONTSIZE) * i, COLOR_WHITE, (const byte *)keyname);
@@ -718,8 +718,8 @@ dword scene_ioptions(dword * selidx)
 	strcpy(item[5].name, getmsgbyid(IMG_OPT_REVERSE_WIDTH));
 	strcpy(item[6].name, getmsgbyid(IMG_OPT_THUMB_VIEW));
 	strcpy(item[7].name, getmsgbyid(IMG_OPT_BRIGHTNESS));
-	strcpy(item[8].name, "  启用类比键");
-	strcpy(item[9].name, "卷动方向反向");
+	strcpy(item[8].name, getmsgbyid(ENABLE_ANALOG_KEY));
+	strcpy(item[9].name, getmsgbyid(REVERSE_SCROLL_DIRECT));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1310,14 +1310,14 @@ dword scene_boptions(dword * selidx)
 	strcpy(item[8].name, getmsgbyid(AUTOSAVE_BOOKMARK));
 	strcpy(item[9].name, getmsgbyid(TEXT_REALIGNMENT));
 	strcpy(item[10].name, getmsgbyid(TEXT_TAIL_PAGE_DOWN));
-	strcpy(item[11].name, "自动翻页模式");
+	strcpy(item[11].name, getmsgbyid(AUTOPAGE_MODE));
 	if(!config.autopagetype) {
 		strcpy(item[12].name, getmsgbyid(AUTOPAGE_DELAY));
 	}
 	else
 		strcpy(item[12].name, getmsgbyid(AUTOLINE_STEP));
-	strcpy(item[13].name, "    滚屏时间");
-	strcpy(item[14].name, "  启用类比键");
+	strcpy(item[13].name, getmsgbyid(AUTOLINE_TIME));
+	strcpy(item[14].name, getmsgbyid(ENABLE_ANALOG_KEY));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1666,7 +1666,7 @@ void scene_musicopt_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	char number[5];
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 123 - 3 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"音乐设置");
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(MUSIC_SETTING));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 #ifdef ENABLE_MUSIC
@@ -1684,9 +1684,9 @@ dword scene_musicopt(dword * selidx)
 {
 	t_win_menuitem item[3];
 	dword i;
-	strcpy(item[0].name, "自动开始播放");
-	strcpy(item[1].name, "歌词显示行数");
-	strcpy(item[2].name, "歌词显示编码");
+	strcpy(item[0].name, getmsgbyid(AUTO_START_PLAYBACK));
+	strcpy(item[1].name, getmsgbyid(LYRIC_DISPLAY_LINENUM));
+	strcpy(item[2].name, getmsgbyid(LYRIC_DISPLAY_ENCODE));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -1810,12 +1810,12 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 {
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"系统选项");
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(SYSTEM_OPTION));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 135 + 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showhidden ? "显示" : "隐藏"));
-	disp_putstring(242 + DISP_FONTSIZE, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showunknown ? "显示" : "隐藏"));
-	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showfinfo ? "显示" : "隐藏"));
+	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showhidden ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
+	disp_putstring(242 + DISP_FONTSIZE, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showunknown ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
+	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showfinfo ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
 	disp_putstring(242 + DISP_FONTSIZE, 127 - 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.allowdelete ? getmsgbyid(YES) : getmsgbyid(NO)));
 	disp_putstring(242 + DISP_FONTSIZE, 128 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)conf_get_arrangename(config.arrange));
 #ifdef ENABLE_USB
@@ -1825,7 +1825,7 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 #endif
 	char infomsg[80];
 	if(config.autosleep == 0) {
-		strcpy(infomsg, "已关闭");
+		strcpy(infomsg, getmsgbyid(HAVE_SHUTDOWN));
 	}
 	else {
 		sprintf(infomsg, "%d分钟", config.autosleep);
@@ -2133,7 +2133,7 @@ void scene_options_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 {
 	disp_rectangle(237 - DISP_FONTSIZE * 3, 120 - 7 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 3, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(238 - DISP_FONTSIZE * 3, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 3, 120 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_putstring(238 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"设置选项");
+	disp_putstring(238 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(SETTING_OPTION));
 	disp_line(238 - DISP_FONTSIZE * 3, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 3, 121 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 }
 
