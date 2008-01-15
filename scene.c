@@ -3714,7 +3714,7 @@ extern void scene_init()
 #endif
 
 	sceRtcGetCurrentTick(&dbglasttick);
-	if(sceKernelDevkitVersion() >= 0x03070110) {
+	if(sceKernelDevkitVersion() >= 0x03070100 && sceKernelDevkitVersion() < 0x03080000) {
 		char prxfn[256];
 		sprintf(prxfn, "%sxrPrx.prx", appdir);
 		SceUID uid = pspSdkLoadStartModule(prxfn, PSP_MEMORY_PARTITION_KERNEL);
