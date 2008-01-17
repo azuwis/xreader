@@ -1588,7 +1588,6 @@ dword scene_fontsel(dword * selidx)
 	return 0;
 }
 
-#ifdef ENABLE_MUSIC
 t_win_menu_op scene_musicopt_menucb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
 {
 	switch(key)
@@ -1695,7 +1694,6 @@ dword scene_musicopt(dword * selidx)
 	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_musicopt_predraw, NULL, scene_musicopt_menucb)) != INVALID);
 	return 0;
 }
-#endif
 
 t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
 {
@@ -2950,13 +2948,11 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 			}
 		}
 	}
-#ifdef ENABLE_MUSIC
 	else if(key == PSP_CTRL_START)
 	{
 		scene_mp3bar();
 		return win_menu_op_force_redraw;
 	}
-#endif
 	else if(key == PSP_CTRL_UP || key == CTRL_BACK)
 	{
 		if(*index == 0)

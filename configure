@@ -23,6 +23,7 @@ Optional features:
   --enable-debug         enable debug functions [disable]
   --enable-ge			 enable ge library usage [enable]
   --enable-me			 enable me music playback [disable]
+  --enable-lite			 enable xreader lite mode [disable] 
 EOF
 exit 0
 }
@@ -49,6 +50,7 @@ _pmpavc=no
 _debug=no
 _ge=yes
 _me=no
+_lite=no
 
 for ac_option do
   case "$ac_option" in
@@ -81,6 +83,7 @@ for ac_option do
   --enable-ge)	_ge=yes	;;
   --disable-ge)	_ge=no	;;
   --enable-me)	_me=yes	;;
+  --enable-lite) _lite=yes;_usb=no;_music=no;_wma=no;_lyric=no;_ttf=no;_image=no;_bg=no;;
   --disable-me)	_me=no	;;
   *)
     echo "Unknown parameter: $ac_option"
@@ -188,6 +191,12 @@ else
   _def_me="#undef ENABLE_ME"
 fi
 
+if test "$_lite" = yes ; then
+  _def_lite="#define ENABLE_LITE 1"
+else
+  _def_lite="#undef ENABLE_LITE"
+fi
+
 echo "Creating config.mak"
 cat > config.mak << EOF
 $_build_prx
@@ -215,6 +224,7 @@ $_inc_pmpavc
 $_def_debug
 $_def_ge
 $_def_me
+$_def_lite
 
 #endif
 EOF

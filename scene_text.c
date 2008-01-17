@@ -624,13 +624,11 @@ int book_handle_input(dword *selidx, dword key)
 			text_needrf = text_needrb;
 			text_needrp = true;
 		}
-#ifdef ENABLE_MUSIC
 		else if(key == PSP_CTRL_START)
 		{
 			scene_mp3bar();
 			text_needrp = true;
 		}
-#endif
 		else if(key == PSP_CTRL_SELECT)
 		{
 			switch(scene_options(&*selidx))
@@ -841,7 +839,9 @@ dword scene_readbook(dword selidx)
 				secticks++;
 			}
 			if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+#ifdef ENABLE_MUSIC
 				mp3_powerdown();
+#endif
 				fat_powerdown();
 				scePowerRequestSuspend();
 				secticks = 0;

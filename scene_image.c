@@ -560,13 +560,11 @@ int image_handle_input(dword *selidx, dword key)
 		else
 			imgh = PSP_SCREEN_HEIGHT;
 	}
-#ifdef ENABLE_MUSIC
 	else if(key == PSP_CTRL_START)
 	{
 		scene_mp3bar();
 		img_needrp = true;
 	}
-#endif
 	else if(key == config.imgkey[1] || key == config.imgkey2[1] || key == CTRL_FORWARD)
 	{
 		if(config.imgpaging > conf_imgpaging_direct)
@@ -1038,7 +1036,9 @@ dword scene_readimage(dword selidx)
 			secticks++;
 		}
 		if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+#ifdef ENABLE_MUSIC
 			mp3_powerdown();
+#endif
 			fat_powerdown();
 			scePowerRequestSuspend();
 			secticks = 0;

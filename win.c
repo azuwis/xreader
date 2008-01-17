@@ -138,7 +138,9 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 				secticks++;
 			}
 			if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+#ifdef ENABLE_MUSIC
 				mp3_powerdown();
+#endif
 				fat_powerdown();
 				scePowerRequestSuspend();
 				secticks = 0;
@@ -157,7 +159,9 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height, p_win
 					secticks++;
 				}
 				if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+#ifdef ENABLE_MUSIC
 					mp3_powerdown();
+#endif
 					fat_powerdown();
 					scePowerRequestSuspend();
 					secticks = 0;

@@ -45,8 +45,6 @@
 #include "pspscreen.h"
 #include "dbg.h"
 
-#ifdef ENABLE_MUSIC
-
 static volatile int secticks = 0;
 
 unsigned int getFreeMemory();
@@ -63,6 +61,7 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item, dword * coun
 		}
 		return win_menu_op_force_redraw;
 	case PSP_CTRL_SQUARE:
+#ifdef ENABLE_MUSIC
 		if(*index < mp3_list_count() - 1)
 		{
 			t_win_menuitem sitem;
@@ -74,8 +73,10 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item, dword * coun
 			(* index) ++;
 			return win_menu_op_force_redraw;
 		}
+#endif
 		return win_menu_op_continue;
 	case PSP_CTRL_TRIANGLE:
+#ifdef ENABLE_MUSIC
 		if(*index > 0)
 		{
 			t_win_menuitem sitem;
@@ -87,8 +88,10 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item, dword * coun
 			(* index) --;
 			return win_menu_op_force_redraw;
 		}
+#endif
 		return win_menu_op_continue;
 	case PSP_CTRL_CIRCLE:
+#ifdef ENABLE_MUSIC
 		if(win_msgbox("从歌曲列表移除文件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 		{
 			mp3_list_delete(*index);
@@ -98,6 +101,7 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item, dword * coun
 				(* index) --;
 			(* count) --;
 		}
+#endif
 		return win_menu_op_ok;
 	case PSP_CTRL_SELECT:
 		return win_menu_op_cancel;
@@ -123,7 +127,13 @@ void scene_mp3_list_predraw(p_win_menuitem item, dword index, dword topindex, dw
 void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char outstr[256];
-	const char * fname = mp3_list_get(index);
+	const char * fname;
+#ifdef ENABLE_MUSIC
+   	fname = mp3_list_get(index);
+#else
+	fname = "音乐已关闭";
+#endif
+
 	if(strlen(fname) <= 36)
 		strcpy(outstr, fname);
 	else
@@ -148,6 +158,7 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex, d
 
 void scene_mp3_list()
 {
+#ifdef ENABLE_MUSIC
 	p_win_menuitem item = (p_win_menuitem)calloc(mp3_list_count(), sizeof(t_win_menuitem));
 	if(item == NULL)
 		return;
@@ -179,6 +190,7 @@ void scene_mp3_list()
 		if(mp3_list_count() == 0)
 			break;
 	free((void *)item);
+#endif
 }
 
 void scene_mp3bar()
@@ -205,7 +217,12 @@ void scene_mp3bar()
 		sceRtcGetCurrentClockLocalTime(&tm);
 		dword cpu, bus;
 		power_get_clock(&cpu, &bus);
-		sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d   剩余内存: %dKB", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus, getFreeMemory() / 1024);
+		if( config.fontsize <= 14 ) {
+			sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d   剩余内存: %dKB", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus, getFreeMemory() / 1024);
+		}
+		else {
+			sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus);
+		}
 		disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE, (const byte *)timestr);
 		int percent, lifetime, tempe, volt;
 		char battstr[80];
@@ -222,6 +239,7 @@ void scene_mp3bar()
 		{
 			const char * ly[config.lyricex * 2 + 1];
 			dword ss[config.lyricex * 2 + 1];
+#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if(lyric_get_cur_lines(mp3_get_lyric(), config.lyricex, ly, ss))
 			{
 				int lidx;
@@ -236,9 +254,11 @@ void scene_mp3bar()
 						disp_putnstring(6 + (cpl - ss[lidx]) * DISP_FONTSIZE / 4, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex) + (DISP_FONTSIZE + 1) * lidx + 1, (lidx == config.lyricex) ? COLOR_WHITE : RGB(0x7F, 0x7F, 0x7F), (const byte *)t, ss[lidx], 0, 0, DISP_FONTSIZE, 0);
 					}
 			}
+#endif
 		}
 #endif
 
+#ifdef ENABLE_MUSIC
 		disp_rectangle(5, 262 - DISP_FONTSIZE * 4, 474, 267, COLOR_WHITE);
 		disp_fillrect(6, 263 - DISP_FONTSIZE * 4, 473, 266, RGB(0x18, 0x28, 0x50));
 		int bitrate, sample, len, tlen;
@@ -247,14 +267,15 @@ void scene_mp3bar()
 			sprintf(infostr, "%s   %d kbps   %d Hz   %02d:%02d / %02d:%02d", conf_get_cyclename(config.mp3cycle), bitrate, sample, len / 60, len % 60, tlen / 60, tlen % 60);
 		else
 			sprintf(infostr, "%s", conf_get_cyclename(config.mp3cycle));
+		disp_putstring(6 + DISP_FONTSIZE, 265 - DISP_FONTSIZE * 2, COLOR_WHITE, (const byte *)infostr);
 		disp_putstring(6 + DISP_FONTSIZE, 263 - DISP_FONTSIZE * 4, COLOR_WHITE, (const byte *)"  SELECT 编辑列表   ←快速后退   →快速前进");
 		char lrctaginfo[80];
 		snprintf(lrctaginfo, 80, "%s  LRC  %s  ID3 %s", "  SELECT 编辑列表   ←快速后退   →快速前进", conf_get_encodename(config.lyricencode), conf_get_encodename(config.mp3encode));
 		disp_putnstring(6 + DISP_FONTSIZE, 263 - DISP_FONTSIZE * 4, COLOR_WHITE, (const byte *)lrctaginfo, (468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0, DISP_FONTSIZE, 0);
 		
 		disp_putstring(6 + DISP_FONTSIZE, 264 - DISP_FONTSIZE * 3, COLOR_WHITE, (const byte *)"○播放/暂停 ×循环 □停止 △曲名编码  L上一首  R下一首");
-		disp_putstring(6 + DISP_FONTSIZE, 265 - DISP_FONTSIZE * 2, COLOR_WHITE, (const byte *)infostr);
 		disp_putnstring(6 + DISP_FONTSIZE, 266 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)mp3_get_tag(), (468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0, DISP_FONTSIZE, 0);
+#endif
 		disp_flip();
 		dword key = ctrl_read();
 		if(key != 0) {
@@ -270,49 +291,69 @@ void scene_mp3bar()
 				}
 				break;
 			case PSP_CTRL_CIRCLE:
+#ifdef ENABLE_MUSIC
 				if(mp3_paused())
 					mp3_resume();
 				else
 					mp3_pause();
+#endif
 				break;
 			case PSP_CTRL_CROSS:
+#ifdef ENABLE_MUSIC
 				if(config.mp3cycle == conf_cycle_random)
 					config.mp3cycle = conf_cycle_single;
 				else
 					config.mp3cycle ++;
 				mp3_set_cycle(config.mp3cycle);
+#endif
 				break;
 			case PSP_CTRL_SQUARE:
+#ifdef ENABLE_MUSIC
 				mp3_restart();
 				scene_power_save(true);
+#endif
 				break;
 			case (PSP_CTRL_LEFT | PSP_CTRL_TRIANGLE):
+#ifdef ENABLE_MUSIC
 				config.lyricencode ++;
 				if((dword)config.lyricencode > 4)
 					config.lyricencode = 0;
+#endif
 				break;
 			case (PSP_CTRL_RIGHT | PSP_CTRL_TRIANGLE):
+#ifdef ENABLE_MUSIC
 				config.mp3encode ++;
 				if((dword)config.mp3encode > 4)
 					config.mp3encode = 0;
 				mp3_set_encode(config.mp3encode);
+#endif
 				break;
 			case PSP_CTRL_LTRIGGER:
+#ifdef ENABLE_MUSIC
 				mp3_prev();
+#endif
 				break;
 			case PSP_CTRL_RTRIGGER:
+#ifdef ENABLE_MUSIC
 				mp3_next();
+#endif
 				break;
 			case PSP_CTRL_LEFT:
+#ifdef ENABLE_MUSIC
 				mp3_backward();
+#endif
 				break;
 			case PSP_CTRL_RIGHT:
+#ifdef ENABLE_MUSIC
 				mp3_forward();
+#endif
 				break;
 			case PSP_CTRL_SELECT:
+#ifdef ENABLE_MUSIC
 				if(mp3_list_count() == 0)
 					break;
 				scene_mp3_list();
+#endif
 				break;
 			case PSP_CTRL_START:
 				ctrl_waitrelease();
@@ -341,7 +382,9 @@ void scene_mp3bar()
 			secticks++;
 		}
 		if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+#ifdef ENABLE_MUSIC
 			mp3_powerdown();
+#endif
 			fat_powerdown();
 			scePowerRequestSuspend();
 			secticks = 0;
@@ -377,5 +420,3 @@ unsigned int getFreeMemory()
 	}
 	return block_free;
 }
-
-#endif
