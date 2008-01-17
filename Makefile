@@ -6,7 +6,11 @@ SRCS = avc.c bg.c bookmark.c charsets.c conf.c copy.c ctrl.c display.c fat.c \
 OBJS = $(SRCS:.c=.o) 
 INCDIR = ./include ./include/freetype2 $(PSPSDK)/../include 
 
+ifeq ($(DEBUG), 1)
+CFLAGS = -O0 -g -Wall
+else
 CFLAGS = -O2 -G0 -Wall
+endif		
 CXXFLAGS = $(CFLAGS) -fno-rtti
 
 PSP_FW_VERSION=380

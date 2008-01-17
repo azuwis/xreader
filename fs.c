@@ -538,10 +538,14 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 	char fname[256] = "";
 	strcpy(item[cur_count].compname, ui->path);
 	sprintf(item[cur_count].shortname, "%u", (unsigned int)ui->length);
-	if(ui->path[0] == '/')
-		strcpy(fname, ui->path + 1);
-	else
-		strcpy(fname, ui->path);
+	if(ui->path[0] == '/') {
+		strncpy(fname, ui->path + 1, 256);
+		fname[255] = '\0';
+	}
+	else {
+		strncpy(fname, ui->path, 256);
+		fname[255] = '\0';
+	}
 
 	item[cur_count].data = (void *)ft;
 	filename_to_itemname(item, cur_count, fname);
