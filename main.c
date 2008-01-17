@@ -81,6 +81,9 @@ static int power_callback(int arg1, int powerInfo, void * arg)
 
 static int exit_callback(int arg1, int arg2, void *arg)
 {
+#ifdef ENABLE_MUSIC
+	mp3_stop();
+#endif
 	scene_exit();
 	sceKernelExitGame();
 
