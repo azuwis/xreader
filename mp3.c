@@ -340,7 +340,8 @@ static bool mp3_load()
 				mp3_tag2 ++;
 			else
 				mp3_tag2 = "";
-			strcpy(mp3_tag, mp3_tag2);
+			strncpy(mp3_tag, mp3_tag2, 128);
+			mp3_tag[127] = '\0';
 		}
 		mp3_handle = sceAudioChReserve( PSP_AUDIO_NEXT_CHANNEL, OUTPUT_BUFFER_SIZE / 4, 0 );
 #ifdef ENABLE_WMA
@@ -368,7 +369,8 @@ static bool mp3_load()
 				mp3_tag2 ++;
 			else
 				mp3_tag2 = "";
-			strcpy(mp3_tag, mp3_tag2);
+			strncpy(mp3_tag, mp3_tag2, 128);
+			mp3_tag[127] = '\0';
 		}
 		mp3_handle = sceAudioChReserve( PSP_AUDIO_NEXT_CHANNEL, WMA_MAX_BUF_SIZE / 2 / wma->channels, (wma->channels == 2) ? 0 : 1 );
 	}
@@ -379,7 +381,8 @@ static bool mp3_load()
 	mp3_jump = 0;
 #ifdef ENABLE_LYRIC
 	char lyricname[256];
-	strcpy(lyricname, mp3_files[mp3_index]);
+	strncpy(lyricname, mp3_files[mp3_index], 256);
+	lyricname[255] = '\0';
 	int lsize = strlen(lyricname);
 	lyricname[lsize - 3] = 'l';
 	lyricname[lsize - 2] = 'r';
@@ -1183,7 +1186,6 @@ extern void mp3_list_delete(dword index)
 		free((void *)mp3_files);
 		mp3_files = NULL;
 		mp3_end();
-		mp3_init();
 		mp3_start();
 		return;
 	}
