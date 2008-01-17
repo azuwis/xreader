@@ -179,7 +179,14 @@ int scene_printbook(dword selidx)
 					else
 						autopageinfo[0] = 0;
 				}
-				snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
+				if( where == scene_in_chm ) {
+					char fname[256];
+					charsets_utf8_conv((unsigned char*)filelist[selidx].compname, (unsigned char*)fname);
+					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
+				}
+				else {
+					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
+				}
 				cr[512-1]='\0';
 				disp_putnstringreversal(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
@@ -348,7 +355,14 @@ int scene_printbook(dword selidx)
 					else
 						autopageinfo[0] = 0;
 				}
-				snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
+				if( where == scene_in_chm ) {
+					char fname[256];
+					charsets_utf8_conv((unsigned char*)filelist[selidx].compname, (unsigned char*)fname);
+					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
+				}
+				else {
+					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
+				}
 				cr[512-1]='\0';
 				disp_putnstringhorz(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}

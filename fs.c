@@ -536,7 +536,9 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 	}
 
 	char fname[256] = "";
-	strcpy(item[cur_count].compname, ui->path);
+
+	strncpy(item[cur_count].compname, ui->path, 256);
+	item[cur_count].compname[255] = '\0';
 	sprintf(item[cur_count].shortname, "%u", (unsigned int)ui->length);
 	if(ui->path[0] == '/') {
 		strncpy(fname, ui->path + 1, 256);
@@ -546,6 +548,11 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 		strncpy(fname, ui->path, 256);
 		fname[255] = '\0';
 	}
+	
+	// CHM Dir in UTF-8 Format???
+	char fname_temp[256] = "";
+	strcpy(fname_temp, fname);
+	charsets_utf8_conv((unsigned char*)fname_temp, (unsigned char*)fname);
 
 	item[cur_count].data = (void *)ft;
 	filename_to_itemname(item, cur_count, fname);

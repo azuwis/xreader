@@ -49,6 +49,8 @@
 
 static volatile int secticks = 0;
 
+unsigned int getFreeMemory();
+
 t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
 {
 	switch(key)
@@ -203,7 +205,7 @@ void scene_mp3bar()
 		sceRtcGetCurrentClockLocalTime(&tm);
 		dword cpu, bus;
 		power_get_clock(&cpu, &bus);
-		sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus);
+		sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d   剩余内存: %dKB", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus, getFreeMemory() / 1024);
 		disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE, (const byte *)timestr);
 		int percent, lifetime, tempe, volt;
 		char battstr[80];
@@ -313,7 +315,7 @@ void scene_mp3bar()
 				scene_mp3_list();
 				break;
 			case PSP_CTRL_START:
-				sceKernelDelayThread(100000);
+				ctrl_waitrelease();
 				if(saveimage != NULL)
 				{
 					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
@@ -347,4 +349,33 @@ void scene_mp3bar()
 		sceKernelDelayThread(20000);
 	}
 }
+
+// 获取PSP剩余内存，单位为Bytes
+// 作者:诗诺比
+unsigned int getFreeMemory()
+{
+	void *p[30];
+	unsigned int block_size = 0x04000000; //最大内存:64MB,必需是2的N次方
+	unsigned int block_free = 0;
+	int i=0;
+	while( (block_size>>=1) >= 0x0400 )        //最小精度:1KB
+	{
+		if( NULL!=(p[i]=malloc(block_size)) )
+		{
+			block_free|=block_size;
+			++i;
+		}
+	}
+	if( NULL!=(p[i]=malloc(0x0400)) )        //最小精度:1KB
+	{
+		block_free+=0x0400;
+		++i;
+	}
+	while(i--)
+	{
+		free(p[i]);
+	}
+	return block_free;
+}
+
 #endif
