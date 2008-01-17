@@ -89,7 +89,6 @@ MsgResource msg[] =
 	{"    自动休眠", AUTO_SLEEP},
 	{"切换翻页"    , SWITCH_PAGE},
 	{"  启用类比键", ENABLE_ANALOG_KEY},
-	{"卷动方向反向", REVERSE_SCROLL_DIRECT},
 	{"自动翻页模式", AUTOPAGE_MODE},
 	{"音乐设置",     MUSIC_SETTING},
 	{"自动开始播放", AUTO_START_PLAYBACK},

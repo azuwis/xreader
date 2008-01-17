@@ -137,7 +137,6 @@ typedef struct {
 	short imgbrightness;
 	bool dis_scrsave;
 	int  autosleep;
-	bool img_pos_topright;
 } t_conf, * p_conf;
 
 /* txt key:

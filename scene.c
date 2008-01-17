@@ -567,9 +567,6 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 8:
 			config.img_enable_analog = !config.img_enable_analog;
 			break;
-		case 9:
-			config.img_pos_topright = ! config.img_pos_topright;
-			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_RIGHT:
@@ -621,9 +618,6 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 			break;
 		case 8:
 			config.img_enable_analog = !config.img_enable_analog;
-			break;
-		case 9:
-			config.img_pos_topright = ! config.img_pos_topright;
 			break;
 		}
 		return win_menu_op_redraw;
@@ -683,11 +677,11 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item, dword * coun
 void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	char number[7];
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 134 + 4 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(IMG_OPT));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 134 + 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 133 + 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.bicubic ? getmsgbyid(IMG_OPT_CUBE) : getmsgbyid(IMG_OPT_LINEAR)));
 	memset(number, ' ', 4);
 	utils_dword2string(config.slideinterval, number, 4);
@@ -705,12 +699,11 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	sprintf(infomsg, "%d%%", config.imgbrightness);
 	disp_putstring(240 + DISP_FONTSIZE, 130 + 2 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
 	disp_putstring(240 + DISP_FONTSIZE, 131 + 3 * DISP_FONTSIZE, COLOR_WHITE, config.img_enable_analog ? (const byte *) getmsgbyid(YES) : (const byte*) getmsgbyid(NO));
-	disp_putstring(240 + DISP_FONTSIZE, 132 + 4 * DISP_FONTSIZE, COLOR_WHITE, config.img_pos_topright ? (const byte *) getmsgbyid(YES) : (const byte*) getmsgbyid(NO));
 }
 
 dword scene_ioptions(dword * selidx)
 {
-	t_win_menuitem item[10];
+	t_win_menuitem item[9];
 	dword i;
 	strcpy(item[0].name, getmsgbyid(IMG_OPT_ALGO));
 	strcpy(item[1].name, getmsgbyid(IMG_OPT_DELAY));
@@ -721,7 +714,6 @@ dword scene_ioptions(dword * selidx)
 	strcpy(item[6].name, getmsgbyid(IMG_OPT_THUMB_VIEW));
 	strcpy(item[7].name, getmsgbyid(IMG_OPT_BRIGHTNESS));
 	strcpy(item[8].name, getmsgbyid(ENABLE_ANALOG_KEY));
-	strcpy(item[9].name, getmsgbyid(REVERSE_SCROLL_DIRECT));
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
