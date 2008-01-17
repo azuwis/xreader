@@ -38,19 +38,11 @@ enum PSPLoadModuleApitype
 	PSP_LOADMODULE_APITYPE_VSH = 0x20, 
 	PSP_LOADMODULE_APITYPE_DISC = 0x120,
 	PSP_LOADMODULE_APITYPE_DISC_UPDATER = 0x121,
-	PSP_LOADMODULE_APITYPE_DISC_DEBUG = 0x122,
-	PSP_LOADMODULE_APITYPE_DISC_IMAGE = 0x123,
-	PSP_LOADMODULE_APITYPE_USBWLAN = 0x130,
-	PSP_LOADMODULE_APITYPE_USBWLAN_DEBUG = 0x131,
 	PSP_LOADMODULE_APITYPE_MS1 = 0x140, 
 	PSP_LOADMODULE_APITYPE_MS2 = 0x141, 
 	PSP_LOADMODULE_APITYPE_MS3 = 0x142, 
-	PSP_LOADMODULE_APITYPE_MS4 = 0x143,
-	PSP_LOADMODULE_APITYPE_MS5 = 0x144,
-	PSP_LOADMODULE_APITYPE_VSH_EXIT_VSH_KERNEL = 0x200,
-	PSP_LOADMODULE_APITYPE_VSH_EXIT_GAME = 0x210, 
-	PSP_LOADMODULE_APITYPE_VSH_EXIT_VSH_VSH = 0x220, 
-	PSP_LOADMODULE_APITYPE_REBOOT_KERNEL = 0x300,
+	PSP_LOADMODULE_APITYPE_VSH_MAIN1 = 0x210, /* ExitGame */
+	PSP_LOADMODULE_APITYPE_VSH_MAIN2 = 0x220, /* ExitVSH */
 };
 
 /**
@@ -84,96 +76,6 @@ int sceKernelModuleCount(void);
 SceUID sceKernelLoadModuleBuffer(void *buf, SceSize bufsize, int flags, SceKernelLMOption *option);
 
 /**
- * Load a module from a buffer in reboot
- *
- * @param bufsize - Size (in bytes) of the buffer pointed to by buf.
- * @param buf - Pointer to a buffer containing the module to load.  The buffer must reside at an
- *              address that is a multiple to 64 bytes.
- * @param flags - Unused, always 0.
- * @param option - Pointer to an optional ::SceKernelLMOption structure.
- *
- * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
- */
-SceUID ModuleMgrForKernel_EF7A7F02(SceSize bufsize, void *buf, int flags, SceKernelLMOption *option);
-
-/**
- * Load a module buffer for VSHUsbWlan (0x130)
- *
- * @param buf - Pointer to a buffer containing the module to load.  The buffer must reside at an
- *              address that is a multiple to 64 bytes.
- * @param flags - Unused, always 0.
- * @param option - Pointer to an optional ::SceKernelLMOption structure.
- *
- * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
- */
-SceUID sceKernelLoadModuleBufferForLoadExecBufferVSHUsbWlan(void *buf, int flags, SceKernelLMOption *option);
-
-/**
- * Load a module buffer for VSHUsbWlanDebug (0x131)
- *
- * @param buf - Pointer to a buffer containing the module to load.  The buffer must reside at an
- *              address that is a multiple to 64 bytes.
- * @param flags - Unused, always 0.
- * @param option - Pointer to an optional ::SceKernelLMOption structure.
- *
- * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
- */
-SceUID sceKernelLoadModuleBufferForLoadExecBufferVSHUsbWlanDebug(void *buf, int flags, SceKernelLMOption *option);
-
-/**
- * Load a module from a buffer for exit vsh kernel (0x200)
- *
- * @param buf - Pointer to a buffer containing the module to load.  The buffer must reside at an
- *              address that is a multiple to 64 bytes.
- * @param flags - Unused, always 0.
- * @param option - Pointer to an optional ::SceKernelLMOption structure.
- *
- * @param unk - Umknown
- * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
- */
-SceUID sceKernelLoadModuleBufferForExitVSHKernel(void *buf, int flags, SceKernelLMOption *option, int unk);
-
-/**
- * Load a module from a buffer for exit game (0x210)
- *
- * @param buf - Pointer to a buffer containing the module to load.  The buffer must reside at an
- *              address that is a multiple to 64 bytes.
- * @param flags - Unused, always 0.
- * @param option - Pointer to an optional ::SceKernelLMOption structure.
- *
- * @param unk - Umknown
- * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
- */
-SceUID sceKernelLoadModuleBufferForExitGame(void *buf, int flags, SceKernelLMOption *option, int unk);
-
-
-/**
- * Load a module from a buffer for exit vsh vsh (0x220)
- *
- * @param buf - Pointer to a buffer containing the module to load.  The buffer must reside at an
- *              address that is a multiple to 64 bytes.
- * @param flags - Unused, always 0.
- * @param option - Pointer to an optional ::SceKernelLMOption structure.
- *
- * @param unk - Umknown
- * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
- */
-SceUID sceKernelLoadModuleBufferForExitVSHVSH(void *buf, int flags, SceKernelLMOption *option, int unk);
-
-/**
- * Load a module from a buffer for  reboot kernel (0x300)
- *
- * @param buf - Pointer to a buffer containing the module to load.  The buffer must reside at an
- *              address that is a multiple to 64 bytes.
- * @param flags - Unused, always 0.
- * @param option - Pointer to an optional ::SceKernelLMOption structure.
- *
- * @param unk - Umknown
- * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
- */
-SceUID sceKernelLoadModuleBufferForRebootKernel(void *buf, int flags, SceKernelLMOption *option, int unk);
-
-/**
   * Load a module with the VSH apitype.
   * 
   * @param path - The path to the module to load.
@@ -193,7 +95,7 @@ SceUID sceKernelLoadModuleVSH(const char *path, int flags, SceKernelLMOption *op
   *
   * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
   */
-SceUID sceKernelLoadModuleForLoadExecVSHDisc(const char *path, int flags, SceKernelLMOption *option);
+SceUID ModuleMgrForKernel_A1A78C58(const char *path, int flags, SceKernelLMOption *option);
 
 /**
   * Load the updater executable of a disc (UPDATE/EBOOT.BIN) (0x121)
@@ -204,29 +106,7 @@ SceUID sceKernelLoadModuleForLoadExecVSHDisc(const char *path, int flags, SceKer
   *
   * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
   */
-SceUID sceKernelLoadModuleForLoadExecVSHDiscUpdater(const char *path, int flags, SceKernelLMOption *option);
-
-/**
-  * Load the executable of a disc for debug in a toolkit (EBOOT.BIN) (0x122)
-  * 
-  * @param path - The path to the module to load.
-  * @param flags - Unused, always 0 .
-  * @param option  - Pointer to a mod_param_t structure. Can be NULL.
-  *
-  * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
-  */
-SceUID sceKernelLoadModuleForLoadExecVSHDiscDebug(const char *path, int flags, SceKernelLMOption *option);
-
-/**
-  * Load the executable of a disc image (0x123)
-  * 
-  * @param path - The path to the module to load.
-  * @param flags - Unused, always 0 .
-  * @param option  - Pointer to a mod_param_t structure. Can be NULL.
-  *
-  * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
-  */
-SceUID ModuleMgrForKernel_1B91F6EC(const char *path, int flags, SceKernelLMOption *option);
+SceUID ModuleMgrForKernel_896C15B6(const char *path, int flags, SceKernelLMOption *option);
 
 /**
   * Load a PBP (used for updater pbp's) (0x140)
@@ -237,7 +117,7 @@ SceUID ModuleMgrForKernel_1B91F6EC(const char *path, int flags, SceKernelLMOptio
   *
   * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
   */
-SceUID sceKernelLoadModuleForLoadExecVSHMs1(const char *path, int flags, SceKernelLMOption *option);
+SceUID ModuleMgrForKernel_6723BBFF(const char *path, int flags, SceKernelLMOption *option);
 
 /**
   * Load a PBP (used for non updater pbp's) (0x141)
@@ -248,7 +128,7 @@ SceUID sceKernelLoadModuleForLoadExecVSHMs1(const char *path, int flags, SceKern
   *
   * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
   */
-SceUID sceKernelLoadModuleForLoadExecVSHMs2(const char *path, int flags, SceKernelLMOption *option);
+SceUID ModuleMgrForKernel_49C5B9E1(const char *path, int flags, SceKernelLMOption *option);
 
 /**
   * Load a PBP (used in Ms3) (0x142)
@@ -259,7 +139,7 @@ SceUID sceKernelLoadModuleForLoadExecVSHMs2(const char *path, int flags, SceKern
   *
   * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
   */
-SceUID sceKernelLoadModuleForLoadExecVSHMs3(const char *path, int flags, SceKernelLMOption *option);
+SceUID ModuleMgrForKernel_ECC2EAA9(const char *path, int flags, SceKernelLMOption *option);
 
 /**
   * Load a PBP (used in Ms4 function to load psx games) (0x143)
@@ -270,32 +150,10 @@ SceUID sceKernelLoadModuleForLoadExecVSHMs3(const char *path, int flags, SceKern
   *
   * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
   */
-SceUID sceKernelLoadModuleForLoadExecVSHMs4(const char *path, int flags, SceKernelLMOption *option);
+SceUID ModuleMgrForKernel_F07E1A2F(const char *path, int flags, SceKernelLMOption *option);
 
 /**
-  * Load a PBP (used in Ms5) (0x144)
-  * 
-  * @param path - The path to the module to load.
-  * @param flags - Unused, always 0 .
-  * @param option  - Pointer to a mod_param_t structure. Can be NULL.
-  *
-  * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
-  */
-SceUID sceKernelLoadModuleForLoadExecVSHMs5(const char *path, int flags, SceKernelLMOption *option);
-
-/**
-  * Load a module in reboot
-  * 
-  * @param path - The path to the module to load.
-  * @param flags - Unused, always 0 .
-  * @param option  - Pointer to a mod_param_t structure. Can be NULL.
-  *
-  * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
-  */
-SceUID ModuleMgrForKernel_25E1F458(const char *path, int flags, SceKernelLMOption *option);
-
-/**
-  * Load a module with a specific apitype for loadexecforuser 
+  * Load a module with a specific apitype
   * 
   * @param apìtype - The apitype
   * @param path - The path to the module to load.
@@ -304,7 +162,7 @@ SceUID ModuleMgrForKernel_25E1F458(const char *path, int flags, SceKernelLMOptio
   *
   * @returns The UID of the loaded module on success, otherwise one of ::PspKernelErrorCodes.
   */
-SceUID sceKernelLoadModuleForLoadExecForUser(int apitype, const char *path, int flags, SceKernelLMOption *option);
+SceUID ModuleMgrForKernel_6DE9FF11(int apitype, const char *path, int flags, SceKernelLMOption *option);
 
 /**
  * Stop and unload the current module with the specified exit status code
@@ -319,9 +177,17 @@ SceUID sceKernelLoadModuleForLoadExecForUser(int apitype, const char *path, int 
  */
 int	ModuleMgrForKernel_2BE4807D(int exitcode, SceSize argsize, void *argp, int *status, SceKernelSMOption *option);
 
+#define sceKernelLoadModuleDisc ModuleMgrForKernel_A1A78C58
+#define sceKernelLoadModuleDiscUpdater ModuleMgrForKernel_896C15B6
+#define sceKernelLoadModuleMs1 ModuleMgrForKernel_6723BBFF
+#define sceKernelLoadModuleMs2 ModuleMgrForKernel_49C5B9E1
+#define sceKernelLoadModuleMs3 ModuleMgrForKernel_ECC2EAA9
+#define sceKernelLoadModuleMs4 ModuleMgrForKernel_F07E1A2F
+#define sceKernelLoadModuleWithApitype2 ModuleMgrForKernel_6DE9FF11
+
 #define sceKernelStopUnloadSelfModuleWithStatusKernel ModuleMgrForKernel_2BE4807D
 
-#define sceKernelLoadModuleForLoadExecVSHDiscImage	ModuleMgrForKernel_1B91F6EC
+
 
 /*@}*/
 

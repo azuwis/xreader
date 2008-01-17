@@ -6,6 +6,23 @@
  * and they are not in HEN 
 */
 
+enum 
+{
+	FAKE_REGION_DISABLED = 0,
+	FAKE_REGION_JAPAN = 1,
+	FAKE_REGION_AMERICA = 2,
+	FAKE_REGION_EUROPE = 3,
+	FAKE_REGION_KOREA = 4, /* do not use, may cause brick on restore default settings */
+	FAKE_REGION_UNK = 5, 
+	FAKE_REGION_UNK2 = 6,
+	FAKE_REGION_AUSTRALIA = 7,
+	FAKE_REGION_HONGKONG = 8, /* do not use, may cause brick on restore default settings */
+	FAKE_REGION_TAIWAN = 9, /* do not use, may cause brick on restore default settings */
+	FAKE_REGION_RUSSIA = 10,
+	FAKE_REGION_CHINA = 11, /* do not use, may cause brick on restore default settings */
+};
+
+
 enum SEUmdModes
 {
 	MODE_UMD = 0,
@@ -35,7 +52,8 @@ typedef struct
 	int usbdevice;
 	int novshmenu;
 	int usbcharge;
-	int reserved[3];
+	int notusedaxupd;
+	int reserved[2];
 } SEConfig;
 
 
@@ -140,5 +158,29 @@ void sctrlSESetDiscOut(int out);
  * @param type - the disctype (0x10=game, 0x20=video, 0x40=audio)
 */
 void sctrlSESetDiscType(int type);
+
+/**
+ * Sets the current umd file (kernel only)
+*/
+char *sctrlSEGetUmdFile();
+
+/**
+ * Gets the current umd file (kernel only)
+*/
+char *sctrlSEGetUmdFile();
+
+/**
+ * Sets the current umd file (kernel only)
+ *
+ * @param file - The umd file
+*/
+void sctrlSESetUmdFile(char *file);
+
+/** 
+ * Sets the boot config file for next reboot (kernel only)
+ *
+ * @param index - The index identifying the file (0 -> normal bootconf, 1 -> march33 driver bootconf, 2 -> np9660 bootcnf)
+*/
+void sctrlSESetBootConfFileIndex(int index);
 
 #endif

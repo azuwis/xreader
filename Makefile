@@ -9,7 +9,7 @@ INCDIR = ./include ./include/freetype2 $(PSPSDK)/../include
 CFLAGS = -O2 -G0 -Wall
 CXXFLAGS = $(CFLAGS) -fno-rtti
 
-PSP_FW_VERSION=371
+PSP_FW_VERSION=380
 BUILD_PRX=1
 PSP_LARGE_MEMORY=1
 

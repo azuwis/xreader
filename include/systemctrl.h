@@ -5,7 +5,14 @@
 #include <pspkernel.h>
 #include <psploadexec_kernel.h>
 #include <pspinit.h>
+#include <psploadcore.h>
 
+/** 
+ * All of these functions can be accessed in both, SE-C (or later) and
+ * HEN-D (or later) in both, normal and devhook
+ *
+ * All of the functions can be used in both, user or kernel mode.
+*/
 
 /**
  * Restart the vsh.
@@ -159,6 +166,8 @@ int	sctrlHENIsDevhook();
  * Gets the HEN version
  *
  * @returns - The HEN version
+ *
+ * HEN D / SE-C :  0x00000400
  */
 int sctrlHENGetVersion();
 
@@ -175,41 +184,42 @@ PspIoDrv *sctrlHENFindDriver(char *drvname);
 /** 
  * Finds a function.
  *
- * @param modname - The module where to search the function
- * @param libname - The library name
- * @nid - The nid of the function
+ * @param szMod - The module where to search the function
+ * @param szLib - The library name
+ * @param nid - The nid of the function
  *
  * @returns - The function address or 0 if not found
  *
 */
-u32 sctrlHENFindFunction(char *modname, char *libname, u32 nid);
+u32 sctrlHENFindFunction(const char* szMod, const char* szLib, u32 nid);
 
-typedef int (* APRS_EVENT)(char *modname, u8 *modbuf);
+#define FindProc sctrlHENFindFunction
+
+typedef int (* STMOD_HANDLER)(SceModule2 *);
 
 /**
- * Sets a function to be called after sceKernelApplyPspRelSection is called (useful for patching purposes)
+ * Sets a function to be called just before module_start of a module is gonna be called (useful for patching purposes)
  *
- * @param func - The function, that will receive the module name and the module buffer of
- * the module that has just been relocated but not started yet.
+ * @param handler - The function, that will receive the module structure before the module is started.
  *
  * @returns - The previous set function (NULL if none);
- * @Note: because only one event function is handled by OE, you should
+ * @Note: because only one handler function is handled by HEN, you should
  * call the previous function in your code.
  *
  * @Example: 
  *
- * PRS_EVENT previous = NULL;
+ * STMOD_HANDLER previous = NULL;
  *
- * int OnPspRelSectionEvent(char *modname, u8 *modbuf);
+ * int OnModuleStart(SceModule2 *mod);
  *
  * void somepointofmycode()
  * {
- *		previous = sctrlHENSetOnApplyPspRelSectionEvent(OnPspRelSectionEvent);
+ *		previous = sctrlHENSetStartModuleHandler(OnModuleStart);
  * }
  *
- * int OnPspRelSectionEvent(char *modname, u8 *modbuf)
+ * int OnModuleStart(SceModule2 *mod)
  * {
- *		if (strcmp(modname, "vsh_module") == 0)
+ *		if (strcmp(mod->modname, "vsh_module") == 0)
  *		{
  *			// Do something with vsh module here
  *		}
@@ -217,16 +227,16 @@ typedef int (* APRS_EVENT)(char *modname, u8 *modbuf);
  *		if (!previous)
  *			return 0;
  *
- *		// Call previous event function
+ *		// Call previous handler
  *
- *		return previous(modname, modbuf);
+ *		return previous(mod);
  * }
  *
  * @Note2: The above example should be compiled with the flag -fno-pic
  *			in order to avoid problems with gp register that may lead to a crash.
  *
 */
-APRS_EVENT sctrlHENSetOnApplyPspRelSectionEvent(APRS_EVENT func);
+STMOD_HANDLER sctrlHENSetStartModuleHandler(STMOD_HANDLER handler);
 
 /**
  * Sets the partition 2 and 8  memory for next loadexec.
@@ -239,6 +249,8 @@ APRS_EVENT sctrlHENSetOnApplyPspRelSectionEvent(APRS_EVENT func);
  * if p2+p8 > 52 or p2 == 0
 */
 int sctrlHENSetMemory(u32 p2, u32 p8);
+
+
 
 #endif
 
