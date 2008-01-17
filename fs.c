@@ -129,8 +129,10 @@ void filename_to_itemname(p_win_menuitem item, int cur_count, const char* filena
 		item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
 		item[cur_count].width = MAX_ITEM_NAME_LEN;
 	}
-	else
-		strcpy(item[cur_count].name, filename);
+	else {
+		strncpy(item[cur_count].name, filename, 64);
+		item[cur_count].name[63] = '\0';
+	}
 }
 
 extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
@@ -480,11 +482,13 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 			memset(str, 0, 1024);
 			const byte *uni = (byte*) header.FileNameW;
 			charsets_utf32_conv(uni, (byte*)str);
-			strcpy(item[cur_count].compname, header.FileName);
+			strncpy(item[cur_count].compname, header.FileName, 256);
+			item[cur_count].compname[255] = '\0';
 			filename_to_itemname(item, cur_count, str);
 		}
 		else {
-			strcpy(item[cur_count].compname, header.FileName);
+			strncpy(item[cur_count].compname, header.FileName, 256);
+			item[cur_count].compname[255] = '\0';
 			filename_to_itemname(item, cur_count, header.FileName);
 		}
 		sprintf(item[cur_count].shortname, "%u", (unsigned int)header.UnpSize);
