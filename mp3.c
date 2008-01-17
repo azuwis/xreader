@@ -824,10 +824,7 @@ extern void mp3_end()
 #ifdef ENABLE_LYRIC
 	lyric_close(&lyric);
 #endif
-#ifdef ENABLE_ME
 	mp3_stop();
-	return;
-#endif
 #ifdef ENABLE_WMA
 	if(file_is_mp3)
 	{
@@ -1186,6 +1183,7 @@ extern void mp3_list_delete(dword index)
 		free((void *)mp3_files);
 		mp3_files = NULL;
 		mp3_end();
+		mp3_init();
 		mp3_start();
 		return;
 	}
