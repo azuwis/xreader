@@ -15,6 +15,7 @@ typedef enum {
 	fs_filetype_rar,
 	fs_filetype_txt,
 	fs_filetype_html,
+	fs_filetype_prog,
 #ifdef ENABLE_PMPAVC
 	fs_filetype_pmp,
 #endif

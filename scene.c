@@ -3248,6 +3248,24 @@ void scene_filelist()
 		}
 		switch((t_fs_filetype)filelist[idx].data)
 		{
+			/*
+		case fs_filetype_prog:
+			if(win_msgbox("是否执行该程序?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+			{
+				char path[256];
+				strncpy(path, config.path, 256);
+				strncat(path, filelist[idx].compname, 256);
+				path[255] = '\0';
+				win_msg(path, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+				int err;
+				if((err = sceKernelLoadExec(path, NULL)) < 0) {
+					char infomsg[256];
+					sprintf(infomsg, "启动错误： 返回错误代码: %08x", err);
+					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+				}
+			}
+			break;
+			*/
 		case fs_filetype_dir:
 		{
 			char pdir[256];

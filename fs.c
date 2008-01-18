@@ -90,6 +90,8 @@ t_fs_filetype_entry ft_table[] =
 	{"gz", fs_filetype_gz},
 	{"chm", fs_filetype_chm},
 	{"rar", fs_filetype_rar},
+	{"prx", fs_filetype_prog},
+	{"pbp", fs_filetype_prog},
 #ifdef ENABLE_MUSIC
 	{"mp3", fs_filetype_mp3},
 	{"aa3", fs_filetype_aa3},
