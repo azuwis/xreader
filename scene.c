@@ -111,12 +111,15 @@ bool scene_load_font()
 	strcat(fontzipfile, "fonts.zip");
 	sprintf(efontfile, "ASC%d", config.fontsize);
 	sprintf(cfontfile, "GBK%d", config.fontsize);
+	scene_power_save(false);
 	if(!disp_load_zipped_font(fontzipfile, efontfile, cfontfile))
 	{
 		sprintf(efontfile, "%sfonts/ASC%d", appdir, config.fontsize);
 		sprintf(cfontfile, "%sfonts/GBK%d", appdir, config.fontsize);
-		if(!disp_load_font(efontfile, cfontfile))
+		if(!disp_load_font(efontfile, cfontfile)) {
+			scene_power_save(true);
 			return false;
+		}
 	}
 	disp_set_fontsize(config.fontsize);
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -125,6 +128,7 @@ bool scene_load_font()
 #else
 	config.lyricex = 0;
 #endif
+	scene_power_save(true);
 	return true;
 }
 
@@ -170,16 +174,20 @@ bool scene_load_book_font()
 		strcat(fontzipfile, "fonts.zip");
 		sprintf(efontfile, "ASC%d", config.bookfontsize);
 		sprintf(cfontfile, "GBK%d", config.bookfontsize);
+		scene_power_save(false);
 		if(!disp_load_zipped_book_font(fontzipfile, efontfile, cfontfile))
 		{
 			sprintf(efontfile, "%sfonts/ASC%d", appdir, config.bookfontsize);
 			sprintf(cfontfile, "%sfonts/GBK%d", appdir, config.bookfontsize);
-			if(!disp_load_book_font(efontfile, cfontfile))
+			if(!disp_load_book_font(efontfile, cfontfile)) {
+				scene_power_save(true);
 				return false;
+			}
 		}
 		memset(disp_ewidth, config.bookfontsize / 2, 0x80);
 	}
 	disp_set_book_fontsize(config.bookfontsize);
+	scene_power_save(true);
 	return true;
 }
 
