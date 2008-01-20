@@ -4,6 +4,7 @@
 
 #if defined(ENABLE_IMAGE) || defined(ENABLE_BG)
 
+#include <psptypes.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
