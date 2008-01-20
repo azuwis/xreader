@@ -73,7 +73,8 @@ int scene_book_reload(dword selidx)
 	}
 	if(rrow == INVALID)
 	{
-		if(config.autobm)
+		// disable binary bookmark
+		if(config.autobm && (t_fs_filetype)filelist[selidx].data != fs_filetype_unknown)
 		{
 			rrow = bookmark_autoload(archname);
 			text_needrb = true;
@@ -110,7 +111,7 @@ int scene_book_reload(dword selidx)
 		fs = text_open(filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	if(fs == NULL)
 	{
-		disp_duptocachealpha(50);
+		win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		return 1;
 	}
 	if(text_needrb && (t_fs_filetype)filelist[selidx].data != fs_filetype_unknown)
