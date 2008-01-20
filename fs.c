@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pspuser.h>
-
 #include <unzip.h>
 #include <chm_lib.h>
 #include <unrar.h>
@@ -16,6 +15,7 @@
 #include "charsets.h"
 #include "fat.h"
 #include "fs.h"
+#include "scene.h"
 
 typedef struct {
 	const char * ext;
@@ -179,13 +179,16 @@ extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem 
 
 extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
 {
+	scene_power_save(false);
 	strcpy((char *)sdir, dir);
 	SceIoDirent info;
 	dword cur_count = 0;
 	p_win_menuitem item = NULL;
 	int fd = sceIoDopen(dir);
-	if(fd < 0)
+	if(fd < 0) {
+		scene_power_save(true);
 		return 0;
+	}
 //	if(stricmp(dir, "ms0:/") == 0)
 	{
 		cur_count = 1;
@@ -193,6 +196,7 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 		if(* mitem == NULL)
 		{
 			sceIoDclose(fd);
+			scene_power_save(true);
 			return 0;
 		}
 		item = * mitem;
@@ -221,8 +225,10 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 					* mitem = (p_win_menuitem)malloc(sizeof(t_win_menuitem) * 256);
 				else
 					* mitem = (p_win_menuitem)realloc(*mitem, sizeof(t_win_menuitem) * (cur_count + 256));
-				if(* mitem == NULL)
+				if(* mitem == NULL) {
+					scene_power_save(true);
 					return 0;
+				}
 				item = *mitem;
 			}
 			item[cur_count].data = (void *)fs_filetype_dir;
@@ -252,8 +258,10 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 					* mitem = (p_win_menuitem)malloc(sizeof(t_win_menuitem) * 256);
 				else
 					* mitem = (p_win_menuitem)realloc(*mitem, sizeof(t_win_menuitem) * (cur_count + 256));
-				if(* mitem == NULL)
+				if(* mitem == NULL) {
+					scene_power_save(true);
 					return 0;
+				}
 				item = *mitem;
 			}
 			item[cur_count].data = (void *)ft;
@@ -274,12 +282,14 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 		cur_count ++;
 	}
 	sceIoDclose(fd);
+	scene_power_save(true);
 	return cur_count;
 }
 
 // New style fat system custom reading
 extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor, bool showhidden, bool showunknown)
 {
+	scene_power_save(false);
 	p_win_menuitem item = NULL;
 	p_fat_info info;
 	if(* mitem != NULL)
@@ -288,8 +298,10 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 		* mitem = NULL;
 	}
 	dword count = fat_readdir(dir, sdir, &info);
-	if(count == INVALID)
+	if(count == INVALID) {
+		scene_power_save(true);
 		return 0;
+	}
 	if(*mitem != NULL)
 	{
 		free((void *)* mitem);
@@ -303,6 +315,7 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 		if(* mitem == NULL)
 		{
 			free((void *)info);
+			scene_power_save(true);
 			return 0;
 		}
 		item = * mitem;
@@ -329,6 +342,7 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 			if(* mitem == NULL)
 			{
 				free((void *)info);
+				scene_power_save(true);
 				return 0;
 			}
 			item = *mitem;
@@ -379,11 +393,13 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 		cur_count ++;
 	}
 	free((void *)info);
+	scene_power_save(true);
 	return cur_count;
 }
 
 extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
 {
+	scene_power_save(false);
 	unzFile unzf = unzOpen(zipfile);
 	p_win_menuitem item = NULL;
 	if(* mitem != NULL)
@@ -391,13 +407,16 @@ extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword 
 		free((void *)* mitem);
 		* mitem = NULL;
 	}
-	if(unzf == NULL)
+	if(unzf == NULL) {
+		scene_power_save(true);
 		return 0;
+	}
 	dword cur_count = 1;
 	* mitem = (p_win_menuitem)malloc(sizeof(t_win_menuitem) * 256);
 	if(* mitem == NULL)
 	{
 		unzClose(unzf);
+		scene_power_save(true);
 		return 0;
 	}
 	item = * mitem;
@@ -413,6 +432,7 @@ extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword 
 	if(unzGoToFirstFile(unzf) != UNZ_OK)
 	{
 		unzClose(unzf);
+		scene_power_save(true);
 		return 1;
 	}
 	do {
@@ -428,8 +448,10 @@ extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword 
 		if(cur_count % 256 == 0)
 		{
 			* mitem = (p_win_menuitem)realloc(*mitem, sizeof(t_win_menuitem) * (cur_count + 256));
-			if(* mitem == NULL)
+			if(* mitem == NULL) {
+				scene_power_save(true);
 				return 0;
+			}
 			item = *mitem;
 		}
 		item[cur_count].data = (void *)ft;
@@ -444,11 +466,13 @@ extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword 
 		cur_count ++;
 	} while(unzGoToNextFile(unzf) == UNZ_OK);
 	unzClose(unzf);
+	scene_power_save(true);
 	return cur_count;
 }
 
 extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
 {
+	scene_power_save(false);
 	p_win_menuitem item = NULL;
 	if(* mitem != NULL)
 	{
@@ -461,13 +485,16 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 	arcdata.CmtBuf = NULL;
 	arcdata.CmtBufSize = 0;
 	HANDLE hrar = RAROpenArchive(&arcdata);
-	if(hrar == 0)
+	if(hrar == 0) {
+		scene_power_save(true);
 		return 0;
+	}
 	dword cur_count = 1;
 	* mitem = (p_win_menuitem)malloc(sizeof(t_win_menuitem) * 256);
 	if(* mitem == NULL)
 	{
 		RARCloseArchive(hrar);
+		scene_power_save(true);
 		return 0;
 	}
 	item = * mitem;
@@ -494,8 +521,10 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 		if(cur_count % 256 == 0)
 		{
 			* mitem = (p_win_menuitem)realloc(*mitem, sizeof(t_win_menuitem) * (cur_count + 256));
-			if(* mitem == NULL)
+			if(* mitem == NULL) {
+				scene_power_save(true);
 				return 0;
+			}
 			item = *mitem;
 		}
 		item[cur_count].data = (void *)ft;
@@ -524,6 +553,7 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 	while(RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
 
 	RARCloseArchive(hrar);
+	scene_power_save(true);
 	return cur_count;
 }
 
@@ -593,6 +623,7 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 
 extern dword fs_chm_to_menu(const char * chmfile, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
 {
+	scene_power_save(false);
 	struct chmFile * chm = chm_open(chmfile);
 	p_win_menuitem item = NULL;
 	if(* mitem != NULL)
@@ -600,12 +631,15 @@ extern dword fs_chm_to_menu(const char * chmfile, p_win_menuitem * mitem, dword 
 		free((void *)* mitem);
 		* mitem = NULL;
 	}
-	if(chm == NULL)
+	if(chm == NULL) {
+		scene_power_save(true);
 		return 0;
+	}
 	* mitem = (p_win_menuitem)malloc(sizeof(t_win_menuitem) * 256);
 	if(* mitem == NULL)
 	{
 		chm_close(chm);
+		scene_power_save(true);
 		return 0;
 	}
 	item = * mitem;
@@ -629,6 +663,7 @@ extern dword fs_chm_to_menu(const char * chmfile, p_win_menuitem * mitem, dword 
 	chm_enumerate(chm, CHM_ENUMERATE_NORMAL | CHM_ENUMERATE_FILES, chmEnum, (void *)&cenum);
 
 	chm_close(chm);
+	scene_power_save(true);
 	return cenum.cur_count;
 }
 
