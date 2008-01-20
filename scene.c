@@ -3181,7 +3181,7 @@ void scene_filelist()
 	while (1)
 	{
 		if(!config.isreading && !locreading) {
-			if(filelist == 0)
+			if(filelist == 0 || filecount == 0)
 			{
 				// empty directory ?
 				if(where == scene_in_dir) {
