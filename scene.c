@@ -2394,6 +2394,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 	}
 	else if(key == config.flkey[3] || key == config.flkey2[3])
 	{
+		ctrl_waitrelease();
 		* index = 0;
 		if(item[*index].compname[0] == '.')
 			return win_menu_op_ok;
