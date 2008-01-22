@@ -51,7 +51,7 @@ int rowtop = 0;
 char tr[8], * trow = NULL;
 bool text_needrf = true, text_needrp = true, text_needrb = false;
 char filename[256], archname[256];
-int autopage_prevsetting = 0;
+int autopage_prevsetting = 2;
 
 int scene_book_reload(dword selidx)
 {
