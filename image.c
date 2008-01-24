@@ -851,14 +851,11 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 	cinfo.scale_denom = 1;
 	cinfo.dct_method = JDCT_FASTEST;
 	cinfo.do_fancy_upsampling = FALSE;
-	sceRtcGetCurrentTick(&dbglasttick);
 	if(!jpeg_start_decompress(&cinfo))
 	{
 		jpeg_destroy_decompress(&cinfo);
 		return 3;
 	}
-	sceRtcGetCurrentTick(&dbgnow);
-	dbg_printf(d, "解压JPG完成耗时:%.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
 	*bgcolor = 0;
 	*pwidth = cinfo.output_width;
 	*pheight = cinfo.output_height;
