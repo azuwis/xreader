@@ -151,7 +151,7 @@ static void conf_default(p_conf conf)
 	conf->flkey[4] = 0;
 	conf->flkey[5] = PSP_CTRL_TRIANGLE;
 	conf->flkey[6] = PSP_CTRL_SQUARE;
-	conf->bicubic = true;
+	conf->bicubic = false;
 	conf->mp3encode = conf_encode_gbk;
 	conf->lyricencode = conf_encode_gbk;
 	conf->mp3cycle = conf_cycle_repeat;
