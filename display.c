@@ -41,6 +41,7 @@ typedef struct _Vertex {
 
 #define DISP_RSPAN 0
 
+#ifdef CHECK_DISPLAY_BORDER
 #define CHECK_AND_VALID(x, y) \
 {\
 	x = (x < 0) ? 0 : x; \
@@ -61,6 +62,11 @@ typedef struct _Vertex {
 	w = x + w > PSP_SCREEN_WIDTH ? PSP_SCREEN_WIDTH - x : w; \
 	h = y + h > PSP_SCREEN_HEIGHT ? PSP_SCREEN_HEIGHT - y : h; \
 }
+#else
+#define CHECK_AND_VALID(x, y) 
+#define CHECK_AND_VALID_4(x1, y1, x2, y2) 
+#define CHECK_AND_VALID_WH(x, y, w, h) 
+#endif
 
 extern void disp_init()
 {
