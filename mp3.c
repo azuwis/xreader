@@ -1027,6 +1027,16 @@ extern void mp3_list_free()
 	mp3_nfiles = 0;
 }
 
+bool mp3_is_file_exist(const char *filename)
+{
+	SceUID uid;
+	uid = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+	if(uid < 0)
+		return false;
+	sceIoClose(uid);
+	return true;
+}
+
 extern bool mp3_list_load(const char * filename)
 {
 	FILE * fp = fopen(filename, "rt");
@@ -1044,6 +1054,8 @@ extern bool mp3_list_load(const char * filename)
 				cname[len2 - 1] = 0;
 		}
 		else
+			continue;
+		if( !mp3_is_file_exist(fname) )
 			continue;
 #ifndef ENABLE_ME
 		if(mp3_nfiles % 256 == 0)
