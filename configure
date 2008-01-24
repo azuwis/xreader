@@ -83,7 +83,7 @@ for ac_option do
   --enable-ge)	_ge=yes	;;
   --disable-ge)	_ge=no	;;
   --enable-me)	_me=yes	;;
-  --enable-lite) _lite=yes;_usb=no;_music=no;_wma=no;_lyric=no;_ttf=no;_image=no;_bg=no;;
+  --enable-lite) _lite=yes;_usb=no;_music=no;_wma=no;_lyric=no;_ttf=no;_image=yes;_bg=no;;
   --disable-me)	_me=no	;;
   *)
     echo "Unknown parameter: $ac_option"
