@@ -1,5 +1,6 @@
 #include <string.h>
 #include "qsort.h"
+#include "scene.h"
 
 __inline void swap_data(void * data1, void * data2, int datasize)
 {
@@ -9,7 +10,7 @@ __inline void swap_data(void * data1, void * data2, int datasize)
 	memcpy(data2, temp, datasize);
 }
 
-extern void quicksort(void * data, int left, int right, int datasize, qsort_compare compare)
+void _quicksort(void * data, int left, int right, int datasize, qsort_compare compare)
 {
 	int i, last;
 	if (left >= right)
@@ -23,6 +24,13 @@ extern void quicksort(void * data, int left, int right, int datasize, qsort_comp
 		if (compare(&qdata[i], &qdata[left]) < 0)
 			swap_data(&qdata[++last], &qdata[i], datasize);
 	swap_data(&qdata[left], &qdata[last], datasize);
-	quicksort(data, left, last-1, datasize, compare);
-	quicksort(data, last+1, right, datasize, compare);
+	_quicksort(data, left, last-1, datasize, compare);
+	_quicksort(data, last+1, right, datasize, compare);
+}
+
+extern void quicksort(void * data, int left, int right, int datasize, qsort_compare compare)
+{
+	scene_power_save(false);
+	_quicksort(data, left, right, datasize, compare);
+	scene_power_save(true);
 }
