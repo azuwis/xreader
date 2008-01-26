@@ -8,15 +8,17 @@
 #include "charsets.h"
 #include "fat.h"
 
+typedef unsigned long long dquad;
+
 static int fatfd = -1;
 static t_fat_dbr dbr;
 static t_fat_mbr mbr;
 static dword * fat_table = NULL;
-static dword root_pos = 0;
-static dword data_pos = 0;
-static dword bytes_per_clus = 0;
-static dword loadcount = 0;
-static dword clus_max = 0;
+static dquad root_pos = 0;
+static dquad data_pos = 0;
+static dquad bytes_per_clus = 0;
+static dquad loadcount = 0;
+static dquad clus_max = 0;
 static enum {
 	fat12,
 	fat16,
