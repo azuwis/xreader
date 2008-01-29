@@ -449,9 +449,11 @@ int scene_printimage(int selidx)
 				int line_num = exif_count <= height ? exif_count : height;
 				int top = (PSP_SCREEN_HEIGHT - (1 + height) * DISP_FONTSIZE) / 2 > 0 ?
 				   	(PSP_SCREEN_HEIGHT - (1 + height) * DISP_FONTSIZE) / 2 : 0; 
+				int left = (PSP_SCREEN_WIDTH - width) / 4 - 10 < 0 ?
+				   	0 : (PSP_SCREEN_WIDTH - width) / 4 - 10;
 				int right = (PSP_SCREEN_WIDTH + 3 * width) / 4 >= PSP_SCREEN_WIDTH ? 
 					PSP_SCREEN_WIDTH-1 : (PSP_SCREEN_WIDTH + 3 * width) / 4;
-				disp_fillrect((PSP_SCREEN_WIDTH - width) / 4 - 10 , top, right, top + DISP_FONTSIZE * line_num, 0);
+				disp_fillrect(left, top, right, top + DISP_FONTSIZE * line_num, 0);
 				int i;
 				for(i=0; i<line_num; ++i) {
 					const char *teststr = exif_msg[i];
