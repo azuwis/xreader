@@ -3,6 +3,7 @@
 #ifndef _IMAGE_C_
 #define _IAMGE_C_
 
+#include "libexif/exif-data.h"
 #include "common/datatype.h"
 #include "display.h"
 
@@ -29,5 +30,9 @@ extern int image_readtga(const char * filename, dword *pwidth, dword *pheight, p
 extern int image_readtga_in_zip(const char * zipfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor);
 extern int image_readtga_in_chm(const char * chmfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor);
 extern int image_readtga_in_rar(const char * rarfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor);
+
+extern void exif_entry_viewer (ExifEntry *pentry, void *user_data);
+extern void exif_context_viewer(ExifContent *pcontext, void *user_data);
+extern void exif_viewer(ExifData *data);
 
 #endif

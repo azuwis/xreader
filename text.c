@@ -356,7 +356,7 @@ extern p_text text_open_in_gz(const char * gzfile, const char * filename, t_fs_f
 	while((len = gzread(unzf, txt->buf + txt->size, cap - txt->size)) > 0) {
 		txt->size += len;
 		if(txt->size >= cap) {
-			cap *= 2 + 16;
+			cap = cap * 2 + 16;
 			txt->buf = realloc(txt->buf, cap);
 			if(txt->buf == NULL) {
 				text_close(txt);

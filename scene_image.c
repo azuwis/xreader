@@ -116,7 +116,9 @@ int open_image(dword selidx)
 					result = image_readjpg_in_rar(config.shortpath, filename, &width, &height, &imgdata, &bgcolor);
 					break;
 				default:
-					result = image_readjpg(filename, &width, &height, &imgdata, &bgcolor);
+				   	{
+						result = image_readjpg(filename, &width, &height, &imgdata, &bgcolor);
+					}
 					break;
 			}
 			break;
@@ -390,6 +392,42 @@ dword scene_rotateimage()
 	return 0;
 }
 
+extern int exif_count;
+extern char exif_msg[20][255];
+
+float get_text_len(const unsigned char* str)
+{
+	if(!str)
+		return 0;
+
+	float f = 0;
+	while(*str != '\0') {
+		if(*str >= 0x80 && *(str+1) != '\0')  {
+			f++;
+			str += 2;
+		}
+		else {
+			f += 0.5;
+			str++;
+		}
+	}
+
+	return f;
+}
+
+float get_max_height(void)
+{
+	int i;
+
+	float max_h = -1.0;
+	for(i=0; i<exif_count; ++i) {
+		float len = get_text_len((const unsigned char*)exif_msg[i]);
+		max_h = max_h > len ? max_h : len;
+	}
+
+	return max_h;
+}
+
 int scene_printimage(int selidx)
 {
 	disp_waitv();
@@ -405,6 +443,22 @@ int scene_printimage(int selidx)
 		int ilen = strlen(infostr);
 		if(config.imginfobar)
 		{
+			if(config.load_exif && exif_count > 0) {
+				int width = get_max_height() * DISP_FONTSIZE + 10;
+				int height = PSP_SCREEN_HEIGHT / DISP_FONTSIZE - 1;
+				int line_num = exif_count <= height ? exif_count : height;
+				int top = (PSP_SCREEN_HEIGHT - (1 + height) * DISP_FONTSIZE) / 2 > 0 ?
+				   	(PSP_SCREEN_HEIGHT - (1 + height) * DISP_FONTSIZE) / 2 : 0; 
+				int right = (PSP_SCREEN_WIDTH + 3 * width) / 4 >= PSP_SCREEN_WIDTH ? 
+					PSP_SCREEN_WIDTH-1 : (PSP_SCREEN_WIDTH + 3 * width) / 4;
+				disp_fillrect((PSP_SCREEN_WIDTH - width) / 4 - 10 , top, right, top + DISP_FONTSIZE * line_num, 0);
+				int i;
+				for(i=0; i<line_num; ++i) {
+					const char *teststr = exif_msg[i];
+					disp_putnstring((PSP_SCREEN_WIDTH - width) / 4, top + i * DISP_FONTSIZE, COLOR_WHITE, (const byte *)teststr, strlen(teststr), 0, 0, DISP_FONTSIZE, 0);
+				}
+			}
+
 			disp_fillrect(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, 479, 271, 0);
 			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)filelist[selidx].name, 960 / DISP_FONTSIZE - ilen - 1, 0, 0, DISP_FONTSIZE, 0);
 			disp_putnstring(PSP_SCREEN_WIDTH - DISP_FONTSIZE / 2 * ilen, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
@@ -415,7 +469,7 @@ int scene_printimage(int selidx)
 			disp_putnstring(11, 11, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
 		}
 	}
-	if(config.thumb == conf_thumb_always || thumb)
+	if((config.thumb == conf_thumb_always || thumb) && (exif_count <= 0 || !config.load_exif))
 	{
 		dword top = (PSP_SCREEN_HEIGHT - thumbh) / 2, bottom = top + thumbh;
 		dword thumbl = 0, thumbr = 0, thumbt = 0, thumbb = 0;
@@ -840,6 +894,7 @@ int image_handle_input(dword *selidx, dword key)
 	}
 	else if(key == config.imgkey[2] || key == config.imgkey2[2])
 	{
+		ctrl_waitrelease();
 		if(config.fit == conf_fit_custom)
 			config.fit = conf_fit_none;
 		else

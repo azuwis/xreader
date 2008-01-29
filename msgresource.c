@@ -98,6 +98,7 @@ MsgResource msg[] =
 	{"显示", DISPLAY_OPTION},
 	{"隐藏", HIDDEN_OPTION},
 	{"设置选项", SETTING_OPTION},
+	{"查看EXIF信息", VIEW_EXIF},
 	{NULL,   UNKNOWN}
 };
 
