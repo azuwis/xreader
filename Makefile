@@ -7,22 +7,22 @@ OBJS = $(SRCS:.c=.o)
 INCDIR = ./include ./include/freetype2 $(PSPSDK)/../include 
 
 ifeq ($(DEBUG), 1)
-CFLAGS = -O0 -g -Wall
+CFLAGS = -O0 -G0 -g -Wall
 else
-CFLAGS = -O3 -G0 -Wall
+CFLAGS = -O2 -G0 -Wall
 endif		
 CXXFLAGS = $(CFLAGS) -fno-rtti
 
 PSP_FW_VERSION=380
 BUILD_PRX=1
-PSP_LARGE_MEMORY=1
+PSP_LARGE_MEMORY=0
 
 LIBDIR = ./lib
 LIBS = ./lib/unrar.a ./lib/unzip.a ./lib/libchm.a ./lib/libpng.a \
 	./lib/libgif.a ./lib/libjpeg.a ./lib/libbmp.a ./lib/libtga.a \
 	./lib/libmad.a ./lib/libz.a ./lib/libfreetype.a ./lib/libwmadec.a \
 	./lib/pmpmodavc/pmpmodavclib.a ./lib/pmpmodavc/libavformat.a ./lib/pmpmodavc/libavcodec.a ./lib/pmpmodavc/libavutil.a ./lib/pmpmodavc/libpspmpeg.a ./lib/pmpmodavc/pmpmodavclib.a ./lib/libpspsystemctrl_kernel.a  \
-	-lm -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc \
+	-lexif -lm -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc \
 	-lpspusb -lpspusbstor -lstdc++ -lpspkubridge -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg 
 
 ifeq ($(EREADER2), 1)
