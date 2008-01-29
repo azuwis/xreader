@@ -15,7 +15,7 @@ CXXFLAGS = $(CFLAGS) -fno-rtti
 
 PSP_FW_VERSION=380
 BUILD_PRX=1
-PSP_LARGE_MEMORY=0
+PSP_LARGE_MEMORY=1
 
 LIBDIR = ./lib
 LIBS = ./lib/unrar.a ./lib/unzip.a ./lib/libchm.a ./lib/libpng.a \
