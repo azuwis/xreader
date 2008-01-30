@@ -30,6 +30,7 @@ extern void scene_power_save(bool save);
 extern void scene_exception();
 extern const char * scene_appdir();
 dword scene_readbook(dword selidx);
+dword scene_readbook_raw(const char* title, const unsigned char* data, size_t size, t_fs_filetype ft);
 extern void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd, dword * kl, dword * kr);
 extern bool scene_bookmark(dword * orgp);
 extern dword scene_options(dword * selidx);

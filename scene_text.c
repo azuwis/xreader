@@ -798,6 +798,435 @@ next:
 	return -1;
 }
 
+dword scene_readbook_raw(const char* title, const unsigned char* data, size_t size, t_fs_filetype ft)
+{
+	p_text prev_text = NULL;
+	dword  prev_rrow = rrow;
+	int prev_rowtop = rowtop;
+	char* prev_trow = trow;
+	bool prev_text_needrf = text_needrf, prev_text_needrp = text_needrp, prev_text_needrb = text_needrb;
+
+	u64 timer_start, timer_end;
+	sceRtcGetCurrentTick(&timer_start);
+	rrow = 0;
+	rowtop = 0;
+	trow = NULL;
+	text_needrf = true, text_needrp = true, text_needrb = false;
+	scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
+	while(1)
+	{
+		if(text_needrf)
+		{
+			if(fs != NULL)
+			{
+				prev_text = fs;
+				fs = NULL;
+			}
+
+			fs = text_open_in_raw(title, data, size, ft, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
+
+			if(fs == NULL)
+			{
+				win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+				fs = prev_text;
+				rrow = prev_rrow ;
+				rowtop= prev_rowtop ;
+				trow= prev_trow ;
+				text_needrf= prev_text_needrf, text_needrp = prev_text_needrp, text_needrb =prev_text_needrb;
+				
+				return 1;
+			}
+			if(text_needrb && ft != fs_filetype_unknown)
+			{
+				rowtop = 0;
+				fs->crow = 1;
+				while(fs->crow < fs->row_count && (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf <= rrow)
+					fs->crow ++;
+				fs->crow --;
+				text_needrb = false;
+			}
+			else
+				fs->crow = rrow;
+
+			if (fs->crow >= fs->row_count)
+				fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+
+			trow = &tr[utils_dword2string(fs->row_count, tr, 7)];
+
+			text_needrf = false;
+		}
+		if(text_needrp)
+		{
+			char ci[8] = "       ", cr[512];
+			disp_waitv();
+#ifdef ENABLE_BG
+			if(!bg_display())
+#endif
+				disp_fillvram(config.bgcolor);
+			p_textrow tr = fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF);
+			switch(config.vertread)
+			{
+				case 3:
+					disp_putnstringreversal(config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, rowtop, DISP_BOOK_FONTSIZE - rowtop, 0);
+					for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
+					{
+						tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+						disp_putnstringreversal(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
+					}
+					if(config.infobar == conf_infobar_info)
+					{
+						int i;
+						offset = 0;
+						for(i=0; i<fs->crow && i<fs->row_count; ++i) {
+							p_textrow tr;
+							tr = fs->rows[i >> 10] + (i & 0x3FF);
+							offset += tr->count;
+						}
+						offset = offset / 1023 + 1;
+						disp_line(0, DISP_BOOK_FONTSIZE, 479, DISP_BOOK_FONTSIZE, config.forecolor);
+						utils_dword2string(fs->crow + 1, ci, 7);
+						char autopageinfo[80];
+						if(config.autopagetype == 2)
+							autopageinfo[0] = 0;
+						else if(config.autopagetype == 1) {
+							snprintf(autopageinfo, 80, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
+							autopageinfo[80-1] = '\0';
+						}
+						else {
+							if(config.autopage != 0) {
+								snprintf(autopageinfo, 80, "自动翻页: 时间 %d", config.autopage);
+								autopageinfo[80-1] = '\0';
+							}
+							else
+								autopageinfo[0] = 0;
+						}
+						snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), title, offset, autopageinfo);
+						cr[512-1]='\0';
+						disp_putnstringreversal(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
+					}
+#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
+					else if(config.infobar == conf_infobar_lyric)
+					{
+						disp_line(480 - 1, 272 - 1 - 271 + DISP_BOOK_FONTSIZE, 480 - 1 - 479, 272 - 1 - 271 + DISP_BOOK_FONTSIZE, config.forecolor);
+						const char * ls[1];
+						dword ss[1];
+						if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
+						{
+							if(ss[0] > 960 / DISP_BOOK_FONTSIZE)
+								ss[0] = 960 / DISP_BOOK_FONTSIZE;
+							char t[BUFSIZ];
+							lyric_decode(ls[0], t, &ss[0]);
+							disp_putnstringreversal((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+						}
+					}
+#endif
+					break;			
+				case 2:
+					disp_putnstringlvert(config.borderspace, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, rowtop, DISP_BOOK_FONTSIZE - rowtop, 0);
+					for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
+					{
+						tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+						disp_putnstringlvert((DISP_BOOK_FONTSIZE + config.rowspace) * cidx + config.borderspace - rowtop, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (479 -  DISP_BOOK_FONTSIZE) : PSP_SCREEN_WIDTH);
+					}
+					if(config.infobar == conf_infobar_info)
+					{
+						int i;
+						offset = 0;
+						for(i=0; i<fs->crow && i<fs->row_count; ++i) {
+							p_textrow tr;
+							tr = fs->rows[i >> 10] + (i & 0x3FF);
+							offset += tr->count;
+						}
+						offset = offset / 1023 + 1;
+						disp_line(479 - DISP_BOOK_FONTSIZE, 0, 479 - DISP_BOOK_FONTSIZE, 271, config.forecolor);
+						utils_dword2string(fs->crow + 1, ci, 7);
+						char autopageinfo[80];
+						if(config.autopagetype == 2)
+							autopageinfo[0] = 0;
+						if(config.autopagetype == 1) {
+							snprintf(autopageinfo, 80, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
+							autopageinfo[80-1]='\0';
+						}
+						if(config.autopagetype == 0) {
+							snprintf(autopageinfo, 80, "翻页: 时%d", config.autopage);
+							autopageinfo[80-1]='\0';
+						}
+						snprintf(cr, 512, "%s/%s  %s  %s  %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), title, offset, autopageinfo);
+						cr[512-1]='\0';
+						disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
+					}
+#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
+					else if(config.infobar == conf_infobar_lyric)
+					{
+						disp_line(479 - DISP_BOOK_FONTSIZE, 0, 479 - DISP_BOOK_FONTSIZE, 271, config.forecolor);
+						const char * ls[1];
+						dword ss[1];
+						if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
+						{
+							if(ss[0] > 544 / DISP_BOOK_FONTSIZE)
+								ss[0] = 544 / DISP_BOOK_FONTSIZE;
+							char t[BUFSIZ];
+							lyric_decode(ls[0], t, &ss[0]);
+							disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271 - (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+						}
+					}
+#endif
+					break;
+				case 1:
+					disp_putnstringrvert(479 - config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, rowtop, DISP_BOOK_FONTSIZE - rowtop, 0);
+					for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
+					{
+						tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+						disp_putnstringrvert(479 - (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - config.borderspace + rowtop, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0);
+					}
+					if(config.infobar == conf_infobar_info)
+					{
+						int i;
+						offset = 0;
+						for(i=0; i<fs->crow && i<fs->row_count; ++i) {
+							p_textrow tr;
+							tr = fs->rows[i >> 10] + (i & 0x3FF);
+							offset += tr->count;
+						}
+						offset = offset / 1023 + 1;
+						disp_line(DISP_BOOK_FONTSIZE, 0, DISP_BOOK_FONTSIZE, 271, config.forecolor);
+						utils_dword2string(fs->crow + 1, ci, 7);
+						char autopageinfo[80];
+						if(config.autopagetype == 2)
+							autopageinfo[0] = 0;
+						if(config.autopagetype == 1) {
+							snprintf(autopageinfo, 80, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
+							autopageinfo[80-1]='\0';
+						}
+						if(config.autopagetype == 0) {
+							snprintf(autopageinfo, 80, "翻页: 时%d", config.autopage);
+							autopageinfo[80-1]='\0';
+						}
+						snprintf(cr, 512, "%s/%s  %s  %s  %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), title, offset, autopageinfo);
+						cr[512-1]='\0';
+						disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, 0, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
+					}
+#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
+					else if(config.infobar == conf_infobar_lyric)
+					{
+						disp_line(DISP_BOOK_FONTSIZE, 0, DISP_BOOK_FONTSIZE, 271, config.forecolor);
+						const char * ls[1];
+						dword ss[1];
+						if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
+						{
+							if(ss[0] > 544 / DISP_BOOK_FONTSIZE)
+								ss[0] = 544 / DISP_BOOK_FONTSIZE;
+							char t[BUFSIZ];
+							lyric_decode(ls[0], t, &ss[0]);
+							disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+						}
+					}
+#endif
+					break;
+				default:
+					{
+						disp_putnstringhorz(config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, rowtop, DISP_BOOK_FONTSIZE - rowtop, 0);
+						for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
+						{
+							tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+							/*
+							   if(!havedisplayed) {
+							   char infomsg[80];
+							   sprintf(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, cidx, rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - rowtop);
+							   win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+
+							   havedisplayed = true;
+							   }
+							   */
+							disp_putnstringhorz(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (271 - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
+						}
+					}
+					if(config.infobar == conf_infobar_info)
+					{
+						int i;
+						offset = 0;
+						for(i=0; i<fs->crow && i<fs->row_count; ++i) {
+							p_textrow tr;
+							tr = fs->rows[i >> 10] + (i & 0x3FF);
+							offset += tr->count;
+						}
+						offset = offset / 1023 + 1;
+						disp_line(0, 271 - DISP_BOOK_FONTSIZE, 479, 271 - DISP_BOOK_FONTSIZE, config.forecolor);
+						utils_dword2string(fs->crow + 1, ci, 7);
+						char autopageinfo[80];
+						if(config.autopagetype == 2)
+							autopageinfo[0] = 0;
+						else if(config.autopagetype == 1) {
+							snprintf(autopageinfo, 80, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
+							autopageinfo[80-1] = '\0';
+						}
+						else {
+							if(config.autopage != 0)
+							{
+								snprintf(autopageinfo, 80, "自动翻页: 时间 %d", config.autopage);
+								autopageinfo[80-1] = '\0';
+							}
+							else
+								autopageinfo[0] = 0;
+						}
+						if( where == scene_in_chm ) {
+							char fname[256];
+							charsets_utf8_conv((unsigned char*)title, (unsigned char*)fname);
+							snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
+						}
+						else {
+							snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), title, offset, autopageinfo);
+						}
+						cr[512-1]='\0';
+						disp_putnstringhorz(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
+					}
+#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
+					else if(config.infobar == conf_infobar_lyric)
+					{
+						disp_line(0, 271 - DISP_BOOK_FONTSIZE, 479, 271 - DISP_BOOK_FONTSIZE, config.forecolor);
+						const char * ls[1];
+						dword ss[1];
+						if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
+						{
+							if(ss[0] > 960 / DISP_BOOK_FONTSIZE)
+								ss[0] = 960 / DISP_BOOK_FONTSIZE;
+							char t[BUFSIZ];
+							lyric_decode(ls[0], t, &ss[0]);
+							disp_putnstringhorz((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
+						}
+					}
+#endif
+			}
+			if(config.scrollbar)
+			{
+				switch(config.vertread)
+				{
+					case 3:
+						{
+							dword slen = config.infobar ? (270 - DISP_BOOK_FONTSIZE) : 271, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, startp = slen * fs->crow / fs->row_count, endp;
+							if(startp + bsize > slen)
+								startp = slen - bsize;
+							endp = startp + bsize;
+							disp_line(480 - 1 - 475, 272 - 1 - 0, 480 - 1 - 475, 272 - 1 - slen, config.forecolor);
+							disp_fillrect(480 - 1 - 476, 272 - 1 - startp, 480 - 1 - 479, 272 - 1 - endp, config.forecolor);
+						}
+						break;
+					case 2:
+						{
+							dword sright = 479 - (config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0), slen = sright, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, startp = slen * fs->crow / fs->row_count, endp;
+							if(startp + bsize > slen)
+								startp = slen - bsize;
+							endp = startp + bsize;
+							disp_line(0, 4, sright, 4, config.forecolor);
+							disp_fillrect(startp, 0, endp, 3, config.forecolor);
+						}
+						break;
+					case 1:
+						{
+							dword sleft = (config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0), slen = 479 - sleft, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, endp = 479 - slen * fs->crow / fs->row_count, startp;
+							if(endp - bsize < sleft)
+								endp = sleft + bsize;
+							startp = endp - bsize;
+							disp_line(sleft, 267, 479, 267, config.forecolor);
+							disp_fillrect(startp, 268, endp, 271, config.forecolor);
+						}
+						break;
+					default:
+						{
+							dword slen = config.infobar ? (270 - DISP_BOOK_FONTSIZE) : 271, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, startp = slen * fs->crow / fs->row_count, endp;
+							if(startp + bsize > slen)
+								startp = slen - bsize;
+							endp = startp + bsize;
+							disp_line(475, 0, 475, slen, config.forecolor);
+							disp_fillrect(476, startp, 479, endp, config.forecolor);
+						}
+						break;
+				}
+			}
+			disp_flip();
+
+			text_needrp = false;
+		}
+
+		int delay = 20000;
+		dword key;
+
+		while((key = ctrl_read()) == 0) 
+		{
+			sceKernelDelayThread(delay);
+			sceRtcGetCurrentTick(&timer_end);
+			if(pspDiffTime(&timer_end, &timer_start) >= 1.0) {
+				sceRtcGetCurrentTick(&timer_start);
+				secticks++;
+			}
+			if(config.autosleep != 0 && secticks > 60 * config.autosleep) {
+#ifdef ENABLE_MUSIC
+				mp3_powerdown();
+#endif
+				fat_powerdown();
+				scePowerRequestSuspend();
+				secticks = 0;
+			}
+
+			if(config.autopage) {
+				if(config.autopagetype != 2) {
+					if(config.autopagetype == 1) {
+						if(++ticks >= config.autolinedelay) {
+							ticks = 0;
+							move_line_smooth(config.autopage);
+							// prevent LCD shut down by setting counter = 0
+							scePowerTick(0);
+							goto redraw;
+							delay = 0;
+						}
+					}
+					else {
+						// dummy selidx
+						dword selidx = 0;
+						if(++ticks >= 50 * abs(config.autopage)) {
+							ticks = 0;
+							if(config.autopage > 0)
+								move_page_down(key, &selidx);
+							else 
+								move_page_up(key, &selidx);
+							// prevent LCD shut down by setting counter = 0
+							scePowerTick(0);
+							goto redraw;
+							delay = 20000;
+						}
+					}
+				}
+			}
+			if(config.dis_scrsave) {
+				scePowerTick(0);
+			}
+		}
+		dword selidx = 0;
+		int ret = book_handle_input(&selidx, key);
+		if(ret != -1) {
+			text_close(fs);
+			fs = prev_text;
+			rrow = prev_rrow ;
+			rowtop= prev_rowtop ;
+			trow= prev_trow ;
+			text_needrf= prev_text_needrf, text_needrp = prev_text_needrp, text_needrb =prev_text_needrb;
+			
+			return ret;
+		}
+redraw:
+		;
+	}
+	text_close(fs);
+	fs = prev_text;
+	rrow = prev_rrow ;
+	rowtop= prev_rowtop ;
+	trow= prev_trow ;
+	text_needrf= prev_text_needrf, text_needrp = prev_text_needrp, text_needrb =prev_text_needrb;
+	
+	disp_duptocachealpha(50);
+	return INVALID;
+}
+
 dword scene_readbook(dword selidx)
 {
 	u64 timer_start, timer_end;

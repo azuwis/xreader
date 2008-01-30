@@ -24,6 +24,7 @@ typedef struct {
 extern bool text_format(p_text txt, dword rowpixels, dword wordspace);
 extern p_text text_open(const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder);
 extern p_text text_open_binary(const char * filename, bool vert);
+extern p_text text_open_in_raw(const char * filename, const unsigned char* data, size_t size, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder);
 extern p_text text_open_in_zip(const char * zipfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder);
 extern p_text text_open_in_gz(const char * gzfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder);
 extern p_text text_open_in_rar(const char * rarfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder);

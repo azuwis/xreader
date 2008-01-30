@@ -138,6 +138,7 @@ typedef struct {
 	bool dis_scrsave;
 	int  autosleep;
 	bool load_exif;
+	int brightness;
 } t_conf, * p_conf;
 
 /* txt key:

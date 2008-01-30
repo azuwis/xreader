@@ -71,4 +71,8 @@ enum { DBG_BUFSIZE = 800 };
 extern DBG *d;
 double pspDiffTime(u64 *t1, u64 *t2);
 
+extern int dbg_memorylog_cap;
+extern int dbg_memorylog_size;
+extern char *dbg_memorylog;
+
 #endif

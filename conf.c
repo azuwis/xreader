@@ -192,6 +192,7 @@ static void conf_default(p_conf conf)
 	conf->dis_scrsave = false;
 	conf->autosleep = 0;
 	conf->load_exif = true;
+	conf->brightness = 50;
 }
 
 extern bool conf_load(p_conf conf)

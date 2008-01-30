@@ -482,6 +482,40 @@ extern p_text text_open_binary_in_zip(const char * zipfile, const char * filenam
 	return txt;
 }
 
+extern p_text text_open_in_raw(const char * filename, const unsigned char* data, size_t size, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder)
+{
+	if(data == NULL || size == 0) {
+		return NULL;
+	}
+
+	p_text txt = (p_text)calloc(1, sizeof(t_text));
+	if(txt == NULL)
+		return NULL;
+	
+	strcpy(txt->filename, filename);
+	txt->size = size;
+
+	if((txt->buf = (char *)calloc(1, txt->size)) == NULL)
+	{
+		text_close(txt);
+		return NULL;
+	}
+
+	memcpy(txt->buf, data, txt->size);
+
+	text_decode(txt, encode);
+	if(ft == fs_filetype_html)
+		txt->size = html_to_text(txt->buf, txt->size, true);
+	if(reorder)
+		txt->size = text_reorder(txt->buf, txt->size);
+	if(!text_format(txt, rowpixels, wordspace))
+	{
+		text_close(txt);
+		return NULL;
+	}
+	return txt;
+}
+
 extern p_text text_open_in_zip(const char * zipfile, const char * filename, t_fs_filetype ft, dword rowpixels, dword wordspace, t_conf_encode encode, bool reorder)
 {
 	p_text txt = (p_text)calloc(1, sizeof(t_text));

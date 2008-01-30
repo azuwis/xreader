@@ -27,7 +27,7 @@ extern t_conf config;
 
 ExifData *exif_data = NULL;
 
-char exif_msg[20][255];
+char (*exif_msg)[255];
 int  exif_count = 0;
 
 /* 
@@ -893,6 +893,18 @@ static int image_readjpg2(FILE *infile, dword *pwidth, dword *pheight, pixel ** 
 	return 0;
 }
 
+extern int exif_readjpg(const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
+{
+	if(!config.load_exif) {
+		return -1;
+	}
+
+	exif_data = exif_data_new_from_file(filename);
+	exif_viewer(exif_data);
+
+	return 0;
+}
+
 extern int image_readjpg(const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
 {
 	FILE * fp = fopen(filename, "rb");
@@ -907,6 +919,28 @@ extern int image_readjpg(const char * filename, dword *pwidth, dword *pheight, p
 	}
 
 	return result;
+}
+
+extern int exif_readjpg_in_zip(const char * zipfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
+{
+	if(!config.load_exif)
+		return -1;
+
+	unzFile unzf = unzOpen(zipfile);
+	if(unzf == NULL)
+		return -1;
+	if(unzLocateFile(unzf, filename, 0) != UNZ_OK || unzOpenCurrentFile(unzf) != UNZ_OK)
+	{
+		unzClose(unzf);
+		return -1;
+	}
+
+	exif_data = exif_data_new_from_stream(image_zip_fread, unzf);
+	exif_viewer(exif_data);
+
+	unzCloseCurrentFile(unzf);
+	unzClose(unzf);
+	return 0;
 }
 
 extern int image_readjpg_in_zip(const char * zipfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
@@ -943,6 +977,28 @@ extern int image_readjpg_in_zip(const char * zipfile, const char * filename, dwo
 	return result;
 }
 
+extern int exif_readjpg_in_chm(const char * chmfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
+{
+	if(!config.load_exif) {
+		return -1;
+	}
+
+	t_image_chm chm;
+	chm.chm = chm_open(chmfile);
+	if(chm.chm == NULL)
+		return -1;
+	if (chm_resolve_object(chm.chm, filename, &chm.ui) != CHM_RESOLVE_SUCCESS)
+	{
+		chm_close(chm.chm);
+		return -1;
+	}
+	chm.readpos = 0;
+	exif_data = exif_data_new_from_stream(image_chm_fread, &chm);
+	exif_viewer(exif_data);
+	chm_close(chm.chm);
+	return 0;
+}
+
 extern int image_readjpg_in_chm(const char * chmfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
 {
 	t_image_chm chm;
@@ -957,11 +1013,59 @@ extern int image_readjpg_in_chm(const char * chmfile, const char * filename, dwo
 	chm.readpos = 0;
 	int result = image_readjpg2((FILE *)&chm, pwidth, pheight, image_data, bgcolor, image_chm_fread);
 	if(config.load_exif) {
+		chm.readpos = 0;
 		exif_data = exif_data_new_from_stream(image_chm_fread, &chm);
 		exif_viewer(exif_data);
 	}
 	chm_close(chm.chm);
 	return result;
+}
+
+extern int exif_readjpg_in_rar(const char * rarfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
+{
+	if(!config.load_exif) {
+		return -1;
+	}
+	
+	u64 dbglasttick, dbgnow;
+	t_image_rar rar;
+	struct RAROpenArchiveData arcdata;
+	arcdata.ArcName = (char *)rarfile;
+	arcdata.OpenMode = RAR_OM_EXTRACT;
+	arcdata.CmtBuf = NULL;
+	arcdata.CmtBufSize = 0;
+	sceRtcGetCurrentTick(&dbglasttick);
+	HANDLE hrar = RAROpenArchive(&arcdata);
+	if(hrar == NULL)
+		return -1;
+	RARSetCallback(hrar, imagerarcbproc, (LONG)&rar);
+	do {
+		struct RARHeaderData header;
+		if(RARReadHeader(hrar, &header) != 0)
+			break;
+		if(stricmp(header.FileName, filename) == 0)
+		{
+			rar.size = header.UnpSize;
+			rar.idx = 0;
+			int e;
+			if((rar.buf = (byte *)calloc(1, rar.size)) == NULL || (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0)
+			{
+				RARCloseArchive(hrar);
+				return -1;
+			}
+			RARCloseArchive(hrar);
+			rar.idx = 0;
+			sceRtcGetCurrentTick(&dbgnow);
+			dbg_printf(d, "找到RAR中JPG文件耗时%.2f秒", pspDiffTime(&dbgnow, &dbglasttick));
+			exif_data = exif_data_new_from_data(rar.buf, rar.size);
+			exif_viewer(exif_data);
+			free((void *)rar.buf);
+			return 0;
+		}
+	} while(RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
+
+	RARCloseArchive(hrar);
+	return -1;
 }
 
 extern int image_readjpg_in_rar(const char * rarfile, const char * filename, dword *pwidth, dword *pheight, pixel ** image_data, pixel * bgcolor)
@@ -1355,6 +1459,26 @@ extern int image_readtga_in_rar(const char * rarfile, const char * filename, dwo
 	return -1;
 }
 
+void add_str(const char* msg)
+{
+	if((exif_count % 10) == 0) {
+		if(exif_count > 0) {
+			exif_msg = (char(*)[255])realloc(exif_msg, 255 * (exif_count + 10));
+		}
+		else {
+			exif_msg = (char(*)[255])malloc(255 * (exif_count + 10));
+		}
+		if(exif_msg == NULL)
+		{
+			exif_count = 0;
+			return;
+		}
+	}
+
+	strncpy(exif_msg[exif_count], msg, 255);
+	exif_msg[exif_count][254] = '\0';
+	exif_count++;
+}
 
 void exif_entry_viewer (ExifEntry *pentry, void *user_data)
 {
@@ -1375,11 +1499,7 @@ void exif_entry_viewer (ExifEntry *pentry, void *user_data)
 	strncat(msg, exif_str, 256);
 	msg[255] = '\0';
 
-	if(exif_count < 20) {
-		strncpy(exif_msg[exif_count], msg, 255);
-		exif_msg[exif_count][255] = '\0';
-		exif_count++;
-	}
+	add_str(msg);
 
 //	win_msg(msg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 }
@@ -1394,7 +1514,11 @@ void exif_context_viewer(ExifContent *pcontext, void *user_data)
 
 void exif_viewer(ExifData *data)
 {
+	if(exif_msg)
+		free(exif_msg);
+	exif_msg = 0;
 	exif_count = 0;
+
 	if(data) {
 //		win_msg("得到JPEG exif数据!", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		// 打印所有EXIF数据

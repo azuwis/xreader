@@ -145,48 +145,48 @@ int dbg_open_dummy(DBG *d)
 	return dbg_add_handle(d, 0, 0, 0, 0);
 }
 
-int cap  = 0;
-int used = 0;
-char *memorylog = 0;
+int dbg_memorylog_cap  = 0;
+int dbg_memorylog_size = 0;
+char *dbg_memorylog = 0;
 void dbg_write_memorylog(void *arg, const char* str)
 {
-	if(!memorylog)
+	if(!dbg_memorylog)
 		return;
 	int l = strlen(str);
-	while(l + used >= cap && memorylog) {
-		cap = cap * 2 + l + 16;
-		memorylog = (char*) realloc(memorylog, cap);
+	while(l + dbg_memorylog_size >= dbg_memorylog_cap && dbg_memorylog) {
+		dbg_memorylog_cap = dbg_memorylog_cap * 2 + l + 16;
+		dbg_memorylog = (char*) realloc(dbg_memorylog, dbg_memorylog_cap);
 	}
-	if(!memorylog)
+	if(!dbg_memorylog)
 		return;
-	memcpy(memorylog + used, str, l);
-	used += l;
+	memcpy(dbg_memorylog + dbg_memorylog_size, str, l);
+	dbg_memorylog_size += l;
 }
 
 void dbg_close_memorylog(void *arg)
 {
-	used = 0;
-	cap = 0;
-	free(memorylog);
-	memorylog = 0;
+	dbg_memorylog_size = 0;
+	dbg_memorylog_cap = 0;
+	free(dbg_memorylog);
+	dbg_memorylog = 0;
 }
 
 int dbg_open_memorylog(DBG *d)
 {
-	if(memorylog != 0) {
+	if(dbg_memorylog != 0) {
 		dbg_close_memorylog(NULL);
 	}
-	memorylog = (char *) malloc(BUFSIZ);
-	if(!memorylog)
+	dbg_memorylog = (char *) malloc(BUFSIZ);
+	if(!dbg_memorylog)
 		return 0;
-	used = 0;
-	cap = BUFSIZ;
+	dbg_memorylog_size = 0;
+	dbg_memorylog_cap = BUFSIZ;
 	return dbg_add_handle(d, 0, dbg_write_memorylog, dbg_close_memorylog, 0);
 }
 
 const char *dbg_get_memorylog(void)
 {
-	return memorylog;
+	return dbg_memorylog;
 }
 
 #ifdef PSP

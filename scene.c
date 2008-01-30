@@ -13,6 +13,7 @@
 #include <pspkernel.h>
 #include <psppower.h>
 #include <psprtc.h>
+#include "xrPrx/xrPrx.h"
 #include "display.h"
 #include "win.h"
 #include "ctrl.h"
@@ -66,6 +67,7 @@ dword filecount = 0, copycount = 0, cutcount = 0;
 bool repaintbg = true;
 #endif
 bool imgreading = false, locreading = false;
+bool prx_loaded = false;
 int locaval[10];
 t_fonts fonts[5], bookfonts[21];
 int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex = 0, ttfsize = 0;
@@ -2125,6 +2127,23 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 	case PSP_CTRL_CIRCLE:
 		if(*index == 12)
 			return exit_confirm();
+		if(*index == 13) {
+			pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
+			if(saveimage)
+				disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
+			
+			scene_readbook_raw("调试信息", (const unsigned char*)dbg_memorylog, dbg_memorylog_size, fs_filetype_txt);
+
+			if(saveimage)
+			{
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
+				disp_flip();
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
+				free((void *)saveimage);
+			}
+
+			return win_menu_op_cancel;
+		}
 		if(scene_option_func[*index] != NULL)
 		{
 			item[0].data = (void *)scene_option_func[*index](item[1].data);
@@ -2141,7 +2160,11 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 
 void scene_options_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
+#ifdef _DEBUG
+	disp_rectangle(237 - DISP_FONTSIZE * 3, 120 - 7 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 3, 138 + 8 * DISP_FONTSIZE, COLOR_WHITE);
+#else
 	disp_rectangle(237 - DISP_FONTSIZE * 3, 120 - 7 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 3, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE);
+#endif
 	disp_fillrect(238 - DISP_FONTSIZE * 3, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 3, 120 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(238 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(SETTING_OPTION));
 	disp_line(238 - DISP_FONTSIZE * 3, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 3, 121 - 6 * DISP_FONTSIZE, COLOR_WHITE);
@@ -2149,7 +2172,11 @@ void scene_options_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 
 dword scene_options(dword * selidx)
 {
+#ifdef _DEBUG
+	t_win_menuitem item[14];
+#else
 	t_win_menuitem item[13];
+#endif
 	dword i;
 	strcpy(item[0].name, "  字体设置");
 	strcpy(item[1].name, "  颜色设置");
@@ -2173,6 +2200,9 @@ dword scene_options(dword * selidx)
 	strcpy(item[10].name, "保存文件位置");
 	strcpy(item[11].name, "读取文件位置");
 	strcpy(item[12].name, "  退出软件");
+#ifdef _DEBUG
+	strcpy(item[13].name, "查看调试信息");
+#endif
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -2458,8 +2488,8 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 		if(saveimage)
 			disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 		disp_duptocachealpha(50);
-		disp_rectangle(240 - DISP_FONTSIZE * 3 - 1, 136 - DISP_FONTSIZE * 3 - 1, 240 + DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE * 4, COLOR_WHITE);
-		disp_fillrect(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 3, 240 + DISP_FONTSIZE * 3 - 1, 136 + DISP_FONTSIZE * 4 - 1, RGB(0x18, 0x28, 0x50));
+		disp_rectangle(240 - DISP_FONTSIZE * 3 - 1, 136 - DISP_FONTSIZE * 3 - 1, 240 + DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE * 5, COLOR_WHITE);
+		disp_fillrect(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 3, 240 + DISP_FONTSIZE * 3 - 1, 136 + DISP_FONTSIZE * 5 - 1, RGB(0x18, 0x28, 0x50));
 		disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 3, COLOR_WHITE, (const byte *)"△  退出操作");
 		if(selcount <= 1 && strcmp(item[selidx].compname, "..") != 0)
 		{
@@ -2523,6 +2553,9 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 				if(where == scene_in_dir)
 					disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)"□  设为背景");
 #endif
+				if(config.load_exif) {
+					disp_putstring(240 - DISP_FONTSIZE * 3, 136 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"SELECT EXIF");
+				}
 				break;
 #endif
 			default:
@@ -2934,6 +2967,79 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 					cutcount = 0;
 					free((void *)cutlist);
 					cutlist = NULL;
+				}
+				break;
+			case PSP_CTRL_SELECT:
+				{
+					if(((t_fs_filetype)filelist[selidx].data) != fs_filetype_jpg)
+						break;
+					int result;
+					dword width, height;
+					pixel* imgdata = NULL;
+					pixel bgcolor = 0;
+					char filename[256];
+					
+					if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
+						strcpy(filename, filelist[selidx].compname);
+					else
+					{
+						strcpy(filename, config.shortpath);
+						strcat(filename, filelist[selidx].shortname);
+					}
+
+					switch(where)
+					{
+						case scene_in_zip:
+							result = exif_readjpg_in_zip(config.shortpath, filename, &width, &height, &imgdata, &bgcolor);
+							break;
+						case scene_in_chm:
+							result = exif_readjpg_in_chm(config.shortpath, filename, &width, &height, &imgdata, &bgcolor);
+							break;
+						case scene_in_rar:
+							result = exif_readjpg_in_rar(config.shortpath, filename, &width, &height, &imgdata, &bgcolor);
+							break;
+						default:
+							{
+								result = exif_readjpg(filename, &width, &height, &imgdata, &bgcolor);
+							}
+							break;
+					}
+
+					free((void *)imgdata);
+					
+					int buf_cap, buf_size;
+					buf_cap = 80, buf_size = 0;
+					char *buf = (char*)malloc(buf_cap);
+					buf[0] = '\0';
+					int i;
+					for(i=0; i<exif_count; ++i)
+					{
+						if(buf_size + strlen(exif_msg[i]) + 2 >= buf_cap) {
+							buf_cap = buf_cap * 2 + strlen(exif_msg[i]) + 2;
+							buf = realloc(buf, buf_cap);
+							if(!buf)
+							{
+								break;
+							}
+						}
+						strcat(buf+buf_size, exif_msg[i]);
+						strcat(buf+buf_size, "\r\n");
+						buf_size += strlen(exif_msg[i]) + 2;
+					}
+					inop = false;
+					if(buf[0] != '\0') {
+						char infotitle[256];
+						if(strrchr(filename, '/') != NULL) {
+							snprintf(infotitle, 256, "%s的EXIF信息", strrchr(filename, '/')+1);
+						}
+						else
+							snprintf(infotitle, 256, "%s的EXIF信息", filename);
+						infotitle[255] = '\0';
+						scene_readbook_raw(infotitle, (const unsigned char*)buf, strlen(buf), fs_filetype_txt);
+					}
+					else 
+						win_msg("无EXIF信息", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+					free(buf);
 				}
 				break;
 			}
@@ -3564,7 +3670,12 @@ extern void scene_init()
 	strcat(logfile, "log.txt");
 	bool printDebugInfo = false;
 	d = dbg_init();
+#ifdef _DEBUG
+	dbg_switch(d, 1);
+#else
 	dbg_switch(d, 0);
+#endif
+	dbg_open_memorylog(d);
 	power_set_clock(333, 166);
 	ctrl_init();
 	if(ctrl_read() == PSP_CTRL_LTRIGGER) {
@@ -3739,12 +3850,15 @@ extern void scene_init()
 #endif
 
 	sceRtcGetCurrentTick(&dbglasttick);
-	if(sceKernelDevkitVersion() >= 0x03070100 && sceKernelDevkitVersion() < 0x03080000) {
+	if(sceKernelDevkitVersion() >= 0x03070100) {
 		char prxfn[256];
 		sprintf(prxfn, "%sxrPrx.prx", appdir);
 		SceUID uid = pspSdkLoadStartModule(prxfn, PSP_MEMORY_PARTITION_KERNEL);
-		if(uid >= 0)
-			use_prx_power_save = true;
+		if(uid >= 0) {
+			if(sceKernelDevkitVersion() < 0x03080000)
+				use_prx_power_save = true;
+			prx_loaded = true;
+		}
 	}
 	scene_power_save(true);
 	sceRtcGetCurrentTick(&dbgnow);
@@ -3765,11 +3879,17 @@ extern void scene_init()
 	disp_flip();
 	disp_fillvram(0);
 
+	if(prx_loaded)
+		xrSetBrightness(config.brightness);
+
 	scene_filelist();
 }
 
 extern void scene_exit()
 {
+	if(prx_loaded)
+		config.brightness = xrGetBrightness();
+
 	/*
 	const char* log = dbg_get_memorylog();
 	if(log) {
