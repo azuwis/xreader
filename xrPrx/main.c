@@ -1,6 +1,7 @@
 #include <pspkernel.h>
 #include <pspsdk.h>
 #include <psputilsforkernel.h>
+#include <pspdisplay_kernel.h>
 #include <string.h>
 #include "xrPrx.h"
 
@@ -139,6 +140,27 @@ void xrPlayerSetSpeed(int cpu, int bus)
 }
 */
 
+int xrGetBrightness(void)
+{
+	unsigned int k = pspSdkSetK1(0);
+
+	int level, unk1 = 0;
+
+	sceDisplayGetBrightness(&level, &unk1);
+
+	pspSdkSetK1(k);
+	
+	return level;
+}
+
+void xrSetBrightness(int bright)
+{
+	unsigned int k = pspSdkSetK1(0);
+
+	sceDisplaySetBrightness(bright, 0);
+
+	pspSdkSetK1(k);
+}
 
 /* Entry point */
 int module_start(SceSize args, void *argp)

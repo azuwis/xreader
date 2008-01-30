@@ -3,5 +3,7 @@
 
 unsigned long FindProc(const char* szMod, const char* szLib, unsigned long nid);
 void xrPlayerSetSpeed(int cpu, int bus);
+int xrGetBrightness(void);
+void xrSetBrightness(int bright);
 
 #endif
