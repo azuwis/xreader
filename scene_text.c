@@ -51,7 +51,15 @@ int rowtop = 0;
 char tr[8], * trow = NULL;
 bool text_needrf = true, text_needrp = true, text_needrb = false;
 char filename[256], archname[256];
-int autopage_prevsetting = 2;
+
+typedef struct _BookViewData
+{
+	int rowtop;
+	char tr[8], * trow;
+	bool text_needrf, text_needrp, text_needrb;
+	char filename[256], archname[256];
+	dword cidx, rrow;
+} BookViewData, *PBookViewData;
 
 int scene_book_reload(dword selidx)
 {
@@ -781,10 +789,10 @@ int book_handle_input(dword *selidx, dword key)
 		}
 		else if(key == ctlkey[12] || key == ctlkey2[12]) {
 			if(config.autopagetype == 2) {
-				config.autopagetype = autopage_prevsetting;
+				config.autopagetype = config.prev_autopage;
 			}
 			else {
-				autopage_prevsetting = config.autopagetype;
+				config.prev_autopage = config.autopagetype;
 				config.autopagetype = 2;
 			}
 			text_needrp = true;
