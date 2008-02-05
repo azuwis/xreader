@@ -103,7 +103,6 @@ static int CallbackThread(unsigned int args, void *argp)
 	return 0;
 }
 
-
 /* Sets up the callback thread and returns its thread id */ 
 static int SetupCallbacks(void) 
 {
@@ -114,7 +113,6 @@ static int SetupCallbacks(void)
 	}
 	return thid;
 }
-
 
 static int main_thread(unsigned int args, void *argp)
 {
