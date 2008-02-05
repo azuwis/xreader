@@ -47,6 +47,8 @@
 dword ctlkey[13], ctlkey2[13], ku, kd, kl, kr;
 static volatile int ticks = 0, secticks = 0;
 
+char g_titlename[256];
+
 BookViewData cur_book_view, prev_book_view;
 
 void copy_book_view(PBookViewData dst, const PBookViewData src)
@@ -69,7 +71,6 @@ PBookViewData new_book_view(PBookViewData p)
 	p->trow = NULL;
 	p->text_needrf = p->text_needrp = true;
    	p->text_needrb = false;
-	p->cidx = p->rrow = 0;
 	p->filename[0] = p->archname[0] = '\0';
 
 	return p;
@@ -134,6 +135,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	if(fs == NULL)
 	{
 		win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+		scene_power_save(true);
 		return 1;
 	}
 	if(pView->text_needrb && (t_fs_filetype)filelist[selidx].data != fs_filetype_unknown)
@@ -159,6 +161,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 
 int scene_printbook(PBookViewData pView, dword selidx)
 {
+	int cidx;
 	char ci[8] = "       ", cr[512];
 	disp_waitv();
 #ifdef ENABLE_BG
@@ -170,10 +173,10 @@ int scene_printbook(PBookViewData pView, dword selidx)
 	{
 		case 3:
 			disp_putnstringreversal(config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, pView->rowtop, DISP_BOOK_FONTSIZE - pView->rowtop, 0);
-			for(pView->cidx = 1; pView->cidx < drperpage && fs->crow + pView->cidx < fs->row_count; pView->cidx ++)
+			for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
 			{
-				tr = fs->rows[(fs->crow + pView->cidx) >> 10] + ((fs->crow + pView->cidx) & 0x3FF);
-				disp_putnstringreversal(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * pView->cidx - pView->rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
+				tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+				disp_putnstringreversal(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - pView->rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
 			}
 			if(config.infobar == conf_infobar_info)
 			{
@@ -232,10 +235,10 @@ int scene_printbook(PBookViewData pView, dword selidx)
 			break;			
 		case 2:
 			disp_putnstringlvert(config.borderspace, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, pView->rowtop, DISP_BOOK_FONTSIZE - pView->rowtop, 0);
-			for(pView->cidx = 1; pView->cidx < drperpage && fs->crow + pView->cidx < fs->row_count; pView->cidx ++)
+			for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
 			{
-				tr = fs->rows[(fs->crow + pView->cidx) >> 10] + ((fs->crow + pView->cidx) & 0x3FF);
-				disp_putnstringlvert((DISP_BOOK_FONTSIZE + config.rowspace) * pView->cidx + config.borderspace - pView->rowtop, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (479 -  DISP_BOOK_FONTSIZE) : PSP_SCREEN_WIDTH);
+				tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+				disp_putnstringlvert((DISP_BOOK_FONTSIZE + config.rowspace) * cidx + config.borderspace - pView->rowtop, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (479 -  DISP_BOOK_FONTSIZE) : PSP_SCREEN_WIDTH);
 			}
 			if(config.infobar == conf_infobar_info)
 			{
@@ -283,10 +286,10 @@ int scene_printbook(PBookViewData pView, dword selidx)
 			break;
 		case 1:
 			disp_putnstringrvert(479 - config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, pView->rowtop, DISP_BOOK_FONTSIZE - pView->rowtop, 0);
-			for(pView->cidx = 1; pView->cidx < drperpage && fs->crow + pView->cidx < fs->row_count; pView->cidx ++)
+			for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
 			{
-				tr = fs->rows[(fs->crow + pView->cidx) >> 10] + ((fs->crow + pView->cidx) & 0x3FF);
-				disp_putnstringrvert(479 - (DISP_BOOK_FONTSIZE + config.rowspace) * pView->cidx - config.borderspace + pView->rowtop, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0);
+				tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
+				disp_putnstringrvert(479 - (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - config.borderspace + pView->rowtop, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0);
 			}
 			if(config.infobar == conf_infobar_info)
 			{
@@ -335,19 +338,19 @@ int scene_printbook(PBookViewData pView, dword selidx)
 		default:
 			{
 			disp_putnstringhorz(config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, pView->rowtop, DISP_BOOK_FONTSIZE - pView->rowtop, 0);
-			for(pView->cidx = 1; pView->cidx < drperpage && fs->crow + pView->cidx < fs->row_count; pView->cidx ++)
+			for(cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx ++)
 			{
-				tr = fs->rows[(fs->crow + pView->cidx) >> 10] + ((fs->crow + pView->cidx) & 0x3FF);
+				tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
 				/*
 				if(!havedisplayed) {
 					char infomsg[80];
-					sprintf(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, pView->cidx, pView->rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * pView->cidx - pView->rowtop);
+					sprintf(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, cidx, pView->rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - pView->rowtop);
 					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 					
 					havedisplayed = true;
 				}
 				*/
-				disp_putnstringhorz(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * pView->cidx - pView->rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (271 - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
+				disp_putnstringhorz(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - pView->rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (271 - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
 			}
 			}
 			if(config.infobar == conf_infobar_info)
@@ -382,6 +385,10 @@ int scene_printbook(PBookViewData pView, dword selidx)
 					char fname[256];
 					charsets_utf8_conv((unsigned char*)filelist[selidx].compname, (unsigned char*)fname);
 					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
+				}
+				else if( where == scene_in_raw )
+				{
+					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), g_titlename, offset, autopageinfo);
 				}
 				else {
 					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
@@ -615,6 +622,37 @@ int move_page_down(PBookViewData pView, dword key, dword *selidx)
 	return 0;
 }
 
+static int scene_autopage(PBookViewData pView, dword* selidx)
+{
+	int key = 0;
+
+	if(config.autopagetype != 2) {
+		if(config.autopagetype == 1) {
+			if(++ticks >= config.autolinedelay) {
+				ticks = 0;
+				move_line_smooth(&cur_book_view, config.autopage);
+				// prevent LCD shut down by setting counter = 0
+				scePowerTick(0);
+				return 1;
+			}
+		}
+		else {
+			if(++ticks >= 50 * abs(config.autopage)) {
+				ticks = 0;
+				if(config.autopage > 0)
+					move_page_down(&cur_book_view, key, selidx);
+				else 
+					move_page_up(&cur_book_view, key, selidx);
+				// prevent LCD shut down by setting counter = 0
+				scePowerTick(0);
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}	
+
 int book_handle_input(PBookViewData pView, dword *selidx, dword key)
 {
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -636,6 +674,7 @@ int book_handle_input(PBookViewData pView, dword *selidx, dword key)
 			text_close(fs);
 			fs = NULL;
 			disp_duptocachealpha(50);
+			scene_power_save(true);
 			return *selidx;
 		}
 		else if(key == ctlkey[0] || key == ctlkey2[0])
@@ -669,6 +708,7 @@ int book_handle_input(PBookViewData pView, dword *selidx, dword key)
 					text_close(fs);
 					fs = NULL;
 					disp_duptocachealpha(50);
+					scene_power_save(true);
 					return *selidx;
 			}
 			scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
@@ -818,9 +858,59 @@ next:
 	return -1;
 }
 
+dword scene_reload_raw(const char* title, const unsigned char *data, size_t size, t_fs_filetype ft)
+{
+	fs = text_open_in_raw(title, data, size, ft, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
+
+	if(fs == NULL)
+	{
+		return 1;
+	}
+
+	if(cur_book_view.rrow == INVALID)
+	{
+		// disable binary bookmark
+		if(config.autobm && ft != fs_filetype_unknown)
+		{
+			cur_book_view.rrow = bookmark_autoload(cur_book_view.archname);
+			cur_book_view.text_needrb = true;
+		}
+		else
+			cur_book_view.rrow = 0;
+	}
+
+
+	if(cur_book_view.text_needrb && ft != fs_filetype_unknown)
+	{
+		cur_book_view.rowtop = 0;
+		fs->crow = 1;
+		while(fs->crow < fs->row_count && (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf <= cur_book_view.rrow)
+			fs->crow ++;
+		fs->crow --;
+		cur_book_view.text_needrb = false;
+	}
+	else
+		fs->crow = cur_book_view.rrow;
+
+	if (fs->crow >= fs->row_count)
+		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
+
+	cur_book_view.trow = &cur_book_view.tr[utils_dword2string(fs->row_count, cur_book_view.tr, 7)];
+
+	return 0;
+}
+
 dword scene_readbook_raw(const char* title, const unsigned char* data, size_t size, t_fs_filetype ft)
 {
+	int prev_where = where;
+	where = scene_in_raw;
+
+	// dummy selidx
+	dword selidx = 0;
 	p_text prev_text = NULL;
+
+	strncpy(g_titlename, title, 256);
+	g_titlename[255] = '\0';
 
 	copy_book_view(&prev_book_view, &cur_book_view);
 	new_book_view(&cur_book_view);
@@ -838,325 +928,20 @@ dword scene_readbook_raw(const char* title, const unsigned char* data, size_t si
 				fs = NULL;
 			}
 
-			fs = text_open_in_raw(title, data, size, ft, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
-
-			if(fs == NULL)
-			{
+			if(scene_reload_raw(title, data, size, ft)) {
 				win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 				fs = prev_text;
 				copy_book_view(&cur_book_view, &prev_book_view);
-				
+
+				where = prev_where;
 				return 1;
 			}
-			if(cur_book_view.text_needrb && ft != fs_filetype_unknown)
-			{
-				cur_book_view.rowtop = 0;
-				fs->crow = 1;
-				while(fs->crow < fs->row_count && (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf <= cur_book_view.rrow)
-					fs->crow ++;
-				fs->crow --;
-				cur_book_view.text_needrb = false;
-			}
-			else
-				fs->crow = cur_book_view.rrow;
-
-			if (fs->crow >= fs->row_count)
-				fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-
-			cur_book_view.trow = &cur_book_view.tr[utils_dword2string(fs->row_count, cur_book_view.tr, 7)];
 
 			cur_book_view.text_needrf = false;
 		}
 		if(cur_book_view.text_needrp)
 		{
-			char ci[8] = "       ", cr[512];
-			disp_waitv();
-#ifdef ENABLE_BG
-			if(!bg_display())
-#endif
-				disp_fillvram(config.bgcolor);
-			p_textrow tr = fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF);
-			switch(config.vertread)
-			{
-				case 3:
-					disp_putnstringreversal(config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, cur_book_view.rowtop, DISP_BOOK_FONTSIZE - cur_book_view.rowtop, 0);
-					for(cur_book_view.cidx = 1; cur_book_view.cidx < drperpage && fs->crow + cur_book_view.cidx < fs->row_count; cur_book_view.cidx ++)
-					{
-						tr = fs->rows[(fs->crow + cur_book_view.cidx) >> 10] + ((fs->crow + cur_book_view.cidx) & 0x3FF);
-						disp_putnstringreversal(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cur_book_view.cidx - cur_book_view.rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
-					}
-					if(config.infobar == conf_infobar_info)
-					{
-						int i;
-						offset = 0;
-						for(i=0; i<fs->crow && i<fs->row_count; ++i) {
-							p_textrow tr;
-							tr = fs->rows[i >> 10] + (i & 0x3FF);
-							offset += tr->count;
-						}
-						offset = offset / 1023 + 1;
-						disp_line(0, DISP_BOOK_FONTSIZE, 479, DISP_BOOK_FONTSIZE, config.forecolor);
-						utils_dword2string(fs->crow + 1, ci, 7);
-						char autopageinfo[80];
-						if(config.autopagetype == 2)
-							autopageinfo[0] = 0;
-						else if(config.autopagetype == 1) {
-							snprintf(autopageinfo, 80, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
-							autopageinfo[80-1] = '\0';
-						}
-						else {
-							if(config.autopage != 0) {
-								snprintf(autopageinfo, 80, "自动翻页: 时间 %d", config.autopage);
-								autopageinfo[80-1] = '\0';
-							}
-							else
-								autopageinfo[0] = 0;
-						}
-						snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, cur_book_view.trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), title, offset, autopageinfo);
-						cr[512-1]='\0';
-						disp_putnstringreversal(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
-					}
-#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
-					else if(config.infobar == conf_infobar_lyric)
-					{
-						disp_line(480 - 1, 272 - 1 - 271 + DISP_BOOK_FONTSIZE, 480 - 1 - 479, 272 - 1 - 271 + DISP_BOOK_FONTSIZE, config.forecolor);
-						const char * ls[1];
-						dword ss[1];
-						if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
-						{
-							if(ss[0] > 960 / DISP_BOOK_FONTSIZE)
-								ss[0] = 960 / DISP_BOOK_FONTSIZE;
-							char t[BUFSIZ];
-							lyric_decode(ls[0], t, &ss[0]);
-							disp_putnstringreversal((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
-						}
-					}
-#endif
-					break;			
-				case 2:
-					disp_putnstringlvert(config.borderspace, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, cur_book_view.rowtop, DISP_BOOK_FONTSIZE - cur_book_view.rowtop, 0);
-					for(cur_book_view.cidx = 1; cur_book_view.cidx < drperpage && fs->crow + cur_book_view.cidx < fs->row_count; cur_book_view.cidx ++)
-					{
-						tr = fs->rows[(fs->crow + cur_book_view.cidx) >> 10] + ((fs->crow + cur_book_view.cidx) & 0x3FF);
-						disp_putnstringlvert((DISP_BOOK_FONTSIZE + config.rowspace) * cur_book_view.cidx + config.borderspace - cur_book_view.rowtop, 271 - config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (479 -  DISP_BOOK_FONTSIZE) : PSP_SCREEN_WIDTH);
-					}
-					if(config.infobar == conf_infobar_info)
-					{
-						int i;
-						offset = 0;
-						for(i=0; i<fs->crow && i<fs->row_count; ++i) {
-							p_textrow tr;
-							tr = fs->rows[i >> 10] + (i & 0x3FF);
-							offset += tr->count;
-						}
-						offset = offset / 1023 + 1;
-						disp_line(479 - DISP_BOOK_FONTSIZE, 0, 479 - DISP_BOOK_FONTSIZE, 271, config.forecolor);
-						utils_dword2string(fs->crow + 1, ci, 7);
-						char autopageinfo[80];
-						if(config.autopagetype == 2)
-							autopageinfo[0] = 0;
-						if(config.autopagetype == 1) {
-							snprintf(autopageinfo, 80, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
-							autopageinfo[80-1]='\0';
-						}
-						if(config.autopagetype == 0) {
-							snprintf(autopageinfo, 80, "翻页: 时%d", config.autopage);
-							autopageinfo[80-1]='\0';
-						}
-						snprintf(cr, 512, "%s/%s  %s  %s  %d  %s", ci, cur_book_view.trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), title, offset, autopageinfo);
-						cr[512-1]='\0';
-						disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
-					}
-#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
-					else if(config.infobar == conf_infobar_lyric)
-					{
-						disp_line(479 - DISP_BOOK_FONTSIZE, 0, 479 - DISP_BOOK_FONTSIZE, 271, config.forecolor);
-						const char * ls[1];
-						dword ss[1];
-						if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
-						{
-							if(ss[0] > 544 / DISP_BOOK_FONTSIZE)
-								ss[0] = 544 / DISP_BOOK_FONTSIZE;
-							char t[BUFSIZ];
-							lyric_decode(ls[0], t, &ss[0]);
-							disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271 - (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
-						}
-					}
-#endif
-					break;
-				case 1:
-					disp_putnstringrvert(479 - config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, cur_book_view.rowtop, DISP_BOOK_FONTSIZE - cur_book_view.rowtop, 0);
-					for(cur_book_view.cidx = 1; cur_book_view.cidx < drperpage && fs->crow + cur_book_view.cidx < fs->row_count; cur_book_view.cidx ++)
-					{
-						tr = fs->rows[(fs->crow + cur_book_view.cidx) >> 10] + ((fs->crow + cur_book_view.cidx) & 0x3FF);
-						disp_putnstringrvert(479 - (DISP_BOOK_FONTSIZE + config.rowspace) * cur_book_view.cidx - config.borderspace + cur_book_view.rowtop, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0);
-					}
-					if(config.infobar == conf_infobar_info)
-					{
-						int i;
-						offset = 0;
-						for(i=0; i<fs->crow && i<fs->row_count; ++i) {
-							p_textrow tr;
-							tr = fs->rows[i >> 10] + (i & 0x3FF);
-							offset += tr->count;
-						}
-						offset = offset / 1023 + 1;
-						disp_line(DISP_BOOK_FONTSIZE, 0, DISP_BOOK_FONTSIZE, 271, config.forecolor);
-						utils_dword2string(fs->crow + 1, ci, 7);
-						char autopageinfo[80];
-						if(config.autopagetype == 2)
-							autopageinfo[0] = 0;
-						if(config.autopagetype == 1) {
-							snprintf(autopageinfo, 80, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
-							autopageinfo[80-1]='\0';
-						}
-						if(config.autopagetype == 0) {
-							snprintf(autopageinfo, 80, "翻页: 时%d", config.autopage);
-							autopageinfo[80-1]='\0';
-						}
-						snprintf(cr, 512, "%s/%s  %s  %s  %d  %s", ci, cur_book_view.trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), title, offset, autopageinfo);
-						cr[512-1]='\0';
-						disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, 0, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
-					}
-#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
-					else if(config.infobar == conf_infobar_lyric)
-					{
-						disp_line(DISP_BOOK_FONTSIZE, 0, DISP_BOOK_FONTSIZE, 271, config.forecolor);
-						const char * ls[1];
-						dword ss[1];
-						if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
-						{
-							if(ss[0] > 544 / DISP_BOOK_FONTSIZE)
-								ss[0] = 544 / DISP_BOOK_FONTSIZE;
-							char t[BUFSIZ];
-							lyric_decode(ls[0], t, &ss[0]);
-							disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, (136 - ss[0] * DISP_BOOK_FONTSIZE / 4), config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
-						}
-					}
-#endif
-					break;
-				default:
-					{
-						disp_putnstringhorz(config.borderspace, config.borderspace, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, cur_book_view.rowtop, DISP_BOOK_FONTSIZE - cur_book_view.rowtop, 0);
-						for(cur_book_view.cidx = 1; cur_book_view.cidx < drperpage && fs->crow + cur_book_view.cidx < fs->row_count; cur_book_view.cidx ++)
-						{
-							tr = fs->rows[(fs->crow + cur_book_view.cidx) >> 10] + ((fs->crow + cur_book_view.cidx) & 0x3FF);
-							/*
-							   if(!havedisplayed) {
-							   char infomsg[80];
-							   sprintf(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, cur_book_view.cidx, cur_book_view.rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cur_book_view.cidx - cur_book_view.rowtop);
-							   win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
-
-							   havedisplayed = true;
-							   }
-							   */
-							disp_putnstringhorz(config.borderspace, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cur_book_view.cidx - cur_book_view.rowtop, config.forecolor, (const byte *)tr->start, (int)tr->count, config.wordspace, 0, DISP_BOOK_FONTSIZE, config.infobar ? (271 - DISP_BOOK_FONTSIZE) : PSP_SCREEN_HEIGHT);
-						}
-					}
-					if(config.infobar == conf_infobar_info)
-					{
-						int i;
-						offset = 0;
-						for(i=0; i<fs->crow && i<fs->row_count; ++i) {
-							p_textrow tr;
-							tr = fs->rows[i >> 10] + (i & 0x3FF);
-							offset += tr->count;
-						}
-						offset = offset / 1023 + 1;
-						disp_line(0, 271 - DISP_BOOK_FONTSIZE, 479, 271 - DISP_BOOK_FONTSIZE, config.forecolor);
-						utils_dword2string(fs->crow + 1, ci, 7);
-						char autopageinfo[80];
-						if(config.autopagetype == 2)
-							autopageinfo[0] = 0;
-						else if(config.autopagetype == 1) {
-							snprintf(autopageinfo, 80, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
-							autopageinfo[80-1] = '\0';
-						}
-						else {
-							if(config.autopage != 0)
-							{
-								snprintf(autopageinfo, 80, "自动翻页: 时间 %d", config.autopage);
-								autopageinfo[80-1] = '\0';
-							}
-							else
-								autopageinfo[0] = 0;
-						}
-						if( where == scene_in_chm ) {
-							char fname[256];
-							charsets_utf8_conv((unsigned char*)title, (unsigned char*)fname);
-							snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, cur_book_view.trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
-						}
-						else {
-							snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, cur_book_view.trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), title, offset, autopageinfo);
-						}
-						cr[512-1]='\0';
-						disp_putnstringhorz(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
-					}
-#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
-					else if(config.infobar == conf_infobar_lyric)
-					{
-						disp_line(0, 271 - DISP_BOOK_FONTSIZE, 479, 271 - DISP_BOOK_FONTSIZE, config.forecolor);
-						const char * ls[1];
-						dword ss[1];
-						if(lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss) && ls[0] != NULL)
-						{
-							if(ss[0] > 960 / DISP_BOOK_FONTSIZE)
-								ss[0] = 960 / DISP_BOOK_FONTSIZE;
-							char t[BUFSIZ];
-							lyric_decode(ls[0], t, &ss[0]);
-							disp_putnstringhorz((240 - ss[0] * DISP_BOOK_FONTSIZE / 4), PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)t, ss[0], 0, 0, DISP_BOOK_FONTSIZE, 0);
-						}
-					}
-#endif
-			}
-			if(config.scrollbar)
-			{
-				switch(config.vertread)
-				{
-					case 3:
-						{
-							dword slen = config.infobar ? (270 - DISP_BOOK_FONTSIZE) : 271, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, startp = slen * fs->crow / fs->row_count, endp;
-							if(startp + bsize > slen)
-								startp = slen - bsize;
-							endp = startp + bsize;
-							disp_line(480 - 1 - 475, 272 - 1 - 0, 480 - 1 - 475, 272 - 1 - slen, config.forecolor);
-							disp_fillrect(480 - 1 - 476, 272 - 1 - startp, 480 - 1 - 479, 272 - 1 - endp, config.forecolor);
-						}
-						break;
-					case 2:
-						{
-							dword sright = 479 - (config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0), slen = sright, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, startp = slen * fs->crow / fs->row_count, endp;
-							if(startp + bsize > slen)
-								startp = slen - bsize;
-							endp = startp + bsize;
-							disp_line(0, 4, sright, 4, config.forecolor);
-							disp_fillrect(startp, 0, endp, 3, config.forecolor);
-						}
-						break;
-					case 1:
-						{
-							dword sleft = (config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0), slen = 479 - sleft, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, endp = 479 - slen * fs->crow / fs->row_count, startp;
-							if(endp - bsize < sleft)
-								endp = sleft + bsize;
-							startp = endp - bsize;
-							disp_line(sleft, 267, 479, 267, config.forecolor);
-							disp_fillrect(startp, 268, endp, 271, config.forecolor);
-						}
-						break;
-					default:
-						{
-							dword slen = config.infobar ? (270 - DISP_BOOK_FONTSIZE) : 271, bsize = 2 + (slen - 2) * rowsperpage / fs->row_count, startp = slen * fs->crow / fs->row_count, endp;
-							if(startp + bsize > slen)
-								startp = slen - bsize;
-							endp = startp + bsize;
-							disp_line(475, 0, 475, slen, config.forecolor);
-							disp_fillrect(476, startp, 479, endp, config.forecolor);
-						}
-						break;
-				}
-			}
-			disp_flip();
-
+			scene_printbook(&cur_book_view, selidx);
 			cur_book_view.text_needrp = false;
 		}
 
@@ -1181,33 +966,8 @@ dword scene_readbook_raw(const char* title, const unsigned char* data, size_t si
 			}
 
 			if(config.autopage) {
-				if(config.autopagetype != 2) {
-					if(config.autopagetype == 1) {
-						if(++ticks >= config.autolinedelay) {
-							ticks = 0;
-							move_line_smooth(&cur_book_view, config.autopage);
-							// prevent LCD shut down by setting counter = 0
-							scePowerTick(0);
-							goto redraw;
-							delay = 0;
-						}
-					}
-					else {
-						// dummy selidx
-						dword selidx = 0;
-						if(++ticks >= 50 * abs(config.autopage)) {
-							ticks = 0;
-							if(config.autopage > 0)
-								move_page_down(&cur_book_view, key, &selidx);
-							else 
-								move_page_up(&cur_book_view, key, &selidx);
-							// prevent LCD shut down by setting counter = 0
-							scePowerTick(0);
-							goto redraw;
-							delay = 20000;
-						}
-					}
-				}
+				if(scene_autopage(&cur_book_view, &selidx))
+					goto redraw;
 			}
 			if(config.dis_scrsave) {
 				scePowerTick(0);
@@ -1220,6 +980,7 @@ dword scene_readbook_raw(const char* title, const unsigned char* data, size_t si
 			fs = prev_text;
 			copy_book_view(&cur_book_view, &prev_book_view);
 			
+			where = prev_where;
 			return ret;
 		}
 redraw:
@@ -1230,6 +991,7 @@ redraw:
 	copy_book_view(&cur_book_view, &prev_book_view);
 	disp_duptocachealpha(50);
 
+	where = prev_where;
 	return INVALID;
 }
 
@@ -1283,31 +1045,8 @@ dword scene_readbook(dword selidx)
 			}
 			
 			if(config.autopage) {
-				if(config.autopagetype != 2) {
-					if(config.autopagetype == 1) {
-						if(++ticks >= config.autolinedelay) {
-							ticks = 0;
-							move_line_smooth(&cur_book_view, config.autopage);
-							// prevent LCD shut down by setting counter = 0
-							scePowerTick(0);
-							goto redraw;
-							delay = 0;
-						}
-					}
-					else {
-						if(++ticks >= 50 * abs(config.autopage)) {
-							ticks = 0;
-							if(config.autopage > 0)
-								move_page_down(&cur_book_view, key, &selidx);
-							else 
-								move_page_up(&cur_book_view, key, &selidx);
-							// prevent LCD shut down by setting counter = 0
-							scePowerTick(0);
-							goto redraw;
-							delay = 20000;
-						}
-					}
-				}
+				if(scene_autopage(&cur_book_view, &selidx))
+					goto redraw;
 			}
 			if(config.dis_scrsave) {
 				scePowerTick(0);

@@ -50,7 +50,7 @@ typedef struct _BookViewData
 	char tr[8], * trow;
 	bool text_needrf, text_needrp, text_needrb;
 	char filename[256], archname[256];
-	dword cidx, rrow;
+	dword rrow;
 } BookViewData, *PBookViewData;
 
 extern BookViewData cur_book_view, prev_book_view;

@@ -2112,6 +2112,7 @@ t_scene_option_func scene_option_func[] = {
 #endif
 	scene_locsave,
 	scene_locload,
+	NULL,
 	NULL
 };
 
@@ -2129,7 +2130,26 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 			if(saveimage)
 				disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 			
+			//TODO Here
+			ctrl_waitrelease();
+			
+			if(saveimage)
+			{
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
+				disp_flip();
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
+				free((void *)saveimage);
+			}
+
+			return win_menu_op_cancel;
+		}
+		if(*index == 14) {
+			pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
+			if(saveimage)
+				disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
+			
 			scene_readbook_raw("调试信息", (const unsigned char*)dbg_memory_buffer->ptr, dbg_memory_buffer->used, fs_filetype_txt);
+			ctrl_waitrelease();
 
 			if(saveimage)
 			{
@@ -2158,9 +2178,9 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 void scene_options_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 #ifdef _DEBUG
-	disp_rectangle(237 - DISP_FONTSIZE * 3, 120 - 7 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 3, 138 + 8 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(237 - DISP_FONTSIZE * 3, 120 - 7 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 3, 139 + 9 * DISP_FONTSIZE, COLOR_WHITE);
 #else
-	disp_rectangle(237 - DISP_FONTSIZE * 3, 120 - 7 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 3, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(237 - DISP_FONTSIZE * 3, 120 - 7 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 3, 138 + 8 * DISP_FONTSIZE, COLOR_WHITE);
 #endif
 	disp_fillrect(238 - DISP_FONTSIZE * 3, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 3, 120 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(238 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(SETTING_OPTION));
@@ -2170,9 +2190,9 @@ void scene_options_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 dword scene_options(dword * selidx)
 {
 #ifdef _DEBUG
-	t_win_menuitem item[14];
+	t_win_menuitem item[15];
 #else
-	t_win_menuitem item[13];
+	t_win_menuitem item[14];
 #endif
 	dword i;
 	strcpy(item[0].name, "  字体设置");
@@ -2197,8 +2217,9 @@ dword scene_options(dword * selidx)
 	strcpy(item[10].name, "保存文件位置");
 	strcpy(item[11].name, "读取文件位置");
 	strcpy(item[12].name, "  退出软件");
+	strcpy(item[13].name, " 设置管理器 ");
 #ifdef _DEBUG
-	strcpy(item[13].name, "查看调试信息");
+	strcpy(item[14].name, "查看调试信息");
 #endif
 	for(i = 0; i < NELEMS(item); i ++)
 	{
@@ -3129,7 +3150,7 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex, dw
 #endif
 	disp_fillrect(0, 0, 479, DISP_FONTSIZE - 1, 0);
 	char infomsg[80];
-	strcpy(infomsg, EREADER_VERSION_STR_LONG);
+	strcpy(infomsg, XREADER_VERSION_STR_LONG);
 #ifdef _DEBUG
 	strcat(infomsg, " 调试版");
 #endif
@@ -3704,7 +3725,7 @@ extern void scene_init()
 	strcpy(config.shortpath, "ms0:/");
 
 	strcpy(conffile, appdir);
-	strcat(conffile, "ereader.conf");
+	strcat(conffile, "xreader.conf");
 	conf_set_file(conffile);
 	conf_load(&config);
 	sceRtcGetCurrentTick(&dbgnow);

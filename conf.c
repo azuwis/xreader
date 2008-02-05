@@ -218,7 +218,7 @@ extern bool conf_load(p_conf conf)
 	conf->lyricex = 0;
 #endif
 #endif
-	if(conf->confver < EREADER_VERSION_NUM)
+	if(conf->confver < XREADER_VERSION_NUM)
 	{
 		if(conf->confver < 0x00060000)
 		{
@@ -241,7 +241,7 @@ extern bool conf_load(p_conf conf)
 		}
 		if(conf->confver < 0x01030000)
 			conf->savesucc = true;
-		conf->confver = EREADER_VERSION_NUM;
+		conf->confver = XREADER_VERSION_NUM;
 	}
 	if(!conf->savesucc)
 	{
