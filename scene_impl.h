@@ -44,4 +44,15 @@ extern dword scene_readbook(dword selidx);
 extern dword scene_readimage(dword selidx);
 #endif
 
+typedef struct _BookViewData
+{
+	int rowtop;
+	char tr[8], * trow;
+	bool text_needrf, text_needrp, text_needrb;
+	char filename[256], archname[256];
+	dword cidx, rrow;
+} BookViewData, *PBookViewData;
+
+extern BookViewData cur_book_view, prev_book_view;
+
 #endif

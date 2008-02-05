@@ -88,7 +88,6 @@ int freq_list[][2] = {
 extern bool use_prx_power_save;
 
 extern bool img_needrf, img_needrp, img_needrc;
-extern bool text_needrf, text_needrp, text_needrb;
 
 t_win_menu_op exit_confirm()
 {
@@ -1100,7 +1099,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 				config.wordspace = 5;
 			else {
 				config.wordspace --;
-				text_needrf = true;
+				cur_book_view.text_needrf = true;
 			}
 			break;
 		case 1:
@@ -1178,7 +1177,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 				config.wordspace = 0;
 			else {
 				config.wordspace ++;
-				text_needrf = true;
+				cur_book_view.text_needrf = true;
 			}
 			break;
 		case 1:
