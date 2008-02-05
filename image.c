@@ -17,18 +17,17 @@
 #include <unzip.h>
 #include <unrar.h>
 #include <setjmp.h>
+#include <psprtc.h>
 #include "win.h"
 #include "image.h"
-#include <psprtc.h>
+#include "buffer.h"
 #include "dbg.h"
 #include "conf.h"
 
 extern t_conf config;
 
 ExifData *exif_data = NULL;
-
-char (*exif_msg)[255];
-int  exif_count = 0;
+buffer_array *exif_array = 0;
 
 /* 
 #define PB  (1.0f/3.0f)
@@ -1459,47 +1458,27 @@ extern int image_readtga_in_rar(const char * rarfile, const char * filename, dwo
 	return -1;
 }
 
-void add_str(const char* msg)
-{
-	if((exif_count % 10) == 0) {
-		if(exif_count > 0) {
-			exif_msg = (char(*)[255])realloc(exif_msg, 255 * (exif_count + 10));
-		}
-		else {
-			exif_msg = (char(*)[255])malloc(255 * (exif_count + 10));
-		}
-		if(exif_msg == NULL)
-		{
-			exif_count = 0;
-			return;
-		}
-	}
-
-	strncpy(exif_msg[exif_count], msg, 255);
-	exif_msg[exif_count][254] = '\0';
-	exif_count++;
-}
-
 void exif_entry_viewer (ExifEntry *pentry, void *user_data)
 {
 	if(pentry == 0)
 		return;
 ;
-	char exif_str[128];
-	exif_entry_get_value(pentry, exif_str, 128);
-	exif_str[127] = '\0';
+	char exif_str[512];
+	exif_entry_get_value(pentry, exif_str, 512);
+	exif_str[511] = '\0';
 
 	if(exif_str[0] == '\0')
 		return;
 
 	ExifIfd ifd = exif_entry_get_ifd(pentry);
-	char msg[256];
-	strncpy(msg, exif_tag_get_title_in_ifd(pentry->tag, ifd), 256);
-	strncat(msg, ": ", 256);
-	strncat(msg, exif_str, 256);
-	msg[255] = '\0';
+	char msg[512];
+	strncpy(msg, exif_tag_get_title_in_ifd(pentry->tag, ifd), 512);
+	strncat(msg, ": ", 512);
+	strncat(msg, exif_str, 512);
+	msg[511] = '\0';
 
-	add_str(msg);
+	buffer *b = buffer_array_append_get_buffer(exif_array);
+	buffer_copy_string(b, msg);
 
 //	win_msg(msg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 }
@@ -1514,11 +1493,12 @@ void exif_context_viewer(ExifContent *pcontext, void *user_data)
 
 void exif_viewer(ExifData *data)
 {
-	if(exif_msg)
-		free(exif_msg);
-	exif_msg = 0;
-	exif_count = 0;
-
+	if(exif_array) {
+		buffer_array_reset(exif_array);
+	}
+	else {
+		exif_array = buffer_array_init();
+	}
 	if(data) {
 //		win_msg("得到JPEG exif数据!", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 		// 打印所有EXIF数据

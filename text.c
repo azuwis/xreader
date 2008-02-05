@@ -16,6 +16,7 @@
 #include "text.h"
 #include "kubridge.h"
 #include "dbg.h"
+#include "buffer.h"
 
 static void text_decode(p_text txt, t_conf_encode encode)
 {
@@ -345,24 +346,16 @@ extern p_text text_open_in_gz(const char * gzfile, const char * filename, t_fs_f
 		return NULL;
 	}
 	strcpy(txt->filename, filename);
-	int len, cap = BUFSIZ;
-	if((txt->buf = (char *)calloc(1, BUFSIZ)) == NULL)
-	{
-		text_close(txt);
-		gzclose(unzf);
-		return NULL;
-	}
-	txt->size = 0;
-	while((len = gzread(unzf, txt->buf + txt->size, cap - txt->size)) > 0) {
-		txt->size += len;
-		if(txt->size >= cap) {
-			cap = cap * 2 + 16;
-			txt->buf = realloc(txt->buf, cap);
-			if(txt->buf == NULL) {
-				text_close(txt);
-				gzclose(unzf);
-				return NULL;
-			}
+	int len;
+
+	buffer *b = buffer_init();
+	char tempbuf[BUFSIZ];
+
+	while((len = gzread(unzf, tempbuf, BUFSIZ)) > 0) {
+		if(buffer_append_memory(b, tempbuf, len) < 0) {
+			text_close(txt);
+			gzclose(unzf);
+			return NULL;
 		}
 	}
 	if(len < 0) {
@@ -371,6 +364,11 @@ extern p_text text_open_in_gz(const char * gzfile, const char * filename, t_fs_f
 		return NULL;
 	}
 	gzclose(unzf);
+	
+	// get the buffer
+	txt->size = b->used;
+	txt->buf  = buffer_free_weak(b);
+
 	text_decode(txt, encode);
 	if(ft == fs_filetype_html)
 		txt->size = html_to_text(txt->buf, txt->size, true);

@@ -419,10 +419,10 @@ float get_max_height(void)
 	float max_h = -1.0;
 
 	int height = PSP_SCREEN_HEIGHT / DISP_FONTSIZE - 1;
-	int line_num = exif_count <= height ? exif_count : height;
+	int line_num = exif_array->used <= height ? exif_array->used : height;
 	
 	for(i=0; i<line_num; ++i) {
-		float len = get_text_len((const unsigned char*)exif_msg[i]);
+		float len = get_text_len((const unsigned char*)exif_array->ptr[i]->ptr);
 		max_h = max_h > len ? max_h : len;
 	}
 
@@ -444,11 +444,11 @@ int scene_printimage(int selidx)
 		int ilen = strlen(infostr);
 		if(config.imginfobar)
 		{
-			if(config.load_exif && exif_count > 0) {
+			if(config.load_exif && exif_array->used > 0) {
 				int width = get_max_height() * DISP_FONTSIZE + 10;
 				width = width > PSP_SCREEN_WIDTH - 10 ? PSP_SCREEN_WIDTH - 10 : width;
 				int height = PSP_SCREEN_HEIGHT / DISP_FONTSIZE - 1;
-				int line_num = exif_count <= height ? exif_count : height;
+				int line_num = exif_array->used <= height ? exif_array->used : height;
 				int top = (PSP_SCREEN_HEIGHT - (1 + height) * DISP_FONTSIZE) / 2 > 1 ?
 				   	(PSP_SCREEN_HEIGHT - (1 + height) * DISP_FONTSIZE) / 2 : 1; 
 				int left = (PSP_SCREEN_WIDTH - width) / 4 - 10 < 1 ?
@@ -459,7 +459,7 @@ int scene_printimage(int selidx)
 				disp_rectangle(left-1, top-1, right+1, top + DISP_FONTSIZE * line_num+1, COLOR_WHITE);
 				int i;
 				for(i=0; i<line_num; ++i) {
-					const char *teststr = exif_msg[i];
+					const char *teststr = exif_array->ptr[i]->ptr;
 					disp_putnstring((PSP_SCREEN_WIDTH - width) / 4, top + i * DISP_FONTSIZE, COLOR_WHITE, (const byte *)teststr, strlen(teststr), 0, 0, DISP_FONTSIZE, 0);
 				}
 			}
@@ -474,7 +474,7 @@ int scene_printimage(int selidx)
 			disp_putnstring(11, 11, COLOR_WHITE, (const byte *)infostr, ilen, 0, 0, DISP_FONTSIZE, 0);
 		}
 	}
-	if((config.thumb == conf_thumb_always || thumb) && (exif_count <= 0 || !config.load_exif))
+	if((config.thumb == conf_thumb_always || thumb) && (exif_array->used <= 0 || !config.load_exif))
 	{
 		dword top = (PSP_SCREEN_HEIGHT - thumbh) / 2, bottom = top + thumbh;
 		dword thumbl = 0, thumbr = 0, thumbt = 0, thumbb = 0;

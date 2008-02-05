@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <ctype.h>
 #ifdef WIN32
 #include <winsock2.h>
 #include <windows.h>
@@ -12,6 +13,7 @@
 #include <pspkernel.h>
 #include <psprtc.h>
 #include <psptypes.h>
+#include "buffer.h"
 #include "dbg.h"
 
 #ifdef _MSC_VER
@@ -145,42 +147,28 @@ int dbg_open_dummy(DBG *d)
 	return dbg_add_handle(d, 0, 0, 0, 0);
 }
 
-int dbg_memorylog_cap  = 0;
-int dbg_memorylog_size = 0;
 char *dbg_memorylog = 0;
+
+buffer * dbg_memory_buffer = 0;
+
 void dbg_write_memorylog(void *arg, const char* str)
 {
-	if(!dbg_memorylog)
+	if(!dbg_memory_buffer)
 		return;
-	int l = strlen(str);
-	while(l + dbg_memorylog_size >= dbg_memorylog_cap && dbg_memorylog) {
-		dbg_memorylog_cap = dbg_memorylog_cap * 2 + l + 16;
-		dbg_memorylog = (char*) realloc(dbg_memorylog, dbg_memorylog_cap);
-	}
-	if(!dbg_memorylog)
-		return;
-	memcpy(dbg_memorylog + dbg_memorylog_size, str, l);
-	dbg_memorylog_size += l;
+	buffer_append_string(dbg_memory_buffer, str);
 }
 
 void dbg_close_memorylog(void *arg)
 {
-	dbg_memorylog_size = 0;
-	dbg_memorylog_cap = 0;
-	free(dbg_memorylog);
-	dbg_memorylog = 0;
+	buffer_free(dbg_memory_buffer);
+	dbg_memory_buffer = 0;
 }
 
 int dbg_open_memorylog(DBG *d)
 {
-	if(dbg_memorylog != 0) {
-		dbg_close_memorylog(NULL);
-	}
-	dbg_memorylog = (char *) malloc(BUFSIZ);
-	if(!dbg_memorylog)
+	dbg_memory_buffer = buffer_init();
+	if(!dbg_memory_buffer)
 		return 0;
-	dbg_memorylog_size = 0;
-	dbg_memorylog_cap = BUFSIZ;
 	return dbg_add_handle(d, 0, dbg_write_memorylog, dbg_close_memorylog, 0);
 }
 

@@ -4,6 +4,7 @@
 #define DBG_H
 
 #include <assert.h>
+#include "buffer.h"
 
 #define TODO	assert("TODO" && 0)
 
@@ -71,8 +72,6 @@ enum { DBG_BUFSIZE = 800 };
 extern DBG *d;
 double pspDiffTime(u64 *t1, u64 *t2);
 
-extern int dbg_memorylog_cap;
-extern int dbg_memorylog_size;
-extern char *dbg_memorylog;
+extern buffer *dbg_memory_buffer;
 
 #endif

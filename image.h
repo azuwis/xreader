@@ -3,6 +3,7 @@
 #ifndef _IMAGE_C_
 #define _IAMGE_C_
 
+#include "buffer.h"
 #include "libexif/exif-data.h"
 #include "common/datatype.h"
 #include "display.h"
@@ -39,7 +40,6 @@ extern void exif_entry_viewer (ExifEntry *pentry, void *user_data);
 extern void exif_context_viewer(ExifContent *pcontext, void *user_data);
 extern void exif_viewer(ExifData *data);
 
-extern char (*exif_msg)[255];
-extern int  exif_count;
+extern buffer_array *exif_array;
 
 #endif

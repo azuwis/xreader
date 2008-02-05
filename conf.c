@@ -193,6 +193,7 @@ static void conf_default(p_conf conf)
 	conf->autosleep = 0;
 	conf->load_exif = true;
 	conf->brightness = 50;
+	conf->prev_autopage = 2;
 }
 
 extern bool conf_load(p_conf conf)

@@ -90,8 +90,6 @@ extern bool use_prx_power_save;
 extern bool img_needrf, img_needrp, img_needrc;
 extern bool text_needrf, text_needrp, text_needrb;
 
-extern int autopage_prevsetting;
-
 t_win_menu_op exit_confirm()
 {
 	if(win_msgbox(getmsgbyid(EXIT_PROMPT), getmsgbyid(YES), getmsgbyid(NO),
@@ -1157,7 +1155,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 11:
 			if(--config.autopagetype < 0)
 				config.autopagetype = 2;
-			autopage_prevsetting = config.autopagetype;
+			config.prev_autopage = config.autopagetype;
 			break;
 		case 12:
 			if(--config.autopage < -1000)
@@ -1234,7 +1232,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item, dword * coun
 			break;
 		case 11:
 			config.autopagetype = (config.autopagetype + 1) % 3;
-			autopage_prevsetting = config.autopagetype;
+			config.prev_autopage = config.autopagetype;
 			break;
 		case 12:
 			if(++config.autopage > 1000)
@@ -2132,7 +2130,7 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 			if(saveimage)
 				disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 			
-			scene_readbook_raw("调试信息", (const unsigned char*)dbg_memorylog, dbg_memorylog_size, fs_filetype_txt);
+			scene_readbook_raw("调试信息", (const unsigned char*)dbg_memory_buffer->ptr, dbg_memory_buffer->used, fs_filetype_txt);
 
 			if(saveimage)
 			{
@@ -3007,27 +3005,8 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 
 					free((void *)imgdata);
 					
-					int buf_cap, buf_size;
-					buf_cap = 80, buf_size = 0;
-					char *buf = (char*)malloc(buf_cap);
-					buf[0] = '\0';
-					int i;
-					for(i=0; i<exif_count; ++i)
-					{
-						if(buf_size + strlen(exif_msg[i]) + 2 >= buf_cap) {
-							buf_cap = buf_cap * 2 + strlen(exif_msg[i]) + 2;
-							buf = realloc(buf, buf_cap);
-							if(!buf)
-							{
-								break;
-							}
-						}
-						strcat(buf+buf_size, exif_msg[i]);
-						strcat(buf+buf_size, "\r\n");
-						buf_size += strlen(exif_msg[i]) + 2;
-					}
 					inop = false;
-					if(buf[0] != '\0') {
+					if(exif_array && exif_array->used) {
 						char infotitle[256];
 						if(strrchr(filename, '/') != NULL) {
 							snprintf(infotitle, 256, "%s的EXIF信息", strrchr(filename, '/')+1);
@@ -3035,11 +3014,19 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 						else
 							snprintf(infotitle, 256, "%s的EXIF信息", filename);
 						infotitle[255] = '\0';
-						scene_readbook_raw(infotitle, (const unsigned char*)buf, strlen(buf), fs_filetype_txt);
+						buffer *b = buffer_init();
+						int i;
+						for(i=0; i<exif_array->used-1; ++i) {
+							buffer_append_string(b, exif_array->ptr[i]->ptr);
+							buffer_append_string(b, "\r\n");
+						}
+						buffer_append_string(b, exif_array->ptr[i]->ptr);
+
+						scene_readbook_raw(infotitle, (const unsigned char*)b->ptr, b->used, fs_filetype_txt);
+						buffer_free(b);
 					}
 					else 
 						win_msg("无EXIF信息", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
-					free(buf);
 				}
 				break;
 			}
@@ -3879,8 +3866,10 @@ extern void scene_init()
 	disp_flip();
 	disp_fillvram(0);
 
-	if(prx_loaded)
+	if(prx_loaded) {
+		dbg_printf(d, "亮度设置为%d", config.brightness);
 		xrSetBrightness(config.brightness);
+	}
 
 	scene_filelist();
 }
