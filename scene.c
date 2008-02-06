@@ -86,8 +86,9 @@ int freq_list[][2] = {
 };
 
 extern bool use_prx_power_save;
-
 extern bool img_needrf, img_needrp, img_needrc;
+
+static int config_num = 0;
 
 t_win_menu_op exit_confirm()
 {
@@ -2088,6 +2089,141 @@ dword scene_locload(dword * selidx)
 	return (bool)item[0].data;
 }
 
+void scene_setting_mgr_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
+{
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"设置管理");
+	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	char infomsg[80];
+	sprintf(infomsg, "%d号设置", config_num);
+	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
+	disp_putstring(242 + DISP_FONTSIZE, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
+	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
+}
+
+int detect_config_change(const p_conf prev, const p_conf curr)
+{
+	if(prev->imgbrightness != curr->imgbrightness)
+	{
+		img_needrf = img_needrc = img_needrp = true;
+	}
+	if(prev->brightness != curr->brightness)
+	{
+		if(prx_loaded) {
+			dbg_printf(d, "亮度设置为%d", config.brightness);
+			xrSetBrightness(config.brightness);
+		}
+	}
+	if(prev->fontsize != curr->fontsize) {
+		scene_load_font();
+		int t = config.vertread;
+		if(t == 3)
+			t = 0;
+		drperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		rowsperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) - config.borderspace * 2;
+	}
+	if(prev->bookfontsize != curr->bookfontsize) {
+		scene_load_book_font();
+	}
+	if(prev->bgcolor != curr->bgcolor || prev->grayscale!= curr->grayscale)
+		bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile), curr->grayscale);
+	int i;
+	for(i=0; i<3; ++i) {
+		if(prev->freqs[i] != curr->freqs[i])
+			break;
+	}
+	if(i != 3) {
+		scene_power_save(true);
+	}
+	return 0;
+}
+
+t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item, dword * count, dword max_height, dword * topindex, dword * index)
+{
+	switch(key)
+	{
+	case (PSP_CTRL_SELECT | PSP_CTRL_START):
+		return exit_confirm();
+	case PSP_CTRL_LEFT:
+		if(--config_num < 0) {
+			config_num = 9;
+		}
+		return win_menu_op_redraw;
+	case PSP_CTRL_RIGHT:
+		if(++config_num > 9) {
+			config_num = 0;
+		}
+		return win_menu_op_redraw;
+	case PSP_CTRL_CIRCLE:
+		{
+			disp_waitv();
+			char conffile[256], appdir[256];
+			getcwd(appdir, 256);
+			strcat(appdir, "/");
+			strcpy(conffile, appdir);
+			char conffilename[80];
+			sprintf(conffilename, "%s%d%s", "xreader", config_num, ".conf");
+			strcat(conffile, conffilename);
+			conf_set_file(conffile);
+			if(*index == 0) {
+				t_conf prev_config;
+				memcpy(&prev_config, &config, sizeof(t_conf));
+				// load
+				if(!conf_load(&config))
+				{
+					win_msg("读取设置失败!", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+					return win_menu_op_redraw;
+				}
+				detect_config_change(&prev_config, &config);
+			}
+			else if(*index == 1) {
+				// save
+				if(!conf_save(&config))
+				{
+					win_msg("保存设置失败!", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+					return win_menu_op_redraw;
+				}
+			}
+			else {
+				// delete
+				utils_del_file(conffile);
+			}
+			ctrl_waitrelease();
+			return win_menu_op_cancel;
+		}
+	default:;
+	}
+	return win_menu_defcb(key, item, count, max_height, topindex, index);
+}
+
+dword scene_setting_mgr(dword * selidx)
+{
+	t_win_menuitem item[3];
+	strcpy(item[0].name, "读取设置");
+	strcpy(item[1].name, "保存设置");
+	strcpy(item[2].name, "删除设置");
+	dword i;
+	for(i = 0; i < NELEMS(item); i ++)
+	{
+		item[i].width = strlen(item[i].name);
+		item[i].selected = false;
+		item[i].icolor = RGB(0xDF, 0xDF, 0xDF);
+		item[i].selicolor = RGB(0xFF, 0xFF, 0x40);
+		item[i].selrcolor = RGB(0x10, 0x30, 0x20);
+		item[i].selbcolor = RGB(0x20, 0x20, 0xDF);
+		item[i].data = NULL;
+	}
+	dword index;
+	item[0].data = (void *)false;
+	item[1].data = (void *)*selidx;
+	index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_setting_mgr_predraw, NULL, scene_setting_mgr_menucb);
+	*selidx = (dword)item[1].data;
+	return (bool)item[0].data;
+}
+
 typedef dword (*t_scene_option_func)(dword * selidx);
 
 t_scene_option_func scene_option_func[] = {
@@ -2113,6 +2249,7 @@ t_scene_option_func scene_option_func[] = {
 	scene_locsave,
 	scene_locload,
 	NULL,
+	scene_setting_mgr,
 	NULL
 };
 
@@ -2125,24 +2262,6 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 	case PSP_CTRL_CIRCLE:
 		if(*index == 12)
 			return exit_confirm();
-		if(*index == 13) {
-			pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
-			if(saveimage)
-				disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
-			
-			//TODO Here
-			ctrl_waitrelease();
-			
-			if(saveimage)
-			{
-				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
-				disp_flip();
-				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0, saveimage);
-				free((void *)saveimage);
-			}
-
-			return win_menu_op_cancel;
-		}
 		if(*index == 14) {
 			pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 			if(saveimage)
@@ -2217,7 +2336,7 @@ dword scene_options(dword * selidx)
 	strcpy(item[10].name, "保存文件位置");
 	strcpy(item[11].name, "读取文件位置");
 	strcpy(item[12].name, "  退出软件");
-	strcpy(item[13].name, " 设置管理器 ");
+	strcpy(item[13].name, "  设置管理");
 #ifdef _DEBUG
 	strcpy(item[14].name, "查看调试信息");
 #endif
@@ -3725,7 +3844,9 @@ extern void scene_init()
 	strcpy(config.shortpath, "ms0:/");
 
 	strcpy(conffile, appdir);
-	strcat(conffile, "xreader.conf");
+	char conffilename[80];
+	sprintf(conffilename, "%s%d%s", "xreader", config_num, ".conf");
+	strcat(conffile, conffilename);
 	conf_set_file(conffile);
 	conf_load(&config);
 	sceRtcGetCurrentTick(&dbgnow);
@@ -3896,9 +4017,6 @@ extern void scene_init()
 
 extern void scene_exit()
 {
-	if(prx_loaded)
-		config.brightness = xrGetBrightness();
-
 	/*
 	const char* log = dbg_get_memorylog();
 	if(log) {

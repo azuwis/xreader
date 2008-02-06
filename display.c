@@ -41,7 +41,7 @@ typedef struct _Vertex {
 
 #define DISP_RSPAN 0
 
-#undef CHECK_DISPLAY_BORDER
+#define CHECK_DISPLAY_BORDER
 
 #ifdef CHECK_DISPLAY_BORDER
 #define CHECK_AND_VALID(x, y) \

@@ -5,9 +5,17 @@
 #include <string.h>
 #include <pspkernel.h>
 #include <pspctrl.h>
+#include "pspscreen.h"
+#include "scene.h"
 #include "display.h"
 #include "version.h"
 #include "conf.h"
+#include "xrPrx/xrPrx.h"
+
+extern t_fonts fonts[5], bookfonts[21];
+extern int fontindex, fontcount, bookfontcount, bookfontindex;
+extern bool scene_load_font();
+extern bool scene_load_book_font();
 
 static char conf_filename[256];
 
@@ -218,31 +226,6 @@ extern bool conf_load(p_conf conf)
 	conf->lyricex = 0;
 #endif
 #endif
-	if(conf->confver < XREADER_VERSION_NUM)
-	{
-		if(conf->confver < 0x00060000)
-		{
-			conf->imgkey[10] = PSP_CTRL_LTRIGGER | PSP_CTRL_CIRCLE;
-			conf->bicubic = true;
-		}
-		if(conf->confver < 0x00080000)
-		{
-			conf->forecolor = RGB_16to32(conf->forecolor);
-			conf->bgcolor = RGB_16to32(conf->bgcolor);
-		}
-		if(conf->confver < 0x00090700)
-			conf->imgkey[11] = PSP_CTRL_RTRIGGER | PSP_CTRL_CIRCLE;
-		if(conf->confver < 0x01010000)
-		{
-			if(conf->fit == 2)
-				conf->fit = 3;
-			else if(conf->fit == 3)
-				conf->fit = 5;
-		}
-		if(conf->confver < 0x01030000)
-			conf->savesucc = true;
-		conf->confver = XREADER_VERSION_NUM;
-	}
 	if(!conf->savesucc)
 	{
 		strcpy(conf->path, "ms0:/");
@@ -257,11 +240,40 @@ extern bool conf_load(p_conf conf)
 	sceIoWrite(fd, conf, sizeof(t_conf));
 	sceIoClose(fd);
 	conf->savesucc = true;
+
+	int i=0;
+	for(i=0; i<fontcount; ++i) {
+		if(fonts[i].size == conf->fontsize)
+		{
+			break;
+		}
+	}
+	if(i != fontcount) {
+		fontindex = i;
+		scene_load_font();
+	}
+	
+	for(i=0; i<bookfontcount; ++i) {
+		if(bookfonts[i].size == conf->bookfontsize)
+		{
+			break;
+		}
+	}
+	if(i != bookfontcount) {
+		bookfontindex = i;
+		scene_load_book_font();
+	}
+
 	return true;
 }
 
 extern bool conf_save(p_conf conf)
 {
+	extern bool prx_loaded;
+	if(prx_loaded)
+		conf->brightness = xrGetBrightness();
+	conf->fontsize = fonts[fontindex].size;
+
 	int fd = sceIoOpen(conf_filename, PSP_O_CREAT | PSP_O_RDWR, 0777);
 	if(fd < 0)
 		return false;
