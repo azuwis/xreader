@@ -4065,6 +4065,15 @@ extern void scene_exit()
 		if(config.autobm)
 			bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
 	}
+	// always save to xreader0.conf
+	char conffile[256], appdir[256];
+	getcwd(appdir, 256);
+	strcat(appdir, "/");
+	strcpy(conffile, appdir);
+	char conffilename[80];
+	sprintf(conffilename, "%s%d%s", "xreader", 0, ".conf");
+	strcat(conffile, conffilename);
+	conf_set_file(conffile);
 	conf_save(&config);
 
 #ifdef ENABLE_MUSIC

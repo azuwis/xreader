@@ -879,8 +879,11 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 		{
 			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE)
 			{
+				break;
+#if 0
 				x = 0;
 				y += DISP_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -916,8 +919,11 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 		{
 			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2)
 			{
+				break;
+#if 0
 				x = 0;
 				y += DISP_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -953,8 +959,11 @@ extern void disp_putnstring(int x, int y, pixel color, const byte *str, int coun
 		{
 			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2)
 			{
+				break;
+#if 0
 				x = 0;
 				y += DISP_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -991,8 +1000,11 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, 
 		{
 			if(x < 0)
 			{
+				break;
+#if 0
 				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE;
 				y -= DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1039,8 +1051,11 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, 
 		{
 			if(x < 0)
 			{
+				break;
+#if 0
 				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2;
 				y -= DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1107,8 +1122,11 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, 
 		{
 			if(x < 0)
 			{
+				break;
+#if 0
 				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2;
 				y -= DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1140,8 +1158,11 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 		{
 			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE)
 			{
+				break;
+#if 0
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1188,8 +1209,11 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 		{
 			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
 			{
+				break;
+#if 0
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1256,8 +1280,11 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 		{
 			if(x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
 			{
+				break;
+#if 0
 				x = 0;
 				y += DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1289,8 +1316,11 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 		{
 			if(y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1)
 			{
+				break;
+#if 0
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1337,8 +1367,11 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 		{
 			if(y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1)
 			{
+				break;
+#if 0
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1405,8 +1438,11 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 		{
 			if(y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1)
 			{
+				break;
+#if 0
 				y = 271;
 				x += DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1435,8 +1471,11 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 		{
 			if(y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE)
 			{
+				break;
+#if 0
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1484,8 +1523,11 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 		{
 			if(y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
 			{
+				break;
+#if 0
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
@@ -1552,8 +1594,11 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 		{
 			if(y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2)
 			{
+				break;
+#if 0
 				y = 0;
 				x -= DISP_BOOK_FONTSIZE;
+#endif
 			}
 			if(!check_range(x, y))
 				return;
