@@ -2,6 +2,7 @@
 
 #include "config.h"
 
+#include <unistd.h>
 #include <string.h>
 #include <pspkernel.h>
 #include <pspctrl.h>
@@ -110,7 +111,15 @@ extern void conf_get_keyname(dword key, char * res)
 
 static void conf_default(p_conf conf)
 {
+	char appdir[256];
+	getcwd(appdir, 256);
+	strcat(appdir, "/");
 	memset(conf, 0, sizeof(t_conf));
+	strcpy(conf->path, "ms0:/");
+	strcpy(conf->shortpath, "ms0:/");
+	strcpy(conf->lastfile, "");
+	strcpy(conf->bgfile, appdir);
+	strcat(conf->bgfile, "bg.png");
 	conf->forecolor = 0xFFFFFFFF;
 	conf->bgcolor = 0;
 	conf->rowspace = 2;
@@ -190,7 +199,6 @@ static void conf_default(p_conf conf)
 #else
 	conf->lyricex = 0;
 #endif
-	conf->savesucc = false;
 	conf->autoplay = false;
 	conf->usettf = 0;
 	conf->freqs[0] = 1;
@@ -226,20 +234,9 @@ extern bool conf_load(p_conf conf)
 	conf->lyricex = 0;
 #endif
 #endif
-	if(!conf->savesucc)
-	{
-		strcpy(conf->path, "ms0:/");
-		strcpy(conf->shortpath, "ms0:/");
-		strcpy(conf->lastfile, "");
-		strcpy(conf->bgfile, "");
-		conf->isreading = false;
-	}
-	else
-		conf->savesucc = false;
 	sceIoLseek32(fd, 0, PSP_SEEK_SET);
 	sceIoWrite(fd, conf, sizeof(t_conf));
 	sceIoClose(fd);
-	conf->savesucc = true;
 
 	int i=0;
 	for(i=0; i<fontcount; ++i) {
@@ -273,6 +270,7 @@ extern bool conf_save(p_conf conf)
 	if(prx_loaded)
 		conf->brightness = xrGetBrightness();
 	conf->fontsize = fonts[fontindex].size;
+	conf->bookfontsize = bookfonts[bookfontindex].size;
 
 	int fd = sceIoOpen(conf_filename, PSP_O_CREAT | PSP_O_RDWR, 0777);
 	if(fd < 0)

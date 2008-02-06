@@ -1078,8 +1078,10 @@ dword scene_color(dword * selidx)
 #endif
 	while(win_menu(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_color_predraw, NULL, scene_color_menucb) != INVALID);
 #ifdef ENABLE_BG
-	if(orgbgcolor != config.bgcolor || orggrayscale != config.grayscale)
+	if(orgbgcolor != config.bgcolor || orggrayscale != config.grayscale) {
+		dbg_printf(d, "更换背景: %s gray: %d", config.bgfile, config.grayscale);
 		bg_load(config.bgfile, config.bgcolor, fs_file_get_type(config.bgfile), config.grayscale);
+	}
 #endif
 	return 0;
 }
@@ -2105,6 +2107,12 @@ void scene_setting_mgr_predraw(p_win_menuitem item, dword index, dword topindex,
 
 int detect_config_change(const p_conf prev, const p_conf curr)
 {
+#ifdef ENABLE_USB
+	if(!prev->enableusb && curr->enableusb)
+		usb_activate();
+	else if(prev->enableusb && !curr->enableusb)
+		usb_deactivate();
+#endif
 	if(prev->imgbrightness != curr->imgbrightness)
 	{
 		img_needrf = img_needrc = img_needrp = true;
@@ -2112,24 +2120,28 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 	if(prev->brightness != curr->brightness)
 	{
 		if(prx_loaded) {
-			dbg_printf(d, "亮度设置为%d", config.brightness);
-			xrSetBrightness(config.brightness);
+			dbg_printf(d, "亮度设置为%d", curr->brightness);
+			xrSetBrightness(curr->brightness);
 		}
 	}
 	if(prev->fontsize != curr->fontsize) {
 		scene_load_font();
-		int t = config.vertread;
+		int t = curr->vertread;
 		if(t == 3)
 			t = 0;
-		drperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (config.infobar ? DISP_BOOK_FONTSIZE : 0) - config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) - config.borderspace * 2;
+		drperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - curr->borderspace * 2 + curr->rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (curr->rowspace + DISP_BOOK_FONTSIZE);
+		rowsperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (curr->infobar ? DISP_BOOK_FONTSIZE : 0) - curr->borderspace * 2) / (curr->rowspace + DISP_BOOK_FONTSIZE);
+		pixelsperrow = (t ? (curr->scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (curr->scrollbar ? 475 : PSP_SCREEN_WIDTH)) - curr->borderspace * 2;
 	}
 	if(prev->bookfontsize != curr->bookfontsize) {
 		scene_load_book_font();
 	}
-	if(prev->bgcolor != curr->bgcolor || prev->grayscale!= curr->grayscale)
+
+	if(curr->bgfile && curr->bgfile[0] != '\0' && (prev->bgcolor != curr->bgcolor || prev->grayscale != curr->grayscale)) {
+		dbg_printf(d, "检测到背景更换: %s %d", curr->bgfile, curr->grayscale);
 		bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile), curr->grayscale);
+	}
+	
 	int i;
 	for(i=0; i<3; ++i) {
 		if(prev->freqs[i] != curr->freqs[i])
@@ -2178,6 +2190,9 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item, dword * c
 					return win_menu_op_redraw;
 				}
 				detect_config_change(&prev_config, &config);
+				strcpy(config.path, prev_config.path);
+				strcpy(config.shortpath, prev_config.shortpath);
+				strcpy(config.lastfile, prev_config.lastfile);
 			}
 			else if(*index == 1) {
 				// save
@@ -2192,7 +2207,7 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item, dword * c
 				utils_del_file(conffile);
 			}
 			ctrl_waitrelease();
-			return win_menu_op_cancel;
+			return win_menu_op_ok;
 		}
 	default:;
 	}
@@ -2220,8 +2235,10 @@ dword scene_setting_mgr(dword * selidx)
 	item[0].data = (void *)false;
 	item[1].data = (void *)*selidx;
 	index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, RGB(0x10, 0x30, 0x20), true, scene_setting_mgr_predraw, NULL, scene_setting_mgr_menucb);
-	*selidx = (dword)item[1].data;
-	return (bool)item[0].data;
+
+	if(index == INVALID)
+		return win_menu_op_continue;
+	return win_menu_op_ok;
 }
 
 typedef dword (*t_scene_option_func)(dword * selidx);
@@ -2248,8 +2265,8 @@ t_scene_option_func scene_option_func[] = {
 #endif
 	scene_locsave,
 	scene_locload,
-	NULL,
 	scene_setting_mgr,
+	NULL,
 	NULL
 };
 
@@ -2260,7 +2277,7 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
 		return exit_confirm();
 	case PSP_CTRL_CIRCLE:
-		if(*index == 12)
+		if(*index == 13)
 			return exit_confirm();
 		if(*index == 14) {
 			pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
@@ -2283,7 +2300,7 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 		if(scene_option_func[*index] != NULL)
 		{
 			item[0].data = (void *)scene_option_func[*index](item[1].data);
-			if(item[0].data != 0)
+			if(item[0].data != win_menu_op_continue)
 				return win_menu_op_cancel;
 		}
 		return win_menu_op_force_redraw;
@@ -2335,8 +2352,8 @@ dword scene_options(dword * selidx)
 #endif
 	strcpy(item[10].name, "保存文件位置");
 	strcpy(item[11].name, "读取文件位置");
-	strcpy(item[12].name, "  退出软件");
-	strcpy(item[13].name, "  设置管理");
+	strcpy(item[12].name, "  设置管理");
+	strcpy(item[13].name, "  退出软件");
 #ifdef _DEBUG
 	strcpy(item[14].name, "查看调试信息");
 #endif
@@ -2834,6 +2851,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 							{
 								if(win_msgbox("是否取消背景图？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 								{
+									dbg_printf(d, "取消背景图");
 									strcpy(config.bgfile, " ");
 									bg_cancel();
 									disp_fillvram(0);
@@ -2846,6 +2864,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 								if(win_msgbox("是否将当前图片文件设为背景图？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 								{
 									strcpy(config.bgfile, bgfile);
+									dbg_printf(d, "设置背景图: %s %d", config.bgfile, config.grayscale);
 									bg_load(config.bgfile, config.bgcolor, (t_fs_filetype)item[*index].data, config.grayscale);
 									repaintbg = true;
 								}
@@ -4099,7 +4118,7 @@ extern void scene_power_save(bool save)
 
 extern void scene_exception()
 {
-	config.savesucc = false;
+//	config.savesucc = false;
 }
 
 extern const char * scene_appdir()

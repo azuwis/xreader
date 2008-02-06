@@ -131,7 +131,6 @@ typedef struct {
 	dword flkey2[20];
 	dword imgpagereserve;
 	dword lyricex;
-	bool savesucc;
 	bool autoplay;
 	bool usettf;
 	int freqs[3];
