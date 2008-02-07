@@ -2,6 +2,7 @@
 #include <string.h>
 #include <pspkernel.h>
 #include <stdarg.h>
+#include "config.h"
 #include "utils.h"
 #include "dbg.h"
 
@@ -152,7 +153,7 @@ size_t strncat_s (
 
 #ifdef _DEBUG
 	if(numberOfElements == 4) {
-		dbg_printf(d, "strncpy_s: strDest可能退化为指针: %s", strSource);
+		dbg_printf(d, "strncat_s: strDest可能退化为指针: %s", strSource);
 	}
 #endif
 
@@ -183,7 +184,7 @@ int snprintf_s(
 
 #ifdef _DEBUG
 	if(sizeOfBuffer == 4) {
-		dbg_printf(d, "strncpy_s: strDest可能退化为指针: %s", format);
+		dbg_printf(d, "snprintf_s: strDest可能退化为指针: %s", format);
 	}
 #endif
 
@@ -226,6 +227,12 @@ size_t mbcsncpy_s(unsigned char* dst, size_t nBytes, const unsigned char* src, s
 
 	if(!dst || !src || nBytes == 0 || n == 0)
 		return 0;
+
+#ifdef _DEBUG
+	if(nBytes == 4) {
+		dbg_printf(d, "mbcsncpy_s: dst可能退化为指针: %s", src);
+	}
+#endif
 
 	while(nBytes > 0 && n > 0 && *src != '\0') {
 		if(*src > 0x80 && *(src+1) != '\0') {

@@ -315,7 +315,8 @@ static bool mp3_load()
 		mp3info_free(&mp3info);
 #ifdef ENABLE_WMA
 	}
-	file_is_mp3 = (stricmp(utils_fileext(mp3_files[mp3_index]), "mp3") == 0);
+	const char* ext = utils_fileext(mp3_files[mp3_index]);
+	file_is_mp3 = (ext && stricmp(ext, "mp3") == 0);
 	if(file_is_mp3)
 	{
 #endif

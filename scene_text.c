@@ -111,7 +111,8 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs = NULL;
 	}
 	scene_power_save(false);
-	if(stricmp(utils_fileext(pView->filename), "gz") == 0)
+	const char* ext = utils_fileext(pView->filename);
+	if(ext && stricmp(ext, "gz") == 0)
 		fs = text_open_in_gz(pView->filename, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_zip && ((t_fs_filetype)filelist[selidx].data == fs_filetype_txt || (t_fs_filetype)filelist[selidx].data == fs_filetype_html))
 		fs = text_open_in_zip(config.shortpath, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
