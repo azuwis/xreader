@@ -13,6 +13,7 @@
 #include <pspkernel.h>
 #include <psprtc.h>
 #include <psptypes.h>
+#include "common/utils.h"
 #include "buffer.h"
 #include "dbg.h"
 
@@ -206,7 +207,7 @@ void dbg_write_psp_logfile(void *arg, const char* str)
 	SceUID fd = (SceUID)arg;
 	int l = strlen(str);
 	char *newstr = (char*)malloc(l + 2);
-	strcpy(newstr, str);
+	strcpy_s(newstr, l + 2, str);
 	if(newstr[l-1] == '\n') {
 		newstr[l-1] = '\r';
 		newstr[l] = '\n';
@@ -326,13 +327,13 @@ int dbg_printf(DBG *d, const char* fmt, ...)
 	sceRtcGetCurrentClockLocalTime(&tm);
 	
     char timestr[80];
-	sprintf(timestr, "%u-%u-%u %02u:%02u:%02u", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds);
+	SPRINTF_S(timestr, "%u-%u-%u %02u:%02u:%02u", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds);
 	
 	int timelen = strlen(timestr);
 	size = DBG_BUFSIZE;
 	buf = (char*)malloc(size + timelen + 2);
-	strcpy(buf, timestr);
-	strcat(buf, ": ");
+	strcpy_s(buf, size + timelen + 2, timestr);
+	strcat_s(buf, size + timelen + 2, ": ");
 	l = vsnprintf(buf + timelen + 2, size, fmt, ap);
 	buf[size + timelen + 2 - 1] = '\0';
 	while(strlen(buf) == size-1) {
@@ -340,12 +341,12 @@ int dbg_printf(DBG *d, const char* fmt, ...)
 		buf = (char*)realloc(buf, size + timelen + 2);
 		if(!buf)
 			return 0;
-		strcpy(buf, timestr);
-		strcat(buf, ": ");
+		strcpy_s(buf, size + timelen + 2, timestr);
+		strcat_s(buf, size + timelen + 2, ": ");
 		l = vsnprintf(buf + timelen + 2, size, fmt, ap);
 		buf[size + timelen + 2 - 1] = '\0';
 	}
-	strcat(buf, "\n");
+	strcat_s(buf, size + timelen + 2, "\n");
 	va_end(ap);
 	for(i=0; i<d->otsize; ++i) {
 		if(d->ot[i].write)
@@ -376,7 +377,7 @@ int dbg_printf_raw(DBG *d, const char* fmt, ...)
 		l = vsnprintf(buf, size, fmt, ap);
 		buf[size-1] = '\0';
 	}
-	strcat(buf, "\n");
+	strcat_s(buf, size, "\n");
 	va_end(ap);
 	for(i=0; i<d->otsize; ++i) {
 		if(d->ot[i].write)

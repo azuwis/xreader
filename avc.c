@@ -41,7 +41,7 @@ extern bool avc_init()
 	gu_font_init();
 	char ftn[256];
 	getcwd(ftn, 256);
-	strcat(ftn, "/font10.f");
+	STRCAT_S(ftn, "/font10.f");
 	gu_font_load(ftn);
 
 	pmp_inited = 1;

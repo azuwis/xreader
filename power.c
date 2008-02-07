@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <psppower.h>
+#include "common/utils.h"
 #include "xrPrx/xrPrx.h"
 #include "power.h"
 
@@ -56,11 +57,11 @@ extern const char * power_get_battery_charging()
 	{
 		status_str[0] = 0;
 		if((status & PSP_POWER_CB_BATTPOWER) > 0)
-			strcat(status_str, "[电源充电]");
+			STRCAT_S(status_str, "[电源充电]");
 		else if((status & PSP_POWER_CB_AC_POWER) > 0)
-			strcat(status_str, "[电源供电]");
+			STRCAT_S(status_str, "[电源供电]");
 		else if((status & PSP_POWER_CB_BATTERY_LOW) > 0)
-			strcat(status_str, "[电量不足]");
+			STRCAT_S(status_str, "[电量不足]");
 	}
 	return status_str;
 }

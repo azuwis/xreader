@@ -10,6 +10,7 @@
 #include <unzip.h>
 #include <chm_lib.h>
 #include <unrar.h>
+#include "common/utils.h"
 #include "charsets.h"
 #include "display.h"
 #include "html.h"
@@ -221,7 +222,7 @@ extern p_text text_open(const char * filename, t_fs_filetype ft, dword rowpixels
 		text_close(txt);
 		return NULL;
 	}
-	strcpy(txt->filename, filename);
+	STRCPY_S(txt->filename, filename);
 	txt->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
 	if((txt->buf = (char *)calloc(1, txt->size + 1)) == NULL)
 	{
@@ -257,7 +258,7 @@ extern p_text text_open_binary(const char * filename, bool vert)
 		text_close(txt);
 		return NULL;
 	}
-	strcpy(txt->filename, filename);
+	STRCPY_S(txt->filename, filename);
 	txt->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
 	if(txt->size > 256 * 1024) 
 	{
@@ -345,7 +346,7 @@ extern p_text text_open_in_gz(const char * gzfile, const char * filename, t_fs_f
 		text_close(txt);
 		return NULL;
 	}
-	strcpy(txt->filename, filename);
+	STRCPY_S(txt->filename, filename);
 	int len;
 
 	buffer *b = buffer_init();
@@ -399,7 +400,7 @@ extern p_text text_open_binary_in_zip(const char * zipfile, const char * filenam
 		unzClose(unzf);
 		return NULL;
 	}
-	strcpy(txt->filename, filename);
+	STRCPY_S(txt->filename, filename);
 	unz_file_info info;
 	if(unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK)
 	{
@@ -490,7 +491,7 @@ extern p_text text_open_in_raw(const char * filename, const unsigned char* data,
 	if(txt == NULL)
 		return NULL;
 	
-	strcpy(txt->filename, filename);
+	STRCPY_S(txt->filename, filename);
 	txt->size = size;
 
 	if((txt->buf = (char *)calloc(1, txt->size)) == NULL)
@@ -531,7 +532,7 @@ extern p_text text_open_in_zip(const char * zipfile, const char * filename, t_fs
 		unzClose(unzf);
 		return NULL;
 	}
-	strcpy(txt->filename, filename);
+	STRCPY_S(txt->filename, filename);
 	unz_file_info info;
 	if(unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK)
 	{
@@ -608,7 +609,7 @@ extern p_text text_open_binary_in_rar(const char * rarfile, const char * filenam
 		if(stricmp(header.FileName, filename) == 0)
 		{
 			curidx = 0;
-			strcpy(txt->filename, filename);
+			STRCPY_S(txt->filename, filename);
 			txt->size = header.UnpSize;
 			if((tmpbuf = (byte*)calloc(1, txt->size)) == NULL) 
 				return NULL;
@@ -707,7 +708,7 @@ extern p_text text_open_in_rar(const char * rarfile, const char * filename, t_fs
 		if(stricmp(header.FileName, filename) == 0)
 		{
 			curidx = 0;
-			strcpy(txt->filename, filename);
+			STRCPY_S(txt->filename, filename);
 			txt->size = header.UnpSize;
 			if((txt->buf = (char *)calloc(1, txt->size)) == NULL || RARProcessFile(hrar, RAR_TEST, NULL, NULL) != 0)
 			{
@@ -752,7 +753,7 @@ extern p_text text_open_in_chm(const char * chmfile, const char * filename, t_fs
 		chm_close(chm);
 		return NULL;
 	}
-	strcpy(txt->filename, filename);
+	STRCPY_S(txt->filename, filename);
 	txt->size = ui.length;
 	if((txt->buf = (char *)calloc(1, txt->size)) == NULL)
 	{

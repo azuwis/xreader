@@ -126,20 +126,19 @@ void filename_to_itemname(p_win_menuitem item, int cur_count, const char* filena
 {
 	if((item[cur_count].width = strlen(filename)) > MAX_ITEM_NAME_LEN)
 	{
-		strncpy(item[cur_count].name, filename, MAX_ITEM_NAME_LEN - 3);
+		strncpy_s(item[cur_count].name, NELEMS(item[cur_count].name), filename, MAX_ITEM_NAME_LEN - 3);
 		item[cur_count].name[MAX_ITEM_NAME_LEN - 3] = item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '.';
 		item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
 		item[cur_count].width = MAX_ITEM_NAME_LEN;
 	}
 	else {
-		strncpy(item[cur_count].name, filename, 64);
-		item[cur_count].name[63] = '\0';
+		STRCPY_S(item[cur_count].name, filename);
 	}
 }
 
 extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
 {
-	strcpy((char *)sdir, dir);
+	strcpy_s((char *)sdir, 256, dir);
 	dword cur_count = 0;
 	p_win_menuitem item = NULL;
 	cur_count = 3;
@@ -147,8 +146,8 @@ extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem 
 	if(* mitem == NULL)
 		return 0;
 	item = * mitem;
-	strcpy(item[0].name, "<MemoryStick>");
-	strcpy(item[0].compname, "ms0:");
+	STRCPY_S(item[0].name, "<MemoryStick>");
+	STRCPY_S(item[0].compname, "ms0:");
 	item[0].data = (void *)fs_filetype_dir;
 	item[0].width = 13;
 	item[0].selected = false;
@@ -156,8 +155,8 @@ extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem 
 	item[0].selicolor = selicolor;
 	item[0].selrcolor = selrcolor;
 	item[0].selbcolor = selbcolor;
-	strcpy(item[1].name, "<NandFlash 0>");
-	strcpy(item[1].compname, "flash0:");
+	STRCPY_S(item[1].name, "<NandFlash 0>");
+	STRCPY_S(item[1].compname, "flash0:");
 	item[1].data = (void *)fs_filetype_dir;
 	item[1].width = 13;
 	item[1].selected = false;
@@ -165,8 +164,8 @@ extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem 
 	item[1].selicolor = selicolor;
 	item[1].selrcolor = selrcolor;
 	item[1].selbcolor = selbcolor;
-	strcpy(item[2].name, "<NandFlash 1>");
-	strcpy(item[2].compname, "flash1:");
+	STRCPY_S(item[2].name, "<NandFlash 1>");
+	STRCPY_S(item[2].compname, "flash1:");
 	item[2].data = (void *)fs_filetype_dir;
 	item[2].width = 13;
 	item[2].selected = false;
@@ -180,7 +179,7 @@ extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem 
 extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor)
 {
 	scene_power_save(false);
-	strcpy((char *)sdir, dir);
+	strcpy_s((char *)sdir, 256, dir);
 	SceIoDirent info;
 	dword cur_count = 0;
 	p_win_menuitem item = NULL;
@@ -200,8 +199,8 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 			return 0;
 		}
 		item = * mitem;
-		strcpy(item[0].name, "<..>");
-		strcpy(item[0].compname, "..");
+		STRCPY_S(item[0].name, "<..>");
+		STRCPY_S(item[0].compname, "..");
 		item[0].data = (void *)fs_filetype_dir;
 		item[0].width = 4;
 		item[0].selected = false;
@@ -232,11 +231,11 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 				item = *mitem;
 			}
 			item[cur_count].data = (void *)fs_filetype_dir;
-			strcpy(item[cur_count].compname, info.d_name);
+			STRCPY_S(item[cur_count].compname, info.d_name);
 			item[cur_count].name[0] = '<';
 			if((item[cur_count].width = strlen(info.d_name) + 2) > MAX_ITEM_NAME_LEN)
 			{
-				strncpy(&item[cur_count].name[1], info.d_name, MAX_ITEM_NAME_LEN - 5);
+				strncpy_s(&item[cur_count].name[1], NELEMS(item[cur_count].name) - 1, info.d_name, MAX_ITEM_NAME_LEN - 5);
 				item[cur_count].name[MAX_ITEM_NAME_LEN - 4] = item[cur_count].name[MAX_ITEM_NAME_LEN - 3] = item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = '.';
 				item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '>';
 				item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
@@ -244,7 +243,7 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 			}
 			else
 			{
-				strncpy(&item[cur_count].name[1], info.d_name, MAX_ITEM_NAME_LEN);
+				strncpy_s(&item[cur_count].name[1], NELEMS(item[cur_count].name) - 1, info.d_name, MAX_ITEM_NAME_LEN);
 				item[cur_count].name[item[cur_count].width - 1] = '>';
 				item[cur_count].name[item[cur_count].width] = 0;
 			}
@@ -265,8 +264,8 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 				item = *mitem;
 			}
 			item[cur_count].data = (void *)ft;
-			strcpy(item[cur_count].compname, info.d_name);
-			strcpy(item[cur_count].shortname, info.d_name);
+			STRCPY_S(item[cur_count].compname, info.d_name);
+			STRCPY_S(item[cur_count].shortname, info.d_name);
 			filename_to_itemname(item, cur_count, info.d_name);
 		}
 		item[cur_count].icolor = icolor;
@@ -319,8 +318,8 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 			return 0;
 		}
 		item = * mitem;
-		strcpy(item[0].name, "<..>");
-		strcpy(item[0].compname, "..");
+		STRCPY_S(item[0].name, "<..>");
+		STRCPY_S(item[0].compname, "..");
 		item[0].data = (void *)fs_filetype_dir;
 		item[0].width = 4;
 		item[0].selected = false;
@@ -350,12 +349,12 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 		if(info[i].attr & FAT_FILEATTR_DIRECTORY)
 		{
 			item[cur_count].data = (void *)fs_filetype_dir;
-			strcpy(item[cur_count].shortname, info[i].filename);
-			strcpy(item[cur_count].compname, info[i].longname);
+			STRCPY_S(item[cur_count].shortname, info[i].filename);
+			STRCPY_S(item[cur_count].compname, info[i].longname);
 			item[cur_count].name[0] = '<';
 			if((item[cur_count].width = strlen(info[i].longname) + 2) > MAX_ITEM_NAME_LEN)
 			{
-				strncpy(&item[cur_count].name[1], info[i].longname, MAX_ITEM_NAME_LEN - 5);
+				strncpy_s(&item[cur_count].name[1], NELEMS(item[cur_count].name)-1, info[i].longname, MAX_ITEM_NAME_LEN - 5);
 				item[cur_count].name[MAX_ITEM_NAME_LEN - 4] = item[cur_count].name[MAX_ITEM_NAME_LEN - 3] = item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = '.';
 				item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '>';
 				item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
@@ -363,7 +362,7 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 			}
 			else
 			{
-				strncpy(&item[cur_count].name[1], info[i].longname, MAX_ITEM_NAME_LEN);
+				strncpy_s(&item[cur_count].name[1], NELEMS(item[cur_count].name)-1, info[i].longname, MAX_ITEM_NAME_LEN);
 				item[cur_count].name[item[cur_count].width - 1] = '>';
 				item[cur_count].name[item[cur_count].width] = 0;
 			}
@@ -376,8 +375,8 @@ extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mite
 			if(!showunknown && ft == fs_filetype_unknown)
 				continue;
 			item[cur_count].data = (void *)ft;
-			strcpy(item[cur_count].shortname, info[i].filename);
-			strcpy(item[cur_count].compname, info[i].longname);
+			STRCPY_S(item[cur_count].shortname, info[i].filename);
+			STRCPY_S(item[cur_count].compname, info[i].longname);
 			filename_to_itemname(item, cur_count, info[i].longname);
 		}
 		item[cur_count].icolor = icolor;
@@ -420,8 +419,8 @@ extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword 
 		return 0;
 	}
 	item = * mitem;
-	strcpy(item[0].name, "<..>");
-	strcpy(item[0].compname, "..");
+	STRCPY_S(item[0].name, "<..>");
+	STRCPY_S(item[0].compname, "..");
 	item[0].data = (void *)fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;
@@ -455,8 +454,8 @@ extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword 
 			item = *mitem;
 		}
 		item[cur_count].data = (void *)ft;
-		strcpy(item[cur_count].compname, fname);
-		sprintf(item[cur_count].shortname, "%u", (unsigned int)file_info.uncompressed_size);
+		STRCPY_S(item[cur_count].compname, fname);
+		SPRINTF_S(item[cur_count].shortname, "%u", (unsigned int)file_info.uncompressed_size);
 		filename_to_itemname(item, cur_count, fname);
 		item[cur_count].selected = false;
 		item[cur_count].icolor = icolor;
@@ -498,8 +497,8 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 		return 0;
 	}
 	item = * mitem;
-	strcpy(item[0].name, "<..>");
-	strcpy(item[0].compname, "..");
+	STRCPY_S(item[0].name, "<..>");
+	STRCPY_S(item[0].compname, "..");
 	item[0].data = (void *)fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;
@@ -533,16 +532,14 @@ extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword 
 			memset(str, 0, 1024);
 			const byte *uni = (byte*) header.FileNameW;
 			charsets_utf32_conv(uni, (byte*)str);
-			strncpy(item[cur_count].compname, header.FileName, 256);
-			item[cur_count].compname[255] = '\0';
+			strncpy_s(item[cur_count].compname, NELEMS(item[cur_count].compname), header.FileName, 256);
 			filename_to_itemname(item, cur_count, str);
 		}
 		else {
-			strncpy(item[cur_count].compname, header.FileName, 256);
-			item[cur_count].compname[255] = '\0';
+			strncpy_s(item[cur_count].compname, NELEMS(item[cur_count].compname), header.FileName, 256);
 			filename_to_itemname(item, cur_count, header.FileName);
 		}
-		sprintf(item[cur_count].shortname, "%u", (unsigned int)header.UnpSize);
+		SPRINTF_S(item[cur_count].shortname, "%u", (unsigned int)header.UnpSize);
 		item[cur_count].selected = false;
 		item[cur_count].icolor = icolor;
 		item[cur_count].selicolor = selicolor;
@@ -593,21 +590,18 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 
 	char fname[256] = "";
 
-	strncpy(item[cur_count].compname, ui->path, 256);
-	item[cur_count].compname[255] = '\0';
-	sprintf(item[cur_count].shortname, "%u", (unsigned int)ui->length);
+	STRCPY_S(item[cur_count].compname, ui->path);
+	SPRINTF_S(item[cur_count].shortname, "%u", (unsigned int)ui->length);
 	if(ui->path[0] == '/') {
-		strncpy(fname, ui->path + 1, 256);
-		fname[255] = '\0';
+		strncpy_s(fname, NELEMS(fname), ui->path + 1, 256);
 	}
 	else {
-		strncpy(fname, ui->path, 256);
-		fname[255] = '\0';
+		strncpy_s(fname, NELEMS(fname), ui->path, 256);
 	}
 	
 	// CHM Dir in UTF-8 Format???
 	char fname_temp[256] = "";
-	strcpy(fname_temp, fname);
+	STRCPY_S(fname_temp, fname);
 	charsets_utf8_conv((unsigned char*)fname_temp, (unsigned char*)fname);
 
 	item[cur_count].data = (void *)ft;
@@ -643,8 +637,8 @@ extern dword fs_chm_to_menu(const char * chmfile, p_win_menuitem * mitem, dword 
 		return 0;
 	}
 	item = * mitem;
-	strcpy(item[0].name, "<..>");
-	strcpy(item[0].compname, "..");
+	STRCPY_S(item[0].name, "<..>");
+	STRCPY_S(item[0].compname, "..");
 	item[0].data = (void *)fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;

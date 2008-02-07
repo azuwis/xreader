@@ -18,6 +18,7 @@
 #include <unrar.h>
 #include <setjmp.h>
 #include <psprtc.h>
+#include "common/utils.h"
 #include "win.h"
 #include "image.h"
 #include "buffer.h"
@@ -1472,10 +1473,9 @@ void exif_entry_viewer (ExifEntry *pentry, void *user_data)
 
 	ExifIfd ifd = exif_entry_get_ifd(pentry);
 	char msg[512];
-	strncpy(msg, exif_tag_get_title_in_ifd(pentry->tag, ifd), 512);
-	strncat(msg, ": ", 512);
-	strncat(msg, exif_str, 512);
-	msg[511] = '\0';
+	STRCPY_S(msg, exif_tag_get_title_in_ifd(pentry->tag, ifd));
+	strncat(msg, ": ", 512 - strlen(msg) - 1);
+	strncat(msg, exif_str, 512 - strlen(msg) - 1);
 
 	buffer *b = buffer_array_append_get_buffer(exif_array);
 	buffer_copy_string(b, msg);

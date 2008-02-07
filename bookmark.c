@@ -37,7 +37,7 @@ static dword bookmark_encode(const char * filename)
 
 extern void bookmark_init(const char * fn)
 {
-	strcpy(bmfile, fn);
+	STRCPY_S(bmfile, fn);
 }
 
 static p_bookmark bookmark_open_hash(dword hash)

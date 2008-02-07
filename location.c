@@ -5,6 +5,7 @@
 #include <string.h>
 #include <pspkernel.h>
 #include "location.h"
+#include "common/utils.h"
 
 static char fn[256];
 static bool slot[10];
@@ -20,7 +21,7 @@ typedef struct _location t_location;
 
 extern void location_init(const char * filename, int * slotaval)
 {
-	strcpy(fn, filename);
+	strncpy_s(fn, 256, filename, 256);
 	memset(slot, 0, sizeof(bool) * 10);
 	int fd = sceIoOpen(fn, PSP_O_RDONLY, 0777);
 	if(fd < 0)
@@ -76,9 +77,9 @@ extern bool location_get(dword index, char * comppath, char * shortpath, char * 
 	memset(&l, 0, sizeof(t_location));
 	sceIoRead(fd, &l, sizeof(t_location));
 	sceIoClose(fd);
-	strcpy(comppath, l.comppath);
-	strcpy(shortpath, l.shortpath);
-	strcpy(compname, l.compname);
+	strcpy_s(comppath, 256, l.comppath);
+	strcpy_s(shortpath, 256, l.shortpath);
+	strcpy_s(compname, 256, l.compname);
 	* isreading = l.isreading;
 	return true;
 }
@@ -102,9 +103,9 @@ extern bool location_set(dword index, char * comppath, char * shortpath, char * 
 	}
 	t_location t;
 	memset(&t, 0, sizeof(t_location));
-	strcpy(t.comppath, comppath);
-	strcpy(t.shortpath, shortpath);
-	strcpy(t.compname, compname);
+	STRCPY_S(t.comppath, comppath);
+	STRCPY_S(t.shortpath, shortpath);
+	STRCPY_S(t.compname, compname);
 	t.isreading = isreading;
 	sceIoWrite(fd, &t, sizeof(t_location));
 	sceIoLseek32(fd, sizeof(bool) * index, PSP_SEEK_SET);

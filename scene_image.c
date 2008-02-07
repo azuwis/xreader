@@ -198,8 +198,10 @@ void report_image_error(int status)
 			errstr = "不明";
 			break;
 	}
-	sprintf(infomsg, "图像无法装载, 原因: %s", errstr);
+	SPRINTF_S(infomsg, "图像无法装载, 原因: %s", errstr);
 	win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+	dbg_printf(d, "图像无法装载，原因: %s where = %d config.path %s filename %s", 
+			   errstr, where, config.path, filename);
 	imgreading = false;
 	reset_image_ptr();
 	scene_power_save(true);	
@@ -225,11 +227,11 @@ int scene_reloadimage(dword selidx)
 	scene_power_save(false);
 	reset_image_ptr();
 	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
-		strcpy(filename, filelist[selidx].compname);
+		STRCPY_S(filename, filelist[selidx].compname);
 	else
 	{
-		strcpy(filename, config.shortpath);
-		strcat(filename, filelist[selidx].shortname);
+		STRCPY_S(filename, config.shortpath);
+		STRCAT_S(filename, filelist[selidx].shortname);
 	}
 	int result = open_image(selidx);
 	if(result != 0)
@@ -240,7 +242,7 @@ int scene_reloadimage(dword selidx)
 	if(config.imgbrightness != 100) {
 		recalc_brightness();
 	}
-	strcpy(config.lastfile, filelist[selidx].compname);
+	STRCPY_S(config.lastfile, filelist[selidx].compname);
 	oldangle = 0;
 	scene_power_save(true);	
 	return 0;
@@ -395,9 +397,9 @@ dword scene_rotateimage()
 float get_text_len(const unsigned char* str)
 {
 	if(!str)
-		return 0;
+		return 0.0;
 
-	float f = 0;
+	float f = 0.0;
 	while(*str != '\0') {
 		if(*str >= 0x80 && *(str+1) != '\0')  {
 			f++;
@@ -438,9 +440,9 @@ int scene_printimage(int selidx)
 	{
 		char infostr[64];
 		if(config.fit == conf_fit_custom)
-			sprintf(infostr, "%dx%d  %d%%  旋转角度 %d  %s", (int)w2, (int)h2, (int)config.scale, (int)oldangle, config.bicubic ? "三次立方" : "两次线性");
+			SPRINTF_S(infostr, "%dx%d  %d%%  旋转角度 %d  %s", (int)w2, (int)h2, (int)config.scale, (int)oldangle, config.bicubic ? "三次立方" : "两次线性");
 		else
-			sprintf(infostr, "%dx%d  %s  旋转角度 %d  %s", (int)w2, (int)h2, conf_get_fitname(config.fit), (int)oldangle, config.bicubic ? "三次立方" : "两次线性");
+			SPRINTF_S(infostr, "%dx%d  %s  旋转角度 %d  %s", (int)w2, (int)h2, conf_get_fitname(config.fit), (int)oldangle, config.bicubic ? "三次立方" : "两次线性");
 		int ilen = strlen(infostr);
 		if(config.imginfobar)
 		{
@@ -1207,8 +1209,8 @@ void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex, dwor
 		{
 			char keyname2[256];
 			conf_get_keyname(config.imgkey2[i], keyname2);
-			strcat(keyname, " | ");
-			strcat(keyname, keyname2);
+			STRCAT_S(keyname, " | ");
+			STRCAT_S(keyname, keyname2);
 		}
 		disp_putstring(238 - DISP_FONTSIZE * 5, 131 - 6 * DISP_FONTSIZE + (1 + DISP_FONTSIZE) * i, COLOR_WHITE, (const byte *)keyname);
 	}
@@ -1217,18 +1219,18 @@ void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex, dwor
 dword scene_imgkey(dword * selidx)
 {
 	t_win_menuitem item[12];
-	strcpy(item[0].name, "上一张图");
-	strcpy(item[1].name, "下一张图");
-	strcpy(item[2].name, "缩放模式");
-	strcpy(item[3].name, "缩小图片");
-	strcpy(item[4].name, "放大图片");
-	strcpy(item[5].name, "左旋90度");
-	strcpy(item[6].name, "右旋90度");
-	strcpy(item[7].name, "  信息栏");
-	strcpy(item[8].name, "显示信息");
-	strcpy(item[9].name, "退出浏览");
-	strcpy(item[10].name, "缩放引擎");
-	strcpy(item[11].name, "幻灯播放");
+	STRCPY_S(item[0].name, "上一张图");
+	STRCPY_S(item[1].name, "下一张图");
+	STRCPY_S(item[2].name, "缩放模式");
+	STRCPY_S(item[3].name, "缩小图片");
+	STRCPY_S(item[4].name, "放大图片");
+	STRCPY_S(item[5].name, "左旋90度");
+	STRCPY_S(item[6].name, "右旋90度");
+	STRCPY_S(item[7].name, "  信息栏");
+	STRCPY_S(item[8].name, "显示信息");
+	STRCPY_S(item[9].name, "退出浏览");
+	STRCPY_S(item[10].name, "缩放引擎");
+	STRCPY_S(item[11].name, "幻灯播放");
 	dword i;
 	for(i = 0; i < 12; i ++)
 	{

@@ -80,18 +80,18 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 {
 	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
 	{
-		strcpy(pView->filename, filelist[selidx].compname);
-		strcpy(pView->archname, config.shortpath);
+		STRCPY_S(pView->filename, filelist[selidx].compname);
+		STRCPY_S(pView->archname, config.shortpath);
 		if(config.shortpath[strlen(config.shortpath) - 1] != '/' &&
 				pView->filename[0] != '/')
-			strcat(pView->archname, "/");
-		strcat(pView->archname, pView->filename);
+			STRCAT_S(pView->archname, "/");
+		STRCAT_S(pView->archname, pView->filename);
 	}
 	else
 	{
-		strcpy(pView->filename, config.shortpath);
-		strcat(pView->filename, filelist[selidx].shortname);
-		strcpy(pView->archname, pView->filename);
+		STRCPY_S(pView->filename, config.shortpath);
+		STRCAT_S(pView->filename, filelist[selidx].shortname);
+		STRCPY_S(pView->archname, pView->filename);
 	}
 	dbg_printf(d, "scene_book_reload: fn %s archname %s", pView->filename, pView->archname);
 	if(pView->rrow == INVALID)
@@ -111,12 +111,12 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs = NULL;
 	}
 	scene_power_save(false);
-	if(where == scene_in_zip && ((t_fs_filetype)filelist[selidx].data == fs_filetype_txt || (t_fs_filetype)filelist[selidx].data == fs_filetype_html))
+	if(stricmp(utils_fileext(pView->filename), "gz") == 0)
+		fs = text_open_in_gz(pView->filename, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
+	else if(where == scene_in_zip && ((t_fs_filetype)filelist[selidx].data == fs_filetype_txt || (t_fs_filetype)filelist[selidx].data == fs_filetype_html))
 		fs = text_open_in_zip(config.shortpath, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_zip)
 		fs = text_open_binary_in_zip(config.shortpath, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt, config.vertread);
-	else if(where == scene_in_gz)
-		fs = text_open_in_gz(pView->filename, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_chm)
 		fs = text_open_in_chm(config.shortpath, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_rar && ((t_fs_filetype)filelist[selidx].data == fs_filetype_txt || (t_fs_filetype)filelist[selidx].data == fs_filetype_html))
@@ -155,7 +155,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
 
 	pView->trow = &pView->tr[utils_dword2string(fs->row_count, pView->tr, 7)];
-	strcpy(config.lastfile, filelist[selidx].compname);
+	STRCPY_S(config.lastfile, filelist[selidx].compname);
 	scene_power_save(true);
 	return 0;
 }
@@ -195,13 +195,11 @@ int scene_printbook(PBookViewData pView, dword selidx)
 				if(config.autopagetype == 2)
 					autopageinfo[0] = 0;
 				else if(config.autopagetype == 1) {
-					snprintf(autopageinfo, 80, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
-					autopageinfo[80-1] = '\0';
+					SPRINTF_S(autopageinfo, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
 				}
 				else {
 					if(config.autopage != 0) {
-						snprintf(autopageinfo, 80, "自动翻页: 时间 %d", config.autopage);
-						autopageinfo[80-1] = '\0';
+						SPRINTF_S(autopageinfo, "自动翻页: 时间 %d", config.autopage);
 					}
 					else
 						autopageinfo[0] = 0;
@@ -209,12 +207,11 @@ int scene_printbook(PBookViewData pView, dword selidx)
 				if( where == scene_in_chm ) {
 					char fname[256];
 					charsets_utf8_conv((unsigned char*)filelist[selidx].compname, (unsigned char*)fname);
-					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
+					SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
 				}
 				else {
-					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
+					SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
 				}
-				cr[512-1]='\0';
 				disp_putnstringreversal(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -257,15 +254,12 @@ int scene_printbook(PBookViewData pView, dword selidx)
 				if(config.autopagetype == 2)
 					autopageinfo[0] = 0;
 				if(config.autopagetype == 1) {
-					snprintf(autopageinfo, 80, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
-					autopageinfo[80-1]='\0';
+					SPRINTF_S(autopageinfo, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
 				}
 				if(config.autopagetype == 0) {
-					snprintf(autopageinfo, 80, "翻页: 时%d", config.autopage);
-					autopageinfo[80-1]='\0';
+					SPRINTF_S(autopageinfo, "翻页: 时%d", config.autopage);
 				}
-				snprintf(cr, 512, "%s/%s  %s  %s  %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
-				cr[512-1]='\0';
+				SPRINTF_S(cr, "%s/%s  %s  %s  %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
 				disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE, 271, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -308,15 +302,12 @@ int scene_printbook(PBookViewData pView, dword selidx)
 				if(config.autopagetype == 2)
 					autopageinfo[0] = 0;
 				if(config.autopagetype == 1) {
-					snprintf(autopageinfo, 80, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
-					autopageinfo[80-1]='\0';
+					SPRINTF_S(autopageinfo, "滚屏: 时%d 速%d", config.autolinedelay, config.autopage);
 				}
 				if(config.autopagetype == 0) {
-					snprintf(autopageinfo, 80, "翻页: 时%d", config.autopage);
-					autopageinfo[80-1]='\0';
+					SPRINTF_S(autopageinfo, "翻页: 时%d", config.autopage);
 				}
-				snprintf(cr, 512, "%s/%s  %s  %s  %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
-				cr[512-1]='\0';
+				SPRINTF_S(cr, "%s/%s  %s  %s  %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
 				disp_putnstringrvert(DISP_BOOK_FONTSIZE - 1, 0, config.forecolor, (const byte *)cr, 544 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -345,7 +336,7 @@ int scene_printbook(PBookViewData pView, dword selidx)
 				/*
 				if(!havedisplayed) {
 					char infomsg[80];
-					sprintf(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, cidx, pView->rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - pView->rowtop);
+					SPRINTF_S(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, cidx, pView->rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - pView->rowtop);
 					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
 					
 					havedisplayed = true;
@@ -370,14 +361,12 @@ int scene_printbook(PBookViewData pView, dword selidx)
 				if(config.autopagetype == 2)
 					autopageinfo[0] = 0;
 				else if(config.autopagetype == 1) {
-					snprintf(autopageinfo, 80, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
-					autopageinfo[80-1] = '\0';
+					SPRINTF_S(autopageinfo, "%s: 时间 %d 速度 %d", "自动滚屏", config.autolinedelay, config.autopage);
 				}
 				else {
 					if(config.autopage != 0)
 					{
-						snprintf(autopageinfo, 80, "自动翻页: 时间 %d", config.autopage);
-						autopageinfo[80-1] = '\0';
+						SPRINTF_S(autopageinfo, "自动翻页: 时间 %d", config.autopage);
 					}
 					else
 						autopageinfo[0] = 0;
@@ -385,16 +374,15 @@ int scene_printbook(PBookViewData pView, dword selidx)
 				if( where == scene_in_chm ) {
 					char fname[256];
 					charsets_utf8_conv((unsigned char*)filelist[selidx].compname, (unsigned char*)fname);
-					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
+					SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
 				}
 				else if( where == scene_in_raw )
 				{
-					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), g_titlename, offset, autopageinfo);
+					SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), g_titlename, offset, autopageinfo);
 				}
 				else {
-					snprintf(cr, 512, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
+					SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), filelist[selidx].compname, offset, autopageinfo);
 				}
-				cr[512-1]='\0';
 				disp_putnstringhorz(0, PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE, config.forecolor, (const byte *)cr, 960 / DISP_BOOK_FONTSIZE, 0, 0, DISP_BOOK_FONTSIZE, 0);
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -910,8 +898,7 @@ dword scene_readbook_raw(const char* title, const unsigned char* data, size_t si
 	dword selidx = 0;
 	p_text prev_text = NULL;
 
-	strncpy(g_titlename, title, 256);
-	g_titlename[255] = '\0';
+	STRCPY_S(g_titlename, title);
 
 	copy_book_view(&prev_book_view, &cur_book_view);
 	new_book_view(&cur_book_view);

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <pspkernel.h>
 #include <pspctrl.h>
+#include "common/utils.h"
 #include "pspscreen.h"
 #include "scene.h"
 #include "display.h"
@@ -22,90 +23,90 @@ static char conf_filename[256];
 
 extern void conf_set_file(const char * filename)
 {
-	strcpy(conf_filename, filename);
+	STRCPY_S(conf_filename, filename);
 }
 
-extern void conf_get_keyname(dword key, char * res)
+extern void conf_get_keyname(dword key, char *res)
 {
 	res[0] = 0;
 	if((key & PSP_CTRL_CIRCLE) > 0)
-		strcat(res, "¡ð");
+		strcat_s(res, 256, "¡ð");
 	if((key & PSP_CTRL_CROSS) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+¡Á");
+			strcat_s(res, 256, "+¡Á");
 		else
-			strcat(res, "¡Á");
+			strcat_s(res, 256, "¡Á");
 	}
 	if((key & PSP_CTRL_SQUARE) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+¡õ");
+			strcat_s(res, 256, "+¡õ");
 		else
-			strcat(res, "¡õ");
+			strcat_s(res, 256, "¡õ");
 	}
 	if((key & PSP_CTRL_TRIANGLE) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+¡÷");
+			strcat_s(res, 256, "+¡÷");
 		else
-			strcat(res, "¡÷");
+			strcat_s(res, 256, "¡÷");
 	}
 	if((key & PSP_CTRL_LTRIGGER) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+L");
+			strcat_s(res, 256, "+L");
 		else
-			strcat(res, "L");
+			strcat_s(res, 256, "L");
 	}
 	if((key & PSP_CTRL_RTRIGGER) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+R");
+			strcat_s(res, 256, "+R");
 		else
-			strcat(res, "R");
+			strcat_s(res, 256, "R");
 	}
 	if((key & PSP_CTRL_UP) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+¡ü");
+			strcat_s(res, 256, "+¡ü");
 		else
-			strcat(res, "¡ü");
+			strcat_s(res, 256, "¡ü");
 	}
 	if((key & PSP_CTRL_DOWN) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+¡ý");
+			strcat_s(res, 256, "+¡ý");
 		else
-			strcat(res, "¡ý");
+			strcat_s(res, 256, "¡ý");
 	}
 	if((key & PSP_CTRL_LEFT) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+¡û");
+			strcat_s(res, 256, "+¡û");
 		else
-			strcat(res, "¡û");
+			strcat_s(res, 256, "¡û");
 	}
 	if((key & PSP_CTRL_RIGHT) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+¡ú");
+			strcat_s(res, 256, "+¡ú");
 		else
-			strcat(res, "¡ú");
+			strcat_s(res, 256, "¡ú");
 	}
 	if((key & PSP_CTRL_SELECT) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+SELECT");
+			strcat_s(res, 256, "+SELECT");
 		else
-			strcat(res, "SELECT");
+			strcat_s(res, 256, "SELECT");
 	}
 	if((key & PSP_CTRL_START) > 0)
 	{
 		if(res[0] != 0)
-			strcat(res, "+START");
+			strcat_s(res, 256, "+START");
 		else
-			strcat(res, "START");
+			strcat_s(res, 256, "START");
 	}
 }
 
@@ -113,13 +114,13 @@ static void conf_default(p_conf conf)
 {
 	char appdir[256];
 	getcwd(appdir, 256);
-	strcat(appdir, "/");
+	STRCAT_S(appdir, "/");
 	memset(conf, 0, sizeof(t_conf));
-	strcpy(conf->path, "ms0:/");
-	strcpy(conf->shortpath, "ms0:/");
-	strcpy(conf->lastfile, "");
-	strcpy(conf->bgfile, appdir);
-	strcat(conf->bgfile, "bg.png");
+	STRCPY_S(conf->path, "ms0:/");
+	STRCPY_S(conf->shortpath, "ms0:/");
+	STRCPY_S(conf->lastfile, "");
+	STRCPY_S(conf->bgfile, appdir);
+	STRCAT_S(conf->bgfile, "bg.png");
 	conf->forecolor = 0xFFFFFFFF;
 	conf->bgcolor = 0;
 	conf->rowspace = 2;
@@ -223,7 +224,7 @@ extern bool conf_load(p_conf conf)
 	conf->enableusb = false;
 #endif
 #ifndef ENABLE_BG
-	strcpy(conf->bgfile, "");
+	STRCPY_S(conf->bgfile, "");
 #endif
 #ifndef ENABLE_MUSIC
 	conf->autoplay = false;

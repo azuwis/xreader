@@ -171,7 +171,7 @@ typedef struct {
 */
 
 extern void conf_set_file(const char * filename);
-extern void conf_get_keyname(dword key, char * res);
+extern void conf_get_keyname(dword key, char *res);
 extern bool conf_load(p_conf conf);
 extern bool conf_save(p_conf conf);
 extern const char * conf_get_encodename(t_conf_encode encode);

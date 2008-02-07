@@ -135,12 +135,12 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex, d
 #endif
 
 	if(strlen(fname) <= 36)
-		strcpy(outstr, fname);
+		STRCPY_S(outstr, fname);
 	else
 	{
-		strncpy(outstr, fname, 33);
+		strncpy_s(outstr, NELEMS(outstr), fname, 33);
 		outstr[33] = 0;
-		strcat(outstr, "...");
+		STRCAT_S(outstr, "...");
 	}
 	if(index - topindex < 6)
 	{
@@ -170,13 +170,12 @@ void scene_mp3_list()
 			rname = (char *)mp3_list_get(i);
 		else
 			rname ++;
-		if(strlen(rname) <= 40)
-			strcpy(item[i].name, rname);
+		if(strlen(rname) <= 38)
+			STRCPY_S(item[i].name, rname);
 		else
 		{
-			strncpy(item[i].name, rname, 37);
-			item[i].name[37] = 0;
-			strcat(item[i].name, "...");
+			mbcsncpy_s((unsigned char*)item[i].name, 37, (const unsigned char*)rname, -1);
+			STRCAT_S(item[i].name, "...");
 		}
 		item[i].width = strlen(item[i].name);
 		item[i].selected = false;
@@ -218,19 +217,19 @@ void scene_mp3bar()
 		dword cpu, bus;
 		power_get_clock(&cpu, &bus);
 		if( config.fontsize <= 14 ) {
-			sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d   剩余内存: %dKB", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus, getFreeMemory() / 1024);
+			SPRINTF_S(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d   剩余内存: %dKB", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus, getFreeMemory() / 1024);
 		}
 		else {
-			sprintf(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus);
+			SPRINTF_S(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d", tm.year, tm.month, tm.day, tm.hour, tm.minutes, tm.seconds, (int)cpu, (int)bus);
 		}
 		disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE, (const byte *)timestr);
 		int percent, lifetime, tempe, volt;
 		char battstr[80];
 		power_get_battery(&percent, &lifetime, &tempe, &volt);
 		if(percent >= 0)
-			sprintf(battstr, "%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃", power_get_battery_charging(), percent, lifetime / 60, lifetime % 60, tempe);
+			SPRINTF_S(battstr, "%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃", power_get_battery_charging(), percent, lifetime / 60, lifetime % 60, tempe);
 		else
-			strcpy(battstr, "[电源供电]");
+			STRCPY_S(battstr, "[电源供电]");
 		disp_putstring(6 + DISP_FONTSIZE, 7 + DISP_FONTSIZE, COLOR_WHITE, (const byte *)battstr);
 
 #ifdef ENABLE_LYRIC
@@ -264,13 +263,13 @@ void scene_mp3bar()
 		int bitrate, sample, len, tlen;
 		char infostr[80];
 		if(mp3_get_info(&bitrate, &sample, &len, &tlen))
-			sprintf(infostr, "%s   %d kbps   %d Hz   %02d:%02d / %02d:%02d", conf_get_cyclename(config.mp3cycle), bitrate, sample, len / 60, len % 60, tlen / 60, tlen % 60);
+			SPRINTF_S(infostr, "%s   %d kbps   %d Hz   %02d:%02d / %02d:%02d", conf_get_cyclename(config.mp3cycle), bitrate, sample, len / 60, len % 60, tlen / 60, tlen % 60);
 		else
-			sprintf(infostr, "%s", conf_get_cyclename(config.mp3cycle));
+			SPRINTF_S(infostr, "%s", conf_get_cyclename(config.mp3cycle));
 		disp_putstring(6 + DISP_FONTSIZE, 265 - DISP_FONTSIZE * 2, COLOR_WHITE, (const byte *)infostr);
 		disp_putstring(6 + DISP_FONTSIZE, 263 - DISP_FONTSIZE * 4, COLOR_WHITE, (const byte *)"  SELECT 编辑列表   ←快速后退   →快速前进");
 		char lrctaginfo[80];
-		snprintf(lrctaginfo, 80, "%s  LRC  %s  ID3 %s", "  SELECT 编辑列表   ←快速后退   →快速前进", conf_get_encodename(config.lyricencode), conf_get_encodename(config.mp3encode));
+		SPRINTF_S(lrctaginfo, "%s  LRC  %s  ID3 %s", "  SELECT 编辑列表   ←快速后退   →快速前进", conf_get_encodename(config.lyricencode), conf_get_encodename(config.mp3encode));
 		disp_putnstring(6 + DISP_FONTSIZE, 263 - DISP_FONTSIZE * 4, COLOR_WHITE, (const byte *)lrctaginfo, (468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0, DISP_FONTSIZE, 0);
 		
 		disp_putstring(6 + DISP_FONTSIZE, 264 - DISP_FONTSIZE * 3, COLOR_WHITE, (const byte *)"○播放/暂停 ×循环 □停止 △曲名编码  L上一首  R下一首");

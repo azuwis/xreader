@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pspkernel.h>
+#include "common/utils.h"
 #include "charsets.h"
 #include "fat.h"
 
@@ -366,9 +367,9 @@ extern bool fat_locate(const char * name, char * sname, dword clus, p_fat_entry 
 					entrys[i].norm.filename[0] = 0x05;
 				memcpy(info, &entrys[i], sizeof(t_fat_entry));
 				free((void *)entrys);
-				strcat(sname, sid.d_name);
+				strcat_s(sname, 256, sid.d_name);
 				if((entrys[i].norm.attr & FAT_FILEATTR_DIRECTORY) > 0)
-					strcat(sname, "/");
+					strcat_s(sname, 256, "/");
 				sceIoDclose(dl);
 				return true;
 			}
@@ -381,9 +382,9 @@ extern bool fat_locate(const char * name, char * sname, dword clus, p_fat_entry 
 			{
 				memcpy(info, &entrys[i], sizeof(t_fat_entry));
 				free((void *)entrys);
-				strcat(sname, sid.d_name);
+				strcat_s(sname, 256, sid.d_name);
 				if((entrys[i].norm.attr & FAT_FILEATTR_DIRECTORY) > 0)
-					strcat(sname, "/");
+					strcat_s(sname, 256, "/");
 				sceIoDclose(dl);
 				return true;
 			}
@@ -399,7 +400,7 @@ static dword fat_dir_clus(const char * dir, char * shortdir)
 	if(!fat_load_table() || fatfd < 0)
 		return 0;
 	char rdir[256];
-	strcpy(rdir, dir);
+	STRCPY_S(rdir, dir);
 	char * partname = strtok(rdir, "/\\");
 	if(partname == NULL)
 	{
@@ -411,8 +412,8 @@ static dword fat_dir_clus(const char * dir, char * shortdir)
 		fat_free_table();
 		return 0;
 	}
-	strcpy(shortdir, partname);
-	strcat(shortdir, "/");
+	strcpy_s(shortdir, 256, partname);
+	strcat_s(shortdir, 256, "/");
 	partname = strtok(NULL, "/\\");
 	dword clus = (fat_type == fat32) ? dbr.ufat.fat32.root_clus : 1;
 	t_fat_entry entry;
@@ -482,8 +483,8 @@ extern dword fat_readdir(const char * dir, char * sdir, p_fat_info * info)
 		if(inf->filename[0] == 0x05)
 			inf->filename[0] = 0xE5;
 		if(!fat_get_longname(entrys, i, inf->longname))
-			strcpy(inf->longname, inf->filename);
-		strcpy(inf->filename, sid.d_name);
+			STRCPY_S(inf->longname, inf->filename);
+		STRCPY_S(inf->filename, sid.d_name);
 		inf->filesize = entrys[i].norm.filesize;
 		inf->cdate = entrys[i].norm.cr_date;
 		inf->ctime = entrys[i].norm.cr_time;

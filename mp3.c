@@ -329,9 +329,9 @@ static bool mp3_load()
 		if(mp3info.title[0] != 0)
 		{
 			if(mp3info.artist[0] != 0)
-				sprintf(mp3_tag, "%s - %s", (const char *)mp3info.artist, (const char *)mp3info.title);
+				SPRINTF_S(mp3_tag, "%s - %s", mp3info.title, mp3info.artist);
 			else
-				sprintf(mp3_tag, "? - %s", (const char *)mp3info.title);
+				SPRINTF_S(mp3_tag, "? - %s", mp3info.title);
 		}
 		else
 		{
@@ -340,8 +340,7 @@ static bool mp3_load()
 				mp3_tag2 ++;
 			else
 				mp3_tag2 = "";
-			strncpy(mp3_tag, mp3_tag2, 128);
-			mp3_tag[127] = '\0';
+			strncpy_s(mp3_tag, 128, mp3_tag2, 128);
 		}
 		mp3_handle = sceAudioChReserve( PSP_AUDIO_NEXT_CHANNEL, OUTPUT_BUFFER_SIZE / 4, 0 );
 #ifdef ENABLE_WMA
@@ -358,9 +357,9 @@ static bool mp3_load()
 		if(wma->title[0] != 0)
 		{
 			if(wma->author[0] != 0)
-				sprintf(mp3_tag, "%s - %s", (const char *)wma->author, (const char *)wma->title);
+				SPRINTF_S(mp3_tag, "%s - %s", (const char *)wma->author, (const char *)wma->title);
 			else
-				sprintf(mp3_tag, "? - %s", (const char *)wma->title);
+				SPRINTF_S(mp3_tag, "? - %s", (const char *)wma->title);
 		}
 		else
 		{
@@ -369,8 +368,7 @@ static bool mp3_load()
 				mp3_tag2 ++;
 			else
 				mp3_tag2 = "";
-			strncpy(mp3_tag, mp3_tag2, 128);
-			mp3_tag[127] = '\0';
+			strncpy_s(mp3_tag, 128, mp3_tag2, 128);
 		}
 		mp3_handle = sceAudioChReserve( PSP_AUDIO_NEXT_CHANNEL, WMA_MAX_BUF_SIZE / 2 / wma->channels, (wma->channels == 2) ? 0 : 1 );
 	}
@@ -381,8 +379,7 @@ static bool mp3_load()
 	mp3_jump = 0;
 #ifdef ENABLE_LYRIC
 	char lyricname[256];
-	strncpy(lyricname, mp3_files[mp3_index], 256);
-	lyricname[255] = '\0';
+	strncpy_s(lyricname, NELEMS(lyricname), mp3_files[mp3_index], 256);
 	int lsize = strlen(lyricname);
 	lyricname[lsize - 3] = 'l';
 	lyricname[lsize - 2] = 'r';
@@ -773,7 +770,7 @@ extern bool mp3_init()
 #ifdef ENABLE_WMA
 	wma_init();
 #endif
-	strcpy(mp3_tag, "");
+	STRCPY_S(mp3_tag, "");
 	
 #else
 	MusicMgrInit();
@@ -972,7 +969,7 @@ extern void mp3_list_add_dir(const char *comppath)
 			if(info[i].filename[0] == '.')
 				continue;
 			char subCompPath[260];
-			sprintf(subCompPath, "%s%s/", comppath, info[i].longname);
+			SPRINTF_S(subCompPath, "%s%s/", comppath, info[i].longname);
 			mp3_list_add_dir(subCompPath);
 			continue;
 		}
@@ -996,8 +993,8 @@ extern void mp3_list_add_dir(const char *comppath)
 				break;
 			}
 		}
-		sprintf(mp3_files[mp3_nfiles], "%s%s", path, info[i].filename);
-		sprintf(&mp3_files[mp3_nfiles][256], "%s%s", comppath, info[i].longname);
+		snprintf_s(mp3_files[mp3_nfiles], 256, "%s%s", path, info[i].filename);
+		snprintf_s(&mp3_files[mp3_nfiles][256], 256, "%s%s", comppath, info[i].longname);
 		dword j;
 		for(j = 0; j < mp3_nfiles; j ++)
 			if(stricmp(mp3_files[j], mp3_files[mp3_nfiles]) == 0)
@@ -1007,7 +1004,7 @@ extern void mp3_list_add_dir(const char *comppath)
 		mp3_nfiles ++;
 #else
 		char fn[512];
-		sprintf(fn, "%s%s", path, info[i].longname);
+		SPRINTF_S(fn, "%s%s", path, info[i].longname);
 		MusicMgrAdd(pMMgr, fn);
 #endif
 	}
@@ -1071,8 +1068,8 @@ extern bool mp3_list_load(const char * filename)
 				return false;
 			}
 		}
-		strcpy(mp3_files[mp3_nfiles], fname);
-		strcpy(&mp3_files[mp3_nfiles][256], cname);
+		strcpy_s(mp3_files[mp3_nfiles], 256, fname);
+		strcpy_s(&mp3_files[mp3_nfiles][256], 256, cname);
 #else
 		MusicMgrAdd(pMMgr, cname);
 #endif
@@ -1104,7 +1101,7 @@ extern void mp3_list_save(const char * filename)
 	for (i = 0; i < mp3_nfiles; i ++)
 	{
 		char shortname[256];
-		strcpy(shortname, mp3_list_get(i));
+		STRCPY_S(shortname, mp3_list_get(i));
 		if(strrchr(shortname, '/')) {
 			char *p = strrchr(shortname, '/') + 1;
 			int l = strlen(p);
@@ -1163,8 +1160,8 @@ extern bool mp3_list_add(const char * filename, const char * longname)
 			return false;
 		}
 	}
-	strcpy(mp3_files[mp3_nfiles], filename);
-	strcpy(&mp3_files[mp3_nfiles][256], longname);
+	strcpy_s(mp3_files[mp3_nfiles], 256, filename);
+	strcpy_s(&mp3_files[mp3_nfiles][256], 256, longname);
 	mp3_nfiles ++;
 	return true;
 }
@@ -1354,8 +1351,8 @@ extern void mp3_directplay(const char * filename, const char * longname)
 				return;
 			}
 		}
-		strcpy(mp3_files[mp3_nfiles], filename);
-		strcpy(&mp3_files[mp3_nfiles][256], longname);
+		strcpy_s(mp3_files[mp3_nfiles], 256, filename);
+		strcpy_s(&mp3_files[mp3_nfiles][256], 256, longname);
 		i = mp3_nfiles;
 		mp3_nfiles ++;
 	}
@@ -1418,9 +1415,9 @@ extern char * mp3_get_tag()
 	if(info.title[0] != 0)
 	{
 		if(info.artist[0] != 0)
-			sprintf(mp3_tag, "%s - %s", (const char *)info.artist, (const char *)info.title);
+			SPRINTF_S(mp3_tag, "%s - %s", (const char *)info.artist, (const char *)info.title);
 		else
-			sprintf(mp3_tag, "? - %s", (const char *)info.title);
+			SPRINTF_S(mp3_tag, "? - %s", (const char *)info.title);
 	}
 	else
 	{
@@ -1430,7 +1427,7 @@ extern char * mp3_get_tag()
 				mp3_tag2 ++;
 			else
 				mp3_tag2 = "";
-			strcpy(mp3_tag, mp3_tag2);
+			STRCPY_S(mp3_tag, mp3_tag2);
 		}
 		else {
 			mp3_tag[0] = '\0';
@@ -1484,14 +1481,14 @@ extern void mp3_set_encode(t_conf_encode encode)
 {
 	if(mp3_nfiles == 0 || mp3_files == NULL)
 	{
-		strcpy(mp3_tag_encode, "");
+		STRCPY_S(mp3_tag_encode, "");
 		return;
 	}
 	mp3_encode = encode;
 	switch(mp3_encode)
 	{
 	case conf_encode_gbk:
-		strcpy(mp3_tag_encode, mp3_tag);
+		STRCPY_S(mp3_tag_encode, mp3_tag);
 		break;
 	case conf_encode_big5:
 		charsets_big5_conv((const byte *)mp3_tag, (byte *)mp3_tag_encode);
@@ -1503,15 +1500,15 @@ extern void mp3_set_encode(t_conf_encode encode)
 			charsets_sjis_conv((const byte *)mp3_tag, (byte **)&targ, &size);
 			if(targ != NULL)
 			{
-				strcpy(mp3_tag_encode, (char *)targ);
+				STRCPY_S(mp3_tag_encode, (char *)targ);
 				free(targ);
 			}
 			else
-				strcpy(mp3_tag_encode, mp3_files[mp3_index]);
+				STRCPY_S(mp3_tag_encode, mp3_files[mp3_index]);
 		}
 		break;
 	default:
-		strcpy(mp3_tag_encode, &mp3_files[mp3_index][256]);
+		STRCPY_S(mp3_tag_encode, &mp3_files[mp3_index][256]);
 		break;
 	}
 }

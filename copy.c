@@ -78,8 +78,8 @@ extern dword copy_dir(const char * src, const char * dest,t_copy_cb cb, t_copy_o
 	{
 		if(sid.d_name[0] == '.') continue;
 		char copysrc[260], copydest[260];
-		sprintf(copysrc, "%s/%s", src, sid.d_name);
-		sprintf(copydest, "%s/%s", dest, sid.d_name);
+		SPRINTF_S(copysrc, "%s/%s", src, sid.d_name);
+		SPRINTF_S(copydest, "%s/%s", dest, sid.d_name);
 		if(FIO_S_ISDIR(sid.d_stat.st_mode))
 		{
 			result += copy_dir(copysrc, copydest, cb, ocb, data);

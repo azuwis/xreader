@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "common/utils.h"
 #include "html.h"
 
 static char * html_skip_spaces(char * string)
@@ -90,7 +91,7 @@ static char * html_skip_close_tag(char * string, char * tag)
 	char * res = string, *sstart;
 	int len = strlen(tag) + 1;
 	char ttag[len + 1];
-	sprintf(ttag, "/%s", tag);
+	snprintf_s(ttag, len + 1, "/%s", tag);
 	do {
 		while(*res != 0 && *res != '<') res ++;
 		if(*res == 0)
