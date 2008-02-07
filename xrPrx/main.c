@@ -2,6 +2,7 @@
 #include <pspsdk.h>
 #include <psputilsforkernel.h>
 #include <pspdisplay_kernel.h>
+#include <psploadexec_kernel.h>
 #include <string.h>
 #include "xrPrx.h"
 
@@ -160,6 +161,38 @@ void xrSetBrightness(int bright)
 	sceDisplaySetBrightness(bright, 0);
 
 	pspSdkSetK1(k);
+}
+
+int xrKernelLoadExecVSHMsX(int method, const char* exec, struct SceKernelLoadExecVSHParam *param)
+{
+	unsigned int k = pspSdkSetK1(0);
+	int r = 0;
+
+	if(!exec || !param)
+		goto ret;
+
+	switch(method) {
+		case 4:
+			r = sceKernelLoadExecVSHMs4(exec, param);
+			break;
+		case 3:
+			r = sceKernelLoadExecVSHMs3(exec, param);
+			break;
+		case 2:
+			r = sceKernelLoadExecVSHMs2(exec, param);
+			break;
+		case 1:
+			r = sceKernelLoadExecVSHMs1(exec, param);
+			break;
+		default:
+			r = -1;
+			break;
+	}
+
+ret:
+	pspSdkSetK1(k);
+
+	return r;
 }
 
 /* Entry point */

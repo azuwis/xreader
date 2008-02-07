@@ -2,6 +2,7 @@
 
 #include "config.h"
 
+#include <ctype.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1763,6 +1764,9 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 10:
 			config.dis_scrsave = ! config.dis_scrsave;
 			break;
+		case 11:
+			config.launchtype = config.launchtype == 2 ? 4 : 2;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_RIGHT:
@@ -1807,6 +1811,9 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 		case 10:
 			config.dis_scrsave = ! config.dis_scrsave;
 			break;
+		case 11:
+			config.launchtype = config.launchtype == 2 ? 4 : 2;
+			break;
 		}
 		return win_menu_op_redraw;
 	case PSP_CTRL_CIRCLE:
@@ -1818,11 +1825,11 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 
 void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE);
+	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 4 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(SYSTEM_OPTION));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 135 + 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 136 + 7 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
 	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showhidden ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
 	disp_putstring(242 + DISP_FONTSIZE, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showunknown ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
 	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showfinfo ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
@@ -1848,11 +1855,12 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 	SPRINTF_S(infomsg, "%d/%d", freq_list[config.freqs[2]][0], freq_list[config.freqs[2]][1]);
 	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)infomsg);
 	disp_putstring(242 + DISP_FONTSIZE, 134 + 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.dis_scrsave ? getmsgbyid(YES) : getmsgbyid(NO)));
+	disp_putstring(242 + DISP_FONTSIZE, 135 + 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.launchtype == 2 ? "普通程序" : "PS游戏"));
 }
 
 dword scene_moptions(dword * selidx)
 {
-	t_win_menuitem item[11];
+	t_win_menuitem item[12];
 	dword i;
 	STRCPY_S(item[0].name, "    隐藏文件");
 	STRCPY_S(item[1].name, "未知类型文件");
@@ -1865,6 +1873,7 @@ dword scene_moptions(dword * selidx)
 	STRCPY_S(item[8].name, "设置普通频率");
 	STRCPY_S(item[9].name, "设置最高频率");
 	STRCPY_S(item[10].name, "禁用屏幕保护");
+	STRCPY_S(item[11].name, "启动程序类型");
 	for(i = 0; i < NELEMS(item); i ++)
 	{
 		item[i].width = 12;
@@ -3391,6 +3400,41 @@ p_win_menuitem make_up_a_empty_dir(dword *filecount, dword icolor, dword selicol
 	return p;
 }
 
+char *strtoupper(char *d, const char *s)
+{
+    char *origd = d;
+
+    while((*d++ = toupper(*s))) s++;
+
+    return origd;
+}
+
+void exec_homebrew(int method, char* path)
+{
+	int err;
+	struct SceKernelLoadExecVSHParam param;
+	memset(&param, 0, sizeof(param));
+	param.size = sizeof(struct SceKernelLoadExecVSHParam);
+	param.args = strlen(path)+1;
+	param.argp = path;
+	if(method == 2)
+		param.key = "game";
+	else if(method == 4) {
+		param.key = "psx";
+	}
+	else
+		param.key = "updater";
+	if((err = xrKernelLoadExecVSHMsX(method, path, &param)) < 0) {
+		char infomsg[256];
+		SPRINTF_S(infomsg, "%s: 方法%d启动错误, 返回错误代码: %08x", path, method, err);
+		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+		dbg_printf(d, infomsg);
+	}
+	else 
+		sceKernelExitDeleteThread(0);
+
+}
+
 void scene_filelist()
 {
 	dword idx = 0;
@@ -3528,23 +3572,20 @@ void scene_filelist()
 		}
 		switch((t_fs_filetype)filelist[idx].data)
 		{
-			/*
 		case fs_filetype_prog:
-			if(win_msgbox("是否执行该程序?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
 			{
-				char path[256];
-				STRCPY_S(path, config.path);
-				STRCAT_S(path, filelist[idx].compname);
-				win_msg(path, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
-				int err;
-				if((err = sceKernelLoadExec(path, NULL)) < 0) {
-					char infomsg[256];
-					SPRINTF_S(infomsg, "启动错误： 返回错误代码: %08x", err);
-					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+			   	char infomsg[80];
+				SPRINTF_S(infomsg, "是否以%s方式执行该程序?", config.launchtype == 2 ? "普通程序" : "PS游戏");
+				if(win_msgbox(infomsg, "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+				{
+					char path[256], upper[256];
+					STRCPY_S(path, config.path);
+					strtoupper(upper, filelist[idx].compname);
+					STRCAT_S(path, upper);
+					exec_homebrew(config.launchtype, path);
 				}
 			}
 			break;
-			*/
 		case fs_filetype_dir:
 		{
 			char pdir[256];

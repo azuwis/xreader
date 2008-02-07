@@ -139,6 +139,7 @@ typedef struct {
 	int  autosleep;
 	bool load_exif;
 	int brightness;
+	int launchtype;
 } t_conf, * p_conf;
 
 /* txt key:

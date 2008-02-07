@@ -211,6 +211,7 @@ static void conf_default(p_conf conf)
 	conf->load_exif = true;
 	conf->brightness = 50;
 	conf->prev_autopage = 2;
+	conf->launchtype = 2;
 }
 
 extern bool conf_load(p_conf conf)
