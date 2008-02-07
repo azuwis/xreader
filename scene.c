@@ -1920,9 +1920,14 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item, dword * count
 		{
 			if(location_set(*index, config.path, config.shortpath, filelist[(dword)item[1].data].compname, config.isreading))
 			{
+				dbg_printf(d, "location_set: %s %s %s %d",
+						config.path, config.shortpath, filelist[(dword)item[1].data].compname, config.isreading);
 				locaval[*index] = true;
-				strcpy(item[*index].name, config.path);
-				strcat(item[*index].name, filelist[(dword)item[1].data].compname);
+				strncpy(item[*index].name, config.path, 64);
+				if(config.path[strlen(config.path) - 1] != '/' && filelist[(dword)item[1].data].compname[0] != '/')
+					strncat(item[*index].name, "/", 64);
+				strncat(item[*index].name, filelist[(dword)item[1].data].compname, 64);
+				item[*index].name[63] = '\0';
 				if(strlen(item[*index].name) > 36)
 				{
 					item[*index].name[36] = item[*index].name[37] = item[*index].name[38] = '.';
@@ -1949,18 +1954,24 @@ void scene_locsave_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 
 void scene_loc_enum(dword index, char * comppath, char * shortpath, char * compname, bool isreading, void * data)
 {
+	dbg_printf(d, "scene_loc_enum: %s %s %s %d", comppath, shortpath, compname, isreading);
 	p_win_menuitem item = (p_win_menuitem)data;
 	if(index < 10)
 	{
-		strcpy(item[index].name, comppath);
-		strcat(item[index].name, compname);
+		strncpy(item[index].name, comppath, 64);
+		if(comppath[strlen(comppath) - 1] != '/' && compname[0] != '/')
+			strncat(item[index].name, "/", 64);
+		strncat(item[index].name, compname, 64);
+		item[index].name[63] = '\0';
 		if(strlen(item[index].name) > 36)
 		{
 			item[index].name[36] = item[index].name[37] = item[index].name[38] = '.';
 			item[index].name[39] = 0;
 		}
-		if(isreading)
-			strcat(item[index].name, "*");
+		if(isreading) {
+			strncat(item[index].name, "*", 64);
+			item[index].name[63] = '\0';
+		}
 		item[index].width = strlen(item[index].name);
 	}
 }
@@ -1999,6 +2010,8 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item, dword * count
 			char comppath[256] = "", shortpath[256] = "", compname[256] = "";
 			if(location_get(*index, comppath, shortpath, compname, &locreading) && comppath[0] != 0 && shortpath[0] != 0 && compname[0] != 0)
 			{
+				dbg_printf(d, "location_get %s %s %s %d",
+						comppath, shortpath, compname, locreading);
 				where = scene_in_dir;
 				strcpy(config.path, comppath);
 				strcpy(config.shortpath, shortpath);
@@ -2283,7 +2296,6 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item, dword * count
 			pixel * saveimage = (pixel *)memalign(16, PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT * sizeof(pixel));
 			if(saveimage)
 				disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
-			
 			scene_readbook_raw("µ÷ÊÔÐÅÏ¢", (const unsigned char*)dbg_memory_buffer->ptr, dbg_memory_buffer->used, fs_filetype_txt);
 			ctrl_waitrelease();
 
@@ -3608,8 +3620,6 @@ void scene_filelist()
 			char prevdir[256], prevdir2[256];
 			strcpy(prevdir, config.path);
 			strcpy(prevdir2, config.shortpath);
-			strcat(config.path, filelist[idx].compname);
-			strcat(config.shortpath, filelist[idx].shortname);
 			idx = scene_readbook(idx);
 			where = prevplace;
 			config.isreading = false;

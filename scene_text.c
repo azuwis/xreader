@@ -78,14 +78,13 @@ PBookViewData new_book_view(PBookViewData p)
 
 int scene_book_reload(PBookViewData pView, dword selidx)
 {
-	if(where == scene_in_gz) {
-		strcpy(pView->filename, config.path);
-		strcpy(pView->archname, config.shortpath);
-	}
-	else if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
+	if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
 	{
 		strcpy(pView->filename, filelist[selidx].compname);
 		strcpy(pView->archname, config.shortpath);
+		if(config.shortpath[strlen(config.shortpath) - 1] != '/' &&
+				pView->filename[0] != '/')
+			strcat(pView->archname, "/");
 		strcat(pView->archname, pView->filename);
 	}
 	else
@@ -94,6 +93,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		strcat(pView->filename, filelist[selidx].shortname);
 		strcpy(pView->archname, pView->filename);
 	}
+	dbg_printf(d, "scene_book_reload: fn %s archname %s", pView->filename, pView->archname);
 	if(pView->rrow == INVALID)
 	{
 		// disable binary bookmark
@@ -116,7 +116,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	else if(where == scene_in_zip)
 		fs = text_open_binary_in_zip(config.shortpath, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt, config.vertread);
 	else if(where == scene_in_gz)
-		fs = text_open_in_gz(config.shortpath, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
+		fs = text_open_in_gz(pView->filename, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_chm)
 		fs = text_open_in_chm(config.shortpath, pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	else if(where == scene_in_rar && ((t_fs_filetype)filelist[selidx].data == fs_filetype_txt || (t_fs_filetype)filelist[selidx].data == fs_filetype_html))
@@ -135,6 +135,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	if(fs == NULL)
 	{
 		win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+		dbg_printf(d, "scene_book_reload: 文件%s打开失败 where=%d", pView->filename, where);
 		scene_power_save(true);
 		return 1;
 	}
@@ -930,6 +931,7 @@ dword scene_readbook_raw(const char* title, const unsigned char* data, size_t si
 
 			if(scene_reload_raw(title, data, size, ft)) {
 				win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+				dbg_printf(d, "scene_readbook_raw: 文件%s打开失败 where=%d", title, where);
 				fs = prev_text;
 				copy_book_view(&cur_book_view, &prev_book_view);
 
