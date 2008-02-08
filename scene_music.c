@@ -138,9 +138,13 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex, d
 		STRCPY_S(outstr, fname);
 	else
 	{
-		strncpy_s(outstr, NELEMS(outstr), fname, 33);
-		outstr[33] = 0;
-		STRCAT_S(outstr, "...");
+		mbcsncpy_s((unsigned char*)outstr, 34, (const unsigned char*)fname, -1);
+		if(strlen(outstr) < 33 ) {
+			mbcsncpy_s(((unsigned char*)outstr), 36, ((const unsigned char*)fname), -1);
+			STRCAT_S(outstr, "..");
+		}
+		else 
+			STRCAT_S(outstr, "...");
 	}
 	if(index - topindex < 6)
 	{
