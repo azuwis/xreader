@@ -326,6 +326,7 @@ t_win_menu_op scene_flkey_menucb(dword key, p_win_menuitem item, dword * count, 
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
 		return exit_confirm();
 	case PSP_CTRL_CIRCLE:
+		disp_duptocache();
 		disp_waitv();
 		disp_rectangle(239 - DISP_FONTSIZE * 3, 135 - DISP_FONTSIZE / 2, 240 + DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE / 2, COLOR_WHITE);
 		disp_fillrect(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2, 239 + DISP_FONTSIZE * 3, 135 + DISP_FONTSIZE / 2, RGB(0x8, 0x18, 0x10));
