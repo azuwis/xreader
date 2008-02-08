@@ -188,6 +188,9 @@ extern dword bookmark_autoload(const char * filename)
 
 extern void bookmark_autosave(const char * filename, dword row)
 {
+	extern bool scene_readbook_in_raw_mode;
+	if(scene_readbook_in_raw_mode)
+		return;
 	p_bookmark bm = bookmark_open(filename);
 	if(bm == NULL)
 		return;

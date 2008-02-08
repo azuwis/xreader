@@ -22,6 +22,7 @@ extern int locaval[10];
 extern t_fonts fonts[5], bookfonts[21];
 extern int fontcount, fontindex, bookfontcount, bookfontindex, ttfsize;
 extern int offset;
+extern bool scene_readbook_in_raw_mode;
 
 t_win_menu_op exit_confirm();
 extern void scene_init();

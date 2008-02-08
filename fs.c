@@ -125,9 +125,13 @@ void filename_to_itemname(p_win_menuitem item, int cur_count, const char* filena
 {
 	if((item[cur_count].width = strlen(filename)) > MAX_ITEM_NAME_LEN)
 	{
-		strncpy_s(item[cur_count].name, NELEMS(item[cur_count].name), filename, MAX_ITEM_NAME_LEN - 3);
-		item[cur_count].name[MAX_ITEM_NAME_LEN - 3] = item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '.';
-		item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
+		mbcsncpy_s(((unsigned char*)item[cur_count].name), MAX_ITEM_NAME_LEN - 2, ((const unsigned char*)filename), -1);
+		if(strlen(item[cur_count].name) < MAX_ITEM_NAME_LEN - 3) {
+			mbcsncpy_s(((unsigned char*)item[cur_count].name), MAX_ITEM_NAME_LEN, ((const unsigned char*)filename), -1);
+			STRCAT_S(item[cur_count].name, "..");
+		}
+		else 
+			STRCAT_S(item[cur_count].name, "...");
 		item[cur_count].width = MAX_ITEM_NAME_LEN;
 	}
 	else {
@@ -234,17 +238,14 @@ extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menu
 			item[cur_count].name[0] = '<';
 			if((item[cur_count].width = strlen(info.d_name) + 2) > MAX_ITEM_NAME_LEN)
 			{
-				strncpy_s(&item[cur_count].name[1], NELEMS(item[cur_count].name) - 1, info.d_name, MAX_ITEM_NAME_LEN - 5);
-				item[cur_count].name[MAX_ITEM_NAME_LEN - 4] = item[cur_count].name[MAX_ITEM_NAME_LEN - 3] = item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = '.';
-				item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '>';
-				item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
+				mbcsncpy_s((unsigned char*)&item[cur_count].name[1], MAX_ITEM_NAME_LEN - 4, (const unsigned char*) info.d_name, -1);
+				STRCAT_S(item[cur_count].name, "...>");
 				item[cur_count].width = MAX_ITEM_NAME_LEN;
 			}
 			else
 			{
-				strncpy_s(&item[cur_count].name[1], NELEMS(item[cur_count].name) - 1, info.d_name, MAX_ITEM_NAME_LEN);
-				item[cur_count].name[item[cur_count].width - 1] = '>';
-				item[cur_count].name[item[cur_count].width] = 0;
+				mbcsncpy_s((unsigned char*)&item[cur_count].name[1], MAX_ITEM_NAME_LEN - 1, (const unsigned char*)info.d_name, -1);
+				STRCAT_S(item[cur_count].name, ">");
 			}
 		}
 		else

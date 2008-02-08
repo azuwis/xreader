@@ -16,8 +16,7 @@ enum {
 	scene_in_zip,
 	scene_in_chm,
 	scene_in_rar,
-	scene_in_gz,
-	scene_in_raw
+	scene_in_gz
 } where;
 
 typedef struct {

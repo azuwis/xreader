@@ -46,8 +46,8 @@
 
 dword ctlkey[13], ctlkey2[13], ku, kd, kl, kr;
 static volatile int ticks = 0, secticks = 0;
-
 char g_titlename[256];
+bool scene_readbook_in_raw_mode = false;
 
 BookViewData cur_book_view, prev_book_view;
 
@@ -377,7 +377,7 @@ int scene_printbook(PBookViewData pView, dword selidx)
 					charsets_utf8_conv((unsigned char*)filelist[selidx].compname, (unsigned char*)fname);
 					SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), fname, offset, autopageinfo);
 				}
-				else if( where == scene_in_raw )
+				else if( scene_readbook_in_raw_mode == true)
 				{
 					SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow, (fs->ucs == 2) ? "UTF-8" : (fs->ucs == 1 ? "UCS " : conf_get_encodename(config.encode)), g_titlename, offset, autopageinfo);
 				}
@@ -667,7 +667,7 @@ int book_handle_input(PBookViewData pView, dword *selidx, dword key)
 			scene_power_save(true);
 			return *selidx;
 		}
-		else if(key == ctlkey[0] || key == ctlkey2[0])
+		else if((key == ctlkey[0] || key == ctlkey2[0]) && scene_readbook_in_raw_mode == false)
 		{
 			pView->rrow = (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
 			pView->text_needrb = scene_bookmark(&pView->rrow);
@@ -892,8 +892,8 @@ dword scene_reload_raw(const char* title, const unsigned char *data, size_t size
 
 dword scene_readbook_raw(const char* title, const unsigned char* data, size_t size, t_fs_filetype ft)
 {
-	int prev_where = where;
-	where = scene_in_raw;
+	bool prev_raw = scene_readbook_in_raw_mode;
+	scene_readbook_in_raw_mode = true;
 
 	// dummy selidx
 	dword selidx = 0;
@@ -923,7 +923,7 @@ dword scene_readbook_raw(const char* title, const unsigned char* data, size_t si
 				fs = prev_text;
 				copy_book_view(&cur_book_view, &prev_book_view);
 
-				where = prev_where;
+				scene_readbook_in_raw_mode = prev_raw;
 				return 1;
 			}
 
@@ -970,7 +970,7 @@ dword scene_readbook_raw(const char* title, const unsigned char* data, size_t si
 			fs = prev_text;
 			copy_book_view(&cur_book_view, &prev_book_view);
 			
-			where = prev_where;
+			scene_readbook_in_raw_mode = prev_raw;
 			return ret;
 		}
 redraw:
@@ -981,7 +981,7 @@ redraw:
 	copy_book_view(&cur_book_view, &prev_book_view);
 	disp_duptocachealpha(50);
 
-	where = prev_where;
+	scene_readbook_in_raw_mode = prev_raw;
 	return INVALID;
 }
 

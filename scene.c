@@ -2134,10 +2134,6 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 	else if(prev->enableusb && !curr->enableusb)
 		usb_deactivate();
 #endif
-	if(prev->imgbrightness != curr->imgbrightness)
-	{
-		img_needrf = img_needrc = img_needrp = true;
-	}
 	if(prev->brightness != curr->brightness)
 	{
 		if(prx_loaded) {
@@ -2171,6 +2167,15 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 	if(i != 3) {
 		scene_power_save(true);
 	}
+
+	STRCPY_S(curr->path, prev->path);
+	STRCPY_S(curr->shortpath, prev->shortpath);
+	STRCPY_S(curr->lastfile, prev->lastfile);
+	curr->isreading = prev->isreading;
+
+	img_needrf = img_needrc = img_needrp = true;
+	cur_book_view.text_needrf = cur_book_view.text_needrp = cur_book_view.text_needrb = true;
+
 	return 0;
 }
 
@@ -2211,9 +2216,6 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item, dword * c
 					return win_menu_op_redraw;
 				}
 				detect_config_change(&prev_config, &config);
-				STRCPY_S(config.path, prev_config.path);
-				STRCPY_S(config.shortpath, prev_config.shortpath);
-				STRCPY_S(config.lastfile, prev_config.lastfile);
 			}
 			else if(*index == 1) {
 				// save
@@ -2727,7 +2729,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item, dword * coun
 				if(where == scene_in_dir)
 					disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)"¡õ  ÉèÎª±³¾°");
 #endif
-				if(config.load_exif) {
+				if(config.load_exif && (t_fs_filetype)item[selidx].data == fs_filetype_jpg) {
 					disp_putstring(240 - DISP_FONTSIZE * 3, 136 + 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"SELECT EXIF");
 				}
 				break;
