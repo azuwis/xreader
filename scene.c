@@ -2025,8 +2025,12 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item, dword * count
 				STRCPY_S(config.lastfile, compname);
 				config.isreading = locreading;
 				dword plen = strlen(config.path);
-				if(plen > 0 && config.path[plen - 1] == '/')
-					filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, RGB(0xDF, 0xDF, 0xDF), RGB(0xFF, 0xFF, 0x40), RGB(0x10, 0x30, 0x20), RGB(0x20, 0x20, 0xDF), config.showhidden, config.showunknown);
+				if(plen > 0 && config.path[plen - 1] == '/') {
+					if(strnicmp(config.path, "ms0:/", 5) == 0)
+						filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, RGB(0xDF, 0xDF, 0xDF), RGB(0xFF, 0xFF, 0x40), RGB(0x10, 0x30, 0x20), RGB(0x20, 0x20, 0xDF), config.showhidden, config.showunknown);
+					else
+						filecount = fs_flashdir_to_menu(config.path, config.shortpath, &filelist, RGB(0xDF, 0xDF, 0xDF), RGB(0xFF, 0xFF, 0x40), RGB(0x10, 0x30, 0x20), RGB(0x20, 0x20, 0xDF));
+				}
 				else
 					switch(fs_file_get_type(config.path))
 					{
