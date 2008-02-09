@@ -4105,12 +4105,15 @@ extern void scene_exit()
 		if(where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
 		{
 			STRCPY_S(archname, config.shortpath);
+			if(archname[strlen(archname) - 1] != '/' && fs->filename[0] != '/')
+				STRCAT_S(archname, "/");
 			STRCAT_S(archname, fs->filename);
 		}
 		else
 			STRCPY_S(archname, fs->filename);
-		if(config.autobm)
+		if(config.autobm) {
 			bookmark_autosave(archname, (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf);
+		}
 	}
 	// always save to xreader0.conf
 	char conffile[256], appdir[256];

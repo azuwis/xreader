@@ -23,7 +23,7 @@ static dword flagbits[32] = {
 
 static char bmfile[256];
 
-static dword bookmark_encode(const char * filename)
+extern dword bookmark_encode(const char * filename)
 {
     register dword h;
 
@@ -71,12 +71,12 @@ static p_bookmark bookmark_open_hash(dword hash)
 			if((bi.flag & flagbits[j]) > 0 && bi.hash[j] == bm->hash)
 			{
 				bm->index = i * 32 + j;
-				sceIoLseek32(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
+				sceIoLseek(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
 				sceIoRead(fd, &bm->row[0], 10 * sizeof(dword));
 				sceIoClose(fd);
 				return bm;
 			}
-		sceIoLseek32(fd, 32 * 10 * sizeof(dword), PSP_SEEK_CUR);
+		sceIoLseek(fd, 32 * 10 * sizeof(dword), PSP_SEEK_CUR);
 	}
 	sceIoClose(fd);
 	return bm;
@@ -84,11 +84,15 @@ static p_bookmark bookmark_open_hash(dword hash)
 
 extern p_bookmark bookmark_open(const char * filename)
 {
+	if(!filename)
+		return NULL;
 	return bookmark_open_hash(bookmark_encode(filename));
 }
 
 extern void bookmark_save(p_bookmark bm)
 {
+	if(!bm)
+		return;
 	int fd = sceIoOpen(bmfile, PSP_O_CREAT | PSP_O_RDWR, 0777);
 	if(fd < 0)
 		return;
@@ -97,7 +101,7 @@ extern void bookmark_save(p_bookmark bm)
 	if(sceIoRead(fd, &count, sizeof(dword)) < sizeof(dword))
 	{
 		count = 1;
-		sceIoLseek32(fd, 0, PSP_SEEK_SET);
+		sceIoLseek(fd, 0, PSP_SEEK_SET);
 		sceIoWrite(fd, &count, sizeof(dword));
 		memset(&bi, 0, sizeof(t_bm_index));
 		sceIoWrite(fd, &bi, sizeof(t_bm_index));
@@ -107,7 +111,7 @@ extern void bookmark_save(p_bookmark bm)
 	}
 	if(bm->index == INVALID)
 	{
-		sceIoLseek32(fd, sizeof(dword) + (count - 1) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
+		sceIoLseek(fd, sizeof(dword) + (count - 1) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
 		sceIoRead(fd, &bi, sizeof(t_bm_index));
 		if(bi.flag != 0xFFFFFFFF)
 		{
@@ -118,16 +122,16 @@ extern void bookmark_save(p_bookmark bm)
 					bi.flag |= flagbits[j];
 					bi.hash[j] = bm->hash;
 					bm->index = (count - 1) * 32 + j;
-					sceIoLseek32(fd, sizeof(dword) + (count - 1) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
+					sceIoLseek(fd, sizeof(dword) + (count - 1) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
 					sceIoWrite(fd, &bi, sizeof(t_bm_index));
-					sceIoLseek32(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
+					sceIoLseek(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
 					sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 					break;
 				}
 		}
 		else
 		{
-			sceIoLseek32(fd, sizeof(dword) + count * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
+			sceIoLseek(fd, sizeof(dword) + count * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
 			memset(&bi, 0, sizeof(t_bm_index));
 			bi.flag = 1;
 			bi.hash[0] = bm->hash;
@@ -137,14 +141,14 @@ extern void bookmark_save(p_bookmark bm)
 			dword temp[31 * 10];
 			memset(temp, 0, 31 * 10 * sizeof(dword));
 			sceIoWrite(fd, temp, 31 * 10 * sizeof(dword));
-			sceIoLseek32(fd, 0, PSP_SEEK_SET);
+			sceIoLseek(fd, 0, PSP_SEEK_SET);
 			count ++;
 			sceIoWrite(fd, &count, sizeof(dword));
 		}
 	}
 	else
 	{
-		sceIoLseek32(fd, sizeof(dword) + (bm->index / 32) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)) + sizeof(t_bm_index) + ((bm->index % 32) * 10 * sizeof(dword)), PSP_SEEK_SET);
+		sceIoLseek(fd, sizeof(dword) + (bm->index / 32) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)) + sizeof(t_bm_index) + ((bm->index % 32) * 10 * sizeof(dword)), PSP_SEEK_SET);
 		sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 	}
 	sceIoClose(fd);
@@ -155,13 +159,13 @@ extern void bookmark_delete(p_bookmark bm)
 	int fd = sceIoOpen(bmfile, PSP_O_RDWR, 0777);
 	if(fd < 0)
 		return;
-	sceIoLseek32(fd, sizeof(dword) + (bm->index / 32) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
+	sceIoLseek(fd, sizeof(dword) + (bm->index / 32) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
 	t_bm_index bi;
 	memset(&bi, 0, sizeof(t_bm_index));
 	sceIoRead(fd, &bi, sizeof(t_bm_index));
 	bi.flag &= ~flagbits[bm->index % 32];
 	bi.hash[bm->index % 32] = 0;
-	sceIoLseek32(fd, sizeof(dword) + (bm->index / 32) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
+	sceIoLseek(fd, sizeof(dword) + (bm->index / 32) * (sizeof(t_bm_index) + 32 * 10 * sizeof(dword)), PSP_SEEK_SET);
 	sceIoWrite(fd, &bi, sizeof(t_bm_index));
 	sceIoClose(fd);
 }
@@ -188,6 +192,8 @@ extern dword bookmark_autoload(const char * filename)
 
 extern void bookmark_autosave(const char * filename, dword row)
 {
+	if(!filename)
+		return;
 	extern bool scene_readbook_in_raw_mode;
 	if(scene_readbook_in_raw_mode)
 		return;
@@ -201,6 +207,8 @@ extern void bookmark_autosave(const char * filename, dword row)
 
 extern bool bookmark_export(p_bookmark bm, const char * filename)
 {
+	if(!bm ||!filename)
+		return false;
 	int fd = sceIoOpen(filename, PSP_O_CREAT | PSP_O_WRONLY, 0777);
 	if(fd < 0)
 		return false;
@@ -212,6 +220,8 @@ extern bool bookmark_export(p_bookmark bm, const char * filename)
 
 extern bool bookmark_import(const char * filename)
 {
+	if(!filename)
+		return false;
 	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
 	if(fd < 0)
 		return false;
