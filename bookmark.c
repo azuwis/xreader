@@ -139,7 +139,7 @@ extern void bookmark_save(p_bookmark bm)
 			sceIoWrite(fd, &bi, sizeof(t_bm_index));
 			sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 			dword temp[31 * 10];
-			memset(temp, 0, 31 * 10 * sizeof(dword));
+			memset(temp, 0, sizeof(temp));
 			sceIoWrite(fd, temp, 31 * 10 * sizeof(dword));
 			sceIoLseek(fd, 0, PSP_SEEK_SET);
 			count ++;
