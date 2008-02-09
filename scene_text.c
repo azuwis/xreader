@@ -135,7 +135,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs = text_open(pView->filename, (t_fs_filetype)filelist[selidx].data, pixelsperrow, config.wordspace, config.encode, config.reordertxt);
 	if(fs == NULL)
 	{
-		win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+		win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		dbg_printf(d, "scene_book_reload: 文件%s打开失败 where=%d", pView->filename, where);
 		scene_power_save(true);
 		return 1;
@@ -338,7 +338,7 @@ int scene_printbook(PBookViewData pView, dword selidx)
 				if(!havedisplayed) {
 					char infomsg[80];
 					SPRINTF_S(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, cidx, pView->rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - pView->rowtop);
-					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 					
 					havedisplayed = true;
 				}
@@ -918,7 +918,7 @@ dword scene_readbook_raw(const char* title, const unsigned char* data, size_t si
 			}
 
 			if(scene_reload_raw(title, data, size, ft)) {
-				win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+				win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 				dbg_printf(d, "scene_readbook_raw: 文件%s打开失败 where=%d", title, where);
 				fs = prev_text;
 				copy_book_view(&cur_book_view, &prev_book_view);

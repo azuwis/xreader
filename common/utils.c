@@ -262,3 +262,16 @@ size_t mbcsncpy_s(unsigned char* dst, size_t nBytes, const unsigned char* src, s
 	return mbcslen(start);
 }
 
+bool utils_is_file_exists(const char *filename)
+{
+	if(!filename)
+		return false;
+
+	SceUID uid;
+	uid = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+	if(uid < 0)
+		return false;
+	sceIoClose(uid);
+	return true;
+}
+

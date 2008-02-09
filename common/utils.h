@@ -18,6 +18,8 @@ int snprintf_s( char *buffer, size_t sizeOfBuffer, const char *format, ...);
 size_t mbcslen(const unsigned char* str);
 size_t mbcsncpy_s(unsigned char* dst, size_t nBytes, const unsigned char* src, size_t n);
 
+bool utils_is_file_exists(const char *filename);
+
 #define NELEMS(n) (sizeof(n) / sizeof(n[0]))
 
 #define STRCPY_S(d, s) strcpy_s((d), (sizeof(d) / sizeof(d[0])), (s))

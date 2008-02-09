@@ -1155,7 +1155,7 @@ extern bool mp3_list_add(const char * filename, const char * longname)
 			mp3_files = (char(*)[512])malloc(512 * 256);
 		if(mp3_files == NULL)
 		{
-			win_msg("内存不足", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+			win_msg("内存不足", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 			mp3_nfiles = 0;
 			mp3_stop();
 			return false;

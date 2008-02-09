@@ -78,6 +78,12 @@ typedef struct {
 	char path[256];
 	dword forecolor;
 	dword bgcolor;
+	dword titlecolor;
+	dword menutextcolor;
+	dword menubcolor;
+	dword selicolor;
+	dword selbcolor;
+	dword msgbcolor;
 	dword rowspace;
 	t_conf_infobar infobar;
 	bool rlastrow;

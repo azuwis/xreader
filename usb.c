@@ -60,7 +60,7 @@ extern bool usb_activate()
 		usb_open();
 	}
 	if(scePowerGetBusClockFrequency() < 66 && !have_prompt) {
-		win_msg("USB转输时请提高总线频率以免传输失败(本提示不再提示)", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+		win_msg("USB转输时请提高总线频率以免传输失败(本提示不再提示)", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		have_prompt = true;
 	}
 	if (usb_isactive())

@@ -202,7 +202,7 @@ void report_image_error(int status)
 			break;
 	}
 	SPRINTF_S(infomsg, "图像无法装载, 原因: %s", errstr);
-	win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+	win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 	dbg_printf(d, "图像无法装载，原因: %s where = %d config.path %s filename %s", 
 			   errstr, where, config.path, filename);
 	imgreading = false;
@@ -930,7 +930,7 @@ int image_handle_input(dword *selidx, dword key)
 		else
 		{
 			slideshow = false;
-			win_msg("幻灯片播放已经停止！", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+			win_msg("幻灯片播放已经停止！", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		}
 	}
 	else if(key == config.imgkey[7] || key == config.imgkey2[7])
@@ -957,7 +957,7 @@ int image_handle_input(dword *selidx, dword key)
 		if(slideshow)
 		{
 			slideshow = false;
-			win_msg("幻灯片播放已经停止！", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50));
+			win_msg("幻灯片播放已经停止！", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		}
 		else
 		{
@@ -1203,8 +1203,8 @@ void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex, dwor
 {
 	char keyname[256];
 	disp_rectangle(239 - DISP_FONTSIZE * 10, 128 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 144 + 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 143 + 6 * DISP_FONTSIZE, RGB(0x10, 0x30, 0x20));
+	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 143 + 6 * DISP_FONTSIZE, config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"按键设置   △ 删除");
 	disp_line(240 - DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 	dword i;
@@ -1242,14 +1242,14 @@ dword scene_imgkey(dword * selidx)
 	{
 		item[i].width = 8;
 		item[i].selected = false;
-		item[i].icolor = RGB(0xDF, 0xDF, 0xDF);
-		item[i].selicolor = RGB(0xFF, 0xFF, 0x40);
-		item[i].selrcolor = RGB(0x10, 0x30, 0x20);
-		item[i].selbcolor = RGB(0x20, 0x20, 0xDF);
+		item[i].icolor = config.menutextcolor;
+		item[i].selicolor = config.selicolor;
+		item[i].selrcolor = config.menubcolor;
+		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
 	dword index;
-	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, 12, item, 12, 0, 0, RGB(0x10, 0x30, 0x20), true, scene_imgkey_predraw, NULL, scene_imgkey_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, 12, item, 12, 0, 0, config.menubcolor, true, scene_imgkey_predraw, NULL, scene_imgkey_menucb)) != INVALID);
 	return 0;
 }
 #endif

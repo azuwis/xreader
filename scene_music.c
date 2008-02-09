@@ -54,7 +54,7 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item, dword * coun
 	switch(key)
 	{
 	case (PSP_CTRL_SELECT | PSP_CTRL_START):
-		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+		if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, config.msgbcolor))
 		{
 			scene_exit();
 			return win_menu_op_continue;
@@ -92,7 +92,7 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item, dword * coun
 		return win_menu_op_continue;
 	case PSP_CTRL_CIRCLE:
 #ifdef ENABLE_MUSIC
-		if(win_msgbox("从歌曲列表移除文件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+		if(win_msgbox("从歌曲列表移除文件?", "是", "否", COLOR_WHITE, COLOR_WHITE, config.msgbcolor))
 		{
 			mp3_list_delete(*index);
 			if(*index < *count - 1)
@@ -183,10 +183,10 @@ void scene_mp3_list()
 		}
 		item[i].width = strlen(item[i].name);
 		item[i].selected = false;
-		item[i].icolor = RGB(0xDF, 0xDF, 0xDF);
-		item[i].selicolor = RGB(0xFF, 0xFF, 0x40);
+		item[i].icolor = config.menutextcolor;
+		item[i].selicolor = config.selicolor;
 		item[i].selrcolor = RGB(0x40, 0x40, 0x28);
-		item[i].selbcolor = RGB(0x20, 0x20, 0xDF);
+		item[i].selbcolor = config.selbcolor;
 	}
 	dword index = 0;
 	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 40, 12, item, mp3_list_count(), index, 0, RGB(0x40, 0x40, 0x28), true, scene_mp3_list_predraw, scene_mp3_list_postdraw, scene_mp3_list_menucb)) != INVALID)
@@ -214,7 +214,7 @@ void scene_mp3bar()
 		else
 			disp_duptocache();
 		disp_rectangle(5, 5, 474, 8 + DISP_FONTSIZE * 2, COLOR_WHITE);
-		disp_fillrect(6, 6, 473, 7 + DISP_FONTSIZE * 2, RGB(0x18, 0x28, 0x50));
+		disp_fillrect(6, 6, 473, 7 + DISP_FONTSIZE * 2, config.msgbcolor);
 		char timestr[80];
 		pspTime tm;
 		sceRtcGetCurrentClockLocalTime(&tm);
@@ -238,7 +238,7 @@ void scene_mp3bar()
 
 #ifdef ENABLE_LYRIC
 		disp_rectangle(5, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex), 474, 136 + (DISP_FONTSIZE + 1) * config.lyricex, COLOR_WHITE);
-		disp_fillrect(6, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex) + 1, 473, 136 + (DISP_FONTSIZE + 1) * config.lyricex - 1, RGB(0x18, 0x28, 0x50));
+		disp_fillrect(6, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex) + 1, 473, 136 + (DISP_FONTSIZE + 1) * config.lyricex - 1, config.msgbcolor);
 		{
 			const char * ly[config.lyricex * 2 + 1];
 			dword ss[config.lyricex * 2 + 1];
@@ -263,7 +263,7 @@ void scene_mp3bar()
 
 #ifdef ENABLE_MUSIC
 		disp_rectangle(5, 262 - DISP_FONTSIZE * 4, 474, 267, COLOR_WHITE);
-		disp_fillrect(6, 263 - DISP_FONTSIZE * 4, 473, 266, RGB(0x18, 0x28, 0x50));
+		disp_fillrect(6, 263 - DISP_FONTSIZE * 4, 473, 266, config.msgbcolor);
 		int bitrate, sample, len, tlen;
 		char infostr[80];
 		if(mp3_get_info(&bitrate, &sample, &len, &tlen))
@@ -287,7 +287,7 @@ void scene_mp3bar()
 		switch(key)
 		{
 			case (PSP_CTRL_SELECT | PSP_CTRL_START):
-				if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, RGB(0x18, 0x28, 0x50)))
+				if(win_msgbox("是否退出软件?", "是", "否", COLOR_WHITE, COLOR_WHITE, config.msgbcolor))
 				{
 					scene_exit();
 					return;
