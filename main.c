@@ -106,7 +106,7 @@ static int CallbackThread(unsigned int args, void *argp)
 /* Sets up the callback thread and returns its thread id */ 
 static int SetupCallbacks(void) 
 {
-	int thid = sceKernelCreateThread("Callback Thread", CallbackThread, 0x11, 0xFA0, PSP_THREAD_ATTR_USER, 0);
+	int thid = sceKernelCreateThread("Callback Thread", CallbackThread, 0x11, 0x1F40, PSP_THREAD_ATTR_USER, 0);
 	if(thid >= 0)
 	{
 		sceKernelStartThread(thid, 0, 0);
