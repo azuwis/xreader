@@ -84,6 +84,7 @@ typedef struct {
 	dword selicolor;
 	dword selbcolor;
 	dword msgbcolor;
+	bool  usedyncolor;
 	dword rowspace;
 	t_conf_infobar infobar;
 	bool rlastrow;

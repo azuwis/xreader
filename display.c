@@ -1064,7 +1064,7 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, 
 #ifdef ENABLE_TTF
 			if(use_ttf)
 			{
-				ccur = book_efont_buffer + ((dword)*str) * DISP_BOOK_CFONTSIZE + top * DISP_BOOK_CFONTSIZE;
+				ccur = book_efont_buffer + ((dword)*str) * DISP_BOOK_CFONTSIZE + top * DISP_BOOK_CROWSIZE;
 				for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur ++) {
 					int b;
 					pixel * vpoint = vaddr;
@@ -1222,7 +1222,7 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int 
 #ifdef ENABLE_TTF
 			if(use_ttf)
 			{
-				ccur = book_efont_buffer + ((dword)*str) * DISP_BOOK_CFONTSIZE + top * DISP_BOOK_CFONTSIZE;
+				ccur = book_efont_buffer + ((dword)*str) * DISP_BOOK_CFONTSIZE + top * DISP_BOOK_CROWSIZE;
 				for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur ++) {
 					int b;
 					pixel * vpoint = vaddr;
@@ -1380,7 +1380,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int
 #ifdef ENABLE_TTF
 			if(use_ttf)
 			{
-				ccur = book_efont_buffer + ((dword)*str) * DISP_BOOK_CFONTSIZE + top * DISP_BOOK_CFONTSIZE;
+				ccur = book_efont_buffer + ((dword)*str) * DISP_BOOK_CFONTSIZE + top * DISP_BOOK_CROWSIZE;
 				for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur ++) {
 					int b;
 					pixel * vpoint = vaddr;
@@ -1536,7 +1536,7 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int
 #ifdef ENABLE_TTF
 			if(use_ttf)
 			{
-				ccur = book_efont_buffer + ((dword)*str) * DISP_BOOK_CFONTSIZE + top * DISP_BOOK_CFONTSIZE;
+				ccur = book_efont_buffer + ((dword)*str) * DISP_BOOK_CFONTSIZE + top * DISP_BOOK_CROWSIZE;
 				for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur ++) {
 					int b;
 					pixel * vpoint = vaddr;

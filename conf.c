@@ -14,8 +14,6 @@
 #include "conf.h"
 #include "xrPrx/xrPrx.h"
 
-extern t_fonts fonts[5], bookfonts[21];
-extern int fontindex, fontcount, bookfontcount, bookfontindex;
 extern bool scene_load_font();
 extern bool scene_load_book_font();
 
@@ -227,6 +225,7 @@ static void conf_default(p_conf conf)
 	conf->selicolor = RGB(0xFF, 0xFF, 0x40);
 	conf->selbcolor = RGB(0x20, 0x20, 0xDF);
 	conf->msgbcolor = RGB(0x18, 0x28, 0x50);
+	conf->usedyncolor = false;
 }
 
 extern bool conf_load(p_conf conf)
@@ -255,29 +254,6 @@ extern bool conf_load(p_conf conf)
 	sceIoWrite(fd, conf, sizeof(t_conf));
 	sceIoClose(fd);
 
-	int i=0;
-	for(i=0; i<fontcount; ++i) {
-		if(fonts[i].size == conf->fontsize)
-		{
-			break;
-		}
-	}
-	if(i != fontcount) {
-		fontindex = i;
-		scene_load_font();
-	}
-	
-	for(i=0; i<bookfontcount; ++i) {
-		if(bookfonts[i].size == conf->bookfontsize)
-		{
-			break;
-		}
-	}
-	if(i != bookfontcount) {
-		bookfontindex = i;
-		scene_load_book_font();
-	}
-
 	return true;
 }
 
@@ -286,8 +262,6 @@ extern bool conf_save(p_conf conf)
 	extern bool prx_loaded;
 	if(prx_loaded)
 		conf->brightness = xrGetBrightness();
-	conf->fontsize = fonts[fontindex].size;
-	conf->bookfontsize = bookfonts[bookfontindex].size;
 
 	int fd = sceIoOpen(conf_filename, PSP_O_CREAT | PSP_O_RDWR, 0777);
 	if(fd < 0)

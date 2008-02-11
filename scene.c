@@ -69,7 +69,7 @@ bool imgreading = false, locreading = false;
 bool prx_loaded = false;
 int locaval[10];
 t_fonts fonts[5], bookfonts[21];
-int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex = 0, ttfsize = 0;
+static int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex = 0, ttfsize = 0;
 int offset = 0;
 
 int freq_list[][2] = {
@@ -88,6 +88,20 @@ extern bool use_prx_power_save;
 extern bool img_needrf, img_needrp, img_needrc;
 
 static int config_num = 0;
+
+static void load_fontsize_to_config()
+{
+	if(!config.usettf) {
+		config.fontsize = fonts[fontindex].size;
+		config.bookfontsize = bookfonts[bookfontindex].size;
+	}
+	else {
+		config.fontsize = fonts[fontindex].size;
+		config.bookfontsize = ttfsize;
+	}
+}
+
+extern dword GetBGColorByTime(void);
 
 t_win_menu_op exit_confirm()
 {
@@ -268,8 +282,8 @@ void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex, dwor
 {
 	char keyname[256];
 	disp_rectangle(239 - DISP_FONTSIZE * 10, 128 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 145 + 7 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, config.menubcolor);
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 144 + 7 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 144 + 7 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(BUTTON_SETTING_PROMPT));
 	disp_line(240 - DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 	dword i;
@@ -310,12 +324,12 @@ dword scene_txtkey(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
 	dword index;
-	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_txtkey_predraw, NULL, scene_txtkey_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_txtkey_predraw, NULL, scene_txtkey_menucb)) != INVALID);
 	return 0;
 }
 
@@ -393,8 +407,8 @@ void scene_flkey_predraw(p_win_menuitem item, dword index, dword topindex, dword
 {
 	char keyname[256];
 	disp_rectangle(239 - DISP_FONTSIZE * 10, 128 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 139 + DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, config.menubcolor);
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 138 + DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 138 + DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(BUTTON_SETTING_PROMPT));
 	disp_line(240 - DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 	dword i;
@@ -429,12 +443,12 @@ dword scene_flkey(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
 	dword index;
-	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_flkey_predraw, NULL, scene_flkey_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_flkey_predraw, NULL, scene_flkey_menucb)) != INVALID);
 	return 0;
 }
 
@@ -694,10 +708,10 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 {
 	char number[7];
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(IMG_OPT));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 134 + 5 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 134 + 5 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.bicubic ? getmsgbyid(IMG_OPT_CUBE) : getmsgbyid(IMG_OPT_LINEAR)));
 	memset(number, ' ', 4);
 	utils_dword2string(config.slideinterval, number, 4);
@@ -738,11 +752,11 @@ dword scene_ioptions(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
-	while(win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_ioptions_predraw, NULL, scene_ioptions_menucb) != INVALID);
+	while(win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_ioptions_predraw, NULL, scene_ioptions_menucb) != INVALID);
 	return 0;
 }
 #endif
@@ -1006,10 +1020,10 @@ void scene_color_predraw(p_win_menuitem item, dword index, dword topindex, dword
 		pad = 6 * (12 - config.fontsize);
 	}
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 120 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6 + pad, 131 + DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 120 - 6 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 120 - 6 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(TEXT_COLOR_OPT));
 	disp_line(240 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 121 - 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 130 + DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(241, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6 + pad, 130 + DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_fillrect(280, 127 - 6 * DISP_FONTSIZE, 310, 157 - 6 * DISP_FONTSIZE, config.forecolor);
 	disp_fillrect(280, 130 - 3 * DISP_FONTSIZE, 310, 160 - 3 * DISP_FONTSIZE, config.bgcolor);
 	memset(number, ' ', 4);
@@ -1068,7 +1082,7 @@ dword scene_color(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1076,7 +1090,7 @@ dword scene_color(dword * selidx)
 	dword orgbgcolor = config.bgcolor;
 	dword orggrayscale = config.grayscale;
 #endif
-	while(win_menu(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_color_predraw, NULL, scene_color_menucb) != INVALID);
+	while(win_menu(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_color_predraw, NULL, scene_color_menucb) != INVALID);
 #ifdef ENABLE_BG
 	if(orgbgcolor != config.bgcolor || orggrayscale != config.grayscale) {
 		dbg_printf(d, "更换背景: %s gray: %d", config.bgfile, config.grayscale);
@@ -1260,10 +1274,10 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex, dw
 {
 	char number[5];
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 140 + 9 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 7 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(READ_OPTION));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 139 + 9 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(241, 123 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 139 + 9 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	memset(number, ' ', 4);
 	utils_dword2string(config.wordspace, number, 4);
 	disp_putstring(242, 124 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
@@ -1338,7 +1352,7 @@ dword scene_boptions(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1351,7 +1365,7 @@ dword scene_boptions(dword * selidx)
 	dword orgborderspace = config.borderspace;
 	dword orgreordertxt = config.reordertxt;
 	dword orgencode = config.encode;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_boptions_predraw, NULL, scene_boptions_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_boptions_predraw, NULL, scene_boptions_menucb)) != INVALID);
 	dword result = 0;
 	if(orgibar != config.infobar || orgvert != config.vertread || orgrowspace != config.rowspace || orgborderspace != config.borderspace)
 	{
@@ -1416,10 +1430,10 @@ t_win_menu_op scene_ctrlset_menucb(dword key, p_win_menuitem item, dword * count
 void scene_ctrlset_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 126 - 4 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(OPERATION_SETTING));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 125 - 4 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 125 - 4 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 #ifdef ENABLE_HPRM
 	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.hprmctrl ? getmsgbyid(CONTROL_PAGE) : getmsgbyid(CONTROL_MUSIC)));
 #else
@@ -1438,7 +1452,7 @@ dword scene_ctrlset(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1446,7 +1460,7 @@ dword scene_ctrlset(dword * selidx)
 #ifdef ENABLE_HPRM
 	bool orghprmctrl = config.hprmctrl;
 #endif
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_ctrlset_predraw, NULL, scene_ctrlset_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_ctrlset_predraw, NULL, scene_ctrlset_menucb)) != INVALID);
 #ifdef ENABLE_HPRM
 	if(orghprmctrl != config.hprmctrl)
 	{
@@ -1492,6 +1506,7 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item, dword * count
 			}
 			break;
 		case 2:
+#ifdef ENABLE_TTF
 			config.usettf = !config.usettf;
 			if(config.usettf)
 				ttfsize = bookfonts[bookfontindex].size;
@@ -1503,6 +1518,7 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item, dword * count
 				if(bookfontindex > 0)
 					bookfontindex --;
 			}
+#endif
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1531,6 +1547,7 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item, dword * count
 			}
 			break;
 		case 2:
+#ifdef ENABLE_TTF
 			config.usettf = !config.usettf;
 			if(config.usettf)
 				ttfsize = bookfonts[bookfontindex].size;
@@ -1542,6 +1559,7 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item, dword * count
 				if(bookfontindex > 0)
 					bookfontindex --;
 			}
+#endif
 			break;
 		}
 		return win_menu_op_redraw;
@@ -1556,17 +1574,21 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 {
 	char number[5];
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(FONT_SETTING));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 126 - 3 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 126 - 3 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	memset(number, ' ', 4);
 	utils_dword2string(fonts[fontindex].size, number, 4);
 	disp_putstring(242, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
 	memset(number, ' ', 4);
 	utils_dword2string(config.usettf ? ttfsize : bookfonts[bookfontindex].size, number, 4);
 	disp_putstring(242, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)number);
+#ifdef ENABLE_TTF
 	disp_putstring(240 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.usettf ? getmsgbyid(YES) : getmsgbyid(NO)));
+#else
+	disp_putstring(240 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(getmsgbyid(HAVE_SHUTDOWN)));
+#endif
 }
 
 dword scene_fontsel(dword * selidx)
@@ -1582,7 +1604,7 @@ dword scene_fontsel(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1591,7 +1613,7 @@ dword scene_fontsel(dword * selidx)
 	int orgbookfontindex = bookfontindex;
 	int orgttfsize = ttfsize;
 	bool orgusettf = config.usettf;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_fontsel_predraw, NULL, scene_fontsel_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_fontsel_predraw, NULL, scene_fontsel_menucb)) != INVALID);
 	if(orgfontindex != fontindex || orgusettf != config.usettf || (!config.usettf && orgbookfontindex != bookfontindex) || (config.usettf && orgttfsize != ttfsize))
 	{
 		if(orgfontindex != fontindex)
@@ -1678,10 +1700,10 @@ void scene_musicopt_predraw(p_win_menuitem item, dword index, dword topindex, dw
 {
 	char number[5];
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 123 - 3 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 123 - 3 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(MUSIC_SETTING));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 #ifdef ENABLE_MUSIC
 	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.autoplay ? getmsgbyid(YES) : getmsgbyid(NO)));
 #else
@@ -1706,12 +1728,12 @@ dword scene_musicopt(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
 	dword index;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_musicopt_predraw, NULL, scene_musicopt_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_musicopt_predraw, NULL, scene_musicopt_menucb)) != INVALID);
 	return 0;
 }
 
@@ -1827,10 +1849,10 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item, dword * coun
 void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 137 + 7 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 4 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 4 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(SYSTEM_OPTION));
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 136 + 7 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 136 + 7 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showhidden ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
 	disp_putstring(242 + DISP_FONTSIZE, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showunknown ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
 	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)(config.showfinfo ? getmsgbyid(DISPLAY_OPTION) : getmsgbyid(HIDDEN_OPTION)));
@@ -1881,7 +1903,7 @@ dword scene_moptions(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1891,7 +1913,7 @@ dword scene_moptions(dword * selidx)
 	int orgfontindex = fontindex;
 	int orgbookfontindex = bookfontindex;
 	t_conf_arrange orgarrange = config.arrange;
-	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_moptions_predraw, NULL, scene_moptions_menucb)) != INVALID);
+	while((index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_moptions_predraw, NULL, scene_moptions_menucb)) != INVALID);
 #ifdef ENABLE_USB
 	if(config.isreading == false) {
 		if(config.enableusb)
@@ -1955,7 +1977,7 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item, dword * count
 void scene_locsave_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	disp_rectangle(237 - DISP_FONTSIZE * 10, 122 - 5 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 10, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(238 - DISP_FONTSIZE * 10, 123 - 5 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 122 - 4 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(238 - DISP_FONTSIZE * 10, 123 - 5 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 122 - 4 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(238 - DISP_FONTSIZE * 3, 123 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"保存文件位置");
 	disp_line(238 - DISP_FONTSIZE * 10, 123 - 4 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 123 - 4 * DISP_FONTSIZE, COLOR_WHITE);
 }
@@ -1994,14 +2016,14 @@ dword scene_locsave(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
 	location_enum(scene_loc_enum, item);
 	dword index;
 	item[1].data = (void *)*selidx;
-	index = win_menu(238 - DISP_FONTSIZE * 10, 124 - 4 * DISP_FONTSIZE, 40, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_locsave_predraw, NULL, scene_locsave_menucb);
+	index = win_menu(238 - DISP_FONTSIZE * 10, 124 - 4 * DISP_FONTSIZE, 40, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_locsave_predraw, NULL, scene_locsave_menucb);
 	return 0;
 }
 
@@ -2027,9 +2049,9 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item, dword * count
 				dword plen = strlen(config.path);
 				if(plen > 0 && config.path[plen - 1] == '/') {
 					if(strnicmp(config.path, "ms0:/", 5) == 0)
-						filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+						filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 					else
-						filecount = fs_flashdir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+						filecount = fs_flashdir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 				}
 				else
 					switch(fs_file_get_type(config.path))
@@ -2037,25 +2059,25 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item, dword * count
 					case fs_filetype_zip:
 					{
 						where = scene_in_zip;
-						filecount = fs_zip_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+						filecount = fs_zip_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 						break;
 					}
 					case fs_filetype_chm:
 					{
 						where = scene_in_chm;
-						filecount = fs_chm_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+						filecount = fs_chm_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 						break;
 					}
 					case fs_filetype_rar:
 					{
 						where = scene_in_rar;
-						filecount = fs_rar_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+						filecount = fs_rar_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 						break;
 					}
 					default:
 						STRCPY_S(config.path, "ms0:/");
 						STRCPY_S(config.shortpath, "ms0:/");
-						filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+						filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 						break;
 					}
 				if(filelist == 0)
@@ -2064,7 +2086,7 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item, dword * count
 					STRCPY_S(config.path, "ms0:/");
 					STRCPY_S(config.shortpath, "ms0:/");
 					STRCPY_S(config.lastfile, "");
-					filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+					filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 				}
 				quicksort(filelist, (filecount > 0 && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1, sizeof(t_win_menuitem), compare_func[(int)config.arrange]);
 				dword idx = 0;
@@ -2087,7 +2109,7 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item, dword * count
 void scene_locload_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	disp_rectangle(237 - DISP_FONTSIZE * 10, 122 - 5 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 10, 136 + 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(238 - DISP_FONTSIZE * 10, 123 - 5 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 122 - 4 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(238 - DISP_FONTSIZE * 10, 123 - 5 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 122 - 4 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(238 - DISP_FONTSIZE * 3, 123 - 5 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"读取文件位置");
 	disp_line(238 - DISP_FONTSIZE * 10, 123 - 4 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 10, 123 - 4 * DISP_FONTSIZE, COLOR_WHITE);
 }
@@ -2103,7 +2125,7 @@ dword scene_locload(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -2111,7 +2133,7 @@ dword scene_locload(dword * selidx)
 	dword index;
 	item[0].data = (void *)false;
 	item[1].data = (void *)*selidx;
-	index = win_menu(238 - DISP_FONTSIZE * 10, 124 - 4 * DISP_FONTSIZE, 40, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_locload_predraw, NULL, scene_locload_menucb);
+	index = win_menu(238 - DISP_FONTSIZE * 10, 124 - 4 * DISP_FONTSIZE, 40, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_locload_predraw, NULL, scene_locload_menucb);
 	*selidx = (dword)item[1].data;
 	return (bool)item[0].data;
 }
@@ -2119,10 +2141,10 @@ dword scene_locload(dword * selidx)
 void scene_setting_mgr_predraw(p_win_menuitem item, dword index, dword topindex, dword max_height)
 {
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 121 - 5 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)"设置管理");
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	char infomsg[80];
 	SPRINTF_S(infomsg, "%d号设置", config_num);
 	char conffile[256], appdir[256];
@@ -2155,23 +2177,58 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 			xrSetBrightness(curr->brightness);
 		}
 	}
-	if(prev->fontsize != curr->fontsize) {
-		scene_load_font();
-		int t = curr->vertread;
-		if(t == 3)
-			t = 0;
-		drperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - curr->borderspace * 2 + curr->rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (curr->rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (curr->infobar ? DISP_BOOK_FONTSIZE : 0) - curr->borderspace * 2) / (curr->rowspace + DISP_BOOK_FONTSIZE);
-		pixelsperrow = (t ? (curr->scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (curr->scrollbar ? 475 : PSP_SCREEN_WIDTH)) - curr->borderspace * 2;
+
+	if(!curr->usettf) {
+		int i=0;
+		for(i=0; i<fontcount; ++i) {
+			if(fonts[i].size == curr->fontsize)
+			{
+				break;
+			}
+		}
+		if(i != fontcount) {
+			fontindex = i;
+			scene_load_font();
+		}
+		else {
+			fontindex = 0;
+			scene_load_font();
+		}
+
+		for(i=0; i<bookfontcount; ++i) {
+			if(bookfonts[i].size == curr->bookfontsize)
+			{
+				break;
+			}
+		}
+		if(i != bookfontcount) {
+			bookfontindex = i;
+			scene_load_book_font();
+		}
+		else {
+			bookfontindex = 0;
+			scene_load_book_font();
+		}
 	}
-	if(prev->bookfontsize != curr->bookfontsize) {
+	else {
+		scene_load_font();
+		ttfsize = curr->bookfontsize;
 		scene_load_book_font();
 	}
+	
+	int t = curr->vertread;
+	if(t == 3)
+		t = 0;
+	drperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - curr->borderspace * 2 + curr->rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (curr->rowspace + DISP_BOOK_FONTSIZE);
+	rowsperpage = ((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - (curr->infobar ? DISP_BOOK_FONTSIZE : 0) - curr->borderspace * 2) / (curr->rowspace + DISP_BOOK_FONTSIZE);
+	pixelsperrow = (t ? (curr->scrollbar ? 267 : PSP_SCREEN_HEIGHT) : (curr->scrollbar ? 475 : PSP_SCREEN_WIDTH)) - curr->borderspace * 2;
 
+#ifdef ENABLE_BG
 	if(curr->bgfile && curr->bgfile[0] != '\0' && (prev->bgcolor != curr->bgcolor || prev->grayscale != curr->grayscale)) {
 		dbg_printf(d, "检测到背景更换: %s %d", curr->bgfile, curr->grayscale);
 		bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile), curr->grayscale);
 	}
+#endif
 	
 	int i;
 	for(i=0; i<3; ++i) {
@@ -2233,6 +2290,7 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item, dword * c
 			}
 			else if(*index == 1) {
 				// save
+				load_fontsize_to_config();
 				if(!conf_save(&config))
 				{
 					win_msg("保存设置失败!", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
@@ -2264,14 +2322,14 @@ dword scene_setting_mgr(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
 	dword index;
 	item[0].data = (void *)false;
 	item[1].data = (void *)*selidx;
-	index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.menubcolor, true, scene_setting_mgr_predraw, NULL, scene_setting_mgr_menucb);
+	index = win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_setting_mgr_predraw, NULL, scene_setting_mgr_menucb);
 
 	if(index == INVALID)
 		return win_menu_op_continue;
@@ -2354,7 +2412,7 @@ void scene_options_predraw(p_win_menuitem item, dword index, dword topindex, dwo
 #else
 	disp_rectangle(237 - DISP_FONTSIZE * 3, 120 - 7 * DISP_FONTSIZE, 241 + DISP_FONTSIZE * 3, 138 + 8 * DISP_FONTSIZE, COLOR_WHITE);
 #endif
-	disp_fillrect(238 - DISP_FONTSIZE * 3, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 3, 120 - 6 * DISP_FONTSIZE, config.menubcolor);
+	disp_fillrect(238 - DISP_FONTSIZE * 3, 121 - 7 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 3, 120 - 6 * DISP_FONTSIZE, config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	disp_putstring(238 - DISP_FONTSIZE * 2, 121 - 7 * DISP_FONTSIZE, COLOR_WHITE, (const byte *)getmsgbyid(SETTING_OPTION));
 	disp_line(238 - DISP_FONTSIZE * 3, 121 - 6 * DISP_FONTSIZE, 240 + DISP_FONTSIZE * 3, 121 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 }
@@ -2399,14 +2457,14 @@ dword scene_options(dword * selidx)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
 	item[0].data = (void *)0;
 	item[1].data = (void *)selidx;
 	dword index = 0;
-	while((index = win_menu(238 - DISP_FONTSIZE * 3, 122 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), index, 0, config.menubcolor, true, scene_options_predraw, NULL, scene_options_menucb)) != INVALID);
+	while((index = win_menu(238 - DISP_FONTSIZE * 3, 122 - 6 * DISP_FONTSIZE, 12, NELEMS(item), item, NELEMS(item), index, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_options_predraw, NULL, scene_options_menucb)) != INVALID);
 	return (dword)item[0].data;
 }
 
@@ -2531,13 +2589,13 @@ bool scene_bookmark(dword * orgp)
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
-		item[i].selrcolor = config.menubcolor;
+		item[i].selrcolor = config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 	}
 	item[0].data = (void *)orgp;
 	item[1].data = (void *)false;
 	dword index;
-	if((index = win_menu(64, 62, 7, 9, item, 9, 0, 0, config.menubcolor, true, scene_bookmark_predraw, NULL, scene_bookmark_menucb)) != INVALID);
+	if((index = win_menu(64, 62, 7, 9, item, 9, 0, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, true, scene_bookmark_predraw, NULL, scene_bookmark_menucb)) != INVALID);
 	bookmark_close(bm);
 	bm = NULL;
 	return (bool)item[1].data;
@@ -3463,39 +3521,39 @@ void scene_filelist()
 	}
 	dword plen = strlen(config.path);
 	if(plen > 0 && config.path[plen - 1] == '/')
-		filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+		filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 	else
 		switch(fs_file_get_type(config.path))
 		{
 		case fs_filetype_zip:
 		{
 			where = scene_in_zip;
-			filecount = fs_zip_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+			filecount = fs_zip_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 			break;
 		}
 		case fs_filetype_chm:
 		{
 			where = scene_in_chm;
-			filecount = fs_chm_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+			filecount = fs_chm_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 			break;
 		}
 		case fs_filetype_rar:
 		{
 			where = scene_in_rar;
-			filecount = fs_rar_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+			filecount = fs_rar_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 			break;
 		}
 		default:
 			STRCPY_S(config.path, "ms0:/");
 			STRCPY_S(config.shortpath, "ms0:/");
-			filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+			filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 			break;
 		}
 	if(filecount == 0)
 	{
 		STRCPY_S(config.path, "ms0:/");
 		STRCPY_S(config.shortpath, "ms0:/");
-		filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+		filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 	}
 	quicksort(filelist, (filecount > 0 && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1, sizeof(t_win_menuitem), compare_func[(int)config.arrange]);
 	while(idx < filecount && stricmp(filelist[idx].compname, config.lastfile) != 0)
@@ -3518,9 +3576,9 @@ void scene_filelist()
 			{
 				// empty directory ?
 				if(where == scene_in_dir) {
-					filelist = make_up_a_empty_dir(&filecount,  config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+					filelist = make_up_a_empty_dir(&filecount,  config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 					idx = 0;
-					idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, config.menubcolor, false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
+					idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
 				}
 				else {
 					char infomsg[80];
@@ -3547,7 +3605,7 @@ void scene_filelist()
 				}
 			}
 			else 
-				idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, config.menubcolor, false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
+				idx = win_menu(240 - WRR * DISP_FONTSIZE, 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2, filelist, filecount, idx, 0, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, false, scene_filelist_predraw, scene_filelist_postdraw, scene_filelist_menucb);
 		}
 		else
 		{
@@ -3559,22 +3617,22 @@ void scene_filelist()
 			switch(where)
 			{
 			case scene_in_zip:
-				filecount = fs_zip_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+				filecount = fs_zip_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 				break;
 			case scene_in_chm:
-				filecount = fs_chm_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+				filecount = fs_chm_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 				break;
 			case scene_in_rar:
-				filecount = fs_rar_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+				filecount = fs_rar_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 				break;
 			default:
-				filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+				filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 			}
 			if(filelist == 0)
 			{
 				STRCPY_S(config.path, "ms0:/");
 				STRCPY_S(config.shortpath, "ms0:/");
-				filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+				filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 			}
 			quicksort(filelist, (filecount > 0 && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1, sizeof(t_win_menuitem), compare_func[(int)config.arrange]);
 			idx = 0;
@@ -3637,11 +3695,11 @@ void scene_filelist()
 				STRCAT_S(config.path, "/");
 			}
 			if(config.path[0] == 0)
-				filecount = fs_list_device(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+				filecount = fs_list_device(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 			else if(strnicmp(config.path, "ms0:/", 5) == 0)
-				filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
+				filecount = fs_dir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor, config.showhidden, config.showunknown);
 			else
-				filecount = fs_flashdir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+				filecount = fs_flashdir_to_menu(config.path, config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 			quicksort(filelist, (filecount > 0 && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1, sizeof(t_win_menuitem), compare_func[(int)config.arrange]);
 			if(isup)
 			{
@@ -3684,7 +3742,7 @@ void scene_filelist()
 			STRCAT_S(config.path, filelist[idx].compname);
 			STRCAT_S(config.shortpath, filelist[idx].shortname);
 			idx = 0;
-			filecount = fs_zip_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+			filecount = fs_zip_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 			quicksort(filelist, (filecount > 0 && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1, sizeof(t_win_menuitem), compare_func[(int)config.arrange]);
 			break;
 		case fs_filetype_chm:
@@ -3692,7 +3750,7 @@ void scene_filelist()
 			STRCAT_S(config.path, filelist[idx].compname);
 			STRCAT_S(config.shortpath, filelist[idx].shortname);
 			idx = 0;
-			filecount = fs_chm_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+			filecount = fs_chm_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 			quicksort(filelist, (filecount > 0 && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1, sizeof(t_win_menuitem), compare_func[(int)config.arrange]);
 			break;
 		case fs_filetype_rar:
@@ -3700,7 +3758,7 @@ void scene_filelist()
 			STRCAT_S(config.path, filelist[idx].compname);
 			STRCAT_S(config.shortpath, filelist[idx].shortname);
 			idx = 0;
-			filecount = fs_rar_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.menubcolor, config.selbcolor);
+			filecount = fs_rar_to_menu(config.shortpath, &filelist, config.menutextcolor, config.selicolor, config.usedyncolor ? GetBGColorByTime() : config.menubcolor, config.selbcolor);
 			quicksort(filelist, (filecount > 0 && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1, sizeof(t_win_menuitem), compare_func[(int)config.arrange]);
 			break;
 #ifdef ENABLE_PMPAVC
@@ -4088,6 +4146,9 @@ extern void scene_init()
 		xrSetBrightness(config.brightness);
 	}
 
+	dword c = GetBGColorByTime();
+	dbg_printf(d, "GetBGColorByTime() return %d/%d/%d", RGB_R(c), RGB_G(c), RGB_B(c));
+
 	scene_filelist();
 }
 
@@ -4134,6 +4195,7 @@ extern void scene_exit()
 	SPRINTF_S(conffilename, "%s%d%s", "xreader", 0, ".conf");
 	STRCAT_S(conffile, conffilename);
 	conf_set_file(conffile);
+	load_fontsize_to_config();
 	conf_save(&config);
 
 #ifdef ENABLE_MUSIC
@@ -4193,4 +4255,98 @@ extern void scene_exception()
 extern const char * scene_appdir()
 {
 	return appdir;
+}
+
+dword ColorLerp(dword color1,dword color2,float fWeight)
+{
+	/*
+	byte r1, g1, b1;
+	byte r2, g2, b2;
+	r1 = RGB_R(color1);
+	g1 = RGB_G(color1);
+	b1 = RGB_B(color1);
+	r2 = RGB_R(color2);
+	g2 = RGB_G(color2);
+	b2 = RGB_B(color2);
+
+	dword result = RGB(
+			255-(255-r1)*fWeight-(255-r2)*(1-fWeight), 
+			255-(255-g1)*fWeight-(255-g2)*(1-fWeight), 
+			255-(255-b1)*fWeight-(255-b2)*(1-fWeight)
+			);
+
+	return result;
+	*/
+	fWeight = 1.0 - fWeight;
+	if(fWeight<=0.01f) return color1;
+	else if(fWeight>=1) return color2; 
+	else
+	{ 
+		byte Weight=(byte)(fWeight*255);
+		byte IWeight=~Weight;
+		dword dwTemp=0;
+		dwTemp =(((0xFF00FF00&color1)>>8)*IWeight+ 
+				((0xFF00FF00&color2)>>8)*Weight
+				)&0xFF00FF00;
+
+		dwTemp|=(((0x00FF00FF&color1)*IWeight+
+					(0x00FF00FF&color2)*Weight
+				 )&0xFF00FF00)>>8; 
+		return dwTemp;
+	}
+}
+
+static dword pspBGColorTable[12] = { 
+	RGB(182, 182, 182),
+	RGB(232, 195,  44),
+	RGB(141, 213,  15),
+	RGB(241, 141, 167),
+	RGB( 10, 184,   9),
+	RGB(174, 115, 233),
+	RGB(  3, 204, 194),
+	RGB( 11, 103, 186),
+	RGB(180,  66, 190),
+	RGB(236, 175,  22),
+	RGB(133,  91,  31),
+	RGB(251,  26,  22)
+};
+
+static int s_month[] = {
+	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+};
+
+#define IsLeapYear(year)  (((year) % 4 == 0 && (year) % 100) || (year) % 400 == 0)
+
+int  GetDaysOfMonth(int y, int m) {
+	return s_month[m - 1] + (m == 2) * IsLeapYear(y);
+}
+
+/* time in 24 hours */
+int GetDiffSecondOfTime(int srcHour, int srcMinute, int srcSeconds, 
+					   	  int dstHour, int dstMinute, int dstSeconds)
+{
+	return (dstHour * 60 * 60 + dstMinute * 60 + dstSeconds - (srcHour * 60 * 60 + srcMinute * 60 + srcSeconds));
+}
+
+dword GetBGColorByTime(void)
+{
+	pspTime tm;
+	sceRtcGetCurrentClockLocalTime(&tm);
+
+	int cur_month = tm.month;
+	int next_month = tm.month == 12 ? 1 : tm.month + 1;
+	dword origColor;
+
+	origColor = ColorLerp(pspBGColorTable[cur_month-1], pspBGColorTable[next_month-1], 1.0 * tm.day / GetDaysOfMonth(tm.year, cur_month));
+
+	if(tm.hour >= 12) {
+//		dbg_printf(d, "c1: %f", (1.0 * GetDiffSecondOfTime(tm.hour, tm.minutes, 24, 0) / (12.0 * 60)));
+		origColor = ColorLerp(origColor, RGB(0, 0, 0), 1.0 * GetDiffSecondOfTime(tm.hour, tm.minutes, tm.seconds, 24, 0, 0) / (12 * 60 * 60));
+	}
+	else {
+//		dbg_printf(d, "c2: %f", (1.0 * GetDiffSecondOfTime(0, 0, tm.hour, tm.minutes) / (12.0 * 60.0)));
+		origColor = ColorLerp(origColor, RGB(0, 0, 0), 1.0 * GetDiffSecondOfTime(0, 0, 0, tm.hour, tm.minutes, tm.seconds) / (12 * 60 * 60));
+	}
+
+	return origColor;
 }
