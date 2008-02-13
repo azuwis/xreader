@@ -51,9 +51,11 @@ int dbg_open_psp_logfile(DBG *d, const char *logfile);
 /** 输出到自定义函数 */
 extern int  dbg_open_custom(DBG *d, void (*writer)(const char*));
 /** 带时间格式化输出 */
-extern int  dbg_printf(DBG *d, const char* fmt, ...);
+extern int  dbg_printf(DBG *d, const char* fmt, ...)
+	__attribute__((format(printf, 2, 3)));
 /** 格式化输出 */
-extern int  dbg_printf_raw(DBG *d, const char* fmt, ...);
+extern int  dbg_printf_raw(DBG *d, const char* fmt, ...)
+	__attribute__((format(printf, 2, 3)));
 /** 十六进制转储,无ASCII版本 */
 extern int  dbg_hexdump(DBG *d, const unsigned char* data, size_t len);
 /** 十六进制转储,ASCII版本 */

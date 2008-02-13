@@ -111,7 +111,7 @@ typedef struct {
 	char bgfile[256];
 	dword slideinterval;
 	bool hprmctrl;
-	dword grayscale;
+	int grayscale;
 	bool showhidden;
 	bool showunknown;
 	bool showfinfo;
