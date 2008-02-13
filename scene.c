@@ -4147,7 +4147,7 @@ extern void scene_init()
 	}
 
 	dword c = GetBGColorByTime();
-	dbg_printf(d, "GetBGColorByTime() return %d/%d/%d", RGB_R(c), RGB_G(c), RGB_B(c));
+	dbg_printf(d, "GetBGColorByTime() return %lu/%lu/%lu", RGB_R(c), RGB_G(c), RGB_B(c));
 
 	scene_filelist();
 }
