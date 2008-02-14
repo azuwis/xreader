@@ -33,6 +33,7 @@
 #ifdef ENABLE_ME
 #include "eReader2Lib/musicwrapper.h"
 #endif
+#include "dbg.h"
 
 #define MAXVOLUME 0x8000
 
@@ -353,8 +354,11 @@ static bool mp3_load()
 		wma = wma_open(mp3_files[mp3_index]);
 		if(wma == NULL)
 			return false;
-		charsets_ucs_conv((const byte *)wma->title, (byte *)wma->title);
-		charsets_ucs_conv((const byte *)wma->author, (byte *)wma->author);
+		// the wma tag library is buggy!!!
+//		charsets_utf8_conv((const byte *)wma->title, (byte *)wma->title);
+//		charsets_utf8_conv((const byte *)wma->author, (byte *)wma->author);
+//		dbg_hexdump_ascii(d, (const unsigned char*)wma->title, 512);
+//		dbg_hexdump_ascii(d, (const unsigned char*)wma->author, 512);
 		if(wma->title[0] != 0)
 		{
 			if(wma->author[0] != 0)
