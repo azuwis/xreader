@@ -1,0 +1,22 @@
+#!/bin/sh
+
+if [ $# -lt 1 ]; then
+	echo "Auto Indent Script "
+	echo "Usage: $0 <source_and_header_files>"
+fi
+
+while [ $# -gt 0 ];
+do
+	SRC="$1"
+	INDENTFLAG="-kr -ut -bad -bap -br -bls -brs -ts4 -l80 -sob -cdw -cli4 -bls -i4 -nce"
+	echo "Indenting $SRC"
+	test ! -f "$SRC" && (echo "$SRC doesn't exists"; shift; continue)
+	dos2unix "$SRC"
+	INDENTFLAG="-kr -ut -bad -bap -br -bls -brs -ts4 -l80 -sob -cdw -cli4 -bls -i4 -nce"
+	indent $INDENTFLAG "$SRC"
+	INDENTFLAG="-kr -ut -bad -bap -br -bls -brs -ts4 -l80 -sob -cdw -cli4 -bls -i4 -ce"
+	indent $INDENTFLAG "$SRC"
+	dos2unix "$SRC"
+	shift
+done
+
