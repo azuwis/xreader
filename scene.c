@@ -2679,12 +2679,17 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 		curr->borderspace * 2;
 
 #ifdef ENABLE_BG
-	if (curr->bgfile && curr->bgfile[0] != '\0'
-		&& (prev->bgcolor != curr->bgcolor
-			|| prev->grayscale != curr->grayscale)) {
-		dbg_printf(d, "¼ì²âµ½±³¾°¸ü»»: %s %d", curr->bgfile, curr->grayscale);
+	if (prev->have_bg == false && curr->have_bg == true) {
 		bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile),
 				curr->grayscale);
+	} else if (prev->have_bg == true && curr->have_bg == false) {
+		bg_cancel();
+	} else if (prev->have_bg == true && curr->have_bg == true) {
+		if (strcmp(prev->bgfile, curr->bgfile) != 0
+			|| curr->grayscale != prev->grayscale) {
+			bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile),
+					curr->grayscale);
+		}
 	}
 #endif
 

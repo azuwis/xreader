@@ -372,6 +372,7 @@ static unsigned image_chm_fread(void *buf, unsigned r, unsigned n, void *stream)
 											 &((p_image_chm) stream)->ui, buf,
 											 ((p_image_chm) stream)->readpos,
 											 r * n);
+
 	if (readsize < 0)
 		readsize = 0;
 	((p_image_chm) stream)->readpos += readsize;

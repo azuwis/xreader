@@ -111,6 +111,7 @@ static void conf_default(p_conf conf)
 	STRCAT_S(conf->bgfile, "bg.png");
 	conf->forecolor = 0xFFFFFFFF;
 	conf->bgcolor = 0;
+	conf->have_bg = true;
 	conf->rowspace = 2;
 	conf->wordspace = 0;
 	conf->borderspace = 0;

@@ -88,6 +88,7 @@ typedef struct
 	char path[256];
 	dword forecolor;
 	dword bgcolor;
+	bool have_bg;
 	dword titlecolor;
 	dword menutextcolor;
 	dword menubcolor;

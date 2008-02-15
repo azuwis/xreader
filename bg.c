@@ -10,10 +10,12 @@
 #include "image.h"
 #include "bg.h"
 #include "pspscreen.h"
+#include "config.h"
+
+extern t_conf config;
 
 static pixel *bg_start =
 	(pixel *) (0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES * 2);
-static bool have_bg = false;
 static dword imgwidth, imgheight;
 
 extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
@@ -93,7 +95,7 @@ extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
 			img_buf++;
 		}
 
-	have_bg = true;
+	config.have_bg = true;
 
 	if (imgshow != imgdata)
 		free((void *) imgshow);
@@ -104,7 +106,7 @@ extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
 
 extern bool bg_display()
 {
-	if (have_bg) {
+	if (config.have_bg) {
 		memcpy(vram_start, bg_start, 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 		return true;
 	}
@@ -113,14 +115,14 @@ extern bool bg_display()
 
 extern void bg_cancel()
 {
-	have_bg = false;
+	config.have_bg = false;
 }
 
 static byte *_cache = NULL;
 
 extern void bg_cache()
 {
-	if (!have_bg)
+	if (!config.have_bg)
 		return;
 	if (_cache != NULL)
 		free((void *) _cache);
@@ -132,7 +134,7 @@ extern void bg_cache()
 
 extern void bg_restore()
 {
-	if (!have_bg)
+	if (!config.have_bg)
 		return;
 	if (_cache == NULL)
 		return;
