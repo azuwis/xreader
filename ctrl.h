@@ -18,8 +18,9 @@
 
 extern void ctrl_init();
 extern void ctrl_destroy();
+
 #ifdef ENABLE_ANALOG
-extern void ctrl_analog(int * x, int * y);
+extern void ctrl_analog(int *x, int *y);
 #endif
 extern dword ctrl_read_cont();
 extern dword ctrl_read();
@@ -29,11 +30,13 @@ extern dword ctrl_waitany();
 extern dword ctrl_waitkey(dword keymask);
 extern dword ctrl_waitmask(dword keymask);
 extern dword ctrl_waitlyric();
+
 #ifdef ENABLE_HPRM
 extern dword ctrl_hprm();
 extern dword ctrl_hprm_raw();
 #endif
 extern dword ctrl_waittime(dword t);
+
 #ifdef ENABLE_HPRM
 extern void ctrl_enablehprm(bool enable);
 #endif

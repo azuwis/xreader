@@ -9,9 +9,10 @@ extern void scene_init();
 extern void scene_exit();
 extern void scene_power_save(bool save);
 extern void scene_exception();
-extern const char * scene_appdir();
+extern const char *scene_appdir();
 
-enum {
+enum
+{
 	scene_in_dir,
 	scene_in_zip,
 	scene_in_chm,
@@ -19,10 +20,10 @@ enum {
 	scene_in_gz
 } where;
 
-typedef struct {
+typedef struct
+{
 	int size;
 	bool zipped;
 } t_fonts;
-
 
 #endif

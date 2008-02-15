@@ -3,12 +3,14 @@
 #ifndef MSGRESOURCE_H
 #define MSGRESOURCE_H
 
-typedef struct {
-	const char* msg;
+typedef struct
+{
+	const char *msg;
 	int id;
 } MsgResource;
 
-enum {
+enum
+{
 	EXIT_PROMPT = 0,
 	YES,
 	NO,
@@ -101,7 +103,7 @@ enum {
 	UNKNOWN
 };
 
-const char* getmsgbyid(int id);
-void setmsglang(const char* langname);
+const char *getmsgbyid(int id);
+void setmsglang(const char *langname);
 
 #endif

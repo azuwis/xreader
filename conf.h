@@ -5,7 +5,8 @@
 
 #include "common/datatype.h"
 
-typedef enum {
+typedef enum
+{
 	conf_encode_gbk = 0,
 	conf_encode_big5 = 1,
 	conf_encode_sjis = 2,
@@ -13,7 +14,8 @@ typedef enum {
 	conf_encode_utf8 = 4
 } t_conf_encode;
 
-typedef enum {
+typedef enum
+{
 	conf_fit_none = 0,
 	conf_fit_width = 1,
 	conf_fit_dblwidth = 2,
@@ -22,21 +24,24 @@ typedef enum {
 	conf_fit_custom = 5
 } t_conf_fit;
 
-typedef enum {
+typedef enum
+{
 	conf_rotate_0 = 0,
 	conf_rotate_90 = 1,
 	conf_rotate_180 = 2,
 	conf_rotate_270 = 3,
 } t_conf_rotate;
 
-typedef enum {
+typedef enum
+{
 	conf_cycle_single = 0,
 	conf_cycle_repeat = 1,
 	conf_cycle_repeat_one = 2,
 	conf_cycle_random = 3
 } t_conf_cycle;
 
-typedef enum {
+typedef enum
+{
 	conf_arrange_ext = 0,
 	conf_arrange_name = 1,
 	conf_arrange_size = 2,
@@ -44,7 +49,8 @@ typedef enum {
 	conf_arrange_mtime = 4
 } t_conf_arrange;
 
-typedef enum {
+typedef enum
+{
 	conf_viewpos_leftup = 0,
 	conf_viewpos_midup = 1,
 	conf_viewpos_rightup = 2,
@@ -56,25 +62,29 @@ typedef enum {
 	conf_viewpos_rightdown = 8,
 } t_conf_viewpos;
 
-typedef enum {
+typedef enum
+{
 	conf_imgpaging_direct = 0,
 	conf_imgpaging_updown = 1,
 	conf_imgpaging_leftright = 2,
 } t_conf_imgpaging;
 
-typedef enum {
+typedef enum
+{
 	conf_thumb_none = 0,
 	conf_thumb_scroll = 1,
 	conf_thumb_always = 2
 } t_conf_thumb;
 
-typedef enum {
+typedef enum
+{
 	conf_infobar_none = 0,
 	conf_infobar_info = 1,
 	conf_infobar_lyric = 2
 } t_conf_infobar;
 
-typedef struct {
+typedef struct
+{
 	char path[256];
 	dword forecolor;
 	dword bgcolor;
@@ -84,7 +94,7 @@ typedef struct {
 	dword selicolor;
 	dword selbcolor;
 	dword msgbcolor;
-	bool  usedyncolor;
+	bool usedyncolor;
 	dword rowspace;
 	t_conf_infobar infobar;
 	bool rlastrow;
@@ -125,10 +135,10 @@ typedef struct {
 	int fontsize;
 	bool reordertxt;
 	bool pagetonext;
-	int  autopage;
+	int autopage;
 	int prev_autopage;
-	int  autopagetype;
-	int  autolinedelay;
+	int autopagetype;
+	int autolinedelay;
 	bool thumb;
 	int bookfontsize;
 	int enable_analog;
@@ -143,11 +153,11 @@ typedef struct {
 	int freqs[3];
 	short imgbrightness;
 	bool dis_scrsave;
-	int  autosleep;
+	int autosleep;
 	bool load_exif;
 	int brightness;
 	int launchtype;
-} t_conf, * p_conf;
+} t_conf, *p_conf;
 
 /* txt key:
 	0 - bookmark;
@@ -178,17 +188,17 @@ typedef struct {
 	above 9 - reversed for future version
 */
 
-extern void conf_set_file(const char * filename);
+extern void conf_set_file(const char *filename);
 extern void conf_get_keyname(dword key, char *res);
 extern bool conf_load(p_conf conf);
 extern bool conf_save(p_conf conf);
-extern const char * conf_get_encodename(t_conf_encode encode);
-extern const char * conf_get_fitname(t_conf_fit fit);
-extern const char * conf_get_cyclename(t_conf_cycle cycle);
-extern const char * conf_get_arrangename(t_conf_arrange arrange);
-extern const char * conf_get_viewposname(t_conf_viewpos viewpos);
-extern const char * conf_get_imgpagingname(t_conf_imgpaging imgpaging);
-extern const char * conf_get_thumbname(t_conf_thumb thumb);
-extern const char * conf_get_infobarname(t_conf_infobar infobar);
+extern const char *conf_get_encodename(t_conf_encode encode);
+extern const char *conf_get_fitname(t_conf_fit fit);
+extern const char *conf_get_cyclename(t_conf_cycle cycle);
+extern const char *conf_get_arrangename(t_conf_arrange arrange);
+extern const char *conf_get_viewposname(t_conf_viewpos viewpos);
+extern const char *conf_get_imgpagingname(t_conf_imgpaging imgpaging);
+extern const char *conf_get_thumbname(t_conf_thumb thumb);
+extern const char *conf_get_infobarname(t_conf_infobar infobar);
 
 #endif

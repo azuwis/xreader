@@ -17,16 +17,16 @@
 
 static int pmp_inited = 0;
 static void *m1 = NULL, *m2 = NULL;
-char* avc_static_init();
-void* valloc(size_t size);
-void vfree(void* ptr);
-char* gu_font_init();
-char* gu_font_load(char* name);
+char *avc_static_init();
+void *valloc(size_t size);
+void vfree(void *ptr);
+char *gu_font_init();
+char *gu_font_load(char *name);
 void gu_font_close();
 
 extern bool avc_init()
 {
-	if(pmp_inited)
+	if (pmp_inited)
 		return true;
 
 	m1 = valloc(4 * 512 * 272);
@@ -40,6 +40,7 @@ extern bool avc_init()
 
 	gu_font_init();
 	char ftn[256];
+
 	getcwd(ftn, 256);
 	STRCAT_S(ftn, "/font10.f");
 	gu_font_load(ftn);
@@ -51,12 +52,10 @@ extern bool avc_init()
 extern void avc_free()
 {
 	gu_font_close();
-	if (m1 != NULL)
-	{
+	if (m1 != NULL) {
 		vfree(m1);
 	}
-	if (m2 != NULL)
-	{
+	if (m2 != NULL) {
 		vfree(m2);
 	}
 	sceUtilityUnloadAvModule(PSP_AV_MODULE_ATRAC3PLUS);
@@ -68,7 +67,8 @@ extern void avc_free()
 extern void avc_start()
 {
 	bg_cache();
-	void * vram = (void*) (0x40000000 | (u32) sceGeEdramGetAddr());
+	void *vram = (void *) (0x40000000 | (u32) sceGeEdramGetAddr());
+
 	sceDisplaySetMode(0, 480, 272);
 	sceDisplaySetFrameBuf(vram, 512, PSP_DISPLAY_PIXEL_FORMAT_8888, 1);
 	memset(vram, 0, 4 * 512 * 272);

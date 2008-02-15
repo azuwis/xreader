@@ -17,6 +17,7 @@
 #define CTRL_REPEAT_TIME 0x40000
 static unsigned int last_btn = 0;
 static unsigned int last_tick = 0;
+
 #ifdef ENABLE_HPRM
 static bool hprmenable = false;
 static u32 lasthprmkey = 0;
@@ -46,12 +47,13 @@ extern void ctrl_destroy()
 }
 
 #ifdef ENABLE_ANALOG
-extern void ctrl_analog(int * x, int * y)
+extern void ctrl_analog(int *x, int *y)
 {
 	SceCtrlData ctl;
-	sceCtrlReadBufferPositive(&ctl,1);
-	*x = ((int)ctl.Lx) - 128;
-	*y = ((int)ctl.Ly) - 128;
+
+	sceCtrlReadBufferPositive(&ctl, 1);
+	*x = ((int) ctl.Lx) - 128;
+	*y = ((int) ctl.Ly) - 128;
 }
 #endif
 
@@ -59,39 +61,35 @@ extern dword ctrl_read_cont()
 {
 	SceCtrlData ctl;
 
-	sceCtrlReadBufferPositive(&ctl,1);
+	sceCtrlReadBufferPositive(&ctl, 1);
 
 #ifdef ENABLE_HPRM
-	if(hprmenable && sceHprmIsRemoteExist())
-	{
+	if (hprmenable && sceHprmIsRemoteExist()) {
 		u32 key;
-		if(sceKernelWaitSema(hprm_sema, 1, NULL) >= 0)
-		{
+
+		if (sceKernelWaitSema(hprm_sema, 1, NULL) >= 0) {
 			sceHprmPeekCurrentKey(&key);
 			sceKernelSignalSema(hprm_sema, 1);
 
-			if(key > 0)
-			{
-				switch(key)
-				{
-				case PSP_HPRM_FORWARD:
-					if(key == lastkhprmkey)
-						break;
-					lastkhprmkey = key;
-					return CTRL_FORWARD;
-				case PSP_HPRM_BACK:
-					if(key == lastkhprmkey)
-						break;
-					lastkhprmkey = key;
-					return CTRL_BACK;
-				case PSP_HPRM_PLAYPAUSE:
-					if(key == lastkhprmkey)
-						break;
-					lastkhprmkey = key;
-					return CTRL_PLAYPAUSE;
+			if (key > 0) {
+				switch (key) {
+					case PSP_HPRM_FORWARD:
+						if (key == lastkhprmkey)
+							break;
+						lastkhprmkey = key;
+						return CTRL_FORWARD;
+					case PSP_HPRM_BACK:
+						if (key == lastkhprmkey)
+							break;
+						lastkhprmkey = key;
+						return CTRL_BACK;
+					case PSP_HPRM_PLAYPAUSE:
+						if (key == lastkhprmkey)
+							break;
+						lastkhprmkey = key;
+						return CTRL_PLAYPAUSE;
 				}
-			}
-			else
+			} else
 				lastkhprmkey = 0;
 		}
 	}
@@ -101,7 +99,7 @@ extern dword ctrl_read_cont()
 	if (ctl.Lx < 65 || ctl.Lx > 191 || ctl.Ly < 65 || ctl.Ly > 191)
 		return CTRL_ANALOG | ctl.Buttons;
 #endif
-	last_btn  = ctl.Buttons;
+	last_btn = ctl.Buttons;
 	last_tick = ctl.TimeStamp;
 	return last_btn;
 }
@@ -111,48 +109,46 @@ extern dword ctrl_read()
 	SceCtrlData ctl;
 
 #ifdef ENABLE_HPRM
-	if(hprmenable && sceHprmIsRemoteExist())
-	{
+	if (hprmenable && sceHprmIsRemoteExist()) {
 		u32 key;
+
 		sceHprmPeekCurrentKey(&key);
 
-		if(key > 0)
-		{
-			switch(key)
-			{
-			case PSP_HPRM_FORWARD:
-				if(key == lastkhprmkey)
-					break;
-				lastkhprmkey = key;
-				return CTRL_FORWARD;
-			case PSP_HPRM_BACK:
-				if(key == lastkhprmkey)
-					break;
-				lastkhprmkey = key;
-				return CTRL_BACK;
-			case PSP_HPRM_PLAYPAUSE:
-				if(key == lastkhprmkey)
-					break;
-				lastkhprmkey = key;
-				return CTRL_PLAYPAUSE;
+		if (key > 0) {
+			switch (key) {
+				case PSP_HPRM_FORWARD:
+					if (key == lastkhprmkey)
+						break;
+					lastkhprmkey = key;
+					return CTRL_FORWARD;
+				case PSP_HPRM_BACK:
+					if (key == lastkhprmkey)
+						break;
+					lastkhprmkey = key;
+					return CTRL_BACK;
+				case PSP_HPRM_PLAYPAUSE:
+					if (key == lastkhprmkey)
+						break;
+					lastkhprmkey = key;
+					return CTRL_PLAYPAUSE;
 			}
-		}
-		else
+		} else
 			lastkhprmkey = 0;
 	}
 #endif
 
-	sceCtrlReadBufferPositive(&ctl,1);
+	sceCtrlReadBufferPositive(&ctl, 1);
 
 #ifdef ENABLE_ANALOG
 	if (ctl.Lx < 65 || ctl.Lx > 191 || ctl.Ly < 65 || ctl.Ly > 191)
 		return CTRL_ANALOG;
 #endif
 	if (ctl.Buttons == last_btn) {
-		if (ctl.TimeStamp - last_tick < CTRL_REPEAT_TIME) return 0;
+		if (ctl.TimeStamp - last_tick < CTRL_REPEAT_TIME)
+			return 0;
 		return last_btn;
 	}
-	last_btn  = ctl.Buttons;
+	last_btn = ctl.Buttons;
 	last_tick = ctl.TimeStamp;
 	return last_btn;
 }
@@ -160,8 +156,9 @@ extern dword ctrl_read()
 extern void ctrl_waitreleaseintime(int i)
 {
 	SceCtrlData ctl;
+
 	do {
-		sceCtrlReadBufferPositive(&ctl,1);
+		sceCtrlReadBufferPositive(&ctl, 1);
 		sceKernelDelayThread(i);
 	} while (ctl.Buttons != 0);
 }
@@ -175,8 +172,7 @@ extern dword ctrl_waitany()
 {
 	dword key;
 
-	while((key = ctrl_read()) == 0)
-	{
+	while ((key = ctrl_read()) == 0) {
 		sceKernelDelayThread(20000);
 	}
 	return key;
@@ -185,8 +181,8 @@ extern dword ctrl_waitany()
 extern dword ctrl_waitkey(dword keymask)
 {
 	dword key;
-	while((key = ctrl_read()) != key)
-	{
+
+	while ((key = ctrl_read()) != key) {
 		sceKernelDelayThread(20000);
 	}
 	return key;
@@ -195,8 +191,8 @@ extern dword ctrl_waitkey(dword keymask)
 extern dword ctrl_waitmask(dword keymask)
 {
 	dword key;
-	while(((key = ctrl_read()) & keymask) == 0)
-	{
+
+	while (((key = ctrl_read()) & keymask) == 0) {
 		sceKernelDelayThread(20000);
 	}
 	return key;
@@ -207,10 +203,9 @@ extern dword ctrl_waitlyric()
 {
 	dword key;
 
-	while((key = ctrl_read()) == 0)
-	{
+	while ((key = ctrl_read()) == 0) {
 		sceKernelDelayThread(20000);
-		if(lyric_check_changed(mp3_get_lyric()))
+		if (lyric_check_changed(mp3_get_lyric()))
 			break;
 	}
 	return key;
@@ -221,26 +216,28 @@ extern dword ctrl_waitlyric()
 extern dword ctrl_hprm()
 {
 	u32 key = ctrl_hprm_raw();
-	if(key == lasthprmkey)
+
+	if (key == lasthprmkey)
 		return 0;
 
 	lasthprmkey = key;
-	return (dword)key;
+	return (dword) key;
 }
 
 extern dword ctrl_hprm_raw()
 {
 /*	if(sceKernelDevkitVersion() >= 0x02000010)
 		return 0;*/
-	if(!sceHprmIsRemoteExist())
+	if (!sceHprmIsRemoteExist())
 		return 0;
 
-	if(sceKernelWaitSema(hprm_sema, 1, NULL) < 0)
+	if (sceKernelWaitSema(hprm_sema, 1, NULL) < 0)
 		return 0;
 	u32 key;
+
 	sceHprmPeekCurrentKey(&key);
 	sceKernelSignalSema(hprm_sema, 1);
-	return (dword)key;
+	return (dword) key;
 }
 #endif
 
@@ -248,10 +245,10 @@ extern dword ctrl_waittime(dword t)
 {
 	dword key;
 	time_t t1 = time(NULL);
-	while((key = ctrl_read()) == 0)
-	{
+
+	while ((key = ctrl_read()) == 0) {
 		sceKernelDelayThread(20000);
-		if(time(NULL) - t1 >= t)
+		if (time(NULL) - t1 >= t)
 			return 0;
 	}
 	return key;
@@ -260,6 +257,6 @@ extern dword ctrl_waittime(dword t)
 #ifdef ENABLE_HPRM
 extern void ctrl_enablehprm(bool enable)
 {
-	hprmenable = /*(sceKernelDevkitVersion() < 0x02000010) &&*/ enable;
+	hprmenable = /*(sceKernelDevkitVersion() < 0x02000010) && */ enable;
 }
 #endif

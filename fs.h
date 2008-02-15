@@ -7,7 +7,8 @@
 #include "conf.h"
 #include "win.h"
 
-typedef enum {
+typedef enum
+{
 	fs_filetype_dir = 0,
 	fs_filetype_chm,
 	fs_filetype_gz,
@@ -37,13 +38,26 @@ typedef enum {
 	fs_filetype_unknown
 } t_fs_filetype;
 
-extern dword fs_list_device(const char * dir, const char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor);
-extern dword fs_flashdir_to_menu(const char * dir, const char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor);
-extern dword fs_dir_to_menu(const char * dir, char * sdir, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor, bool showhidden, bool showunknown);
-extern dword fs_zip_to_menu(const char * zipfile, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor);
-extern dword fs_rar_to_menu(const char * rarfile, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor);
-extern dword fs_chm_to_menu(const char * chmfile, p_win_menuitem * mitem, dword icolor, dword selicolor, dword selrcolor, dword selbcolor);
-extern t_fs_filetype fs_file_get_type(const char * filename);
+extern dword fs_list_device(const char *dir, const char *sdir,
+							p_win_menuitem * mitem, dword icolor,
+							dword selicolor, dword selrcolor, dword selbcolor);
+extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
+								 p_win_menuitem * mitem, dword icolor,
+								 dword selicolor, dword selrcolor,
+								 dword selbcolor);
+extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
+							dword icolor, dword selicolor, dword selrcolor,
+							dword selbcolor, bool showhidden, bool showunknown);
+extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
+							dword icolor, dword selicolor, dword selrcolor,
+							dword selbcolor);
+extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
+							dword icolor, dword selicolor, dword selrcolor,
+							dword selbcolor);
+extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
+							dword icolor, dword selicolor, dword selrcolor,
+							dword selbcolor);
+extern t_fs_filetype fs_file_get_type(const char *filename);
 extern bool fs_is_image(t_fs_filetype ft);
 extern bool fs_is_txtbook(t_fs_filetype ft);
 

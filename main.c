@@ -25,7 +25,7 @@ PSP_HEAP_SIZE_MAX();
 PSP_MODULE_INFO("XREADER", 0x1000, 1, 0);
 PSP_MAIN_THREAD_PARAMS(45, 256, 0);
 
-static void exception_handler(PspDebugRegBlock *regs)
+static void exception_handler(PspDebugRegBlock * regs)
 {
 	/* Do normal initial dump, setup screen etc */
 	pspDebugScreenInit();
@@ -36,12 +36,15 @@ static void exception_handler(PspDebugRegBlock *regs)
 	pspDebugScreenClear();
 
 	pspDebugScreenPrintf("The application has just crashed\n");
-	pspDebugScreenPrintf("Please contact aeolusc @ pspchina.com or post comments at www.pspsp.org\n\n");
+	pspDebugScreenPrintf
+		("Please contact aeolusc @ pspchina.com or post comments at www.pspsp.org\n\n");
 	pspDebugScreenPrintf("Exception Details:\n");
 	pspDebugDumpException(regs);
 	pspDebugScreenPrintf("\nThe offending routine may be identified with:\n\n"
-		"\tpsp-addr2line -e target.elf -f -C 0x%x 0x%x 0x%x\n",
-		(unsigned int)regs->epc, (unsigned int)regs->badvaddr, (unsigned int)regs->r[31]);
+						 "\tpsp-addr2line -e target.elf -f -C 0x%x 0x%x 0x%x\n",
+						 (unsigned int) regs->epc,
+						 (unsigned int) regs->badvaddr,
+						 (unsigned int) regs->r[31]);
 	pspDebugScreenPrintf("\nThanks for support!\n");
 }
 
@@ -60,16 +63,13 @@ void loaderInit()
 }
 #endif
 
-static int power_callback(int arg1, int powerInfo, void * arg)
+static int power_callback(int arg1, int powerInfo, void *arg)
 {
 #ifdef ENABLE_MUSIC
-	if((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0)
-	{
+	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0) {
 		mp3_powerdown();
 		fat_powerdown();
-	}
-	else if((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0)
-	{
+	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
 		sceKernelDelayThread(1000000);
 		fat_powerup();
 		mp3_powerup();
@@ -93,6 +93,7 @@ static int exit_callback(int arg1, int arg2, void *arg)
 static int CallbackThread(unsigned int args, void *argp)
 {
 	int cbid;
+
 	cbid = sceKernelCreateCallback("Exit Callback", exit_callback, NULL);
 	sceKernelRegisterExitCallback(cbid);
 	cbid = sceKernelCreateCallback("Power Callback", power_callback, NULL);
@@ -103,12 +104,14 @@ static int CallbackThread(unsigned int args, void *argp)
 	return 0;
 }
 
-/* Sets up the callback thread and returns its thread id */ 
-static int SetupCallbacks(void) 
+/* Sets up the callback thread and returns its thread id */
+static int SetupCallbacks(void)
 {
-	int thid = sceKernelCreateThread("Callback Thread", CallbackThread, 0x11, 0x1F40, PSP_THREAD_ATTR_USER, 0);
-	if(thid >= 0)
-	{
+	int thid =
+		sceKernelCreateThread("Callback Thread", CallbackThread, 0x11, 0x1F40,
+							  PSP_THREAD_ATTR_USER, 0);
+
+	if (thid >= 0) {
 		sceKernelStartThread(thid, 0, 0);
 	}
 	return thid;
@@ -120,15 +123,17 @@ static int main_thread(unsigned int args, void *argp)
 	return 0;
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
 	SetupCallbacks();
 #ifdef ENABLE_PMPAVC
 	avc_init();
 #endif
 
-	int thid = sceKernelCreateThread("User Thread", main_thread, 45, 0x40000, PSP_THREAD_ATTR_USER, NULL);
-	if(thid < 0)
+	int thid = sceKernelCreateThread("User Thread", main_thread, 45, 0x40000,
+									 PSP_THREAD_ATTR_USER, NULL);
+
+	if (thid < 0)
 		sceKernelSleepThread();
 	sceKernelStartThread(thid, 0, NULL);
 

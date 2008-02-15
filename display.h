@@ -3,7 +3,7 @@
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
 
-#ifdef ENABLE_GE 
+#ifdef ENABLE_GE
 #include <pspgu.h>
 #endif
 #include <pspdisplay.h>
@@ -15,6 +15,7 @@ extern byte disp_ewidth[0x80];
 // R,G,B color to word value color
 #ifdef COLOR16BIT
 typedef word pixel;
+
 #define PIXEL_BYTES 2
 #define COLOR_MAX 31
 #define COLOR_WHITE 0xFFFF
@@ -30,6 +31,7 @@ typedef word pixel;
 #else
 
 typedef dword pixel;
+
 #define PIXEL_BYTES 4
 #define COLOR_MAX 255
 #define COLOR_WHITE 0xFFFFFFFF
@@ -46,7 +48,7 @@ typedef dword pixel;
 
 #define disp_grayscale(c,r,g,b,gs) RGB2(((r)*(gs)+RGB_R(c)*(100-(gs)))/100,((g)*(gs)+RGB_G(c)*(100-(gs)))/100,((b)*(gs)+RGB_B(c)*(100-(gs)))/100)
 
-extern pixel * vram_start;
+extern pixel *vram_start;
 
 // sceDisplayWaitVblankStart function alias name, define is faster than function call (even at most time this is inline linked)
 #define disp_waitv() sceDisplayWaitVblankStart()
@@ -58,40 +60,61 @@ extern void disp_init();
 extern void init_gu(void);
 extern void disp_set_fontsize(int fontsize);
 extern void disp_set_book_fontsize(int fontsize);
-extern bool disp_has_zipped_font(const char * zipfile, const char * efont, const char * cfont);
-extern bool disp_load_zipped_font(const char * zipfile, const char * efont, const char * cfont);
-extern bool disp_load_zipped_book_font(const char * zipfile, const char * efont, const char * cfont);
-extern bool disp_load_truetype_book_font(const char * ettffile, const char *cttffile, int size);
-extern bool disp_load_zipped_truetype_book_font(const char * zipfile, const char * ettffile, const char *cttffile, int size);
-extern bool disp_has_font(const char * efont, const char * cfont);
-extern bool disp_load_font(const char * efont, const char * cfont);
-extern bool disp_load_book_font(const char * efont, const char * cfont);
+extern bool disp_has_zipped_font(const char *zipfile, const char *efont,
+								 const char *cfont);
+extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
+								  const char *cfont);
+extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
+									   const char *cfont);
+extern bool disp_load_truetype_book_font(const char *ettffile,
+										 const char *cttffile, int size);
+extern bool disp_load_zipped_truetype_book_font(const char *zipfile,
+												const char *ettffile,
+												const char *cttffile, int size);
+extern bool disp_has_font(const char *efont, const char *cfont);
+extern bool disp_load_font(const char *efont, const char *cfont);
+extern bool disp_load_book_font(const char *efont, const char *cfont);
 extern void disp_assign_book_font();
 extern void disp_free_font();
 extern void disp_flip();
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf);
+
 #ifdef ENABLE_GE
-extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx, int starty, int ow, int oh, pixel * buf, bool swizzled);
+extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
+							 int starty, int ow, int oh, pixel * buf,
+							 bool swizzled);
 #endif
-extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx, dword starty, pixel * buf);
+extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx,
+						  dword starty, pixel * buf);
 extern void disp_duptocache();
 extern void disp_duptocachealpha(int percent);
 extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2);
-extern void disp_rectduptocachealpha(dword x1, dword y1, dword x2, dword y2, int percent);
+extern void disp_rectduptocachealpha(dword x1, dword y1, dword x2, dword y2,
+									 int percent);
 
-extern void disp_putnstring(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot);
+extern void disp_putnstring(int x, int y, pixel color, const byte * str,
+							int count, dword wordspace, int top, int height,
+							int bot);
 #define disp_putstring(x,y,color,str) disp_putnstring((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_FONTSIZE,PSP_SCREEN_HEIGHT)
 
-extern void disp_putnstringreversal(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot);
+extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
+									int count, dword wordspace, int top,
+									int height, int bot);
 #define disp_putstringreversal(x,y,color,str) disp_putnstringreversal((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
 
-extern void disp_putnstringhorz(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot);
+extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
+								int count, dword wordspace, int top, int height,
+								int bot);
 #define disp_putstringhorz(x,y,color,str) disp_putnstringhorz((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
 
-extern void disp_putnstringlvert(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot);
+extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
+								 int count, dword wordspace, int top,
+								 int height, int bot);
 #define disp_putstringlvert(x,y,color,str) disp_putnstringlvert((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
 
-extern void disp_putnstringrvert(int x, int y, pixel color, const byte *str, int count, dword wordspace, int top, int height, int bot);
+extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
+								 int count, dword wordspace, int top,
+								 int height, int bot);
 #define disp_putstringrvert(x,y,color,str) disp_putnstringrvert((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
 
 extern void disp_fillvram(pixel color);

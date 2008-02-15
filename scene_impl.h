@@ -14,6 +14,7 @@ extern p_text fs;
 extern t_conf config;
 extern p_win_menuitem filelist, copylist, cutlist;
 extern dword filecount, copycount, cutcount;
+
 #ifdef ENABLE_BG
 extern bool repaintbg;
 #endif
@@ -28,18 +29,22 @@ extern void scene_init();
 extern void scene_exit();
 extern void scene_power_save(bool save);
 extern void scene_exception();
-extern const char * scene_appdir();
+extern const char *scene_appdir();
 dword scene_readbook(dword selidx);
-dword scene_readbook_raw(const char* title, const unsigned char* data, size_t size, t_fs_filetype ft);
-extern void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd, dword * kl, dword * kr);
+dword scene_readbook_raw(const char *title, const unsigned char *data,
+						 size_t size, t_fs_filetype ft);
+extern void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku,
+							 dword * kd, dword * kl, dword * kr);
 extern bool scene_bookmark(dword * orgp);
 extern dword scene_options(dword * selidx);
 extern void scene_mp3bar();
+
 #ifdef ENABLE_IMAGE
 dword scene_readimage(dword selidx);
 dword scene_imgkey(dword * selidx);
 #endif
 extern dword scene_readbook(dword selidx);
+
 #ifdef ENABLE_IMAGE
 extern dword scene_readimage(dword selidx);
 #endif
@@ -47,7 +52,7 @@ extern dword scene_readimage(dword selidx);
 typedef struct _BookViewData
 {
 	int rowtop;
-	char tr[8], * trow;
+	char tr[8], *trow;
 	bool text_needrf, text_needrp, text_needrb;
 	char filename[256], archname[256];
 	dword rrow;
