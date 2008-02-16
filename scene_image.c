@@ -521,34 +521,37 @@ int scene_printimage(int selidx)
 							0, 0, DISP_FONTSIZE, 0);
 		}
 	}
-	if ((config.thumb == conf_thumb_always || thumb) &&
-		(!config.load_exif || (exif_array && exif_array->used <= 0))) {
-		dword top = (PSP_SCREEN_HEIGHT - thumbh) / 2, bottom = top + thumbh;
-		dword thumbl = 0, thumbr = 0, thumbt = 0, thumbb = 0;
+	if ((config.thumb == conf_thumb_always || thumb)) {
+		if (!config.imginfobar
+			|| !(config.load_exif && exif_array && exif_array->used > 0)) {
+			dword top = (PSP_SCREEN_HEIGHT - thumbh) / 2, bottom = top + thumbh;
+			dword thumbl = 0, thumbr = 0, thumbt = 0, thumbb = 0;
 
-		if (paintleft > 0) {
-			thumbl = 0;
-			thumbr = thumbw - 1;
-		} else {
-			thumbl = curleft * thumbw / w2;
-			thumbr = (curleft + 479) * thumbw / w2;
-		}
-		if (painttop > 0) {
-			thumbt = 0;
-			thumbb = thumbb - 1;
-		} else {
-			thumbt = curtop * thumbh / h2;
-			thumbb = (curtop + imgh - 1) * thumbh / h2;
-		}
-		disp_putimage(32, top, thumbw, thumbh, 0, 0, thumbimg);
-		disp_line(34, bottom, 32 + thumbw, bottom, 0);
-		disp_line(32 + thumbw, top + 2, 32 + thumbw, bottom - 1, 0);
-		disp_rectangle(33 + thumbl, top + thumbt + 1, 33 + thumbr,
-					   top + thumbb + 1, 0);
-		short b = 75 - config.imgbrightness > 0 ? 75 - config.imgbrightness : 0;
+			if (paintleft > 0) {
+				thumbl = 0;
+				thumbr = thumbw - 1;
+			} else {
+				thumbl = curleft * thumbw / w2;
+				thumbr = (curleft + 479) * thumbw / w2;
+			}
+			if (painttop > 0) {
+				thumbt = 0;
+				thumbb = thumbb - 1;
+			} else {
+				thumbt = curtop * thumbh / h2;
+				thumbb = (curtop + imgh - 1) * thumbh / h2;
+			}
+			disp_putimage(32, top, thumbw, thumbh, 0, 0, thumbimg);
+			disp_line(34, bottom, 32 + thumbw, bottom, 0);
+			disp_line(32 + thumbw, top + 2, 32 + thumbw, bottom - 1, 0);
+			disp_rectangle(33 + thumbl, top + thumbt + 1, 33 + thumbr,
+						   top + thumbb + 1, 0);
+			short b =
+				75 - config.imgbrightness > 0 ? 75 - config.imgbrightness : 0;
 
-		disp_rectangle(32 + thumbl, top + thumbt, 32 + thumbr, top + thumbb,
-					   disp_grayscale(COLOR_WHITE, 0, 0, 0, b));
+			disp_rectangle(32 + thumbl, top + thumbt, 32 + thumbr, top + thumbb,
+						   disp_grayscale(COLOR_WHITE, 0, 0, 0, b));
+		}
 	}
 	disp_flip();
 	return 0;
