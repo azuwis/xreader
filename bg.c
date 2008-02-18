@@ -18,6 +18,14 @@ static pixel *bg_start =
 	(pixel *) (0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES * 2);
 static dword imgwidth, imgheight;
 
+static void bg_set_color(pixel* bg_addr, dword bgcolor)
+{
+	pixel* bg_buf, *bg_end;
+	for (bg_buf = bg_addr, bg_end = bg_addr + 0x22000; bg_buf < bg_end;
+		 bg_buf++)
+		*bg_buf = bgcolor;
+}
+
 extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
 					dword grayscale)
 {
@@ -46,8 +54,13 @@ extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
 		default:
 			result = -1;
 	}
-	if (result != 0)
+
+	if (result != 0) {
+		// if load bg image fail, continue to set bgcolor
+		bg_set_color(bg_start, bgcolor);
+		config.have_bg = true;
 		return;
+	}
 	if (width > PSP_SCREEN_WIDTH) {
 		h2 = height * PSP_SCREEN_WIDTH / width;
 		if (h2 > PSP_SCREEN_HEIGHT) {
@@ -81,16 +94,15 @@ extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
 	else
 		top = 0;
 
-	for (bg_buf = bg_start, bg_end = bg_start + 0x22000; bg_buf < bg_end;
-		 bg_buf++)
-		*bg_buf = bgcolor;
+	bg_set_color(bg_start, bgcolor);
+
 	img_buf = imgshow;
 	dword r = RGB_R(bgcolor), g = RGB_G(bgcolor), b = RGB_B(bgcolor);
 
 	for (bg_buf = bg_start + top * 512 + left, bg_end = bg_buf + h2 * 512;
-		 bg_buf < bg_end; bg_buf += 512)
+			bg_buf < bg_end; bg_buf += 512)
 		for (bg_line = bg_buf, bg_lineend = bg_buf + w2; bg_line < bg_lineend;
-			 bg_line++) {
+				bg_line++) {
 			*bg_line = disp_grayscale(*img_buf, r, g, b, grayscale);
 			img_buf++;
 		}
