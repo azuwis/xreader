@@ -5,5 +5,6 @@
 
 #define PSP_SCREEN_WIDTH 480
 #define PSP_SCREEN_HEIGHT 272
+#define PSP_SCREEN_SCANLINE 512
 
 #endif
