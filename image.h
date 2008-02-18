@@ -7,6 +7,7 @@
 #include "libexif/exif-data.h"
 #include "common/datatype.h"
 #include "display.h"
+#include "fs.h"
 
 extern void image_zoom_bicubic(pixel * src, int srcwidth, int srcheight,
 							   pixel * dest, int destwidth, int destheight);
@@ -80,6 +81,11 @@ extern int image_readtga_in_chm(const char *chmfile, const char *filename,
 extern int image_readtga_in_rar(const char *rarfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor);
+
+extern int image_open_normal(const char* filename, 
+								t_fs_filetype ft, 
+								dword *pWidth, dword* pHeight, 
+								pixel **ppImageData, pixel* pBgColor);
 
 extern void exif_entry_viewer(ExifEntry * pentry, void *user_data);
 extern void exif_context_viewer(ExifContent * pcontext, void *user_data);

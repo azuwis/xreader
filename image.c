@@ -24,6 +24,7 @@
 #include "buffer.h"
 #include "dbg.h"
 #include "conf.h"
+#include "fs.h"
 
 extern t_conf config;
 
@@ -1752,6 +1753,51 @@ void exif_viewer(ExifData * data)
 		exif_data_foreach_content(data, exif_context_viewer, 0);
 		exif_data_free(data);
 	}
+}
+
+/**
+ * 解压图像文件，普通文件版本
+ * @param filename 文件路径
+ * @param ft 文件类型
+ * @param pWidth [out] 图像宽度
+ * @param pHeight [out] 图像高度
+ * @param ppImageData [out] 图像数据指针
+ * @note  如果执行成功，*ppImageData将指向分配的内存
+ * @param pBgColor [out] 图像背景颜色
+ * @return 
+ * - !=0 失败
+ * - =0 成功
+ */
+int image_open_normal(const char* filename, t_fs_filetype ft, dword *pWidth, dword* pHeight, pixel **ppImageData, pixel* pBgColor)
+{
+	int result;
+
+	if(filename == NULL || pWidth == NULL || pHeight == NULL || pBgColor == NULL)
+		return -1;
+
+	*ppImageData = NULL;
+
+	switch (ft) {
+		case fs_filetype_png:
+			result = image_readpng(filename, pWidth, pHeight, ppImageData, pBgColor);
+			break;
+		case fs_filetype_gif:
+			result = image_readgif(filename, pWidth, pHeight, ppImageData, pBgColor);
+			break;
+		case fs_filetype_jpg:
+			result = image_readjpg(filename, pWidth, pHeight, ppImageData, pBgColor);
+			break;
+		case fs_filetype_tga:
+			result = image_readtga(filename, pWidth, pHeight, ppImageData, pBgColor);
+			break;
+		case fs_filetype_bmp:
+			result = image_readbmp(filename, pWidth, pHeight, ppImageData, pBgColor);
+			break;
+		default:
+			result = -1;
+	}
+
+	return result;
 }
 
 #endif
