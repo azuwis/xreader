@@ -15,45 +15,47 @@
 extern t_conf config;
 
 static pixel *bg_start =
-	(pixel *) (0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES * 2);
+	(pixel *) (0x44000000 +
+			   PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES * 2);
 static dword imgwidth, imgheight;
 
-static void bg_set_color(pixel* bg_addr, dword bgcolor)
+static void bg_set_color(pixel * bg_addr, dword bgcolor)
 {
-	pixel* bg_buf, *bg_end;
+	pixel *bg_buf, *bg_end;
+
 	for (bg_buf = bg_addr, bg_end = bg_addr + 0x22000; bg_buf < bg_end;
 		 bg_buf++)
 		*bg_buf = bgcolor;
+}
+
+/// mix image and bgcolor to bg buffer
+static void bg_set_image_grayscale(pixel * img_buf, dword top, dword left,
+								   dword width, dword height,
+								   dword bgcolor, dword grayscale)
+{
+	pixel *bg_buf, *bg_end, *bg_line, *bg_lineend;
+	dword r = RGB_R(bgcolor), g = RGB_G(bgcolor), b = RGB_B(bgcolor);
+
+	for (bg_buf = bg_start + top * PSP_SCREEN_SCANLINE + left, bg_end =
+		 bg_buf + height * PSP_SCREEN_SCANLINE; bg_buf < bg_end;
+		 bg_buf += PSP_SCREEN_SCANLINE)
+		for (bg_line = bg_buf, bg_lineend = bg_buf + width;
+			 bg_line < bg_lineend; bg_line++) {
+			*bg_line = disp_grayscale(*img_buf, r, g, b, grayscale);
+			img_buf++;
+		}
 }
 
 extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
 					dword grayscale)
 {
 	pixel *imgdata, *imgshow =
-		NULL, *img_buf, *bg_buf, *bg_line, *bg_end, *bg_lineend;
+		NULL, *img_buf;
 	dword width, height, w2, h2, left, top;
 	pixel bgc;
 	int result;
 
-	switch (ft) {
-		case fs_filetype_png:
-			result = image_readpng(filename, &width, &height, &imgdata, &bgc);
-			break;
-		case fs_filetype_gif:
-			result = image_readgif(filename, &width, &height, &imgdata, &bgc);
-			break;
-		case fs_filetype_jpg:
-			result = image_readjpg(filename, &width, &height, &imgdata, &bgc);
-			break;
-		case fs_filetype_tga:
-			result = image_readtga(filename, &width, &height, &imgdata, &bgc);
-			break;
-		case fs_filetype_bmp:
-			result = image_readbmp(filename, &width, &height, &imgdata, &bgc);
-			break;
-		default:
-			result = -1;
-	}
+	result = image_open_normal(filename, ft, &width, &height, &imgdata, &bgc);
 
 	if (result != 0) {
 		// if load bg image fail, continue to set bgcolor
@@ -97,15 +99,8 @@ extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
 	bg_set_color(bg_start, bgcolor);
 
 	img_buf = imgshow;
-	dword r = RGB_R(bgcolor), g = RGB_G(bgcolor), b = RGB_B(bgcolor);
 
-	for (bg_buf = bg_start + top * 512 + left, bg_end = bg_buf + h2 * 512;
-			bg_buf < bg_end; bg_buf += 512)
-		for (bg_line = bg_buf, bg_lineend = bg_buf + w2; bg_line < bg_lineend;
-				bg_line++) {
-			*bg_line = disp_grayscale(*img_buf, r, g, b, grayscale);
-			img_buf++;
-		}
+	bg_set_image_grayscale(img_buf, top, left, w2, h2, bgcolor, grayscale);
 
 	config.have_bg = true;
 
