@@ -60,7 +60,7 @@ for ac_option do
   --disable-16bit)	_16bit=no	;;
   --enable-image)	_image=yes	;;
   --disable-image)	_image=no	;;
-  --enable-bg)		_bg=yes		;;
+  --enable-bg)		_image=yes;_bg=yes		;;
   --disable-bg)		_bg=no		;;
   --enable-usb)		_usb=yes	;;
   --disable-usb)	_usb=no		;;
