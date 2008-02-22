@@ -2679,18 +2679,8 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 		curr->borderspace * 2;
 
 #ifdef ENABLE_BG
-	if (prev->have_bg == false && curr->have_bg == true) {
-		bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile),
-				curr->grayscale);
-	} else if (prev->have_bg == true && curr->have_bg == false) {
-		bg_cancel();
-	} else if (prev->have_bg == true && curr->have_bg == true) {
-		if (strcmp(prev->bgfile, curr->bgfile) != 0
-			|| curr->grayscale != prev->grayscale) {
-			bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile),
-					curr->grayscale);
-		}
-	}
+	bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile),
+			curr->grayscale);
 #endif
 
 	int i;
@@ -5000,7 +4990,6 @@ extern void scene_exit()
 	   }
 	   }
 	 */
-	dbg_close(d);
 	power_set_clock(222, 111);
 	if (bm != NULL) {
 		bookmark_close(bm);
@@ -5065,6 +5054,7 @@ extern void scene_exit()
 #ifdef ENABLE_GE
 	sceGuTerm();
 #endif
+	dbg_close(d);
 	sceKernelExitGame();
 }
 

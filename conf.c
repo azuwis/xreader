@@ -109,6 +109,7 @@ static void conf_default(p_conf conf)
 	STRCPY_S(conf->lastfile, "");
 	STRCPY_S(conf->bgfile, appdir);
 	STRCAT_S(conf->bgfile, "bg.png");
+	conf->confver = XREADER_VERSION_NUM;
 	conf->forecolor = 0xFFFFFFFF;
 	conf->bgcolor = 0;
 	conf->have_bg = true;
@@ -170,7 +171,7 @@ static void conf_default(p_conf conf)
 	conf->showunknown = true;
 	conf->showfinfo = true;
 	conf->allowdelete = true;
-	conf->arrange = conf_arrange_ext;
+	conf->arrange = conf_arrange_name;
 	conf->enableusb = false;
 	conf->viewpos = conf_viewpos_leftup;
 	conf->imgmvspd = 8;

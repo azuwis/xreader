@@ -107,6 +107,14 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 			}
 #endif
 			return win_menu_op_ok;
+		case PSP_CTRL_START:
+#ifdef ENABLE_MUSIC
+			if (mp3_list_get(*index) != NULL) {
+				mp3_directplay(mp3_list_get(*index), NULL);
+			}
+			return win_menu_op_continue;
+#endif
+			return win_menu_op_ok;
 		case PSP_CTRL_SELECT:
 			return win_menu_op_cancel;
 	}
@@ -140,7 +148,7 @@ void scene_mp3_list_predraw(p_win_menuitem item, dword index, dword topindex,
 																		 0x30));
 	disp_putstring(240 - 10 * DISP_FONTSIZE, 129 - 7 * DISP_FONTSIZE,
 				   COLOR_WHITE,
-				   (const byte *) " ○删除  □下移  △上移  ×退出");
+				   (const byte *) " ○删除 □下移 △上移 ×退出 START播放");
 	disp_putstring(240 - 10 * DISP_FONTSIZE, 145 + 6 * DISP_FONTSIZE,
 				   COLOR_WHITE,
 				   (const byte *) "要添加乐曲请到文件列表选取音乐文件按○");

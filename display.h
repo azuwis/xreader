@@ -117,6 +117,35 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 								 int height, int bot);
 #define disp_putstringrvert(x,y,color,str) disp_putnstringrvert((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
 
+extern void disp_putnstringreversal_sys(int x, int y, pixel color,
+										const byte * str, int count,
+										dword wordspace, int top, int height,
+										int bot);
+#define disp_putstringreversal_sys(x,y,color,str) disp_putnstringreversal_sys((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
+
+extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
+									int count, dword wordspace, int top,
+									int height, int bot);
+#define disp_putstringhorz_sys(x,y,color,str) disp_putnstringhorz_sys((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
+
+extern void disp_putnstringlvert_sys(int x, int y, pixel color,
+									 const byte * str, int count,
+									 dword wordspace, int top, int height,
+									 int bot);
+#define disp_putstringlvert_sys(x,y,color,str) disp_putnstringlvert_sys((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
+
+extern void disp_putnstringrvert_sys(int x, int y, pixel color,
+									 const byte * str, int count,
+									 dword wordspace, int top, int height,
+									 int bot);
+#define disp_putstringrvert_sys(x,y,color,str) disp_putnstringrvert_sys((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
+
+extern void disp_putnstringreversal_sys(int x, int y, pixel color,
+										const byte * str, int count,
+										dword wordspace, int top, int height,
+										int bot);
+#define disp_putstringreversal_sys(x,y,color,str) disp_putnstringreversal_sys((x),(y),(color),(str),0x7FFFFFFF,0,0,DISP_BOOK_FONTSIZE,0)
+
 extern void disp_fillvram(pixel color);
 extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color);
 extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color);
