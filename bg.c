@@ -49,8 +49,7 @@ static void bg_set_image_grayscale(pixel * img_buf, dword top, dword left,
 extern void bg_load(const char *filename, pixel bgcolor, t_fs_filetype ft,
 					dword grayscale)
 {
-	pixel *imgdata, *imgshow =
-		NULL, *img_buf;
+	pixel *imgdata, *imgshow = NULL, *img_buf;
 	dword width, height, w2, h2, left, top;
 	pixel bgc;
 	int result;

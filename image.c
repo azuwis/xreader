@@ -1769,30 +1769,37 @@ void exif_viewer(ExifData * data)
  * - !=0 失败
  * - =0 成功
  */
-int image_open_normal(const char* filename, t_fs_filetype ft, dword *pWidth, dword* pHeight, pixel **ppImageData, pixel* pBgColor)
+int image_open_normal(const char *filename, t_fs_filetype ft, dword * pWidth,
+					  dword * pHeight, pixel ** ppImageData, pixel * pBgColor)
 {
 	int result;
 
-	if(filename == NULL || pWidth == NULL || pHeight == NULL || pBgColor == NULL)
+	if (filename == NULL || pWidth == NULL || pHeight == NULL
+		|| pBgColor == NULL)
 		return -1;
 
 	*ppImageData = NULL;
 
 	switch (ft) {
 		case fs_filetype_png:
-			result = image_readpng(filename, pWidth, pHeight, ppImageData, pBgColor);
+			result =
+				image_readpng(filename, pWidth, pHeight, ppImageData, pBgColor);
 			break;
 		case fs_filetype_gif:
-			result = image_readgif(filename, pWidth, pHeight, ppImageData, pBgColor);
+			result =
+				image_readgif(filename, pWidth, pHeight, ppImageData, pBgColor);
 			break;
 		case fs_filetype_jpg:
-			result = image_readjpg(filename, pWidth, pHeight, ppImageData, pBgColor);
+			result =
+				image_readjpg(filename, pWidth, pHeight, ppImageData, pBgColor);
 			break;
 		case fs_filetype_tga:
-			result = image_readtga(filename, pWidth, pHeight, ppImageData, pBgColor);
+			result =
+				image_readtga(filename, pWidth, pHeight, ppImageData, pBgColor);
 			break;
 		case fs_filetype_bmp:
-			result = image_readbmp(filename, pWidth, pHeight, ppImageData, pBgColor);
+			result =
+				image_readbmp(filename, pWidth, pHeight, ppImageData, pBgColor);
 			break;
 		default:
 			result = -1;
@@ -1817,114 +1824,117 @@ int image_open_normal(const char* filename, t_fs_filetype ft, dword *pWidth, dwo
  * - =0 成功
  * @note 如果文件为a.zip中的b.jpg，则filename为b.jpg, archname为a.zip
  */
-int image_open_archive(const char* filename, const char* archname, t_fs_filetype ft, dword *pWidth, dword* pHeight, pixel **ppImageData, pixel* pBgColor, int where)
+int image_open_archive(const char *filename, const char *archname,
+					   t_fs_filetype ft, dword * pWidth, dword * pHeight,
+					   pixel ** ppImageData, pixel * pBgColor, int where)
 {
 	int result = -1;
 
 	// archname may be NULL
-	if(filename == NULL || pWidth == NULL || pHeight == NULL || pBgColor == NULL)
+	if (filename == NULL || pWidth == NULL || pHeight == NULL
+		|| pBgColor == NULL)
 		return -1;
 
 	*ppImageData = NULL;
 
-	if(where == scene_in_dir)
-	{
-		return image_open_normal(filename, ft, pWidth, pHeight, ppImageData, pBgColor);
+	if (where == scene_in_dir) {
+		return image_open_normal(filename, ft, pWidth, pHeight, ppImageData,
+								 pBgColor);
 	}
 
 	switch (ft) {
 		case fs_filetype_png:
-			switch(where) {
+			switch (where) {
 				case scene_in_zip:
 					result =
 						image_readpng_in_zip(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_chm:
 					result =
 						image_readpng_in_chm(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_rar:
 					result =
 						image_readpng_in_rar(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 			}
 			break;
 		case fs_filetype_gif:
-			switch(where) {
+			switch (where) {
 				case scene_in_zip:
 					result =
 						image_readgif_in_zip(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_chm:
 					result =
 						image_readgif_in_chm(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_rar:
 					result =
 						image_readgif_in_rar(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 			}
 			break;
 		case fs_filetype_jpg:
-			switch(where) {
+			switch (where) {
 				case scene_in_zip:
 					result =
 						image_readjpg_in_zip(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_chm:
 					result =
 						image_readjpg_in_chm(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_rar:
 					result =
 						image_readjpg_in_rar(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 			}
 			break;
 		case fs_filetype_tga:
-			switch(where) {
+			switch (where) {
 				case scene_in_zip:
 					result =
 						image_readtga_in_zip(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_chm:
 					result =
 						image_readtga_in_chm(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_rar:
 					result =
 						image_readtga_in_rar(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 			}
 			break;
 		case fs_filetype_bmp:
-			switch(where) {
+			switch (where) {
 				case scene_in_zip:
 					result =
 						image_readbmp_in_zip(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_chm:
 					result =
 						image_readbmp_in_chm(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 				case scene_in_rar:
 					result =
 						image_readbmp_in_rar(archname, filename, pWidth,
-								pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor);
 					break;
 			}
 			break;

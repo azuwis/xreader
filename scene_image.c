@@ -72,8 +72,10 @@ int open_image(dword selidx)
 	bool shareimg = (imgshow == imgdata) ? true : false;
 	int result;
 
-	result = image_open_archive(filename, config.shortpath, (t_fs_filetype) filelist[selidx].data, 
-								&width, &height, &imgdata, &bgcolor, where);
+	result =
+		image_open_archive(filename, config.shortpath,
+						   (t_fs_filetype) filelist[selidx].data, &width,
+						   &height, &imgdata, &bgcolor, where);
 	if (imgdata == NULL && shareimg) {
 		imgshow = NULL;
 	}
