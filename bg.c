@@ -47,18 +47,21 @@ static void bg_set_image_grayscale(pixel * img_buf, dword top, dword left,
 		}
 }
 
-extern void bg_load(const char *filename, const char* archname, pixel bgcolor, t_fs_filetype ft,
-					dword grayscale, int where)
+extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
+					t_fs_filetype ft, dword grayscale, int where)
 {
 	pixel *imgdata, *imgshow = NULL, *img_buf;
 	dword width, height, w2, h2, left, top;
 	pixel bgc;
 	int result;
 
-	if(archname == NULL || archname[0] == '\0' || where == scene_in_dir)
-		result = image_open_normal(filename, ft, &width, &height, &imgdata, &bgc);
+	if (archname == NULL || archname[0] == '\0' || where == scene_in_dir)
+		result =
+			image_open_normal(filename, ft, &width, &height, &imgdata, &bgc);
 	else
-		result = image_open_archive(filename, archname, ft, &width, &height, &imgdata, &bgc, where);
+		result =
+			image_open_archive(filename, archname, ft, &width, &height,
+							   &imgdata, &bgc, where);
 
 	if (result != 0) {
 		// if load bg image fail, continue to set bgcolor

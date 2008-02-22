@@ -121,7 +121,7 @@ typedef struct
 	bool isreading;
 	char bgarch[256];
 	char bgfile[256];
-	int  bgwhere;
+	int bgwhere;
 	dword slideinterval;
 	bool hprmctrl;
 	int grayscale;
