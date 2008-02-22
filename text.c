@@ -368,6 +368,7 @@ extern p_text text_open_in_gz(const char *gzfile, const char *filename,
 		}
 	}
 	if (len < 0) {
+		buffer_free(b);
 		text_close(txt);
 		gzclose(unzf);
 		return NULL;
