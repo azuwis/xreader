@@ -23,6 +23,7 @@ extern void mp3_list_moveup(dword index);
 extern void mp3_list_movedown(dword index);
 extern dword mp3_list_count();
 extern const char *mp3_list_get(dword index);
+extern const char *mp3_list_get_path(dword index);
 extern void mp3_prev();
 extern void mp3_next();
 extern void mp3_directplay(const char *filename, const char *longname);

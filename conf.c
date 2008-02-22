@@ -107,8 +107,10 @@ static void conf_default(p_conf conf)
 	STRCPY_S(conf->path, "ms0:/");
 	STRCPY_S(conf->shortpath, "ms0:/");
 	STRCPY_S(conf->lastfile, "");
+	STRCPY_S(conf->bgarch, "");
 	STRCPY_S(conf->bgfile, appdir);
 	STRCAT_S(conf->bgfile, "bg.png");
+	conf->bgwhere = scene_in_zip;
 	conf->confver = XREADER_VERSION_NUM;
 	conf->forecolor = 0xFFFFFFFF;
 	conf->bgcolor = 0;
@@ -233,6 +235,8 @@ extern bool conf_load(p_conf conf)
 #endif
 #ifndef ENABLE_BG
 	STRCPY_S(conf->bgfile, "");
+	STRCPY_S(conf->bgarch, "");
+	conf->bgwhere = scene_in_dir;
 #endif
 #ifndef ENABLE_MUSIC
 	conf->autoplay = false;

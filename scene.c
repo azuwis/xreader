@@ -516,6 +516,57 @@ static const char *GetFileExt(const char *filename)
 		return strExt;
 }
 
+static void set_background_image(p_win_menuitem item, dword * index)
+{
+	char bgfile[256], bgarchname[256];
+
+	if (where == scene_in_dir) {
+		STRCPY_S(bgfile, config.shortpath);
+		STRCAT_S(bgfile, item[*index].shortname);
+		bgarchname[0] = '\0';
+	} else {
+		STRCPY_S(bgarchname, config.shortpath);
+		STRCPY_S(bgfile, item[*index].compname);
+	}
+
+	dbg_printf(d, "bgarchname: %s", bgarchname);
+	dbg_printf(d, "bgfile: %s", bgfile);
+
+	if ((where == scene_in_dir && stricmp(bgfile, config.bgfile) == 0) ||
+		(where != scene_in_dir && stricmp(bgfile, config.bgfile) == 0 &&
+		 stricmp(bgarchname, config.bgarch) == 0)
+		) {
+		if (win_msgbox
+			("是否取消背景图？", getmsgbyid(YES), getmsgbyid(NO), COLOR_WHITE,
+			 COLOR_WHITE, config.msgbcolor)) {
+			dbg_printf(d, "取消背景图");
+			STRCPY_S(config.bgfile, "");
+			STRCPY_S(config.bgarch, "");
+			config.bgwhere = scene_in_dir;
+			bg_cancel();
+			disp_fillvram(0);
+			disp_flip();
+			disp_fillvram(0);
+		}
+	} else {
+		if (win_msgbox
+			("是否将当前图片文件设为背景图？",
+			 getmsgbyid(YES), getmsgbyid(NO),
+			 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
+			config.bgwhere = where;
+			STRCPY_S(config.bgfile, bgfile);
+			STRCPY_S(config.bgarch, bgarchname);
+			dbg_printf(d, "bgarch: %s", config.bgarch);
+			dbg_printf(d, "bgfile: %s", config.bgfile);
+			dbg_printf(d, "bgwhere: %d", config.bgwhere);
+			bg_load(config.bgfile,
+					config.bgarch, config.bgcolor, (t_fs_filetype)
+					item[*index].data, config.grayscale, config.bgwhere);
+			repaintbg = true;
+		}
+	}
+}
+
 int scene_filelist_compare_ext(void *data1, void *data2)
 {
 	const char *fn1 = ((p_win_menuitem) data1)->compname, *fn2 =
@@ -1239,9 +1290,11 @@ dword scene_color(dword * selidx)
 			scene_color_predraw, NULL, scene_color_menucb) != INVALID);
 #ifdef ENABLE_BG
 	if (orgbgcolor != config.bgcolor || orggrayscale != config.grayscale) {
-		dbg_printf(d, "更换背景: %s gray: %d", config.bgfile, config.grayscale);
-		bg_load(config.bgfile, config.bgcolor, fs_file_get_type(config.bgfile),
-				config.grayscale);
+		dbg_printf(d, "更换背景: %s %s gray: %d", config.bgarch, config.bgfile,
+				   config.grayscale);
+		bg_load(config.bgfile, config.bgarch, config.bgcolor,
+				fs_file_get_type(config.bgfile), config.grayscale,
+				config.bgwhere);
 	}
 #endif
 	return 0;
@@ -2679,8 +2732,8 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 		curr->borderspace * 2;
 
 #ifdef ENABLE_BG
-	bg_load(curr->bgfile, curr->bgcolor, fs_file_get_type(curr->bgfile),
-			curr->grayscale);
+	bg_load(curr->bgfile, curr->bgarch, curr->bgcolor,
+			fs_file_get_type(curr->bgfile), curr->grayscale, curr->bgwhere);
 #endif
 
 	int i;
@@ -3328,10 +3381,9 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 								   (const byte *) "○  查看图片");
 #endif
 #ifdef ENABLE_BG
-					if (where == scene_in_dir)
-						disp_putstring(240 - DISP_FONTSIZE * 3,
-									   136 - DISP_FONTSIZE, COLOR_WHITE,
-									   (const byte *) "□  设为背景");
+					disp_putstring(240 - DISP_FONTSIZE * 3,
+								   136 - DISP_FONTSIZE, COLOR_WHITE,
+								   (const byte *) "□  设为背景");
 #endif
 					if (config.load_exif
 						&& (t_fs_filetype) item[selidx].data ==
@@ -3496,41 +3548,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 							case fs_filetype_tga:
 							case fs_filetype_bmp:
 								{
-									char bgfile[256];
-
-									STRCPY_S(bgfile, config.shortpath);
-									STRCAT_S(bgfile, item[*index].shortname);
-									if (stricmp(bgfile, config.bgfile) == 0) {
-										if (win_msgbox
-											("是否取消背景图？",
-											 getmsgbyid(YES), getmsgbyid(NO),
-											 COLOR_WHITE, COLOR_WHITE,
-											 config.msgbcolor)) {
-											dbg_printf(d, "取消背景图");
-											STRCPY_S(config.bgfile, " ");
-											bg_cancel();
-											disp_fillvram(0);
-											disp_flip();
-											disp_fillvram(0);
-										}
-									} else {
-										if (win_msgbox
-											("是否将当前图片文件设为背景图？",
-											 getmsgbyid(YES), getmsgbyid(NO),
-											 COLOR_WHITE, COLOR_WHITE,
-											 config.msgbcolor)) {
-											STRCPY_S(config.bgfile, bgfile);
-											dbg_printf(d, "设置背景图: %s %d",
-													   config.bgfile,
-													   config.grayscale);
-											bg_load(config.bgfile,
-													config.bgcolor,
-													(t_fs_filetype)
-													item[*index].data,
-													config.grayscale);
-											repaintbg = true;
-										}
-									}
+									set_background_image(item, index);
 								}
 								break;
 #endif
@@ -4798,7 +4816,11 @@ extern void scene_init()
 	SPRINTF_S(conffilename, "%s%d%s", "xreader", config_num, ".conf");
 	STRCAT_S(conffile, conffilename);
 	conf_set_file(conffile);
+	STRCPY_S(mp3conf, appdir);
+	STRCAT_S(mp3conf, "music.lst");
+
 	if (key == PSP_CTRL_RTRIGGER) {
+		utils_del_file(mp3conf);
 		utils_del_file(conffile);
 		conf_load(&config);
 		conf_save(&config);
@@ -4815,8 +4837,8 @@ extern void scene_init()
 		STRCAT_S(config.bgfile, "bg.png");
 	}
 	sceRtcGetCurrentTick(&dbglasttick);
-	bg_load(config.bgfile, config.bgcolor, fs_file_get_type(config.bgfile),
-			config.grayscale);
+	bg_load(config.bgfile, config.bgarch, config.bgcolor,
+			fs_file_get_type(config.bgfile), config.grayscale, config.bgwhere);
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "bg_load(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 #endif
@@ -4919,8 +4941,6 @@ extern void scene_init()
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "mp3_init(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 
-	STRCPY_S(mp3conf, appdir);
-	STRCAT_S(mp3conf, "music.lst");
 	if (config.confver < 0x00090100 || !mp3_list_load(mp3conf)) {
 		sceRtcGetCurrentTick(&dbglasttick);
 		mp3_list_add_dir("ms0:/MUSIC/");

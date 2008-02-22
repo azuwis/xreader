@@ -109,8 +109,8 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 			return win_menu_op_ok;
 		case PSP_CTRL_START:
 #ifdef ENABLE_MUSIC
-			if (mp3_list_get(*index) != NULL) {
-				mp3_directplay(mp3_list_get(*index), NULL);
+			if (mp3_list_get_path(*index) != NULL) {
+				mp3_directplay(mp3_list_get_path(*index), NULL);
 			}
 			return win_menu_op_continue;
 #endif

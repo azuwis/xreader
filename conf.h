@@ -119,7 +119,9 @@ typedef struct
 	t_conf_encode lyricencode;
 	t_conf_cycle mp3cycle;
 	bool isreading;
+	char bgarch[256];
 	char bgfile[256];
+	int  bgwhere;
 	dword slideinterval;
 	bool hprmctrl;
 	int grayscale;

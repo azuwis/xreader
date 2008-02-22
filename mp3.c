@@ -1120,6 +1120,13 @@ extern dword mp3_list_count()
 	return mp3_nfiles;
 }
 
+extern const char *mp3_list_get_path(dword index)
+{
+	if (index >= mp3_nfiles)
+		return NULL;
+	return mp3_files[index];
+}
+
 extern const char *mp3_list_get(dword index)
 {
 	if (index >= mp3_nfiles)
