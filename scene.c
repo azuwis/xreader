@@ -4747,7 +4747,9 @@ extern void scene_init()
 	dbg_open_memorylog(d);
 	power_set_clock(333, 166);
 	ctrl_init();
-	if (ctrl_read() == PSP_CTRL_LTRIGGER) {
+	dword key = ctrl_read();
+
+	if (key == PSP_CTRL_LTRIGGER) {
 		printDebugInfo = true;
 		dbg_switch(d, 1);
 		dbg_open_psp_logfile(d, logfile);
@@ -4796,9 +4798,16 @@ extern void scene_init()
 	SPRINTF_S(conffilename, "%s%d%s", "xreader", config_num, ".conf");
 	STRCAT_S(conffile, conffilename);
 	conf_set_file(conffile);
-	conf_load(&config);
-	sceRtcGetCurrentTick(&dbgnow);
-	dbg_printf(d, "conf_load() etc: %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
+	if (key == PSP_CTRL_RTRIGGER) {
+		utils_del_file(conffile);
+		conf_load(&config);
+		conf_save(&config);
+	} else {
+		conf_load(&config);
+		sceRtcGetCurrentTick(&dbgnow);
+		dbg_printf(d, "conf_load() etc: %.2fs",
+				   pspDiffTime(&dbgnow, &dbglasttick));
+	}
 
 #ifdef ENABLE_BG
 	if (config.bgfile[0] == 0) {
