@@ -895,11 +895,9 @@ extern p_text text_open_archive(
 							   rowpixels, wordspace, encode,
 							   reorder);
 			else {
-				int t = vertread;
-
-				if (t == 3)
-					t = 0;
-				pText = text_open_binary(filename, t);
+				pText = text_open_binary(filename, (vertread == conf_vertread_lvert
+						   	|| vertread ==  conf_vertread_rvert)
+						);
 			}
 			break;
 		case scene_in_chm:
@@ -918,7 +916,10 @@ extern p_text text_open_archive(
 				pText = text_open_binary_in_zip(archname, filename,
 											 filetype, rowpixels,
 											 wordspace, encode,
-											 reorder, vertread);
+											 reorder,
+											 (vertread == conf_vertread_lvert
+											  || vertread ==  conf_vertread_rvert
+											  ));
 			break;
 		case scene_in_rar:
 			if(filetype == fs_filetype_txt || filetype == fs_filetype_html)
@@ -930,7 +931,9 @@ extern p_text text_open_archive(
 				pText = text_open_binary_in_rar(archname, filename,
 											 filetype, rowpixels, wordspace,
 											 encode, reorder,
-											 vertread);
+											 (vertread == conf_vertread_lvert
+											  || vertread ==  conf_vertread_rvert)
+											 );
 			break;
 	}
 
