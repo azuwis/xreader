@@ -253,7 +253,7 @@ PBookViewData new_book_view(PBookViewData p)
 	p->trow = NULL;
 	p->text_needrf = p->text_needrp = true;
 	p->text_needrb = false;
-	p->filename[0] = p->archname[0] = '\0';
+	p->filename[0] = p->archname[0] = p->bookmarkname[0] = '\0';
 
 	return p;
 }
@@ -262,23 +262,25 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 {
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
 		STRCPY_S(pView->filename, filelist[selidx].compname);
+		STRCPY_S(pView->bookmarkname, config.shortpath);
 		STRCPY_S(pView->archname, config.shortpath);
 		if (config.shortpath[strlen(config.shortpath) - 1] != '/' &&
 			pView->filename[0] != '/')
-			STRCAT_S(pView->archname, "/");
-		STRCAT_S(pView->archname, pView->filename);
+			STRCAT_S(pView->bookmarkname, "/");
+		STRCAT_S(pView->bookmarkname, pView->filename);
 	} else {
 		STRCPY_S(pView->filename, config.shortpath);
 		STRCAT_S(pView->filename, filelist[selidx].shortname);
 		STRCPY_S(pView->archname, pView->filename);
+		STRCPY_S(pView->bookmarkname, pView->filename);
 	}
-	dbg_printf(d, "scene_book_reload: fn %s archname %s", pView->filename,
-			   pView->archname);
+	dbg_printf(d, "scene_book_reload: fn %s bookmarkname %s archname %s", pView->filename,
+			   pView->bookmarkname, pView->archname);
 	if (pView->rrow == INVALID) {
-		// disable binary bookmark
+		// disable binary file type text's bookmark
 		if (config.autobm
 			&& (t_fs_filetype) filelist[selidx].data != fs_filetype_unknown) {
-			pView->rrow = bookmark_autoload(pView->archname);
+			pView->rrow = bookmark_autoload(pView->bookmarkname);
 			pView->text_needrb = true;
 		} else
 			pView->rrow = 0;
@@ -288,54 +290,12 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs = NULL;
 	}
 	scene_power_save(false);
-	const char *ext = utils_fileext(pView->filename);
 
-	if (ext && stricmp(ext, "gz") == 0)
-		fs = text_open_in_gz(pView->filename, pView->filename,
-							 (t_fs_filetype) filelist[selidx].data,
-							 pixelsperrow, config.wordspace, config.encode,
-							 config.reordertxt);
-	else if (where == scene_in_zip
-			 && ((t_fs_filetype) filelist[selidx].data == fs_filetype_txt
-				 || (t_fs_filetype) filelist[selidx].data == fs_filetype_html))
-		fs = text_open_in_zip(config.shortpath, pView->filename,
-							  (t_fs_filetype) filelist[selidx].data,
-							  pixelsperrow, config.wordspace, config.encode,
-							  config.reordertxt);
-	else if (where == scene_in_zip)
-		fs = text_open_binary_in_zip(config.shortpath, pView->filename,
-									 (t_fs_filetype) filelist[selidx].data,
-									 pixelsperrow, config.wordspace,
-									 config.encode, config.reordertxt,
-									 config.vertread);
-	else if (where == scene_in_chm)
-		fs = text_open_in_chm(config.shortpath, pView->filename,
-							  (t_fs_filetype) filelist[selidx].data,
-							  pixelsperrow, config.wordspace, config.encode,
-							  config.reordertxt);
-	else if (where == scene_in_rar
-			 && ((t_fs_filetype) filelist[selidx].data == fs_filetype_txt
-				 || (t_fs_filetype) filelist[selidx].data == fs_filetype_html))
-		fs = text_open_in_rar(config.shortpath, pView->filename,
-							  (t_fs_filetype) filelist[selidx].data,
-							  pixelsperrow, config.wordspace, config.encode,
-							  config.reordertxt);
-	else if (where == scene_in_rar)
-		fs = text_open_binary_in_rar(config.shortpath, pView->filename,
-									 (t_fs_filetype) filelist[selidx].data,
-									 pixelsperrow, config.wordspace,
-									 config.encode, config.reordertxt,
-									 config.vertread);
-	else if ((t_fs_filetype) filelist[selidx].data == fs_filetype_unknown) {
-		int t = config.vertread;
+	fs = text_open_archive(pView->filename, pView->archname, 
+						  (t_fs_filetype) filelist[selidx].data,
+						  pixelsperrow, config.wordspace, config.encode,
+						  config.reordertxt, where, config.vertread);
 
-		if (t == 3)
-			t = 0;
-		fs = text_open_binary(pView->filename, t);
-	} else
-		fs = text_open(pView->filename, (t_fs_filetype) filelist[selidx].data,
-					   pixelsperrow, config.wordspace, config.encode,
-					   config.reordertxt);
 	if (fs == NULL) {
 		win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		dbg_printf(d, "scene_book_reload: 文件%s打开失败 where=%d",
@@ -479,15 +439,6 @@ int scene_printbook(PBookViewData pView, dword selidx)
 					 cidx++) {
 					tr = fs->rows[(fs->crow + cidx) >> 10] +
 						((fs->crow + cidx) & 0x3FF);
-					/*
-					   if(!havedisplayed) {
-					   char infomsg[80];
-					   SPRINTF_S(infomsg, "%d+(%d+%d)*%d-%d=%d", config.borderspace, DISP_BOOK_FONTSIZE, config.rowspace, cidx, pView->rowtop, config.borderspace + (DISP_BOOK_FONTSIZE + config.rowspace) * cidx - pView->rowtop);
-					   win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
-
-					   havedisplayed = true;
-					   }
-					 */
 					disp_putnstringhorz(config.borderspace,
 										config.borderspace +
 										(DISP_BOOK_FONTSIZE +
@@ -683,7 +634,7 @@ int move_page_up(PBookViewData pView, dword key, dword * selidx)
 			} while (!fs_is_txtbook((t_fs_filetype) filelist[*selidx].data));
 			if (*selidx != orgidx) {
 				if (config.autobm)
-					bookmark_autosave(pView->archname,
+					bookmark_autosave(pView->bookmarkname,
 									  (fs->rows[fs->crow >> 10] +
 									   (fs->crow & 0x3FF))->start - fs->buf);
 				pView->text_needrf = pView->text_needrp = true;
@@ -717,7 +668,7 @@ int move_page_down(PBookViewData pView, dword key, dword * selidx)
 			} while (!fs_is_txtbook((t_fs_filetype) filelist[*selidx].data));
 			if (*selidx != orgidx) {
 				if (config.autobm)
-					bookmark_autosave(pView->archname,
+					bookmark_autosave(pView->bookmarkname,
 									  (fs->rows[fs->crow >> 10] +
 									   (fs->crow & 0x3FF))->start - fs->buf);
 				pView->text_needrf = pView->text_needrp = true;
@@ -778,7 +729,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 	} else if (key == ctlkey[11] || key == ctlkey2[11] || key == CTRL_PLAYPAUSE) {
 		scene_power_save(false);
 		if (config.autobm)
-			bookmark_autosave(pView->archname,
+			bookmark_autosave(pView->bookmarkname,
 							  (fs->rows[fs->crow >> 10] +
 							   (fs->crow & 0x3FF))->start - fs->buf);
 		text_close(fs);
@@ -812,7 +763,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 			case 1:
 				scene_power_save(false);
 				if (config.autobm)
-					bookmark_autosave(pView->archname,
+					bookmark_autosave(pView->bookmarkname,
 									  (fs->rows[fs->crow >> 10] +
 									   (fs->crow & 0x3FF))->start - fs->buf);
 				text_close(fs);
@@ -891,7 +842,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		dword orgidx = *selidx;
 
 		if (config.autobm)
-			bookmark_autosave(pView->archname,
+			bookmark_autosave(pView->bookmarkname,
 							  (fs->rows[fs->crow >> 10] +
 							   (fs->crow & 0x3FF))->start - fs->buf);
 		do {
@@ -902,7 +853,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		} while (!fs_is_txtbook((t_fs_filetype) filelist[*selidx].data));
 		if (*selidx != orgidx) {
 			if (config.autobm)
-				bookmark_autosave(pView->archname,
+				bookmark_autosave(pView->bookmarkname,
 								  (fs->rows[fs->crow >> 10] +
 								   (fs->crow & 0x3FF))->start - fs->buf);
 			pView->text_needrf = pView->text_needrp = true;
@@ -920,7 +871,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		} while (!fs_is_txtbook((t_fs_filetype) filelist[*selidx].data));
 		if (*selidx != orgidx) {
 			if (config.autobm)
-				bookmark_autosave(pView->archname,
+				bookmark_autosave(pView->bookmarkname,
 								  (fs->rows[fs->crow >> 10] +
 								   (fs->crow & 0x3FF))->start - fs->buf);
 			pView->text_needrf = pView->text_needrp = true;
@@ -957,7 +908,7 @@ dword scene_reload_raw(const char *title, const unsigned char *data,
 	if (cur_book_view.rrow == INVALID) {
 		// disable binary bookmark
 		if (config.autobm && ft != fs_filetype_unknown) {
-			cur_book_view.rrow = bookmark_autoload(cur_book_view.archname);
+			cur_book_view.rrow = bookmark_autoload(cur_book_view.bookmarkname);
 			cur_book_view.text_needrb = true;
 		} else
 			cur_book_view.rrow = 0;
@@ -1146,7 +1097,7 @@ dword scene_readbook(dword selidx)
 	}
 	scene_power_save(false);
 	if (config.autobm)
-		bookmark_autosave(cur_book_view.archname,
+		bookmark_autosave(cur_book_view.bookmarkname,
 						  (fs->rows[fs->crow >> 10] +
 						   (fs->crow & 0x3FF))->start - fs->buf);
 	text_close(fs);

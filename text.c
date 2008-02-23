@@ -18,6 +18,7 @@
 #include "kubridge.h"
 #include "dbg.h"
 #include "buffer.h"
+#include "scene.h"
 
 static void text_decode(p_text txt, t_conf_encode encode)
 {
@@ -844,4 +845,94 @@ extern void text_close(p_text fstext)
 			if (fstext->rows[i] != NULL)
 				free((void *) fstext->rows[i]);
 	}
+}
+
+/**
+ * 打开文本文件，可用于档案文件
+ * @param filename 文件路径
+ * @param archname 档案路径
+ * @param filetype 文本文件类型
+ * @param rowpixels 
+ * @param wordspace 字距
+ * @param encode 文本文件编码
+ * @param reorder 是否重新编排
+ * @param where 档案类型
+ * @param vertread 显示方式
+ * @return 文本指针
+ * - NULL 失败
+ */
+extern p_text text_open_archive(
+								const char* filename,
+								const char* archname,
+								t_fs_filetype filetype,
+								dword rowpixels,
+								dword wordspace,
+								t_conf_encode encode,
+								bool reorder,
+								int where,
+								int vertread
+							   )
+{
+	if (filename == NULL)
+		return NULL;
+
+	if (where != scene_in_dir && (archname == NULL || archname[0] == '\0'))
+		return NULL;
+
+	p_text pText = NULL;
+
+	const char *ext = utils_fileext(filename);
+
+	switch(where) {
+		case scene_in_dir:
+			if (ext && stricmp(ext, "gz") == 0)
+				pText = text_open_in_gz(filename, filename,
+									 filetype, rowpixels,
+									 wordspace, encode,
+									 reorder);
+			else if (filetype != fs_filetype_unknown)
+				pText = text_open(filename, filetype,
+							   rowpixels, wordspace, encode,
+							   reorder);
+			else {
+				int t = vertread;
+
+				if (t == 3)
+					t = 0;
+				pText = text_open_binary(filename, t);
+			}
+			break;
+		case scene_in_chm:
+				pText = text_open_in_chm(archname, filename,
+									  filetype, rowpixels, 
+									  wordspace, encode,
+									  reorder);
+			break;
+		case scene_in_zip:
+			if(filetype == fs_filetype_txt || filetype == fs_filetype_html)
+				pText = text_open_in_zip(archname, filename,
+									  filetype, rowpixels,
+									  wordspace, encode,
+									  reorder);
+			else 
+				pText = text_open_binary_in_zip(archname, filename,
+											 filetype, rowpixels,
+											 wordspace, encode,
+											 reorder, vertread);
+			break;
+		case scene_in_rar:
+			if(filetype == fs_filetype_txt || filetype == fs_filetype_html)
+				pText = text_open_in_rar(archname, filename,
+									  filetype, rowpixels,
+									  wordspace, encode,
+									  reorder);
+			else
+				pText = text_open_binary_in_rar(archname, filename,
+											 filetype, rowpixels, wordspace,
+											 encode, reorder,
+											 vertread);
+			break;
+	}
+
+	return pText;
 }

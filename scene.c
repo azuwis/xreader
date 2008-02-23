@@ -3031,7 +3031,7 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 				char bmfn[256];
 
 				if (where == scene_in_zip || where == scene_in_chm
-					|| where == scene_in_rar || where == scene_in_gz) {
+					|| where == scene_in_rar) {
 					STRCPY_S(bmfn, config.shortpath);
 					STRCAT_S(bmfn, fs->filename);
 				} else
@@ -3123,8 +3123,7 @@ bool scene_bookmark(dword * orgp)
 {
 	char archname[256];
 
-	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar
-		|| where == scene_in_gz) {
+	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
 		STRCPY_S(archname, config.shortpath);
 		STRCAT_S(archname, fs->filename);
 	} else

@@ -57,4 +57,16 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 									  bool reorder, bool vert);
 extern void text_close(p_text fstext);
 
+extern p_text text_open_archive(
+								const char* filename,
+								const char* archname,
+								t_fs_filetype filetype,
+								dword rowpixels,
+								dword wordspace,
+								t_conf_encode encode,
+								bool reorder,
+								int where,
+								int vertread
+							   );
+
 #endif
