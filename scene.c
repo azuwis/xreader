@@ -55,7 +55,8 @@
 #ifdef ENABLE_PMPAVC
 bool pmp_restart = false;
 #endif
-char appdir[256], copydir[256], cutdir[256];
+char appdir[256], copydir[512], cutdir[512];
+bool copy_archmode = false;
 dword drperpage, rowsperpage, pixelsperrow;
 p_bookmark bm = NULL;
 p_text fs = NULL;
@@ -3441,6 +3442,13 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 				disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE * 3,
 							   COLOR_WHITE, (const byte *) "START Õ³Ìù");
 		}
+		if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar ) {
+			if (selcount > 1 || strcmp(item[selidx].compname, "..") != 0) {
+				if (config.path[0] != 0)
+					disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
+								   COLOR_WHITE, (const byte *) " L    ¸´ÖÆ");
+			}
+		}
 		disp_flip();
 		bool inop = true;
 		t_win_menu_op retop = win_menu_op_continue;
@@ -3714,8 +3722,8 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 					inop = false;
 					break;
 				case PSP_CTRL_LTRIGGER:
-					if (where != scene_in_dir)
-						break;
+//					if (where != scene_in_dir)
+//						break;
 					if (copycount > 0 && copylist != NULL) {
 						copycount = 0;
 						free((void *) copylist);
@@ -3726,21 +3734,28 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 						free((void *) cutlist);
 						cutlist = NULL;
 					}
-					STRCPY_S(copydir, config.shortpath);
+					if (where == scene_in_dir) {
+						copy_archmode = false;
+						STRCPY_S(copydir, config.shortpath);
+					}
+					else {
+						copy_archmode = true;
+						STRCPY_S(copydir, config.shortpath);
+					}
 					copylist =
 						(p_win_menuitem) malloc((selcount > 0 ? selcount : 1) *
-												sizeof(t_win_menuitem));
+								sizeof(t_win_menuitem));
 					if (selcount < 1) {
 						copycount = 1;
 						memcpy(&copylist[0], &filelist[selidx],
-							   sizeof(t_win_menuitem));
+								sizeof(t_win_menuitem));
 					} else {
 						copycount = selcount;
 						sidx = 0;
 						for (selidx = 0; selidx < filecount; selidx++)
 							if (item[selidx].selected)
 								memcpy(&copylist[sidx++], &filelist[selidx],
-									   sizeof(t_win_menuitem));
+										sizeof(t_win_menuitem));
 					}
 					inop = false;
 					break;
@@ -3777,29 +3792,50 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 					inop = false;
 					break;
 				case PSP_CTRL_START:
-					if (where != scene_in_dir
-						|| strnicmp(config.path, "ms0:/", 5) != 0)
+					if (strnicmp(config.path, "ms0:/", 5) != 0)
 						break;
+//					if (where != scene_in_dir
+//						|| strnicmp(config.path, "ms0:/", 5) != 0)
+//						break;
 					if (copycount > 0) {
 						for (sidx = 0; sidx < copycount; sidx++) {
-							char copysrc[260], copydest[260];
+							if (copy_archmode == true ) {
+								char archname[512], copydest[512];
+								char temp[512];
+								STRCPY_S(archname, copydir);
+								STRCPY_S(copydest, config.shortpath);
+								STRCPY_S(temp, copylist[sidx].compname);
+//								charsets_gbk_to_sjis((const byte*)copylist[sidx].compname, (byte*)temp);
+//								temp[NELEMS(temp)-1] = '\0';
+								if (strrchr(temp, '/') != NULL) 
+									STRCAT_S(copydest, strrchr(temp, '/') + 1);
+								else 
+									STRCAT_S(copydest, temp);
 
-							STRCPY_S(copysrc, copydir);
-							STRCAT_S(copysrc, copylist[sidx].shortname);
-							STRCPY_S(copydest, config.shortpath);
-							STRCAT_S(copydest, copylist[sidx].shortname);
-							if ((t_fs_filetype) copylist[sidx].data ==
-								fs_filetype_dir)
-								copy_dir(copysrc, copydest, NULL, NULL, NULL);
-							else
-								copy_file(copysrc, copydest, NULL, NULL, NULL);
+								if ((t_fs_filetype) copylist[sidx].data !=
+										fs_filetype_dir)
+									extract_archive_file(archname, copylist[sidx].compname, copydest, NULL, NULL, NULL);
+							}
+							else {
+								char copysrc[512], copydest[512];
+
+								STRCPY_S(copysrc, copydir);
+								STRCAT_S(copysrc, copylist[sidx].shortname);
+								STRCPY_S(copydest, config.shortpath);
+								STRCAT_S(copydest, copylist[sidx].shortname);
+								if ((t_fs_filetype) copylist[sidx].data ==
+										fs_filetype_dir)
+									copy_dir(copysrc, copydest, NULL, NULL, NULL);
+								else
+									copy_file(copysrc, copydest, NULL, NULL, NULL);
+							}
 						}
 						STRCPY_S(config.lastfile, item[*index].compname);
 						retop = win_menu_op_cancel;
 						inop = false;
 					} else if (cutcount > 0) {
 						for (sidx = 0; sidx < cutcount; sidx++) {
-							char cutsrc[260], cutdest[260];
+							char cutsrc[512], cutdest[512];
 
 							STRCPY_S(cutsrc, cutdir);
 							STRCAT_S(cutsrc, cutlist[sidx].shortname);

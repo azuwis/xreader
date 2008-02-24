@@ -6,6 +6,7 @@
 #include "common/datatype.h"
 #include "conf.h"
 #include "win.h"
+#include "buffer.h"
 
 typedef enum
 {
@@ -60,5 +61,10 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 extern t_fs_filetype fs_file_get_type(const char *filename);
 extern bool fs_is_image(t_fs_filetype ft);
 extern bool fs_is_txtbook(t_fs_filetype ft);
+
+extern void extract_archive_file_into_buffer(buffer **buf,
+											 const char* archname,
+											 const char* archpath,
+											 t_fs_filetype filetype);
 
 #endif

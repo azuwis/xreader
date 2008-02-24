@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <stdio.h>
+#define NDEBUG
 #include <assert.h>
 #include <ctype.h>
 

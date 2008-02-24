@@ -9,6 +9,8 @@ typedef void (*t_copy_cb) (const char *src, const char *dest, bool succ,
 						   void *data);
 typedef bool(*t_copy_overwritecb) (const char *filename, void *data);
 
+extern bool extract_archive_file(const char *archname, const char* archpath, const char *dest, t_copy_cb cb,
+								 t_copy_overwritecb ocb, void *data);
 extern bool copy_file(const char *src, const char *dest, t_copy_cb cb,
 					  t_copy_overwritecb ocb, void *data);
 extern dword copy_dir(const char *src, const char *dest, t_copy_cb cb,
