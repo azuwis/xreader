@@ -83,7 +83,8 @@ typedef enum
 	conf_infobar_lyric = 2
 } t_conf_infobar;
 
-typedef enum {
+typedef enum
+{
 	conf_vertread_horz = 0,
 	conf_vertread_rvert = 1,
 	conf_vertread_lvert = 2,

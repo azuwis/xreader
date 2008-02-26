@@ -3236,16 +3236,16 @@ void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd,
 	}
 }
 
-static bool is_contain_hanzi_str(const char* str)
+static bool is_contain_hanzi_str(const char *str)
 {
 	size_t i;
 	size_t len;
 
-	if(str == NULL)
+	if (str == NULL)
 		return false;
-   	
-	for(i=0, len = strlen(str); i<len; ++i) {
-		if(str[i] < 0) {
+
+	for (i = 0, len = strlen(str); i < len; ++i) {
+		if (str[i] < 0) {
 			return true;
 		}
 	}
@@ -3253,7 +3253,7 @@ static bool is_contain_hanzi_str(const char* str)
 	return false;
 }
 
-static const char* remove_hanzi(char *dst, const char* src, size_t size)
+static const char *remove_hanzi(char *dst, const char *src, size_t size)
 {
 	size_t i;
 	char *p = dst;
@@ -3261,9 +3261,9 @@ static const char* remove_hanzi(char *dst, const char* src, size_t size)
 	if (size == 0 || dst == NULL || src == NULL)
 		return NULL;
 
-	for(i=0; i<size-1 && *src != '\0';) {
-		if(*src < 0) {
-			src+=2;
+	for (i = 0; i < size - 1 && *src != '\0';) {
+		if (*src < 0) {
+			src += 2;
 			continue;
 		}
 		*p++ = *src++;
@@ -3274,7 +3274,8 @@ static const char* remove_hanzi(char *dst, const char* src, size_t size)
 	return dst;
 }
 
-static const char* insert_string(char* str, size_t size, const char* insstr, int inspos)
+static const char *insert_string(char *str, size_t size, const char *insstr,
+								 int inspos)
 {
 	size_t len, inslen;
 
@@ -3287,44 +3288,44 @@ static const char* insert_string(char* str, size_t size, const char* insstr, int
 	if (len + inslen + 1 > size)
 		return NULL;
 
-	if (inspos > len) 
+	if (inspos > len)
 		return NULL;
 
-	memmove(str+inspos+inslen, str+inspos, len - inspos + 1);
-	memcpy(str+inspos, insstr, inslen);
+	memmove(str + inspos + inslen, str + inspos, len - inspos + 1);
+	memcpy(str + inspos, insstr, inslen);
 
 	return str;
 }
 
-static const char* get_file_basename(char *dst, size_t dstsize, const char* src)
+static const char *get_file_basename(char *dst, size_t dstsize, const char *src)
 {
 	char *p, *q;
 
-	if ((p = strrchr(src, '/')) == NULL ) {
+	if ((p = strrchr(src, '/')) == NULL) {
 		if ((q = strrchr(src, '.')) == NULL) {
 			strcpy_s(dst, dstsize, src);
-		}
-		else {
+		} else {
 			size_t n = q - src;
+
 			if (n != 0)
 				strncpy_s(dst, dstsize, src, n);
 			else
 				dst[0] = '\0';
 		}
-	}
-	else {
+	} else {
 		if ((q = strrchr(p, '.')) == NULL) {
 			size_t n = dstsize - (p - src);
+
 			if (n != 0)
-				strncpy_s(dst, dstsize, p+1, n);
+				strncpy_s(dst, dstsize, p + 1, n);
 			else
 				dst[0] = '\0';
-		}
-		else {
+		} else {
 			size_t n = q - p - 1;
+
 			if (n != 0)
-				strncpy_s(dst, dstsize, p+1, n);
-			else 
+				strncpy_s(dst, dstsize, p + 1, n);
+			else
 				dst[0] = '\0';
 		}
 	}
@@ -3334,9 +3335,10 @@ static const char* get_file_basename(char *dst, size_t dstsize, const char* src)
 
 static void scene_copy_files(int sidx)
 {
-	if (copy_archmode == true ) {
+	if (copy_archmode == true) {
 		char archname[512], copydest[512];
 		char temp[512];
+
 		STRCPY_S(archname, copydir);
 		STRCPY_S(copydest, config.shortpath);
 		if (copy_where == scene_in_chm) {
@@ -3344,49 +3346,46 @@ static void scene_copy_files(int sidx)
 			char fname[512];
 
 			charsets_utf8_conv((unsigned char *) copylist[sidx].
-					compname, (unsigned char *) fname);
+							   compname, (unsigned char *) fname);
 			STRCPY_S(temp, fname);
-		}
-		else 
+		} else
 			STRCPY_S(temp, copylist[sidx].compname);
 		if (strrchr(temp, '/') != NULL) {
 			char t[512];
+
 			STRCPY_S(t, strrchr(temp, '/') + 1);
 			STRCPY_S(temp, t);
 		}
 		if (is_contain_hanzi_str(temp) == true) {
 			remove_hanzi(temp, temp, NELEMS(temp));
-			if (strrchr(temp, '.') == NULL ) {
+			if (strrchr(temp, '.') == NULL) {
 				STRCAT_S(temp, copylist[sidx].shortname);
-			}
-			else {
+			} else {
 				char basename[512];
+
 				get_file_basename(basename, 512, temp);
 				if (basename[0] != '\0') {
-					insert_string(temp, NELEMS(temp), 
-							"_", 
-							strrchr(temp, '.') - temp);
+					insert_string(temp, NELEMS(temp),
+								  "_", strrchr(temp, '.') - temp);
 				}
-				insert_string(temp, NELEMS(temp), 
-						copylist[sidx].shortname, 
-						strrchr(temp, '.') - temp);
+				insert_string(temp, NELEMS(temp),
+							  copylist[sidx].shortname,
+							  strrchr(temp, '.') - temp);
 			}
 		}
 		STRCAT_S(copydest, temp);
 
-		if ((t_fs_filetype) copylist[sidx].data !=
-				fs_filetype_dir)
-			extract_archive_file(archname, copylist[sidx].compname, copydest, NULL, NULL, NULL);
-	}
-	else {
+		if ((t_fs_filetype) copylist[sidx].data != fs_filetype_dir)
+			extract_archive_file(archname, copylist[sidx].compname, copydest,
+								 NULL, NULL, NULL);
+	} else {
 		char copysrc[512], copydest[512];
 
 		STRCPY_S(copysrc, copydir);
 		STRCAT_S(copysrc, copylist[sidx].shortname);
 		STRCPY_S(copydest, config.shortpath);
 		STRCAT_S(copydest, copylist[sidx].shortname);
-		if ((t_fs_filetype) copylist[sidx].data ==
-				fs_filetype_dir)
+		if ((t_fs_filetype) copylist[sidx].data == fs_filetype_dir)
 			copy_dir(copysrc, copydest, NULL, NULL, NULL);
 		else
 			copy_file(copysrc, copydest, NULL, NULL, NULL);
@@ -3600,7 +3599,8 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 				disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE * 3,
 							   COLOR_WHITE, (const byte *) "START Õ³Ìù");
 		}
-		if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar ) {
+		if (where == scene_in_zip || where == scene_in_chm
+			|| where == scene_in_rar) {
 			if (selcount > 1 || strcmp(item[selidx].compname, "..") != 0) {
 				if (config.path[0] != 0)
 					disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
@@ -3880,8 +3880,8 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 					inop = false;
 					break;
 				case PSP_CTRL_LTRIGGER:
-//					if (where != scene_in_dir)
-//						break;
+//                  if (where != scene_in_dir)
+//                      break;
 					if (copycount > 0 && copylist != NULL) {
 						copycount = 0;
 						free((void *) copylist);
@@ -3895,26 +3895,25 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 					if (where == scene_in_dir) {
 						copy_archmode = false;
 						STRCPY_S(copydir, config.shortpath);
-					}
-					else {
+					} else {
 						copy_archmode = true;
 						copy_where = where;
 						STRCPY_S(copydir, config.shortpath);
 					}
 					copylist =
 						(p_win_menuitem) malloc((selcount > 0 ? selcount : 1) *
-								sizeof(t_win_menuitem));
+												sizeof(t_win_menuitem));
 					if (selcount < 1) {
 						copycount = 1;
 						memcpy(&copylist[0], &filelist[selidx],
-								sizeof(t_win_menuitem));
+							   sizeof(t_win_menuitem));
 					} else {
 						copycount = selcount;
 						sidx = 0;
 						for (selidx = 0; selidx < filecount; selidx++)
 							if (item[selidx].selected)
 								memcpy(&copylist[sidx++], &filelist[selidx],
-										sizeof(t_win_menuitem));
+									   sizeof(t_win_menuitem));
 					}
 					inop = false;
 					break;
@@ -3953,9 +3952,9 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 				case PSP_CTRL_START:
 					if (strnicmp(config.path, "ms0:/", 5) != 0)
 						break;
-//					if (where != scene_in_dir
-//						|| strnicmp(config.path, "ms0:/", 5) != 0)
-//						break;
+//                  if (where != scene_in_dir
+//                      || strnicmp(config.path, "ms0:/", 5) != 0)
+//                      break;
 					if (copycount > 0) {
 						for (sidx = 0; sidx < copycount; sidx++) {
 							scene_copy_files(sidx);

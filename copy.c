@@ -115,21 +115,25 @@ extern dword move_dir(const char *src, const char *dest, t_copy_cb cb,
 	return result;
 }
 
-static t_fs_filetype get_archive_type(const char* path)
+static t_fs_filetype get_archive_type(const char *path)
 {
-	if (strlen(path) >= strlen(".rar") && stricmp(path + strlen(path) - strlen(".rar"), ".rar") == 0)
+	if (strlen(path) >= strlen(".rar")
+		&& stricmp(path + strlen(path) - strlen(".rar"), ".rar") == 0)
 		return fs_filetype_rar;
 
-	if (strlen(path) >= strlen(".zip") && stricmp(path + strlen(path) - strlen(".zip"), ".zip") == 0)
+	if (strlen(path) >= strlen(".zip")
+		&& stricmp(path + strlen(path) - strlen(".zip"), ".zip") == 0)
 		return fs_filetype_zip;
 
-	if (strlen(path) >= strlen(".chm") && stricmp(path + strlen(path) - strlen(".chm"), ".chm") == 0)
+	if (strlen(path) >= strlen(".chm")
+		&& stricmp(path + strlen(path) - strlen(".chm"), ".chm") == 0)
 		return fs_filetype_chm;
-	
+
 	return fs_filetype_unknown;
 }
 
-extern bool extract_archive_file(const char *archname, const char* archpath, const char *dest, t_copy_cb cb,
+extern bool extract_archive_file(const char *archname, const char *archpath,
+								 const char *dest, t_copy_cb cb,
 								 t_copy_overwritecb ocb, void *data)
 {
 	if (archname == NULL || archpath == NULL || dest == NULL)
@@ -153,9 +157,11 @@ extern bool extract_archive_file(const char *archname, const char* archpath, con
 		}
 	}
 
-	dbg_printf(d, "extract_archive_file: %s %s %s, ft = %d", archname, archpath, dest, ft);
+	dbg_printf(d, "extract_archive_file: %s %s %s, ft = %d", archname, archpath,
+			   dest, ft);
 
 	SceUID fd;
+
 	fd = sceIoOpen(dest, PSP_O_CREAT | PSP_O_RDWR, 0777);
 
 	if (fd < 0)
@@ -170,22 +176,26 @@ extern bool extract_archive_file(const char *archname, const char* archpath, con
 	if (archdata == NULL || archdata->ptr == NULL)
 		goto exit;
 
-	int buffer_cache = archdata->used >= 1024 * 1024 ? 1024 * 1024 : archdata->used;
+	int buffer_cache =
+		archdata->used >= 1024 * 1024 ? 1024 * 1024 : archdata->used;
 
 	char *ptr = archdata->ptr;
 
 	while (buffer_cache > 0) {
 		int bytes = sceIoWrite(fd, ptr, buffer_cache);
+
 		if (bytes < 0) {
 			goto exit;
 		}
-		buffer_cache = archdata->used - bytes >= 1024 * 1024 ? 1024 * 1024 : archdata->used - bytes;
+		buffer_cache =
+			archdata->used - bytes >=
+			1024 * 1024 ? 1024 * 1024 : archdata->used - bytes;
 		ptr += bytes;
 	}
 
 	result = true;
 
-exit:
+  exit:
 	sceIoClose(fd);
 	if (archdata != NULL) {
 		buffer_free(archdata);

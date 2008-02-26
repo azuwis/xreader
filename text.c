@@ -861,17 +861,13 @@ extern void text_close(p_text fstext)
  * @return ÎÄ±¾Ö¸Õë
  * - NULL Ê§°Ü
  */
-extern p_text text_open_archive(
-								const char* filename,
-								const char* archname,
+extern p_text text_open_archive(const char *filename,
+								const char *archname,
 								t_fs_filetype filetype,
 								dword rowpixels,
 								dword wordspace,
 								t_conf_encode encode,
-								bool reorder,
-								int where,
-								int vertread
-							   )
+								bool reorder, int where, int vertread)
 {
 	if (filename == NULL)
 		return NULL;
@@ -883,57 +879,55 @@ extern p_text text_open_archive(
 
 	const char *ext = utils_fileext(filename);
 
-	switch(where) {
+	switch (where) {
 		case scene_in_dir:
 			if (ext && stricmp(ext, "gz") == 0)
 				pText = text_open_in_gz(filename, filename,
-									 filetype, rowpixels,
-									 wordspace, encode,
-									 reorder);
+										filetype, rowpixels,
+										wordspace, encode, reorder);
 			else if (filetype != fs_filetype_unknown)
 				pText = text_open(filename, filetype,
-							   rowpixels, wordspace, encode,
-							   reorder);
+								  rowpixels, wordspace, encode, reorder);
 			else {
-				pText = text_open_binary(filename, (vertread == conf_vertread_lvert
-						   	|| vertread ==  conf_vertread_rvert)
-						);
+				pText =
+					text_open_binary(filename,
+									 (vertread == conf_vertread_lvert
+									  || vertread == conf_vertread_rvert)
+					);
 			}
 			break;
 		case scene_in_chm:
-				pText = text_open_in_chm(archname, filename,
-									  filetype, rowpixels, 
-									  wordspace, encode,
-									  reorder);
+			pText = text_open_in_chm(archname, filename,
+									 filetype, rowpixels,
+									 wordspace, encode, reorder);
 			break;
 		case scene_in_zip:
-			if(filetype == fs_filetype_txt || filetype == fs_filetype_html)
+			if (filetype == fs_filetype_txt || filetype == fs_filetype_html)
 				pText = text_open_in_zip(archname, filename,
-									  filetype, rowpixels,
-									  wordspace, encode,
-									  reorder);
-			else 
+										 filetype, rowpixels,
+										 wordspace, encode, reorder);
+			else
 				pText = text_open_binary_in_zip(archname, filename,
-											 filetype, rowpixels,
-											 wordspace, encode,
-											 reorder,
-											 (vertread == conf_vertread_lvert
-											  || vertread ==  conf_vertread_rvert
-											  ));
+												filetype, rowpixels,
+												wordspace, encode,
+												reorder,
+												(vertread == conf_vertread_lvert
+												 || vertread ==
+												 conf_vertread_rvert));
 			break;
 		case scene_in_rar:
-			if(filetype == fs_filetype_txt || filetype == fs_filetype_html)
+			if (filetype == fs_filetype_txt || filetype == fs_filetype_html)
 				pText = text_open_in_rar(archname, filename,
-									  filetype, rowpixels,
-									  wordspace, encode,
-									  reorder);
+										 filetype, rowpixels,
+										 wordspace, encode, reorder);
 			else
 				pText = text_open_binary_in_rar(archname, filename,
-											 filetype, rowpixels, wordspace,
-											 encode, reorder,
-											 (vertread == conf_vertread_lvert
-											  || vertread ==  conf_vertread_rvert)
-											 );
+												filetype, rowpixels, wordspace,
+												encode, reorder,
+												(vertread == conf_vertread_lvert
+												 || vertread ==
+												 conf_vertread_rvert)
+					);
 			break;
 	}
 

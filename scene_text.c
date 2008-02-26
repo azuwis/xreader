@@ -51,8 +51,7 @@ bool scene_readbook_in_raw_mode = false;
 
 BookViewData cur_book_view, prev_book_view;
 
-static void draw_infobar_info(PBookViewData pView, dword selidx,
-							  int vertread)
+static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 {
 	char ci[8] = "       ";
 	int i;
@@ -166,8 +165,7 @@ static void draw_infobar_info(PBookViewData pView, dword selidx,
 }
 
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
-static void draw_infobar_lyric(PBookViewData pView, dword selidx,
-							   int vertread)
+static void draw_infobar_lyric(PBookViewData pView, dword selidx, int vertread)
 {
 	switch (vertread) {
 		case conf_vertread_reversal:
@@ -283,8 +281,8 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		STRCPY_S(pView->archname, pView->filename);
 		STRCPY_S(pView->bookmarkname, pView->filename);
 	}
-	dbg_printf(d, "scene_book_reload: fn %s bookmarkname %s archname %s", pView->filename,
-			   pView->bookmarkname, pView->archname);
+	dbg_printf(d, "scene_book_reload: fn %s bookmarkname %s archname %s",
+			   pView->filename, pView->bookmarkname, pView->archname);
 	if (pView->rrow == INVALID) {
 		// disable binary file type text's bookmark
 		if (config.autobm
@@ -300,10 +298,10 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	}
 	scene_power_save(false);
 
-	fs = text_open_archive(pView->filename, pView->archname, 
-						  (t_fs_filetype) filelist[selidx].data,
-						  pixelsperrow, config.wordspace, config.encode,
-						  config.reordertxt, where, config.vertread);
+	fs = text_open_archive(pView->filename, pView->archname,
+						   (t_fs_filetype) filelist[selidx].data,
+						   pixelsperrow, config.wordspace, config.encode,
+						   config.reordertxt, where, config.vertread);
 
 	if (fs == NULL) {
 		win_msg("文件打开失败", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
@@ -338,16 +336,14 @@ static void scene_printtext_reversal(PBookViewData pView)
 {
 	int cidx;
 	p_textrow tr = fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF);
-	
+
 	disp_putnstringreversal(config.borderspace, config.borderspace,
 							config.forecolor, (const byte *) tr->start,
 							(int) tr->count, config.wordspace,
 							pView->rowtop,
 							DISP_BOOK_FONTSIZE - pView->rowtop, 0);
-	for (cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count;
-		 cidx++) {
-		tr = fs->rows[(fs->crow + cidx) >> 10] +
-			((fs->crow + cidx) & 0x3FF);
+	for (cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx++) {
+		tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
 		disp_putnstringreversal(config.borderspace,
 								config.borderspace +
 								(DISP_BOOK_FONTSIZE +
@@ -366,16 +362,14 @@ static void scene_printtext_rvert(PBookViewData pView)
 {
 	int cidx;
 	p_textrow tr = fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF);
-	
+
 	disp_putnstringrvert((PSP_SCREEN_WIDTH - 1) - config.borderspace,
 						 config.borderspace, config.forecolor,
 						 (const byte *) tr->start, (int) tr->count,
 						 config.wordspace, pView->rowtop,
 						 DISP_BOOK_FONTSIZE - pView->rowtop, 0);
-	for (cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count;
-		 cidx++) {
-		tr = fs->rows[(fs->crow + cidx) >> 10] +
-			((fs->crow + cidx) & 0x3FF);
+	for (cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx++) {
+		tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
 		disp_putnstringrvert((PSP_SCREEN_WIDTH - 1) -
 							 (DISP_BOOK_FONTSIZE +
 							  config.rowspace) * cidx -
@@ -391,17 +385,14 @@ static void scene_printtext_lvert(PBookViewData pView)
 {
 	int cidx;
 	p_textrow tr = fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF);
-	
+
 	disp_putnstringlvert(config.borderspace,
 						 (PSP_SCREEN_HEIGHT - 1) - config.borderspace,
 						 config.forecolor, (const byte *) tr->start,
 						 (int) tr->count, config.wordspace,
-						 pView->rowtop,
-						 DISP_BOOK_FONTSIZE - pView->rowtop, 0);
-	for (cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count;
-		 cidx++) {
-		tr = fs->rows[(fs->crow + cidx) >> 10] +
-			((fs->crow + cidx) & 0x3FF);
+						 pView->rowtop, DISP_BOOK_FONTSIZE - pView->rowtop, 0);
+	for (cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx++) {
+		tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
 		disp_putnstringlvert((DISP_BOOK_FONTSIZE +
 							  config.rowspace) * cidx +
 							 config.borderspace - pView->rowtop,
@@ -420,17 +411,13 @@ static void scene_printtext_horz(PBookViewData pView)
 {
 	int cidx;
 	p_textrow tr = fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF);
-	
+
 	disp_putnstringhorz(config.borderspace, config.borderspace,
 						config.forecolor, (const byte *) tr->start,
 						(int) tr->count, config.wordspace,
-						pView->rowtop,
-						DISP_BOOK_FONTSIZE - pView->rowtop, 0);
-	for (cidx = 1;
-		 cidx < drperpage && fs->crow + cidx < fs->row_count;
-		 cidx++) {
-		tr = fs->rows[(fs->crow + cidx) >> 10] +
-			((fs->crow + cidx) & 0x3FF);
+						pView->rowtop, DISP_BOOK_FONTSIZE - pView->rowtop, 0);
+	for (cidx = 1; cidx < drperpage && fs->crow + cidx < fs->row_count; cidx++) {
+		tr = fs->rows[(fs->crow + cidx) >> 10] + ((fs->crow + cidx) & 0x3FF);
 		disp_putnstringhorz(config.borderspace,
 							config.borderspace +
 							(DISP_BOOK_FONTSIZE +
@@ -441,8 +428,7 @@ static void scene_printtext_horz(PBookViewData pView)
 							DISP_BOOK_FONTSIZE,
 							config.
 							infobar ? ((PSP_SCREEN_HEIGHT - 1) -
-									   DISP_FONTSIZE) :
-							PSP_SCREEN_HEIGHT);
+									   DISP_FONTSIZE) : PSP_SCREEN_HEIGHT);
 	}
 }
 
@@ -458,8 +444,7 @@ static void scene_draw_scrollbar_reversal(void)
 	disp_line(4, PSP_SCREEN_HEIGHT - 1, 4,
 			  PSP_SCREEN_HEIGHT - 1 - slen, config.forecolor);
 	disp_fillrect(3, PSP_SCREEN_HEIGHT - 1 - startp,
-				  0, PSP_SCREEN_HEIGHT - 1 - endp,
-				  config.forecolor);
+				  0, PSP_SCREEN_HEIGHT - 1 - endp, config.forecolor);
 }
 
 static void scene_draw_scrollbar_lvert(void)
@@ -483,15 +468,12 @@ static void scene_draw_scrollbar_rvert(void)
 		(config.infobar ? (DISP_BOOK_FONTSIZE + 1) : 0), slen =
 		(PSP_SCREEN_WIDTH - 1) - sleft, bsize =
 		2 + (slen - 2) * rowsperpage / fs->row_count, endp =
-		(PSP_SCREEN_WIDTH - 1) -
-		slen * fs->crow / fs->row_count, startp;
+		(PSP_SCREEN_WIDTH - 1) - slen * fs->crow / fs->row_count, startp;
 	if (endp - bsize < sleft)
 		endp = sleft + bsize;
 	startp = endp - bsize;
-	disp_line(sleft, 267, (PSP_SCREEN_WIDTH - 1), 267,
-			config.forecolor);
-	disp_fillrect(startp, 268, endp, (PSP_SCREEN_HEIGHT - 1),
-			config.forecolor);
+	disp_line(sleft, 267, (PSP_SCREEN_WIDTH - 1), 267, config.forecolor);
+	disp_fillrect(startp, 268, endp, (PSP_SCREEN_HEIGHT - 1), config.forecolor);
 }
 
 static void scene_draw_scrollbar_horz(void)
@@ -504,8 +486,7 @@ static void scene_draw_scrollbar_horz(void)
 		startp = slen - bsize;
 	endp = startp + bsize;
 	disp_line(475, 0, 475, slen, config.forecolor);
-	disp_fillrect(476, startp, (PSP_SCREEN_WIDTH - 1), endp,
-			config.forecolor);
+	disp_fillrect(476, startp, (PSP_SCREEN_WIDTH - 1), endp, config.forecolor);
 }
 
 int scene_printbook(PBookViewData pView, dword selidx)

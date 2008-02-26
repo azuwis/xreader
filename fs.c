@@ -758,9 +758,11 @@ extern bool fs_is_txtbook(t_fs_filetype ft)
 		|| ft == fs_filetype_gz;
 }
 
-static void extract_zip_file_into_buffer(buffer *buffer, const char* archname, const char* archpath)
+static void extract_zip_file_into_buffer(buffer * buffer, const char *archname,
+										 const char *archpath)
 {
 	unzFile unzf = unzOpen(archname);
+
 	if (unzf == NULL)
 		return;
 	if (unzLocateFile(unzf, archpath, 0) != UNZ_OK
@@ -768,7 +770,7 @@ static void extract_zip_file_into_buffer(buffer *buffer, const char* archname, c
 		unzClose(unzf);
 		return;
 	}
-	
+
 	unz_file_info info;
 
 	if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK) {
@@ -777,7 +779,7 @@ static void extract_zip_file_into_buffer(buffer *buffer, const char* archname, c
 		return;
 	}
 	buffer_prepare_copy(buffer, info.uncompressed_size);
-	if(buffer->ptr == NULL) {
+	if (buffer->ptr == NULL) {
 		unzCloseCurrentFile(unzf);
 		unzClose(unzf);
 		return;
@@ -791,13 +793,15 @@ static void extract_zip_file_into_buffer(buffer *buffer, const char* archname, c
 static int rarcbproc(UINT msg, LONG UserData, LONG P1, LONG P2)
 {
 	if (msg == UCM_PROCESSDATA) {
-		buffer* buf = (buffer*) UserData;
+		buffer *buf = (buffer *) UserData;
+
 		buffer_append_memory(buf, (void *) P1, P2);
 	}
 	return 0;
 }
 
-static void extract_rar_file_into_buffer(buffer *buf, const char* archname, const char* archpath)
+static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
+										 const char *archpath)
 {
 	struct RAROpenArchiveData arcdata;
 
@@ -820,11 +824,12 @@ static void extract_rar_file_into_buffer(buffer *buf, const char* archname, cons
 			goto exit;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
-exit:
+  exit:
 	RARCloseArchive(hrar);
 }
 
-static void extract_chm_file_into_buffer(buffer *buf, const char* archname, const char* archpath)
+static void extract_chm_file_into_buffer(buffer * buf, const char *archname,
+										 const char *archpath)
 {
 	struct chmFile *chm = chm_open(archname);
 	struct chmUnitInfo ui;
@@ -857,12 +862,12 @@ static void extract_chm_file_into_buffer(buffer *buf, const char* archname, cons
  * @param filetype 档案文件类型
  * @note 如果解压失败, *buffer = NULL
  */
-extern void extract_archive_file_into_buffer(buffer **buf,
-											 const char* archname,
-											 const char* archpath,
+extern void extract_archive_file_into_buffer(buffer ** buf,
+											 const char *archname,
+											 const char *archpath,
 											 t_fs_filetype filetype)
 {
-	if(buf == NULL)
+	if (buf == NULL)
 		return;
 
 	if (archname == NULL || archpath == NULL) {
@@ -890,9 +895,8 @@ extern void extract_archive_file_into_buffer(buffer **buf,
 			break;
 	}
 
-	if(b != NULL && b->ptr != NULL)
+	if (b != NULL && b->ptr != NULL)
 		*buf = b;
-	else 
+	else
 		*buf = NULL;
 }
-
