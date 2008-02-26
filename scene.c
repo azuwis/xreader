@@ -5147,7 +5147,7 @@ extern void scene_init()
 	dbg_printf(d, "Load finished in %.2fs, press any key to continue",
 			   pspDiffTime(&end, &start));
 	if (printDebugInfo) {
-		dbg_close_handle(d, 1);
+		dbg_close_handle(d, 2);
 		while (ctrl_read() == PSP_CTRL_LTRIGGER) {
 			sceKernelDelayThread(100000);
 		}
