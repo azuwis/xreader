@@ -110,7 +110,7 @@ extern void bookmark_save(p_bookmark bm)
 		sceIoWrite(fd, &count, sizeof(dword));
 		memset(&bi, 0, sizeof(t_bm_index));
 		sceIoWrite(fd, &bi, sizeof(t_bm_index));
-		dword *temp = (dword *) calloc(31 * 10, sizeof(dword));
+		dword *temp = (dword *) calloc(32 * 10, sizeof(dword));
 
 		memset(temp, 0, 32 * 10 * sizeof(dword));
 		sceIoWrite(fd, temp, 32 * 10 * sizeof(dword));
@@ -153,7 +153,7 @@ extern void bookmark_save(p_bookmark bm)
 			sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 			dword *temp = (dword *) calloc(31 * 10, sizeof(dword));
 
-			memset(temp, 0, sizeof(temp));
+			memset(temp, 0, 31 * 10 * sizeof(dword));
 			sceIoWrite(fd, temp, 31 * 10 * sizeof(dword));
 			free(temp);
 			sceIoLseek(fd, 0, PSP_SEEK_SET);
