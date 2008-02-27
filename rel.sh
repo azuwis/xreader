@@ -7,4 +7,5 @@ cp ./fonts/fonts.zip ./PSP/GAME/xReader
 cp ./xrPrx/xrPrx.prx ./PSP/GAME/xReader
 cp Changelog.txt ./PSP/GAME/xReader
 cp Readme.txt ./PSP/GAME/xReader
+cp GenIndex/GenIndex.exe ./PSP/GAME/xReader
 rar a -v1500k xReader.rar PSP
