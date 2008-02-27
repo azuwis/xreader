@@ -70,6 +70,21 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "xReader 目录生成工具 GenIndex (version 0.1)\n");
 		fprintf(stderr, "用法: GenIndex.exe 文件名.txt [-d]\n");
 		fprintf(stderr, "                               -d: 调试模式\n");
+		fprintf(stderr, "使用方法\n");
+		fprintf(stderr, "1. 在你的TXT电子书里加入<<<<符号标注每章开始\n");
+		fprintf(stderr, "如\n");
+		fprintf(stderr, "<<<<第一章 XXX\n");
+		fprintf(stderr, "....\n");
+		fprintf(stderr, "<<<<第二章 YYY\n");
+		fprintf(stderr, "2. 保存后，将TXT拖到GenIndex图标中，GenIndex就会为你的电子书生成\n");
+		fprintf(stderr, "一个简便的目录：\n");
+		fprintf(stderr, "===================\n");
+		fprintf(stderr, "页数 目录\n");
+		fprintf(stderr, "1    第一章 XXX\n");
+		fprintf(stderr, "2    第二章 YYY\n");
+		fprintf(stderr, "===================\n");
+		fprintf(stderr, "3. 页数数字就是GI值，看书时在信息栏里有显示，如果你要移动到某章，翻页直到GI相等即可找到该章。GI是绝对页码，不会因为字体大小而改变。\n");
+		system("pause");
 		return -1;
 	}
 	dbg_printf(d, "处理文件名: %s", argv[1]);
@@ -158,7 +173,17 @@ void ParseFile(void)
 	char *szOutFn = 0;
 	dbg_printf(d, "处理TXT文件: 路径 %s 名字 %s 大小 %d", g_file.path, g_file.name, g_file.size);
 	fp = fopen(g_file.path, "r");
+	char str[4];
+	fgets(str, 4, fp);
+	if(str[0] == '\xef' && str[1] == '\xbb' && str[2] == '\xbf')
+	{
+		fprintf(stderr, "GenIndex不能处理UTF8 TXT文件，请先转换为GBK编码\n");
+		system("pause");
+		return;
+	}
+	
 	g_file.dirsize = 0;
+	fseek(fp, 0, SEEK_SET);
 	SearchDir(fp);
 
 	g_file.dirsize = VPrintDir();
