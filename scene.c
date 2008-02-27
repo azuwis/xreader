@@ -518,6 +518,7 @@ static const char *GetFileExt(const char *filename)
 		return strExt;
 }
 
+#ifdef ENABLE_BG
 static void set_background_image(p_win_menuitem item, dword * index)
 {
 	char bgfile[256], bgarchname[256];
@@ -568,6 +569,7 @@ static void set_background_image(p_win_menuitem item, dword * index)
 		}
 	}
 }
+#endif
 
 int scene_filelist_compare_ext(void *data1, void *data2)
 {
@@ -4980,11 +4982,15 @@ extern void scene_init()
 	SPRINTF_S(conffilename, "%s%d%s", "xreader", config_num, ".conf");
 	STRCAT_S(conffile, conffilename);
 	conf_set_file(conffile);
+#ifdef ENABLE_MUSIC
 	STRCPY_S(mp3conf, appdir);
 	STRCAT_S(mp3conf, "music.lst");
+#endif
 
 	if (key == PSP_CTRL_RTRIGGER) {
+#ifdef ENABLE_MUSIC
 		utils_del_file(mp3conf);
+#endif
 		utils_del_file(conffile);
 		conf_load(&config);
 		conf_save(&config);
