@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	else  {
-		dbg_printf(d, "文件: %s 大小: %d字节", argv[1], statbuf.st_size);
+		dbg_printf(d, "文件: %s 大小: %ld字节", argv[1], statbuf.st_size);
 		g_file.name = strdup(argv[1]);
 		if(strrchr(g_file.name, '\\') != 0) {
 			strcpy(g_file.name, strrchr(g_file.name, '\\')+1);
