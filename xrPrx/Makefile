@@ -1,7 +1,7 @@
 TARGET = xrPrx
 OBJS = main.o 
 
-PSP_FW_VERSION=371
+PSP_FW_VERSION=390
 BUILD_PRX=1
 
 # Use the kernel's small inbuilt libc
