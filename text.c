@@ -150,6 +150,141 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace)
 	return true;
 }
 
+int min_ratio = 20;
+
+/** 计算平均行长 */
+static size_t getTxtAvgLength(char *txtBuf, size_t txtLen)
+{
+	int linesize = 0, linecnt = 0;
+
+	while (txtLen-- > 0) {
+		if (*txtBuf == '\n') {
+			linecnt++;
+		} else {
+			if (*txtBuf != '\r') {
+				linesize++;
+			}
+		}
+		txtBuf++;
+	}
+	if (linecnt != 0)
+		return linesize / linecnt;
+	return 0;
+}
+
+/**
+ * 合并文本段落，不分配内存版本，速度慢
+ * @param txtbuf 输入TXT指针指针
+ * @param txtlen 输入TXT大小
+ * @return 新文件大小
+ * @note 能够合并段落
+ */
+static size_t text_paragraph_join_without_memory(char **txtbuf, size_t txtlen)
+{
+	char *src = *txtbuf;
+
+	if (txtlen == 0 || txtbuf == NULL || *txtbuf == NULL)
+		return 0;
+
+	// 计算平均行长
+	size_t avgLength = getTxtAvgLength(*txtbuf, txtlen);
+
+	int numOfLineSize = 0, numOfLine = 0;
+
+	int cnt = txtlen;
+
+	while (cnt-- > 0) {
+		if (*src == '\n') {
+			numOfLine++;
+			if (numOfLineSize < avgLength - avgLength * 1.0 / min_ratio) {
+//              char fmt[80];
+//              sprintf(fmt, "发现段落结束行：%%.%ds %%d/%%d\n", numOfLineSize);
+//              printf(fmt, src-numOfLineSize, numOfLine, numOfLineSize);
+			} else {
+				// 将本行和下一行合并
+				if (*(src - 1) == '\r') {
+					if (txtlen > src - *txtbuf) {
+						memmove(src - 1, src + 1, txtlen - (src - *txtbuf));
+						txtlen -= 2;
+					}
+				} else {
+					if (txtlen > src - *txtbuf) {
+						memmove(src, src + 1, txtlen - (src - *txtbuf));
+						txtlen--;
+					}
+				}
+			}
+			numOfLineSize = 0;
+		} else if (*src != '\r') {
+			numOfLineSize++;
+		}
+		src++;
+	}
+
+	return txtlen;
+}
+
+/**
+ * 合并文本段落，分配内存版本，速度快
+ * @param txtbuf 输入TXT指针指针
+ * @param txtlen 输入TXT大小
+ * @return 新文件大小
+ * @note 能够合并段落
+ * <br> *txtbuf指向一段被malloc分配的TXT数据
+ */
+static size_t text_paragraph_join_alloc_memory(char **txtbuf, size_t txtlen)
+{
+	if (txtlen == 0 || txtbuf == NULL || *txtbuf == NULL)
+		return 0;
+
+	// 计算平均行长
+	size_t avgLength = getTxtAvgLength(*txtbuf, txtlen);
+
+	char *src = *txtbuf, *dst = NULL;
+
+	if ((dst = (char *) calloc(1, txtlen)) == NULL) {
+		return text_paragraph_join_without_memory(txtbuf, txtlen);
+	}
+
+	char *p = dst;
+
+	int numOfLineSize = 0, numOfLine = 0;
+
+	int cnt = txtlen;
+
+	while (cnt-- > 0) {
+		if (*src == '\n') {
+			numOfLine++;
+			if (numOfLineSize < avgLength - avgLength * 1.0 / min_ratio) {
+				if (*(src - 1) == '\r') {
+					*p++ = *(src - 1);
+				}
+				*p++ = '\n';
+				/*
+				   // 插入段落开始‘　’字符
+				   size_t pos = p - dst;
+				   dst = realloc(dst, txtlen+strlen("    "));
+				   p = pos + dst;
+				   memcpy((char*)p, "    ", strlen("    "));
+				   p += strlen("    ");
+				   txtlen += strlen("    ");
+				 */
+			} else {
+				// 将本行和下一行合并
+			}
+			numOfLineSize = 0;
+		} else if (*src != '\r') {
+			numOfLineSize++;
+			*p++ = *src;
+		}
+		src++;
+	}
+
+	free(*txtbuf);
+	*txtbuf = dst;
+	return p - dst;
+}
+
 static dword text_reorder(char *string, dword size)
 {
 	int i;
@@ -233,8 +368,10 @@ extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 	text_decode(txt, encode);
 	if (ft == fs_filetype_html)
 		txt->size = html_to_text(txt->buf, txt->size, true);
-	if (reorder)
+	if (reorder) {
 		txt->size = text_reorder(txt->buf, txt->size);
+		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+	}
 	if (!text_format(txt, rowpixels, wordspace)) {
 		text_close(txt);
 		return NULL;
@@ -383,8 +520,10 @@ extern p_text text_open_in_gz(const char *gzfile, const char *filename,
 	text_decode(txt, encode);
 	if (ft == fs_filetype_html)
 		txt->size = html_to_text(txt->buf, txt->size, true);
-	if (reorder)
+	if (reorder) {
 		txt->size = text_reorder(txt->buf, txt->size);
+		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+	}
 	if (!text_format(txt, rowpixels, wordspace)) {
 		text_close(txt);
 		return NULL;
@@ -532,8 +671,10 @@ extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
 	text_decode(txt, encode);
 	if (ft == fs_filetype_html)
 		txt->size = html_to_text(txt->buf, txt->size, true);
-	if (reorder)
+	if (reorder) {
 		txt->size = text_reorder(txt->buf, txt->size);
+		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+	}
 	if (!text_format(txt, rowpixels, wordspace)) {
 		text_close(txt);
 		return NULL;
@@ -584,8 +725,10 @@ extern p_text text_open_in_zip(const char *zipfile, const char *filename,
 	text_decode(txt, encode);
 	if (ft == fs_filetype_html)
 		txt->size = html_to_text(txt->buf, txt->size, true);
-	if (reorder)
+	if (reorder) {
 		txt->size = text_reorder(txt->buf, txt->size);
+		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+	}
 	if (!text_format(txt, rowpixels, wordspace)) {
 		text_close(txt);
 		return NULL;
@@ -777,8 +920,11 @@ extern p_text text_open_in_rar(const char *rarfile, const char *filename,
 			text_decode(txt, encode);
 			if (ft == fs_filetype_html)
 				txt->size = html_to_text(txt->buf, txt->size, true);
-			if (reorder)
+			if (reorder) {
 				txt->size = text_reorder(txt->buf, txt->size);
+				txt->size =
+					text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+			}
 			if (!text_format(txt, rowpixels, wordspace)) {
 				text_close(txt);
 				return NULL;
