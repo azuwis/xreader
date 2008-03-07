@@ -5,361 +5,1758 @@
 #ifdef ENABLE_TTF
 
 #include <pspkernel.h>
+#include <malloc.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include FT_STROKER_H
+#include FT_SYNTHESIS_H
+#include "freetype/ftlcdfil.h"
 #include "charsets.h"
 #include "ttfont.h"
+#include "display.h"
+#include "charsets.h"
+#include "pspscreen.h"
+#include "dbg.h"
 
-typedef struct _ttf
+/**
+ * 打开TTF字体
+ * @param filename TTF文件名
+ * @param size 预设的字体大小
+ * @return 描述TTF的指针
+ * - NULL 失败
+ */
+extern p_ttf ttf_open(const char *filename, int size)
 {
-	FT_Library library;
-	FT_Face face;
-	int bpr;
-	int size;
+	p_ttf ttf;
 	byte *buf;
-	int buflen;
-} t_ttf, *p_ttf;
+	int fd, fileSize;
 
-extern void *ttf_open(const char *filename, int size, byte ** cbuffer)
-{
-	p_ttf ttf;
-
-	if ((ttf = (p_ttf) calloc(1, sizeof(t_ttf))) == NULL) {
+	if (filename == NULL || size == 0)
 		return NULL;
-	}
-	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
 
+	fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
 	if (fd < 0) {
-		free(ttf);
 		return NULL;
 	}
-	ttf->buflen = sceIoLseek32(fd, 0, PSP_SEEK_END);
+	fileSize = sceIoLseek32(fd, 0, PSP_SEEK_END);
 	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	ttf->buf = (byte *) malloc(ttf->buflen);
-	if (ttf->buf == NULL) {
-		free(ttf);
-		sceIoClose(fd);
+	buf = (byte *) malloc(fileSize);
+	if (buf == NULL) {
 		return NULL;
 	}
-	sceIoRead(fd, ttf->buf, ttf->buflen);
+	sceIoRead(fd, buf, fileSize);
 	sceIoClose(fd);
-	ttf->size = size;
-	if (FT_Init_FreeType(&ttf->library) != 0) {
-		free(ttf->buf);
-		free(ttf);
-		return NULL;
-	}
-	if (FT_New_Memory_Face(ttf->library, ttf->buf, ttf->buflen, 0, &ttf->face)
-		!= 0) {
-		FT_Done_FreeType(ttf->library);
-		free(ttf->buf);
-		free(ttf);
-		return NULL;
-	}
-
-	if (FT_Set_Pixel_Sizes(ttf->face, 0, size) != 0) {
-		ttf_close(ttf);
-		return NULL;
-	}
-
-	ttf->bpr = (size + 7) / 8;
-	*cbuffer = (byte *) calloc(1, 0x5E02 * ttf->bpr * size);
-	if (*cbuffer == NULL) {
-		ttf_close(ttf);
-		return NULL;
-	}
+	ttf = ttf_open_buffer(buf, fileSize, size, filename);
 	return ttf;
 }
 
-extern void *ttf_reopen(void *ttfh, int size, byte ** cbuffer)
+/**
+ * 打开TTF字体数据
+ * @param ttfBuf TTF字体数据
+ * @param ttfLength TTF字体数据大小，以字节计
+ * @param pixelSize 预设的字体大小
+ * @param ttfName TTF字体名
+ * @return 描述TTF的指针
+ * - NULL 失败
+ */
+extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
+							 const char *ttfName)
 {
-	p_ttf ttf = (p_ttf) ttfh;
-
-	ttf->size = size;
-
-	if (FT_Set_Pixel_Sizes(ttf->face, 0, size) != 0) {
-		ttf_close(ttf);
-		return NULL;
-	}
-
-	ttf->bpr = (size + 7) / 8;
-	*cbuffer = (byte *) calloc(1, 0x5E02 * ttf->bpr * size);
-	if (*cbuffer == NULL) {
-		ttf_close(ttf);
-		return NULL;
-	}
-	return ttf;
-}
-
-extern void *ttf_open_buffer(const byte * buf, int len, int size,
-							 byte ** cbuffer)
-{
+	int i;
 	p_ttf ttf;
+
+	if (ttfBuf == NULL || ttfLength == 0 || ttfName == NULL)
+		return NULL;
 
 	if ((ttf = (p_ttf) calloc(1, sizeof(t_ttf))) == NULL) {
 		return NULL;
 	}
-	ttf->buflen = len;
-	ttf->buf = (byte *) buf;
-	ttf->size = size;
+
+	memset(ttf, 0, sizeof(t_ttf));
+
+	ttf->fileBuffer = ttfBuf;
+	ttf->fileSize = ttfLength;
+
+	if (strrchr(ttfName, '/') == NULL)
+		ttf->fontName = strdup(ttfName);
+	else {
+		ttf->fontName = strdup(strrchr(ttfName, '/') + 1);
+	}
+
 	if (FT_Init_FreeType(&ttf->library) != 0) {
-		free(ttf->buf);
+		free(ttf->fileBuffer);
 		free(ttf);
 		return NULL;
 	}
-	if (FT_New_Memory_Face(ttf->library, ttf->buf, ttf->buflen, 0, &ttf->face)
+	if (FT_New_Memory_Face
+		(ttf->library, ttf->fileBuffer, ttf->fileSize, 0, &ttf->face)
 		!= 0) {
 		FT_Done_FreeType(ttf->library);
-		free(ttf->buf);
+		free(ttf->fileBuffer);
 		free(ttf);
 		return NULL;
 	}
 
-	if (FT_Set_Pixel_Sizes(ttf->face, 0, size) != 0) {
-		ttf_close(ttf);
-		return NULL;
+	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
+		memset(&ttf->sbitHashRoot[i], 0, sizeof(SBit_HashItem));
 	}
+	ttf->cacheSize = 0;
+	ttf->cachePop = 0;
 
-	ttf->bpr = (size + 7) / 8;
-	*cbuffer = (byte *) calloc(1, 0x5E02 * ttf->bpr * size);
-	if (*cbuffer == NULL) {
-		ttf_close(ttf);
-		return NULL;
-	}
+	ttf_set_pixel_size(ttf, pixelSize);
+
 	return ttf;
 }
 
-extern void ttf_close(void *ttfh)
+/**
+ * 关闭TTF结构
+ * @param ttf ttf指针
+ */
+extern void ttf_close(p_ttf ttf)
 {
-	p_ttf ttf = (p_ttf) ttfh;
+	int i;
 
-	if (ttf->buf != NULL)
-		free(ttf->buf);
+	if (ttf == NULL)
+		return;
+
+	if (ttf->fontName != NULL) {
+		free(ttf->fontName);
+		ttf->fontName = NULL;
+	}
+	if (ttf->fileBuffer != NULL) {
+		free(ttf->fileBuffer);
+		ttf->fileBuffer = NULL;
+	}
+
+	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
+		if (ttf->sbitHashRoot[i].bitmap.buffer) {
+			free(ttf->sbitHashRoot[i].bitmap.buffer);
+			ttf->sbitHashRoot[i].bitmap.buffer = NULL;
+		}
+	}
+
 	FT_Done_Face(ttf->face);
 	FT_Done_FreeType(ttf->library);
+
 	free(ttf);
 }
 
-extern void *ttf_open_ascii(const char *filename, int size, byte ** ebuffer)
+/**
+ * 设置TTF字体大小
+ * @param ttf ttf指针
+ * @param size 字体大小
+ * @return 是否成功
+ */
+extern bool ttf_set_pixel_size(p_ttf ttf, int size)
 {
-	p_ttf ttf;
-
-	if ((ttf = (p_ttf) calloc(1, sizeof(t_ttf))) == NULL) {
-		return NULL;
-	}
-	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
-
-	if (fd < 0) {
-		free(ttf);
-		return NULL;
-	}
-	ttf->buflen = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	ttf->buf = (byte *) malloc(ttf->buflen);
-	if (ttf->buf == NULL) {
-		free(ttf);
-		sceIoClose(fd);
-		return NULL;
-	}
-	sceIoRead(fd, ttf->buf, ttf->buflen);
-	sceIoClose(fd);
-	ttf->size = size;
-	if (FT_Init_FreeType(&ttf->library) != 0) {
-		free(ttf->buf);
-		free(ttf);
-		return NULL;
-	}
-	if (FT_New_Memory_Face(ttf->library, ttf->buf, ttf->buflen, 0, &ttf->face)
-		!= 0) {
-		FT_Done_FreeType(ttf->library);
-		free(ttf->buf);
-		free(ttf);
-		return NULL;
-	}
+	if (ttf == NULL)
+		return false;
 
 	if (FT_Set_Pixel_Sizes(ttf->face, 0, size) != 0) {
-		ttf_close(ttf);
-		return NULL;
+		return false;
 	}
 
-	ttf->bpr = (size + 7) / 8;
-	*ebuffer = (byte *) calloc(1, 0x80 * ttf->bpr * size);
-	if (*ebuffer == NULL) {
-		ttf_close(ttf);
-		return NULL;
-	}
-	return ttf;
+	ttf->pixelSize = size;
+	return true;
 }
 
-extern void *ttf_open_ascii_buffer(const byte * buf, int len, int size,
-								   byte ** ebuffer)
+/**
+ * 设置TTF是否启用抗锯齿效果
+ * @param ttf ttf指针
+ * @param aa 是否启用抗锯齿效果
+ */
+extern void ttf_set_anti_alias(p_ttf ttf, bool aa)
 {
-	p_ttf ttf;
+	if (ttf == NULL)
+		return;
 
-	if ((ttf = (p_ttf) calloc(1, sizeof(t_ttf))) == NULL) {
-		return NULL;
-	}
-	ttf->buflen = len;
-	ttf->buf = (byte *) buf;
-	ttf->size = size;
-	if (FT_Init_FreeType(&ttf->library) != 0) {
-		free(ttf->buf);
-		free(ttf);
-		return NULL;
-	}
-	if (FT_New_Memory_Face(ttf->library, ttf->buf, ttf->buflen, 0, &ttf->face)
-		!= 0) {
-		FT_Done_FreeType(ttf->library);
-		free(ttf->buf);
-		free(ttf);
-		return NULL;
-	}
-
-	if (FT_Set_Pixel_Sizes(ttf->face, 0, size) != 0) {
-		ttf_close(ttf);
-		return NULL;
-	}
-
-	ttf->bpr = (size + 7) / 8;
-	*ebuffer = (byte *) calloc(1, 0x80 * ttf->bpr * size);
-	if (*ebuffer == NULL) {
-		ttf_close(ttf);
-		return NULL;
-	}
-	return ttf;
+	ttf->antiAlias = aa;
 }
 
-extern void ttf_cache(void *ttfh, const byte * s, byte * zslot)
+/**
+ * 设置TTF是否启用ClearType(Sub-Pixel LCD优化效果)
+ * @param ttf ttf指针
+ * @param cleartype 是否启用cleartype
+ */
+extern void ttf_set_cleartype(p_ttf ttf, bool cleartype)
 {
-	p_ttf ttf = (p_ttf) ttfh;
-	word u = charsets_gbk_to_ucs(s);
+	if (ttf == NULL)
+		return;
 
-	if (FT_Load_Char(ttf->face, u, FT_LOAD_RENDER | FT_LOAD_TARGET_MONO) == 0
-		&& ttf->face->glyph->bitmap.buffer != NULL) {
-		memset(zslot, 0, ttf->bpr * ttf->size);
-		int sz = ttf->face->glyph->bitmap.rows;
-		int bpr2 = min(ttf->face->glyph->bitmap.pitch,
-					   ttf->bpr * 8 - ttf->face->glyph->bitmap_left);
-		int m, n, y =
-			ttf->size - ttf->face->glyph->bitmap_top - (ttf->size + 8) / 9;
-		if (y + sz > ttf->size)
-			y = ttf->size - sz;
-		if (y < 0)
-			y = 0;
-		byte *p = ttf->face->glyph->bitmap.buffer;
-		int sx = ttf->face->glyph->bitmap_left;
+	if (cleartype)
+		FT_Library_SetLcdFilter(ttf->library, FT_LCD_FILTER_DEFAULT);
+	ttf->cleartype = cleartype;
+}
 
-		if (sx < 0)
-			sx = 0;
-		int maxx = sx + ttf->face->glyph->bitmap.width;
+/**
+ * 设置TTF是否启用字体加粗
+ * @param ttf ttf指针
+ * @param embolden 是否启用字体加粗
+ */
+extern void ttf_set_embolden(p_ttf ttf, bool embolden)
+{
+	if (ttf == NULL)
+		return;
 
-		if (maxx > ttf->size) {
-			maxx = ttf->size;
-			sx = 0;
+	ttf->embolden = embolden;
+}
+
+/**
+ * 添加字形到ttf字型缓存
+ */
+static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
+						 FT_Bitmap * bitmap, int left, int top, int xadvance,
+						 int yadvance)
+{
+	int addIndex = 0;
+
+	if (ttf->cacheSize < SBIT_HASH_SIZE) {
+		addIndex = ttf->cacheSize++;
+	} else {
+		addIndex = ttf->cachePop++;
+		if (ttf->cachePop == SBIT_HASH_SIZE)
+			ttf->cachePop = 0;
+	}
+	SBit_HashItem *item = &ttf->sbitHashRoot[addIndex];
+
+	if (item->bitmap.buffer) {
+		free(item->bitmap.buffer);
+		item->bitmap.buffer = 0;
+	}
+
+	item->ucs_code = ucsCode;
+	item->glyph_index = glyphIndex;
+	item->size = ttf->pixelSize;
+	item->anti_alias = ttf->antiAlias;
+	item->cleartype = ttf->cleartype;
+	item->embolden = ttf->embolden;
+	item->xadvance = xadvance;
+	item->yadvance = yadvance;
+	item->bitmap.width = bitmap->width;
+	item->bitmap.height = bitmap->rows;
+	item->bitmap.left = left;
+	item->bitmap.top = top;
+	item->bitmap.pitch = bitmap->pitch;
+	item->bitmap.format = bitmap->pixel_mode;
+	item->bitmap.max_grays = (bitmap->num_grays - 1);
+
+	int pitch = abs(bitmap->pitch);
+
+	if (pitch * bitmap->rows > 0) {
+		item->bitmap.buffer =
+			(unsigned char *) memalign(64, pitch * bitmap->rows);
+		if (item->bitmap.buffer) {
+			memcpy(item->bitmap.buffer, bitmap->buffer, pitch * bitmap->rows);
 		}
-		for (m = 0; m < sz; m++) {
-			int x = sx;
+	}
+}
 
-			for (n = 0; n < bpr2; n++) {
-				byte e;
+/**
+ * 在TTF字形缓存中查找字形 
+ */
+static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode)
+{
+	int i;
 
-				for (e = 0x80; e > 0 && x < maxx; e >>= 1) {
-					if (((*p) & e) > 0)
-						zslot[y * ttf->bpr + (x >> 3)] |= (0x80 >> (x & 0x07));
-					x++;
-				}
-				p++;
+	for (i = 0; i < ttf->cacheSize; i++) {
+		if ((ttf->sbitHashRoot[i].ucs_code == ucsCode) &&
+			(ttf->sbitHashRoot[i].size == ttf->pixelSize) &&
+			(ttf->sbitHashRoot[i].anti_alias == ttf->antiAlias) &&
+			(ttf->sbitHashRoot[i].cleartype == ttf->cleartype) &&
+			(ttf->sbitHashRoot[i].embolden == ttf->embolden))
+			return (&ttf->sbitHashRoot[i]);
+	}
+	return NULL;
+}
+
+/**
+ * 8位单通道alpha混合算法
+ * @param wpSrc 源颜色指针
+ * @param wpDes 目的颜色指针
+ * @param wAlpha alpha值(0-255)
+ * @note 目的颜色 = 目的颜色 * alpha + ( 1 - alpha ) * 源颜色
+ */
+static __inline void MakeAlpha(byte * wpSrc, byte * wpDes, byte wAlpha)
+{
+	word result;
+
+	if (*wpDes == *wpSrc && wAlpha == 255)
+		return;
+
+	if (wAlpha == 0)
+		*wpDes = *wpSrc;
+
+	result = wAlpha * (*wpDes) + (255 - wAlpha) * (*wpSrc);
+
+	*wpDes = result / 255;
+}
+
+/** 
+ * 绘制TTF字型到屏幕，水平版本
+ * @param buffer 字型位图数据
+ * @param format 格式
+ * @param width 位图宽度
+ * @param height 位图高度
+ * @param pitch 位图行位数（字节记）
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param scr_width 绘图区最大宽度
+ * @param scr_height 绘图区最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void _drawBitmap_horz(byte * buffer, int format, int width, int height,
+							 int pitch, FT_Int x, FT_Int y,
+							 int scr_width, int scr_height, pixel color)
+{
+	FT_Int i, j;
+	pixel pix, grey;
+	byte ra, ga, ba;
+	byte rd, gd, bd;
+	byte rs, gs, bs;
+
+	if (!buffer)
+		return;
+//  dbg_printf(d, "%s: %d, %d, %d", __func__, x, y, scr_height);
+	if (format == FT_PIXEL_MODE_MONO) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width; i++) {
+				if (i + x < 0 || i + x >= scr_width || j + y < 0
+					|| j + y >= scr_height)
+					continue;
+				if (buffer[j * pitch + i / 8] & (0x80 >> (i % 8)))
+					*(pixel *) disp_get_vaddr((i + x), (j + y)) = (color);
 			}
-			y++;
-		}
+	} else if (format == FT_PIXEL_MODE_GRAY) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width; i++) {
+				if (i + x < 0 || i + x >= scr_width || j + y < 0
+					|| j + y >= scr_height)
+					continue;
+				grey = buffer[j * pitch + i];
+
+				if (grey) {
+					pix =
+						disp_grayscale(*disp_get_vaddr((i + x), (j + y)),
+									   RGB_R(color), RGB_G(color), RGB_B(color),
+									   grey * 100 / 255);
+					*(pixel *) disp_get_vaddr((i + x), (j + y)) = (pix);
+				}
+			}
+	} else if (format == FT_PIXEL_MODE_LCD) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width / 3; i++) {
+				if (i + x < 0 || i + x >= scr_width || j + y < 0
+					|| j + y >= scr_height)
+					continue;
+				// RGB or BGR ?
+				pixel origcolor = *disp_get_vaddr((i + x), (j + y));
+
+				ra = buffer[j * pitch + i * 3];
+				ga = buffer[j * pitch + i * 3 + 1];
+				ba = buffer[j * pitch + i * 3 + 2];
+
+				rs = RGB_R(origcolor);
+				gs = RGB_G(origcolor);
+				bs = RGB_B(origcolor);
+
+				rd = RGB_R(color);
+				gd = RGB_G(color);
+				bd = RGB_B(color);
+
+				MakeAlpha(&rs, &rd, ra);
+				MakeAlpha(&gs, &gd, ga);
+				MakeAlpha(&bs, &bd, ba);
+
+				*(pixel *) disp_get_vaddr((i + x), (j + y)) = (RGB(rd, gd, bd));
+			}
 	}
 }
 
-static void _cache_ascii(void *ttfh, word u, byte * zslot, byte * width)
+/** 
+ * 绘制TTF字型缓存到屏幕，水平版本
+ * @param bitmap 字型位图
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param width 最大宽度
+ * @param height 最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void drawCachedBitmap_horz(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
+								  int width, int height, pixel color)
 {
-	p_ttf ttf = (p_ttf) ttfh;
+	_drawBitmap_horz(sbt->buffer, sbt->format, sbt->width, sbt->height,
+					 sbt->pitch, x, y, width, height, color);
+}
 
-	if (FT_Load_Char(ttf->face, u, FT_LOAD_RENDER | FT_LOAD_TARGET_MONO) == 0
-		&& ttf->face->glyph->bitmap.buffer != NULL) {
-		memset(zslot, 0, ttf->bpr * ttf->size);
-		int sz = ttf->face->glyph->bitmap.rows;
-		int bpr2 = min(ttf->face->glyph->bitmap.pitch,
-					   ttf->bpr * 8 - ttf->face->glyph->bitmap_left);
-		int m, n, y =
-			ttf->size - ttf->face->glyph->bitmap_top - (ttf->size + 8) / 9;
-		if (y + sz > ttf->size)
-			y = ttf->size - sz;
-		if (y < 0)
-			y = 0;
-		byte *p = ttf->face->glyph->bitmap.buffer;
-		int sx = ttf->face->glyph->bitmap_left;
+/** 
+ * 绘制TTF字型到屏幕，水平版本
+ * @param bitmap 字型位图
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param height 最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void drawBitmap_horz(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
+							int width, int height, pixel color)
+{
+	if (!bitmap->buffer)
+		return;
 
-		if (sx < 0)
-			sx = 0;
-		int maxx = sx + ttf->face->glyph->bitmap.width;
+	_drawBitmap_horz(bitmap->buffer, bitmap->pixel_mode, bitmap->width,
+					 bitmap->rows, bitmap->pitch, x, y, width, height, color);
+}
 
-		if (maxx > ttf->size) {
-			maxx = ttf->size;
-			sx = 0;
+#define DISP_RSPAN 0
+
+/**
+ * 从*str中取出一个字（汉字/英文字母）进行绘制，水平版本
+ * @param ttf 使用的TTF字体
+ * @param *x 指向X坐标的指针
+ * @param *y 指向Y坐标的指针 
+ * @param color 字体颜色
+ * @param str 字符串指针指针
+ * @param count 字数指针
+ * @param wordspace 字间距（以像素点计）
+ * @param top 绘制字体的开始行，如果所绘字型部分在屏幕以外，则为非0值
+ * @param height 绘制字体的高度，如果所绘字形部分在屏幕以外，
+ * 				 则不等于DISP_BOOK_FONTSIZE，而等于被裁剪后的高度
+ * @param bot 最大绘制高度
+ * @param previous 指向上一个同类字符指针
+ * @param is_hanzi 是否为汉字
+ * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
+ * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
+ */
+static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
+									 const byte ** str, int *count,
+									 dword wordspace, int top, int height,
+									 int bot, FT_UInt * previous, bool is_hanzi)
+{
+	FT_Error error;
+	FT_GlyphSlot slot;
+	FT_UInt glyphIndex;
+
+	FT_Bool useKerning;
+
+	useKerning = FT_HAS_KERNING(ttf->face);
+	word ucs = charsets_gbk_to_ucs(*str);
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+
+	if (cache) {
+		if (useKerning && *previous && cache->glyph_index) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, *previous, cache->glyph_index,
+						   FT_KERNING_DEFAULT, &delta);
+			*x += delta.x >> 6;
 		}
-		*width = maxx;
-		for (m = 0; m < sz; m++) {
-			int x = 0;
+		drawCachedBitmap_horz(&cache->bitmap, *x + cache->bitmap.left,
+							  bot ? *y + DISP_BOOK_FONTSIZE -
+							  cache->bitmap.top : *y + height -
+							  cache->bitmap.top,
+							  PSP_SCREEN_WIDTH, bot ? bot : PSP_SCREEN_HEIGHT,
+							  color);
+		*x += cache->xadvance >> 6;
+		*previous = cache->glyph_index;
+	} else {
+		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
+		// disable hinting when loading chinese characters
+		if (is_hanzi)
+			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
+		else
+			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		if (error)
+			return;
+		if (ttf->cleartype) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+		} else if (ttf->antiAlias) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+		} else
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+		if (error) {
+			return;
+		}
+		slot = ttf->face->glyph;
 
-			for (n = 0; n < bpr2; n++) {
-				byte e;
+		if (ttf->embolden)
+			FT_GlyphSlot_Embolden(slot);
 
-				for (e = 0x80; e > 0 && x < maxx; e >>= 1) {
-					if (((*p) & e) > 0)
-						zslot[y * ttf->bpr + ((x + sx) >> 3)] |=
-							(0x80 >> ((x + sx) & 0x07));
-					x++;
-					if (x >= ttf->face->glyph->bitmap.width)
+		if (useKerning && *previous && glyphIndex) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, *previous, glyphIndex, FT_KERNING_DEFAULT,
+						   &delta);
+			*x += delta.x >> 6;
+		}
+		drawBitmap_horz(&slot->bitmap, *x + slot->bitmap_left,
+						bot ? *y + DISP_BOOK_FONTSIZE - slot->bitmap_top : *y +
+						height - slot->bitmap_top, PSP_SCREEN_WIDTH,
+						bot ? bot : PSP_SCREEN_HEIGHT, color);
+		*x += slot->advance.x >> 6;
+		*previous = glyphIndex;
+
+		sbitCacheAdd(ttf, ucs, glyphIndex,
+					 &slot->bitmap, slot->bitmap_left, slot->bitmap_top,
+					 slot->advance.x, slot->advance.y);
+	}
+	if (is_hanzi) {
+		(*str) += 2;
+		*count -= 2;
+		*x += wordspace * 2;
+	} else {
+		(*str)++;
+		(*count)--;
+		*x += wordspace;
+	}
+}
+
+static bool bytetable[256] = {
+	1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 1, 0, 0,	// 0x00
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x10
+	2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x20
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x30
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x40
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x50
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x60
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x70
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x80
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x90
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xA0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xB0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xC0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xD0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xE0
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	// 0xF0
+};
+
+/**
+ * 得到字符串所能显示在maxpixels中的长度
+ * @param cttf 中文TTF字体
+ * @param ettf 英文TTF字体
+ * @param str 字符串
+ * @param maxpixels 最大长度
+ * @param wordspace 字间距（以像素点计）
+ * @note 如果遇到换行，则字符串计数停止累加。
+ * <br>  如果字符串绘制长度＞maxpixels，则字符串计数停止累加。
+ * <br>  这个版本速度极慢，不要使用
+ */
+extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
+									 dword maxpixels, dword wordspace)
+{
+	FT_Error error;
+	FT_GlyphSlot slot;
+	FT_UInt glyphIndex;
+	FT_Bool useKerning;
+	FT_UInt cprevious = 0, eprevious = 0;
+	int x = 0, count = 0;
+
+	if (str == NULL || maxpixels == 0)
+		return 0;
+
+	while (*str != 0 && x < maxpixels && bytetable[*(byte *) str] != 1) {
+		if (*str > 0x80) {
+			useKerning = FT_HAS_KERNING(cttf->face);
+			word ucs = charsets_gbk_to_ucs(str);
+			SBit_HashItem *cache = sbitCacheFind(cttf, ucs);
+
+			if (cache) {
+				if (useKerning && cprevious && cache->glyph_index) {
+					FT_Vector delta;
+
+					FT_Get_Kerning(cttf->face, cprevious, cache->glyph_index,
+								   FT_KERNING_DEFAULT, &delta);
+					x += delta.x >> 6;
+					if (x > maxpixels)
 						break;
 				}
-				p++;
+				x += cache->xadvance >> 6;
+				if (x > maxpixels)
+					break;
+				cprevious = cache->glyph_index;
+			} else {
+				glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
+				// disable hinting when loading chinese characters
+				error =
+					FT_Load_Glyph(cttf->face, glyphIndex, FT_LOAD_NO_HINTING);
+				if (error)
+					return count;
+				if (cttf->cleartype) {
+					error =
+						FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_LCD);
+				} else if (cttf->antiAlias) {
+					error =
+						FT_Render_Glyph(cttf->face->glyph,
+										FT_RENDER_MODE_NORMAL);
+				} else
+					error =
+						FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_MONO);
+				if (error) {
+					return count;
+				}
+				slot = cttf->face->glyph;
+
+				if (cttf->embolden)
+					FT_GlyphSlot_Embolden(slot);
+
+				if (useKerning && cprevious && glyphIndex) {
+					FT_Vector delta;
+
+					FT_Get_Kerning(cttf->face, cprevious, glyphIndex,
+								   FT_KERNING_DEFAULT, &delta);
+					x += delta.x >> 6;
+					if (x > maxpixels)
+						break;
+				}
+				x += slot->advance.x >> 6;
+				if (x > maxpixels)
+					break;
+				cprevious = glyphIndex;
+
+				sbitCacheAdd(cttf, ucs, glyphIndex,
+							 &slot->bitmap, slot->bitmap_left, slot->bitmap_top,
+							 slot->advance.x, slot->advance.y);
 			}
-			y++;
+			x += wordspace * 2;
+			if (x > maxpixels)
+				break;
+			(str) += 2;
+			(count) += 2;
+		} else if (*str > 0x1F) {
+			useKerning = FT_HAS_KERNING(ettf->face);
+			word ucs = charsets_gbk_to_ucs(str);
+			SBit_HashItem *cache = sbitCacheFind(ettf, ucs);
+
+			if (cache) {
+				if (useKerning && eprevious && cache->glyph_index) {
+					FT_Vector delta;
+
+					FT_Get_Kerning(ettf->face, eprevious, cache->glyph_index,
+								   FT_KERNING_DEFAULT, &delta);
+					x += delta.x >> 6;
+					if (x > maxpixels)
+						break;
+				}
+				x += cache->xadvance >> 6;
+				if (x > maxpixels)
+					break;
+				eprevious = cache->glyph_index;
+			} else {
+				glyphIndex = FT_Get_Char_Index(ettf->face, ucs);
+				// disable hinting when loading chinese characters
+				error = FT_Load_Glyph(ettf->face, glyphIndex, FT_LOAD_DEFAULT);
+				if (error)
+					return count;
+				if (ettf->cleartype) {
+					error =
+						FT_Render_Glyph(ettf->face->glyph, FT_RENDER_MODE_LCD);
+				} else if (ettf->antiAlias) {
+					error =
+						FT_Render_Glyph(ettf->face->glyph,
+										FT_RENDER_MODE_NORMAL);
+				} else
+					error =
+						FT_Render_Glyph(ettf->face->glyph, FT_RENDER_MODE_MONO);
+				if (error) {
+					return count;
+				}
+				slot = ettf->face->glyph;
+
+				if (ettf->embolden)
+					FT_GlyphSlot_Embolden(slot);
+
+				if (useKerning && eprevious && glyphIndex) {
+					FT_Vector delta;
+
+					FT_Get_Kerning(ettf->face, eprevious, glyphIndex,
+								   FT_KERNING_DEFAULT, &delta);
+					x += delta.x >> 6;
+					if (x > maxpixels)
+						break;
+				}
+				x += slot->advance.x >> 6;
+				if (x > maxpixels)
+					break;
+				eprevious = glyphIndex;
+
+				sbitCacheAdd(ettf, ucs, glyphIndex,
+							 &slot->bitmap, slot->bitmap_left, slot->bitmap_top,
+							 slot->advance.x, slot->advance.y);
+			}
+			x += wordspace;
+			if (x > maxpixels)
+				break;
+			(str)++;
+			(count)++;
+		} else {
+			x += DISP_BOOK_FONTSIZE / 2 + wordspace;
+			if (x > maxpixels)
+				break;
+			str++;
+			(count)++;
+		}
+	}
+	if (bytetable[*(byte *) str] == 1) {
+		if (*str == '\r' && *(str + 1) == '\n') {
+			count += 2;
+		} else {
+			count++;
+		}
+	}
+
+	return count;
+}
+
+static int ttf_get_char_width(p_ttf cttf, const byte * str)
+{
+	FT_Error error;
+	FT_GlyphSlot slot;
+	FT_UInt glyphIndex;
+	FT_Bool useKerning;
+	int x = 0;
+
+	if (str == NULL)
+		return 0;
+
+	useKerning = FT_HAS_KERNING(cttf->face);
+	word ucs = charsets_gbk_to_ucs(str);
+
+	glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
+	// disable hinting when loading chinese characters
+	error = FT_Load_Glyph(cttf->face, glyphIndex, FT_LOAD_NO_HINTING);
+	if (error)
+		return x;
+	if (cttf->cleartype) {
+		error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_LCD);
+	} else if (cttf->antiAlias) {
+		error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_NORMAL);
+	} else
+		error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_MONO);
+	if (error) {
+		return x;
+	}
+	slot = cttf->face->glyph;
+
+	if (cttf->embolden)
+		FT_GlyphSlot_Embolden(slot);
+
+	x += slot->advance.x >> 6;
+
+	return x;
+}
+
+/**
+ * 得到字符串所能显示在maxpixels中的长度
+ * @param cttf 中文TTF字体
+ * @param ettf 英文TTF字体
+ * @param str 字符串
+ * @param maxpixels 最大长度
+ * @param wordspace 字间距（以像素点计）
+ * @return 字符串个数计数，以字节计
+ * @note 如果遇到换行，则字符串计数停止累加。
+ * <br>  如果字符串绘制长度＞maxpixels，则字符串计数停止累加。
+ * <br>  这个版本速度快，但对于英文字母可能有出界问题
+ */
+extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
+								dword maxpixels, dword wordspace)
+{
+	dword width = 0;
+	const byte *ostr = str;
+	static int hanzi_len, hanzi_size = 0;
+
+	if (hanzi_len == 0 || hanzi_size != DISP_BOOK_FONTSIZE) {
+		hanzi_len = ttf_get_char_width(cttf, (const byte *) "字");
+		hanzi_size = DISP_BOOK_FONTSIZE;
+	}
+
+	while (*str != 0 && width <= maxpixels && bytetable[*str] != 1) {
+		if (*str > 0x80) {
+			width += hanzi_len;
+			width += wordspace * 2;
+			if (width > maxpixels)
+				break;
+			str += 2;
+		} else {
+			width += disp_ewidth[*str];
+			width += wordspace;
+			if (width > maxpixels)
+				break;
+			str++;
+		}
+	}
+	if (bytetable[*str] == 1) {
+		if (*str == '\r' && *(str + 1) == '\n') {
+			str += 2;
+		} else {
+			str++;
+		}
+	}
+
+	return str - ostr;
+}
+
+extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
+										  pixel color, const byte * str,
+										  int count, dword wordspace, int top,
+										  int height, int bot)
+{
+	if (cttf == NULL || ettf == NULL)
+		return;
+
+	if (bot) {
+		if (y >= bot)
+			return;
+		if (y + height > bot)
+			height = bot - y;
+//      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
+	}
+
+	/*
+	   #define CHECK_AND_VALID(x, y) \
+	   {\
+	   x = (x < 0) ? 0 : x; \
+	   y = (y < 0) ? 0 : y; \
+	   x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
+	   y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
+	   }
+
+	   CHECK_AND_VALID(x, y);
+	 */
+
+	FT_UInt cprevious, eprevious;
+
+	cprevious = eprevious = 0;
+
+	while (*str != 0 && count > 0) {
+		if (!check_range(x, y))
+			return;
+		if (*str > 0x80) {
+			ttf_disp_putnstring_horz(cttf, &x, &y, color, &str, &count,
+									 wordspace, top, height, bot,
+									 &cprevious, true);
+		} else if (*str > 0x1F) {
+			ttf_disp_putnstring_horz(ettf, &x, &y, color, &str, &count,
+									 wordspace, top, height, bot,
+									 &eprevious, false);
+		} else {
+			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
+				break;
+#if 0
+				x = 0;
+				y += DISP_BOOK_FONTSIZE;
+#endif
+			}
+			str++;
+			count--;
+			x += DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
 
-extern bool ttf_cache_ascii(const char *filename, int size, byte ** ebuffer,
-							byte * ewidth)
+/**
+ * 得到英文字母宽度信息
+ */
+extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 {
-	p_ttf ttf = (p_ttf) ttf_open_ascii(filename, size, ebuffer);
+	if (ttf == NULL || ewidth == NULL || size == 0)
+		return;
 
-	if (ttf == NULL)
-		return false;
-	word u;
-	byte *buf = *ebuffer;
+	FT_Error error;
+	FT_GlyphSlot slot;
+	FT_UInt glyphIndex;
+	FT_Bool useKerning;
+	FT_UInt eprevious = 0;
+	byte width;
+	word ucs;
 
-	for (u = 0x00; u < 0x80; u++) {
-		_cache_ascii(ttf, u, buf, ewidth + u);
-		buf += ttf->bpr * ttf->size;
+	for (ucs = 0; ucs < size; ++ucs) {
+		width = 0;
+		useKerning = FT_HAS_KERNING(ttf->face);
+		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
+		error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		if (error)
+			return;
+		if (ttf->cleartype) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+		} else if (ttf->antiAlias) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+		} else
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+		if (error) {
+			return;
+		}
+		slot = ttf->face->glyph;
+
+		if (ttf->embolden)
+			FT_GlyphSlot_Embolden(slot);
+
+		if (useKerning && eprevious && glyphIndex) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, eprevious, glyphIndex,
+						   FT_KERNING_DEFAULT, &delta);
+			width += delta.x >> 6;
+		}
+		width += slot->advance.x >> 6;
+		eprevious = glyphIndex;
+
+		// Add width to length
+		ewidth[ucs] = width;
 	}
-	ewidth[0x20] = size / 2;
-	ttf_close(ttf);
-	return true;
+
+	dbg_printf(d, "%s: OK. 'i' width is %d, 'M' width is %d", __func__,
+			   ewidth['i'], ewidth['M']);
 }
 
-extern bool ttf_cache_ascii_buffer(const byte * buffer, int len, int size,
-								   byte ** ebuffer, byte * ewidth)
+/** 
+ * 绘制TTF字型到屏幕，颠倒版本
+ * @param buffer 字型位图数据
+ * @param format 格式
+ * @param width 位图宽度
+ * @param height 位图高度
+ * @param pitch 位图行位数（字节记）
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param scr_width 绘图区最大宽度
+ * @param scr_height 绘图区最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void _drawBitmap_reversal(byte * buffer, int format, int width,
+								 int height, int pitch, FT_Int x, FT_Int y,
+								 int scr_width, int scr_height, pixel color)
 {
-	p_ttf ttf = (p_ttf) ttf_open_ascii_buffer(buffer, len, size, ebuffer);
+	FT_Int i, j;
+	pixel pix, grey;
+	byte ra, ga, ba;
+	byte rd, gd, bd;
+	byte rs, gs, bs;
 
-	if (ttf == NULL)
-		return false;
-	word u;
-	byte *buf = *ebuffer;
+	if (!buffer)
+		return;
+	if (format == FT_PIXEL_MODE_MONO) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width; i++) {
+				if (x - i < 0 || x - i >= scr_width
+					|| y - j < PSP_SCREEN_HEIGHT - scr_height
+					|| j + y >= PSP_SCREEN_HEIGHT)
+					continue;
+				if (buffer[j * pitch + i / 8] & (0x80 >> (i % 8)))
+					*(pixel *) disp_get_vaddr((x - i), (y - j)) = (color);
+			}
+	} else if (format == FT_PIXEL_MODE_GRAY) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width; i++) {
+				if (x - i < 0 || x - i >= scr_width
+					|| y - j < PSP_SCREEN_HEIGHT - scr_height
+					|| y - j >= PSP_SCREEN_HEIGHT)
+					continue;
+				grey = buffer[j * pitch + i];
 
-	for (u = 0x00; u < 0x80; u++) {
-		_cache_ascii(ttf, u, buf, ewidth + u);
-		buf += ttf->bpr * ttf->size;
+				if (grey) {
+					pix =
+						disp_grayscale(*disp_get_vaddr((x - i), (y - j)),
+									   RGB_R(color), RGB_G(color), RGB_B(color),
+									   grey * 100 / 255);
+					*(pixel *) disp_get_vaddr((x - i), (y - j)) = (pix);
+				}
+			}
+	} else if (format == FT_PIXEL_MODE_LCD) {
+//      dbg_printf(d, "%s: %d, %d, %d", __func__, x, y, scr_height);
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width / 3; i++) {
+				if (x - i < 0 || x - i >= scr_width
+					|| y - j < PSP_SCREEN_HEIGHT - scr_height
+					|| y - j >= PSP_SCREEN_HEIGHT)
+					continue;
+				// RGB or BGR ?
+				pixel origcolor = *disp_get_vaddr((x - i), (y - j));
+
+				ra = buffer[j * pitch + i * 3];
+				ga = buffer[j * pitch + i * 3 + 1];
+				ba = buffer[j * pitch + i * 3 + 2];
+
+				rs = RGB_R(origcolor);
+				gs = RGB_G(origcolor);
+				bs = RGB_B(origcolor);
+
+				rd = RGB_R(color);
+				gd = RGB_G(color);
+				bd = RGB_B(color);
+
+				MakeAlpha(&rs, &rd, ra);
+				MakeAlpha(&gs, &gd, ga);
+				MakeAlpha(&bs, &bd, ba);
+
+				*(pixel *) disp_get_vaddr((x - i), (y - j)) = (RGB(rd, gd, bd));
+			}
 	}
-	ewidth[0x20] = size / 2;
-	ttf_close(ttf);
-	return true;
+}
+
+/** 
+ * 绘制TTF字型缓存到屏幕，颠倒版本
+ * @param bitmap 字型位图
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param width 最大宽度
+ * @param height 最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void drawCachedBitmap_reversal(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
+									  int width, int height, pixel color)
+{
+	_drawBitmap_reversal(sbt->buffer, sbt->format, sbt->width, sbt->height,
+						 sbt->pitch, x, y, width, height, color);
+}
+
+/** 
+ * 绘制TTF字型到屏幕，颠倒版本
+ * @param bitmap 字型位图
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param width 最大宽度
+ * @param height 最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void drawBitmap_reversal(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
+								int width, int height, pixel color)
+{
+	if (!bitmap->buffer)
+		return;
+
+	_drawBitmap_reversal(bitmap->buffer, bitmap->pixel_mode, bitmap->width,
+						 bitmap->rows, bitmap->pitch, x, y, width, height,
+						 color);
+}
+
+/**
+ * 从*str中取出一个字（汉字/英文字母）进行绘制，颠倒版本
+ * @param ttf 使用的TTF字体
+ * @param *x 指向X坐标的指针
+ * @param *y 指向Y坐标的指针 
+ * @param color 字体颜色
+ * @param str 字符串指针指针
+ * @param count 字数指针
+ * @param wordspace 字间距（以像素点计）
+ * @param top 绘制字体的开始行，如果所绘字型部分在屏幕以外，则为非0值
+ * @param height 绘制字体的高度，如果所绘字形部分在屏幕以外，
+ * 				 则不等于DISP_BOOK_FONTSIZE，而等于被裁剪后的高度
+ * @param bot 最大绘制高度
+ * @param previous 指向上一个同类字符指针
+ * @param is_hanzi 是否为汉字
+ * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
+ * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
+ */
+static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
+										 const byte ** str, int *count,
+										 dword wordspace, int top, int height,
+										 int bot, FT_UInt * previous,
+										 bool is_hanzi)
+{
+	FT_Error error;
+	FT_GlyphSlot slot;
+	FT_UInt glyphIndex;
+
+	FT_Bool useKerning;
+
+	useKerning = FT_HAS_KERNING(ttf->face);
+	word ucs = charsets_gbk_to_ucs(*str);
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+
+	if (cache) {
+		if (useKerning && *previous && cache->glyph_index) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, *previous, cache->glyph_index,
+						   FT_KERNING_DEFAULT, &delta);
+			*x -= delta.x >> 6;
+		}
+		drawCachedBitmap_reversal(&cache->bitmap, *x - cache->bitmap.left,
+								  bot ? *y - DISP_BOOK_FONTSIZE +
+								  cache->bitmap.top : *y - height +
+								  cache->bitmap.top,
+								  PSP_SCREEN_WIDTH,
+								  bot ? bot : PSP_SCREEN_HEIGHT, color);
+		*x -= cache->xadvance >> 6;
+		*previous = cache->glyph_index;
+	} else {
+		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
+		// disable hinting when loading chinese characters
+		if (is_hanzi)
+			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
+		else
+			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		if (error)
+			return;
+		if (ttf->cleartype) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+		} else if (ttf->antiAlias) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+		} else
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+		if (error) {
+			return;
+		}
+		slot = ttf->face->glyph;
+
+		if (ttf->embolden)
+			FT_GlyphSlot_Embolden(slot);
+
+		if (useKerning && *previous && glyphIndex) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, *previous, glyphIndex, FT_KERNING_DEFAULT,
+						   &delta);
+			*x -= delta.x >> 6;
+		}
+		drawBitmap_reversal(&slot->bitmap, *x - slot->bitmap_left,
+							bot ? *y - DISP_BOOK_FONTSIZE +
+							slot->bitmap_top : *y - height + slot->bitmap_top,
+							PSP_SCREEN_WIDTH, bot ? bot : PSP_SCREEN_HEIGHT,
+							color);
+		*x -= slot->advance.x >> 6;
+		*previous = glyphIndex;
+
+		sbitCacheAdd(ttf, ucs, glyphIndex,
+					 &slot->bitmap, slot->bitmap_left, slot->bitmap_top,
+					 slot->advance.x, slot->advance.y);
+	}
+	if (is_hanzi) {
+		(*str) += 2;
+		*count -= 2;
+		*x -= wordspace * 2;
+	} else {
+		(*str)++;
+		(*count)--;
+		*x -= wordspace;
+	}
+}
+
+extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
+											  int y, pixel color,
+											  const byte * str, int count,
+											  dword wordspace, int top,
+											  int height, int bot)
+{
+	if (cttf == NULL || ettf == NULL)
+		return;
+
+	if (bot) {
+		if (y >= bot)
+			return;
+		if (y + height > bot)
+			height = bot - y;
+//      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
+	}
+
+	/*
+	   #define CHECK_AND_VALID(x, y) \
+	   {\
+	   x = (x < 0) ? 0 : x; \
+	   y = (y < 0) ? 0 : y; \
+	   x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
+	   y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
+	   }
+
+	   CHECK_AND_VALID(x, y);
+	 */
+
+	x = PSP_SCREEN_WIDTH - x - 1, y = PSP_SCREEN_HEIGHT - y - 1;
+
+	FT_UInt cprevious, eprevious;
+
+	cprevious = eprevious = 0;
+
+	while (*str != 0 && count > 0) {
+		if (!check_range(x, y))
+			return;
+		if (x < 0)
+			break;
+		if (*str > 0x80) {
+			ttf_disp_putnstring_reversal(cttf, &x, &y, color, &str, &count,
+										 wordspace, top, height, bot,
+										 &cprevious, true);
+		} else if (*str > 0x1F) {
+			ttf_disp_putnstring_reversal(ettf, &x, &y, color, &str, &count,
+										 wordspace, top, height, bot,
+										 &eprevious, false);
+		} else {
+			if (x < 0) {
+				break;
+#if 0
+				x = 0;
+				y += DISP_BOOK_FONTSIZE;
+#endif
+			}
+			str++;
+			count--;
+			x -= DISP_BOOK_FONTSIZE / 2 + wordspace;
+		}
+	}
+}
+
+/** 
+ * 绘制TTF字型到屏幕，左向版本
+ * @param buffer 字型位图数据
+ * @param format 格式
+ * @param width 位图宽度
+ * @param height 位图高度
+ * @param pitch 位图行位数（字节记）
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param scr_width 绘图区最大宽度
+ * @param scr_height 绘图区最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void _drawBitmap_lvert(byte * buffer, int format, int width, int height,
+							  int pitch, FT_Int x, FT_Int y, int scr_width,
+							  int scr_height, pixel color)
+{
+	FT_Int i, j;
+	pixel pix, grey;
+	byte ra, ga, ba;
+	byte rd, gd, bd;
+	byte rs, gs, bs;
+
+	if (!buffer)
+		return;
+	if (format == FT_PIXEL_MODE_MONO) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width; i++) {
+				if (y - i < 0 || y - i >= scr_height || x + j < 0
+					|| x + j >= scr_width)
+					continue;
+				if (buffer[j * pitch + i / 8] & (0x80 >> (i % 8)))
+					*(pixel *) disp_get_vaddr((x + j), (y - i)) = (color);
+			}
+	} else if (format == FT_PIXEL_MODE_GRAY) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width; i++) {
+				if (y - i < 0 || y - i >= scr_height || x + j < 0
+					|| x + j >= scr_width)
+					continue;
+				grey = buffer[j * pitch + i];
+
+				if (grey) {
+					pix =
+						disp_grayscale(*disp_get_vaddr((x + j), (y - i)),
+									   RGB_R(color), RGB_G(color), RGB_B(color),
+									   grey * 100 / 255);
+					*(pixel *) disp_get_vaddr((x + j), (y - i)) = (pix);
+				}
+			}
+	} else if (format == FT_PIXEL_MODE_LCD) {
+//      dbg_printf(d, "%s: %d, %d, %d", __func__, x, y, scr_height);
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width / 3; i++) {
+				if (y - i < 0 || y - i >= scr_height || x + j < 0
+					|| x + j >= scr_width)
+					continue;
+				// RGB or BGR ?
+				pixel origcolor = *disp_get_vaddr((x + j), (y - i));
+
+				ra = buffer[j * pitch + i * 3];
+				ga = buffer[j * pitch + i * 3 + 1];
+				ba = buffer[j * pitch + i * 3 + 2];
+
+				rs = RGB_R(origcolor);
+				gs = RGB_G(origcolor);
+				bs = RGB_B(origcolor);
+
+				rd = RGB_R(color);
+				gd = RGB_G(color);
+				bd = RGB_B(color);
+
+				MakeAlpha(&rs, &rd, ra);
+				MakeAlpha(&gs, &gd, ga);
+				MakeAlpha(&bs, &bd, ba);
+
+				*(pixel *) disp_get_vaddr((x + j), (y - i)) = (RGB(rd, gd, bd));
+			}
+	}
+}
+
+/** 
+ * 绘制TTF字型缓存到屏幕，左向版本
+ * @param bitmap 字型位图
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param width 最大宽度
+ * @param height 最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void drawCachedBitmap_lvert(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
+								   int width, int height, pixel color)
+{
+	_drawBitmap_lvert(sbt->buffer, sbt->format, sbt->width, sbt->height,
+					  sbt->pitch, x, y, width, height, color);
+}
+
+/** 
+ * 绘制TTF字型到屏幕，左向版本
+ * @param bitmap 字型位图
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param width 最大宽度
+ * @param height 最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void drawBitmap_lvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
+							 int width, int height, pixel color)
+{
+	if (!bitmap->buffer)
+		return;
+
+	_drawBitmap_lvert(bitmap->buffer, bitmap->pixel_mode, bitmap->width,
+					  bitmap->rows, bitmap->pitch, x, y, width, height, color);
+}
+
+/**
+ * 从*str中取出一个字（汉字/英文字母）进行绘制，左向版本
+ * @param ttf 使用的TTF字体
+ * @param *x 指向X坐标的指针
+ * @param *y 指向Y坐标的指针 
+ * @param color 字体颜色
+ * @param str 字符串指针指针
+ * @param count 字数指针
+ * @param wordspace 字间距（以像素点计）
+ * @param top 绘制字体的开始行，如果所绘字型部分在屏幕以外，则为非0值
+ * @param height 绘制字体的高度，如果所绘字形部分在屏幕以外，
+ * 				 则不等于DISP_BOOK_FONTSIZE，而等于被裁剪后的高度
+ * @param bot 最大绘制高度
+ * @param previous 指向上一个同类字符指针
+ * @param is_hanzi 是否为汉字
+ * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
+ * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
+ */
+static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
+									  const byte ** str, int *count,
+									  dword wordspace, int top, int height,
+									  int bot, FT_UInt * previous,
+									  bool is_hanzi)
+{
+	FT_Error error;
+	FT_GlyphSlot slot;
+	FT_UInt glyphIndex;
+
+	FT_Bool useKerning;
+
+	useKerning = FT_HAS_KERNING(ttf->face);
+	word ucs = charsets_gbk_to_ucs(*str);
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+
+	if (cache) {
+		if (useKerning && *previous && cache->glyph_index) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, *previous, cache->glyph_index,
+						   FT_KERNING_DEFAULT, &delta);
+			*y -= delta.x >> 6;
+		}
+		drawCachedBitmap_lvert(&cache->bitmap,
+							   bot ? *x + DISP_BOOK_FONTSIZE -
+							   cache->bitmap.top : *x + height -
+							   cache->bitmap.top, *y - cache->bitmap.left,
+							   bot ? bot : PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT,
+							   color);
+		*y -= cache->xadvance >> 6;
+		*previous = cache->glyph_index;
+	} else {
+		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
+		// disable hinting when loading chinese characters
+		if (is_hanzi)
+			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
+		else
+			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		if (error)
+			return;
+		if (ttf->cleartype) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+		} else if (ttf->antiAlias) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+		} else
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+		if (error) {
+			return;
+		}
+		slot = ttf->face->glyph;
+
+		if (ttf->embolden)
+			FT_GlyphSlot_Embolden(slot);
+
+		if (useKerning && *previous && glyphIndex) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, *previous, glyphIndex, FT_KERNING_DEFAULT,
+						   &delta);
+			*y -= delta.x >> 6;
+		}
+		drawBitmap_lvert(&slot->bitmap,
+						 bot ? *x + DISP_BOOK_FONTSIZE - slot->bitmap_top : *x +
+						 height - slot->bitmap_top, *y - slot->bitmap_left,
+						 bot ? bot : PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT,
+						 color);
+		*y -= slot->advance.x >> 6;
+		*previous = glyphIndex;
+
+		sbitCacheAdd(ttf, ucs, glyphIndex,
+					 &slot->bitmap, slot->bitmap_left, slot->bitmap_top,
+					 slot->advance.x, slot->advance.y);
+	}
+	if (is_hanzi) {
+		(*str) += 2;
+		*count -= 2;
+		*y -= wordspace * 2;
+	} else {
+		(*str)++;
+		(*count)--;
+		*y -= wordspace;
+	}
+}
+
+extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
+										   pixel color, const byte * str,
+										   int count, dword wordspace, int top,
+										   int height, int bot)
+{
+	if (cttf == NULL || ettf == NULL)
+		return;
+
+	if (bot) {
+		if (x >= bot)
+			return;
+		if (x + height > bot)
+			height = bot - x;
+//      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
+	}
+
+	/*
+	   #define CHECK_AND_VALID(x, y) \
+	   {\
+	   x = (x < 0) ? 0 : x; \
+	   y = (y < 0) ? 0 : y; \
+	   x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
+	   y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
+	   }
+
+	   CHECK_AND_VALID(x, y);
+	 */
+
+	FT_UInt cprevious, eprevious;
+
+	cprevious = eprevious = 0;
+
+	while (*str != 0 && count > 0) {
+		if (!check_range(x, y))
+			return;
+		if (*str > 0x80) {
+			if (y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1)
+				break;
+			ttf_disp_putnstring_lvert(cttf, &x, &y, color, &str, &count,
+									  wordspace, top, height, bot,
+									  &cprevious, true);
+		} else if (*str > 0x1F) {
+			if (y < DISP_RSPAN + disp_ewidth[*str] - 1)
+				break;
+			ttf_disp_putnstring_lvert(ettf, &x, &y, color, &str, &count,
+									  wordspace, top, height, bot,
+									  &eprevious, false);
+		} else {
+			if (y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1) {
+				break;
+			}
+			str++;
+			count--;
+			y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
+		}
+	}
+}
+
+/** 
+ * 绘制TTF字型到屏幕，右向版本
+ * @param buffer 字型位图数据
+ * @param format 格式
+ * @param width 位图宽度
+ * @param height 位图高度
+ * @param pitch 位图行位数（字节记）
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param scr_width 绘图区最大宽度
+ * @param scr_height 绘图区最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void _drawBitmap_rvert(byte * buffer, int format, int width, int height,
+							  int pitch, FT_Int x, FT_Int y, int scr_width,
+							  int scr_height, pixel color)
+{
+	FT_Int i, j;
+	pixel pix, grey;
+	byte ra, ga, ba;
+	byte rd, gd, bd;
+	byte rs, gs, bs;
+
+	if (!buffer)
+		return;
+	if (format == FT_PIXEL_MODE_MONO) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width; i++) {
+				if (y + i < 0 || y + i >= scr_height
+					|| x - j < PSP_SCREEN_WIDTH - scr_width
+					|| x - j >= PSP_SCREEN_WIDTH)
+					continue;
+				if (buffer[j * pitch + i / 8] & (0x80 >> (i % 8)))
+					*(pixel *) disp_get_vaddr((x - j), (y + i)) = (color);
+			}
+	} else if (format == FT_PIXEL_MODE_GRAY) {
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width; i++) {
+				if (y + i < 0 || y + i >= scr_height
+					|| x - j < PSP_SCREEN_WIDTH - scr_width
+					|| x - j >= PSP_SCREEN_WIDTH)
+					continue;
+				grey = buffer[j * pitch + i];
+
+				if (grey) {
+					pix =
+						disp_grayscale(*disp_get_vaddr((x - j), (y + i)),
+									   RGB_R(color), RGB_G(color), RGB_B(color),
+									   grey * 100 / 255);
+					*(pixel *) disp_get_vaddr((x - j), (y + i)) = (pix);
+				}
+			}
+	} else if (format == FT_PIXEL_MODE_LCD) {
+//      dbg_printf(d, "%s: %d, %d, %d", __func__, x, y, scr_height);
+		for (j = 0; j < height; j++)
+			for (i = 0; i < width / 3; i++) {
+				if (y + i < 0 || y + i >= scr_height
+					|| x - j < PSP_SCREEN_WIDTH - scr_width
+					|| x - j >= PSP_SCREEN_WIDTH)
+					continue;
+				// RGB or BGR ?
+				pixel origcolor = *disp_get_vaddr((x - j), (y + i));
+
+				ra = buffer[j * pitch + i * 3];
+				ga = buffer[j * pitch + i * 3 + 1];
+				ba = buffer[j * pitch + i * 3 + 2];
+
+				rs = RGB_R(origcolor);
+				gs = RGB_G(origcolor);
+				bs = RGB_B(origcolor);
+
+				rd = RGB_R(color);
+				gd = RGB_G(color);
+				bd = RGB_B(color);
+
+				MakeAlpha(&rs, &rd, ra);
+				MakeAlpha(&gs, &gd, ga);
+				MakeAlpha(&bs, &bd, ba);
+
+				*(pixel *) disp_get_vaddr((x - j), (y + i)) = (RGB(rd, gd, bd));
+			}
+	}
+}
+
+/** 
+ * 绘制TTF字型缓存到屏幕，右向版本
+ * @param bitmap 字型位图
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param width 最大宽度
+ * @param height 最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void drawCachedBitmap_rvert(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
+								   int width, int height, pixel color)
+{
+	_drawBitmap_rvert(sbt->buffer, sbt->format, sbt->width, sbt->height,
+					  sbt->pitch, x, y, width, height, color);
+}
+
+/** 
+ * 绘制TTF字型到屏幕，右向版本
+ * @param bitmap 字型位图
+ * @param x 屏幕x坐标
+ * @param y 屏幕y坐标
+ * @param width 最大宽度
+ * @param height 最大高度
+ * @param color 颜色
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ */
+static void drawBitmap_rvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
+							 int width, int height, pixel color, int space)
+{
+	if (!bitmap->buffer)
+		return;
+
+	_drawBitmap_rvert(bitmap->buffer, bitmap->pixel_mode, bitmap->width,
+					  bitmap->rows, bitmap->pitch, x, y, width, height, color);
+}
+
+/**
+ * 从*str中取出一个字（汉字/英文字母）进行绘制，右向版本
+ * @param ttf 使用的TTF字体
+ * @param *x 指向X坐标的指针
+ * @param *y 指向Y坐标的指针 
+ * @param color 字体颜色
+ * @param str 字符串指针指针
+ * @param count 字数指针
+ * @param wordspace 字间距（以像素点计）
+ * @param top 绘制字体的开始行，如果所绘字型部分在屏幕以外，则为非0值
+ * @param height 绘制字体的高度，如果所绘字形部分在屏幕以外，
+ * 				 则不等于DISP_BOOK_FONTSIZE，而等于被裁剪后的高度
+ * @param bot 最大绘制高度
+ * @param previous 指向上一个同类字符指针
+ * @param is_hanzi 是否为汉字
+ * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
+ * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
+ */
+static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
+									  const byte ** str, int *count,
+									  dword wordspace, int top, int height,
+									  int bot, FT_UInt * previous,
+									  bool is_hanzi)
+{
+	FT_Error error;
+	FT_GlyphSlot slot;
+	FT_UInt glyphIndex;
+
+	FT_Bool useKerning;
+
+	useKerning = FT_HAS_KERNING(ttf->face);
+	word ucs = charsets_gbk_to_ucs(*str);
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+
+	if (cache) {
+		if (useKerning && *previous && cache->glyph_index) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, *previous, cache->glyph_index,
+						   FT_KERNING_DEFAULT, &delta);
+			*y += delta.x >> 6;
+		}
+		drawCachedBitmap_rvert(&cache->bitmap,
+							   bot ? *x - DISP_BOOK_FONTSIZE +
+							   cache->bitmap.top : *x - height +
+							   cache->bitmap.top, *y + cache->bitmap.left,
+							   bot ? PSP_SCREEN_WIDTH - bot : PSP_SCREEN_WIDTH,
+							   PSP_SCREEN_HEIGHT, color);
+		*y += cache->xadvance >> 6;
+		*previous = cache->glyph_index;
+	} else {
+		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
+		// disable hinting when loading chinese characters
+		if (is_hanzi)
+			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
+		else
+			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		if (error)
+			return;
+		if (ttf->cleartype) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+		} else if (ttf->antiAlias) {
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+		} else
+			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+		if (error) {
+			return;
+		}
+		slot = ttf->face->glyph;
+
+		if (ttf->embolden)
+			FT_GlyphSlot_Embolden(slot);
+
+		if (useKerning && *previous && glyphIndex) {
+			FT_Vector delta;
+
+			FT_Get_Kerning(ttf->face, *previous, glyphIndex, FT_KERNING_DEFAULT,
+						   &delta);
+			*y += delta.x >> 6;
+		}
+		drawBitmap_rvert(&slot->bitmap,
+						 bot ? *x - DISP_BOOK_FONTSIZE + slot->bitmap_top : *x -
+						 height + slot->bitmap_top, *y + slot->bitmap_left,
+						 bot ? PSP_SCREEN_WIDTH - bot : PSP_SCREEN_WIDTH,
+						 PSP_SCREEN_HEIGHT, color,
+						 DISP_BOOK_FONTSIZE - slot->bitmap_top);
+		*y += slot->advance.x >> 6;
+		*previous = glyphIndex;
+
+		sbitCacheAdd(ttf, ucs, glyphIndex,
+					 &slot->bitmap, slot->bitmap_left, slot->bitmap_top,
+					 slot->advance.x, slot->advance.y);
+	}
+	if (is_hanzi) {
+		(*str) += 2;
+		*count -= 2;
+		*y += wordspace * 2;
+	} else {
+		(*str)++;
+		(*count)--;
+		*y += wordspace;
+	}
+}
+
+extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
+										   pixel color, const byte * str,
+										   int count, dword wordspace, int top,
+										   int height, int bot)
+{
+	if (cttf == NULL || ettf == NULL)
+		return;
+
+	if (x < bot)
+		return;
+	if (x + 1 - height < bot)
+		height = x + 1 - bot;
+
+	/*
+	   #define CHECK_AND_VALID(x, y) \
+	   {\
+	   x = (x < 0) ? 0 : x; \
+	   y = (y < 0) ? 0 : y; \
+	   x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
+	   y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
+	   }
+
+	   CHECK_AND_VALID(x, y);
+	 */
+
+	FT_UInt cprevious, eprevious;
+
+	cprevious = eprevious = 0;
+
+	while (*str != 0 && count > 0) {
+		if (!check_range(x, y))
+			return;
+		if (*str > 0x80) {
+			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE)
+				break;
+			ttf_disp_putnstring_rvert(cttf, &x, &y, color, &str, &count,
+									  wordspace, top, height, bot,
+									  &cprevious, true);
+		} else if (*str > 0x1F) {
+			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - disp_ewidth[*str])
+				break;
+			ttf_disp_putnstring_rvert(ettf, &x, &y, color, &str, &count,
+									  wordspace, top, height, bot,
+									  &eprevious, false);
+		} else {
+			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
+				break;
+			}
+			str++;
+			count--;
+			y += DISP_BOOK_FONTSIZE / 2 + wordspace;
+		}
+	}
 }
 
 #endif

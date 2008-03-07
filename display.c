@@ -12,6 +12,9 @@
 #include "ttfont.h"
 #include "display.h"
 #include "pspscreen.h"
+#include "iniparser.h"
+#include "strsafe.h"
+#include "dbg.h"
 
 extern t_conf config;
 
@@ -22,16 +25,17 @@ static bool vram_page = 0;
 static byte *cfont_buffer = NULL, *book_cfont_buffer = NULL, *efont_buffer =
 	NULL, *book_efont_buffer = NULL;
 int DISP_FONTSIZE = 16, DISP_BOOK_FONTSIZE = 16, HRR = 6, WRR = 10;
-static int use_ttf =
-	0, DISP_EFONTSIZE, DISP_CFONTSIZE, DISP_CROWSIZE, DISP_EROWSIZE,
+int use_ttf = 0;
+static int DISP_EFONTSIZE, DISP_CFONTSIZE, DISP_CROWSIZE, DISP_EROWSIZE,
 	fbits_last = 0, febits_last =
 	0, DISP_BOOK_EFONTSIZE, DISP_BOOK_CFONTSIZE, DISP_BOOK_EROWSIZE,
 	DISP_BOOK_CROWSIZE, fbits_book_last = 0, febits_book_last = 0;;
 byte disp_ewidth[0x80];
 
 #ifdef ENABLE_TTF
-static byte *cache = NULL;
-static void *ttfh = NULL;
+//static byte *cache = NULL;
+//static void *ttfh = NULL;
+p_ttf ettf = NULL, cttf = NULL;
 #endif
 
 typedef struct _VertexColor
@@ -145,7 +149,7 @@ extern void disp_putpixel(int x, int y, pixel color)
 extern void disp_set_fontsize(int fontsize)
 {
 	if (!use_ttf)
-		memset(disp_ewidth, fontsize / 2, 0x80);
+		memset(disp_ewidth, 0, 0x80);
 	DISP_FONTSIZE = fontsize;
 	if (fontsize <= 16) {
 		DISP_CROWSIZE = 2;
@@ -196,12 +200,12 @@ extern void disp_set_book_fontsize(int fontsize)
 	DISP_BOOK_EFONTSIZE = DISP_BOOK_FONTSIZE * DISP_BOOK_EROWSIZE;
 
 	// if set font size to very small one, set config.wordspace to 1
-	if (fontsize <= 10 && config.wordspace == 0) {
+	if (use_ttf == false && fontsize <= 10 && config.wordspace == 0) {
 		config.wordspace = 1;
 		auto_inc_wordspace_on_small_font = true;
 	}
 	// if previous have auto increased wordspace on small font, restore config.wordspace to 0
-	if (fontsize >= 12 && auto_inc_wordspace_on_small_font
+	if (use_ttf == false && fontsize >= 12 && auto_inc_wordspace_on_small_font
 		&& config.wordspace == 1) {
 		config.wordspace = 0;
 		auto_inc_wordspace_on_small_font = false;
@@ -261,13 +265,13 @@ extern void disp_assign_book_font()
 		book_cfont_buffer = NULL;
 	}
 #ifdef ENABLE_TTF
-	if (ttfh != NULL) {
-		ttf_close(ttfh);
-		ttfh = NULL;
+	if (ettf != NULL) {
+		ttf_close(ettf);
+		ettf = NULL;
 	}
-	if (cache != NULL) {
-		free(cache);
-		cache = NULL;
+	if (cttf != NULL) {
+		ttf_close(cttf);
+		cttf = NULL;
 	}
 #endif
 	book_efont_buffer = efont_buffer;
@@ -332,16 +336,79 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 	return true;
 }
 
+static void load_ttf_config(void)
+{
+	dictionary *ini;
+
+	char inifile[256], appdir[256];
+
+	getcwd(appdir, 256);
+	STRCAT_S(appdir, "/");
+	STRCPY_S(inifile, appdir);
+	STRCAT_S(inifile, "fontcfg.ini");
+
+	ini = iniparser_load(inifile);
+	if (!ini) {
+		dbg_printf(d, "Creating ini");
+		/*
+		   ini = dictionary_new(0);
+		   iniparser_setstr(ini, "cfont:antialias", "1");
+		   iniparser_setstr(ini, "efont:antialias", "1");
+		   iniparser_setstr(ini, "cfont:cleartype", "1");
+		   iniparser_setstr(ini, "efont:cleartype", "1");
+		   iniparser_setstr(ini, "cfont:embolden", "0");
+		   iniparser_setstr(ini, "efont:embolden", "0");
+		 */
+		FILE *fp;
+
+		fp = fopen(inifile, "w");
+		if (fp == NULL) {
+			return;
+		}
+		/*
+		   iniparser_dump_ini(ini, fp);
+		 */
+		fprintf(fp, "[cfont]\r\n");
+		fprintf(fp, "antialias=1;\r\n");
+		fprintf(fp, "cleartype=1;\r\n");
+		fprintf(fp, "embolden=0;\r\n");
+		fprintf(fp, "[efont]\r\n");
+		fprintf(fp, "antialias=1;\r\n");
+		fprintf(fp, "cleartype=1;\r\n");
+		fprintf(fp, "embolden=0;\r\n");
+		fclose(fp);
+		load_ttf_config();
+	} else {
+		bool res;
+
+		res = iniparser_getboolean(ini, "cfont:antialias", 1);
+		dbg_printf(d, "iniparser_getboolean returns %d", res);
+		ttf_set_anti_alias(cttf, res);
+		res = iniparser_getboolean(ini, "efont:antialias", 1);
+		dbg_printf(d, "iniparser_getboolean returns %d", res);
+		ttf_set_anti_alias(ettf, res);
+		res = iniparser_getboolean(ini, "cfont:cleartype", 1);
+		dbg_printf(d, "iniparser_getboolean returns %d", res);
+		ttf_set_cleartype(cttf, res);
+		res = iniparser_getboolean(ini, "efont:cleartype", 1);
+		dbg_printf(d, "iniparser_getboolean returns %d", res);
+		ttf_set_cleartype(ettf, res);
+		res = iniparser_getboolean(ini, "cfont:embolden", 0);
+		dbg_printf(d, "iniparser_getboolean returns %d", res);
+		ttf_set_embolden(cttf, res);
+		res = iniparser_getboolean(ini, "efont:embolden", 0);
+		dbg_printf(d, "iniparser_getboolean returns %d", res);
+		ttf_set_embolden(ettf, res);
+		iniparser_freedict(ini);
+	}
+}
+
 extern bool disp_load_truetype_book_font(const char *ettffile,
 										 const char *cttffile, int size)
 {
 #ifdef ENABLE_TTF
 	use_ttf = 0;
-	memset(disp_ewidth, 0, 0x80);
-	if (cache != NULL) {
-		free((void *) cache);
-		cache = NULL;
-	}
+	memset(disp_ewidth, size / 2, 0x80);
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
 		free((void *) book_efont_buffer);
 		book_efont_buffer = NULL;
@@ -350,22 +417,24 @@ extern bool disp_load_truetype_book_font(const char *ettffile,
 		free((void *) book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
-	if (!ttf_cache_ascii(ettffile, size, &book_efont_buffer, disp_ewidth))
-		return false;
-	if (ttfh == NULL) {
-		if ((ttfh = ttf_open(cttffile, size, &book_cfont_buffer)) == NULL) {
-			free((void *) book_efont_buffer);
-			book_efont_buffer = NULL;
+	if (ettf == NULL) {
+		if ((ettf = ttf_open(ettffile, size)) == NULL) {
 			return false;
 		}
 	} else {
-		if ((ttfh = ttf_reopen(ttfh, size, &book_cfont_buffer)) == NULL) {
-			free((void *) book_efont_buffer);
-			book_efont_buffer = NULL;
+		ttf_set_pixel_size(ettf, size);
+	}
+	if (cttf == NULL) {
+		if ((cttf = ttf_open(cttffile, size)) == NULL) {
 			return false;
 		}
+	} else {
+		ttf_set_pixel_size(cttf, size);
 	}
-	cache = (byte *) calloc(1, 0x5E02);
+
+	load_ttf_config();
+
+	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
 	use_ttf = 1;
 	return true;
 #else
@@ -379,11 +448,7 @@ extern bool disp_load_zipped_truetype_book_font(const char *zipfile,
 {
 #ifdef ENABLE_TTF
 	use_ttf = 0;
-	memset(disp_ewidth, 0, 0x80);
-	if (cache != NULL) {
-		free((void *) cache);
-		cache = NULL;
-	}
+	memset(disp_ewidth, size / 2, 0x80);
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
 		free((void *) book_efont_buffer);
 		book_efont_buffer = NULL;
@@ -419,13 +484,13 @@ extern bool disp_load_zipped_truetype_book_font(const char *zipfile,
 	}
 	unzReadCurrentFile(unzf, buf, usize);
 	unzCloseCurrentFile(unzf);
-	if (!ttf_cache_ascii_buffer
-		(buf, usize, size, &book_efont_buffer, disp_ewidth)) {
+
+	if ((ettf = ttf_open_buffer(buf, usize, size, ettffile)) == NULL) {
 		unzClose(unzf);
 		return false;
 	}
 
-	if (ttfh == NULL) {
+	if (cttf == NULL) {
 		if (unzLocateFile(unzf, cttffile, 0) != UNZ_OK
 			|| unzOpenCurrentFile(unzf) != UNZ_OK) {
 			unzClose(unzf);
@@ -446,22 +511,22 @@ extern bool disp_load_zipped_truetype_book_font(const char *zipfile,
 		}
 		unzReadCurrentFile(unzf, buf, usize);
 		unzCloseCurrentFile(unzf);
-		if ((ttfh =
-			 ttf_open_buffer(buf, usize, size, &book_cfont_buffer)) == NULL) {
+		if ((cttf = ttf_open_buffer(buf, usize, size, cttffile)) == NULL) {
 			free((void *) book_efont_buffer);
 			book_efont_buffer = NULL;
 			return false;
 		}
 	} else {
-		if ((ttfh = ttf_reopen(ttfh, size, &book_cfont_buffer)) == NULL) {
-			free((void *) book_efont_buffer);
-			book_efont_buffer = NULL;
-			return false;
-		}
+		ttf_set_pixel_size(cttf, size);
 	}
-	cache = (byte *) calloc(1, 0x5E02);
-	use_ttf = 1;
 	unzClose(unzf);
+	ttf_set_anti_alias(ettf, true);
+	ttf_set_anti_alias(cttf, true);
+	ttf_set_cleartype(ettf, true);
+	ttf_set_cleartype(cttf, true);
+	ttf_set_embolden(ettf, false);
+	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
+	use_ttf = 1;
 	return true;
 #else
 	return false;
@@ -510,13 +575,13 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 {
 	use_ttf = 0;
 #ifdef ENABLE_TTF
-	if (ttfh != NULL) {
-		ttf_close(ttfh);
-		ttfh = NULL;
+	if (ettf != NULL) {
+		ttf_close(ettf);
+		ettf = NULL;
 	}
-	if (cache != NULL) {
-		free(cache);
-		cache = NULL;
+	if (cttf != NULL) {
+		ttf_close(cttf);
+		cttf = NULL;
 	}
 #endif
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
@@ -582,13 +647,13 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 {
 	use_ttf = 0;
 #ifdef ENABLE_TTF
-	if (ttfh != NULL) {
-		ttf_close(ttfh);
-		ttfh = NULL;
+	if (ettf != NULL) {
+		ttf_close(ettf);
+		ettf = NULL;
 	}
-	if (cache != NULL) {
-		free(cache);
-		cache = NULL;
+	if (cttf != NULL) {
+		ttf_close(cttf);
+		cttf = NULL;
 	}
 #endif
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
@@ -652,13 +717,13 @@ extern void disp_free_font()
 	use_ttf = 0;
 #ifdef ENABLE_TTF
 	memset(disp_ewidth, 0, 0x80);
-	if (ttfh != NULL) {
-		ttf_close(ttfh);
-		ttfh = NULL;
+	if (ettf != NULL) {
+		ttf_close(ettf);
+		ettf = NULL;
 	}
-	if (cache != NULL) {
-		free((void *) cache);
-		cache = NULL;
+	if (cttf != NULL) {
+		ttf_close(cttf);
+		cttf = NULL;
 	}
 #endif
 }
@@ -1087,6 +1152,14 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 	pixel *vaddr;
 	const byte *ccur, *cend;
 
+#ifdef ENABLE_TTF
+	if (use_ttf) {
+		disp_putnstring_reversal_truetype(cttf, ettf, x, y, color, str, count,
+										  wordspace, top, height, bot);
+		return;
+	}
+#endif
+
 	if (bot) {
 		if (y >= bot)
 			return;
@@ -1116,17 +1189,9 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 			dword pos =
 				(((dword) (*str - 0x81)) * 0xBF +
 				 ((dword) (*(str + 1) - 0x40)));
-#ifdef ENABLE_TTF
-			if (use_ttf && !cache[pos]) {
-				ccur = book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE;
-				ttf_cache(ttfh, (const byte *) str, (byte *) ccur);
-				cache[pos] = 1;
-				ccur += top * DISP_BOOK_CROWSIZE;
-			} else
-#endif
-				ccur =
-					book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
-					top * DISP_BOOK_CROWSIZE;
+			ccur =
+				book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
+				top * DISP_BOOK_CROWSIZE;
 
 			for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur++) {
 				int b;
@@ -1164,36 +1229,6 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 				return;
 			vaddr = disp_get_vaddr(x, y);
 
-#ifdef ENABLE_TTF
-			if (use_ttf) {
-				ccur =
-					book_efont_buffer + ((dword) * str) * DISP_BOOK_CFONTSIZE +
-					top * DISP_BOOK_CROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend;
-					 ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_BOOK_FONTSIZE - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint--;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > fbits_book_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint--;
-					}
-					vaddr -= 512;
-				}
-				x -= disp_ewidth[*str] + wordspace;
-			} else
-#endif
 			{
 				ccur =
 					book_efont_buffer + ((dword) * str) * DISP_BOOK_EFONTSIZE +
@@ -1363,6 +1398,14 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 	pixel *vaddr;
 	const byte *ccur, *cend;
 
+#ifdef ENABLE_TTF
+	if (use_ttf) {
+		disp_putnstring_horz_truetype(cttf, ettf, x, y, color, str, count,
+									  wordspace, top, height, bot);
+		return;
+	}
+#endif
+
 	if (bot) {
 		if (y >= bot)
 			return;
@@ -1387,17 +1430,9 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 			dword pos =
 				(((dword) (*str - 0x81)) * 0xBF +
 				 ((dword) (*(str + 1) - 0x40)));
-#ifdef ENABLE_TTF
-			if (use_ttf && !cache[pos]) {
-				ccur = book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE;
-				ttf_cache(ttfh, (const byte *) str, (byte *) ccur);
-				cache[pos] = 1;
-				ccur += top * DISP_BOOK_CROWSIZE;
-			} else
-#endif
-				ccur =
-					book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
-					top * DISP_BOOK_CROWSIZE;
+			ccur =
+				book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
+				top * DISP_BOOK_CROWSIZE;
 
 			for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur++) {
 				int b;
@@ -1435,36 +1470,6 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 				return;
 			vaddr = disp_get_vaddr(x, y);
 
-#ifdef ENABLE_TTF
-			if (use_ttf) {
-				ccur =
-					book_efont_buffer + ((dword) * str) * DISP_BOOK_CFONTSIZE +
-					top * DISP_BOOK_CROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend;
-					 ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_BOOK_FONTSIZE - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint++;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > fbits_book_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint++;
-					}
-					vaddr += 512;
-				}
-				x += disp_ewidth[*str] + wordspace;
-			} else
-#endif
 			{
 				ccur =
 					book_efont_buffer + ((dword) * str) * DISP_BOOK_EFONTSIZE +
@@ -1635,6 +1640,14 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 	pixel *vaddr;
 	const byte *ccur, *cend;
 
+#ifdef ENABLE_TTF
+	if (use_ttf) {
+		disp_putnstring_lvert_truetype(cttf, ettf, x, y, color, str, count,
+									   wordspace, top, height, bot);
+		return;
+	}
+#endif
+
 	if (bot) {
 		if (x >= bot)
 			return;
@@ -1659,17 +1672,9 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			dword pos =
 				(((dword) (*str - 0x81)) * 0xBF +
 				 ((dword) (*(str + 1) - 0x40)));
-#ifdef ENABLE_TTF
-			if (use_ttf && !cache[pos]) {
-				ccur = book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE;
-				ttf_cache(ttfh, (const byte *) str, (byte *) ccur);
-				cache[pos] = 1;
-				ccur += top * DISP_BOOK_CROWSIZE;
-			} else
-#endif
-				ccur =
-					book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
-					top * DISP_BOOK_CROWSIZE;
+			ccur =
+				book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
+				top * DISP_BOOK_CROWSIZE;
 
 			for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur++) {
 				int b;
@@ -1707,36 +1712,6 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 				return;
 			vaddr = disp_get_vaddr(x, y);
 
-#ifdef ENABLE_TTF
-			if (use_ttf) {
-				ccur =
-					book_efont_buffer + ((dword) * str) * DISP_BOOK_CFONTSIZE +
-					top * DISP_BOOK_CROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend;
-					 ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_BOOK_FONTSIZE - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint -= 512;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > fbits_book_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint -= 512;
-					}
-					vaddr++;
-				}
-				y -= disp_ewidth[*str] + wordspace;
-			} else
-#endif
 			{
 				ccur =
 					book_efont_buffer + ((dword) * str) * DISP_BOOK_EFONTSIZE +
@@ -1906,6 +1881,14 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 	pixel *vaddr;
 	const byte *ccur, *cend;
 
+#ifdef ENABLE_TTF
+	if (use_ttf) {
+		disp_putnstring_rvert_truetype(cttf, ettf, x, y, color, str, count,
+									   wordspace, top, height, bot);
+		return;
+	}
+#endif
+
 	CHECK_AND_VALID(x, y);
 
 	if (x < bot)
@@ -1929,17 +1912,9 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 			dword pos =
 				(((dword) (*str - 0x81)) * 0xBF +
 				 ((dword) (*(str + 1) - 0x40)));
-#ifdef ENABLE_TTF
-			if (use_ttf && !cache[pos]) {
-				ccur = book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE;
-				ttf_cache(ttfh, (const byte *) str, (byte *) ccur);
-				cache[pos] = 1;
-				ccur += top * DISP_BOOK_CROWSIZE;
-			} else
-#endif
-				ccur =
-					book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
-					top * DISP_BOOK_CROWSIZE;
+			ccur =
+				book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
+				top * DISP_BOOK_CROWSIZE;
 
 			for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur++) {
 				int b;
@@ -1977,36 +1952,6 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 				return;
 			vaddr = disp_get_vaddr(x, y);
 
-#ifdef ENABLE_TTF
-			if (use_ttf) {
-				ccur =
-					book_efont_buffer + ((dword) * str) * DISP_BOOK_CFONTSIZE +
-					top * DISP_BOOK_CROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend;
-					 ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_BOOK_FONTSIZE - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint += 512;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > fbits_book_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint += 512;
-					}
-					vaddr--;
-				}
-				y += disp_ewidth[*str] + wordspace;
-			} else
-#endif
 			{
 				ccur =
 					book_efont_buffer + ((dword) * str) * DISP_BOOK_EFONTSIZE +

@@ -8,6 +8,7 @@
 #endif
 #include <pspdisplay.h>
 #include "common/datatype.h"
+#include "ttfont.h"
 
 extern int DISP_FONTSIZE, DISP_BOOK_FONTSIZE, HRR, WRR;
 extern byte disp_ewidth[0x80];
@@ -35,6 +36,7 @@ typedef dword pixel;
 #define PIXEL_BYTES 4
 #define COLOR_MAX 255
 #define COLOR_WHITE 0xFFFFFFFF
+#define COLOR_BLACK 0x0
 
 #define RGB(r,g,b) ((((pixel)(b))<<16)|(((pixel)(g))<<8)|((pixel)(r))|0xFF000000)
 #define RGB2(r,g,b) ((((pixel)(b))<<16)|(((pixel)(g))<<8)|((pixel)(r))|0xFF000000)
@@ -151,4 +153,23 @@ extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color);
 extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color);
 extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color);
 
+extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
+										  pixel color, const byte * str,
+										  int count, dword wordspace, int top,
+										  int height, int bot);
+extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
+											  int y, pixel color,
+											  const byte * str, int count,
+											  dword wordspace, int top,
+											  int height, int bot);
+extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
+										   pixel color, const byte * str,
+										   int count, dword wordspace, int top,
+										   int height, int bot);
+extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
+										   pixel color, const byte * str,
+										   int count, dword wordspace, int top,
+										   int height, int bot);
+
+extern bool check_range(int x, int y);
 #endif

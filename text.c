@@ -19,6 +19,10 @@
 #include "dbg.h"
 #include "buffer.h"
 #include "scene.h"
+#include "conf.h"
+
+extern t_conf config;
+extern int use_ttf;
 
 static void text_decode(p_text txt, t_conf_encode encode)
 {
@@ -88,8 +92,13 @@ static bool bytetable[256] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xE0
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	// 0xF0
 };
-extern bool text_format(p_text txt, dword rowpixels, dword wordspace)
+
+extern p_ttf ettf, cttf;
+
+extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
+						bool ttf_mode)
 {
+
 	char *pos = txt->buf, *posend = pos + txt->size;
 	dword curs;
 
@@ -111,20 +120,33 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace)
 		char *startp = pos;
 		dword width = 0;
 
-		while (pos < posend && bytetable[*(byte *) pos] != 1)
-			if ((*(byte *) pos) >= 0x80) {
-				width += DISP_BOOK_FONTSIZE;
-				if (width > rowpixels)
-					break;
-				width += wordspace * 2;
-				pos += 2;
-			} else {
-				width += disp_ewidth[*(byte *) pos];
-				if (width > rowpixels)
-					break;
-				width += wordspace;
-				++pos;
-			}
+		if (ttf_mode) {
+			dword count;
+
+			if (0)
+				count =
+					ttf_get_string_width_hard(cttf, ettf, (const byte *) pos,
+											  rowpixels, wordspace);
+			else
+				count = ttf_get_string_width(cttf, ettf, (const byte *) pos,
+											 rowpixels, wordspace);
+			pos += count;
+		} else {
+			while (pos < posend && bytetable[*(byte *) pos] != 1)
+				if ((*(byte *) pos) >= 0x80) {
+					width += DISP_BOOK_FONTSIZE;
+					if (width > rowpixels)
+						break;
+					width += wordspace * 2;
+					pos += 2;
+				} else {
+					width += disp_ewidth[*(byte *) pos];
+					if (width > rowpixels)
+						break;
+					width += wordspace;
+					++pos;
+				}
+		}
 /*		if(pos + 1 < posend && ((*pos >= 'A' && *pos <= 'Z') || (*pos >= 'a' && *pos <= 'z')))
 		{
 			char * curp = pos - 1;
@@ -372,7 +394,7 @@ extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace)) {
+	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -524,7 +546,8 @@ extern p_text text_open_in_gz(const char *gzfile, const char *filename,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace)) {
+
+	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -675,7 +698,7 @@ extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace)) {
+	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -729,7 +752,7 @@ extern p_text text_open_in_zip(const char *zipfile, const char *filename,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace)) {
+	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -925,7 +948,7 @@ extern p_text text_open_in_rar(const char *rarfile, const char *filename,
 				txt->size =
 					text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 			}
-			if (!text_format(txt, rowpixels, wordspace)) {
+			if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
 				text_close(txt);
 				return NULL;
 			}
@@ -971,9 +994,11 @@ extern p_text text_open_in_chm(const char *chmfile, const char *filename,
 	text_decode(txt, encode);
 	if (ft == fs_filetype_html)
 		txt->size = html_to_text(txt->buf, txt->size, true);
-	if (reorder)
+	if (reorder) {
 		txt->size = text_reorder(txt->buf, txt->size);
-	if (!text_format(txt, rowpixels, wordspace)) {
+		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+	}
+	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}

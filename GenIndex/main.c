@@ -42,6 +42,7 @@ DirEntry * AddDirEntry(const char* name, int page);
 void ParseFile(void);
 int PrintDir(FILE *fp);
 int VPrintDir(void);
+void FreeDirEntry(void);
 
 #if defined(WIN32) || defined(_MSC_VER)
 #include <windows.h>
@@ -103,6 +104,7 @@ int main(int argc, char* argv[])
 	}
 
 	ParseFile();
+	FreeDirEntry();
 
 	dbg_close(d);
 	return 0;
@@ -256,7 +258,7 @@ DirEntry * AddDirEntry(const char* name, int page)
 	}
 	else {
 		if(g_dircnt >= g_dircap) {
-			g_dircap = g_dircnt * 2 + 16;
+			g_dircap += 16;
 			g_dirs = (DirEntry*) realloc(g_dirs, sizeof(DirEntry)*g_dircap);
 		}
 		g_dirs[g_dircnt].name = strdup(name);
@@ -264,4 +266,18 @@ DirEntry * AddDirEntry(const char* name, int page)
 	}
 	g_dircnt++;
 	return g_dirs;
+}
+
+void FreeDirEntry(void)
+{
+	int i;
+
+	if (g_dirs == NULL || g_dircnt == 0)
+		return;
+	for(i=0; i<g_dircnt; ++i) {
+		free(g_dirs[i].name);
+	}
+	free(g_dirs);
+	g_dircnt = 0;
+	g_dirs = NULL;
 }

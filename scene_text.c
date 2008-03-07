@@ -51,6 +51,55 @@ bool scene_readbook_in_raw_mode = false;
 
 BookViewData cur_book_view, prev_book_view;
 
+#ifdef _DEBUG
+static void WriteByte(int fd, unsigned char b)
+{
+	sceIoWrite(fd, &b, 1);
+}
+
+void ScreenShot()
+{
+	const char tgaHeader[] = { 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	const int width = PSP_SCREEN_WIDTH;
+	const int lineWidth = PSP_SCREEN_SCANLINE;
+	const int height = PSP_SCREEN_HEIGHT;
+	unsigned char lineBuffer[width * 4];
+	u32 *vram = disp_get_vaddr(0, 0);
+	int x, y;
+	char filename[256];
+	int i = 0;
+
+	do {
+		SPRINTF_S(filename, "ms0:/screenshot%02d.tga", i++);
+	} while (utils_is_file_exists(filename));
+	int fd =
+		sceIoOpen(filename, PSP_O_CREAT | PSP_O_TRUNC | PSP_O_WRONLY, 0777);
+	if (!fd)
+		return;
+	sceIoWrite(fd, tgaHeader, sizeof(tgaHeader));
+	WriteByte(fd, width & 0xff);
+	WriteByte(fd, width >> 8);
+	WriteByte(fd, height & 0xff);
+	WriteByte(fd, height >> 8);
+	WriteByte(fd, 24);
+	WriteByte(fd, 0);
+	for (y = height - 1; y >= 0; y--) {
+		for (x = 0; x < width; x++) {
+			u32 color = vram[y * lineWidth + x];
+			unsigned char red = color & 0xff;
+			unsigned char green = (color >> 8) & 0xff;
+			unsigned char blue = (color >> 16) & 0xff;
+
+			lineBuffer[3 * x] = blue;
+			lineBuffer[3 * x + 1] = green;
+			lineBuffer[3 * x + 2] = red;
+		}
+		sceIoWrite(fd, lineBuffer, width * 3);
+	}
+	sceIoClose(fd);
+}
+#endif
+
 static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 {
 	char ci[8] = "       ";
@@ -377,7 +426,7 @@ static void scene_printtext_rvert(PBookViewData pView)
 							 config.borderspace, config.forecolor,
 							 (const byte *) tr->start, (int) tr->count,
 							 config.wordspace, 0, DISP_BOOK_FONTSIZE,
-							 config.infobar ? (DISP_FONTSIZE + 1) : 0);
+							 config.infobar ? (DISP_FONTSIZE + 1) : 1);
 	}
 }
 
@@ -1065,6 +1114,12 @@ dword scene_readbook(dword selidx)
 		}
 		if (cur_book_view.text_needrp) {
 			scene_printbook(&cur_book_view, selidx);
+#ifdef _DEBUG
+//          disp_flip();
+//          ScreenShot();
+//          dbg_printf(d, "Screen Captured");
+//          disp_flip();
+#endif
 			cur_book_view.text_needrp = false;
 		}
 

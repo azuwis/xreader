@@ -1781,8 +1781,8 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 				case 1:
 					if (config.usettf) {
 						ttfsize--;
-						if (ttfsize < 12)
-							ttfsize = 32;
+						if (ttfsize < 8)
+							ttfsize = 64;
 					} else {
 						if (bookfontindex == 0)
 							bookfontindex = bookfontcount - 1;
@@ -1818,8 +1818,8 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 				case 1:
 					if (config.usettf) {
 						ttfsize++;
-						if (ttfsize > 32)
-							ttfsize = 12;
+						if (ttfsize > 64)
+							ttfsize = 8;
 					} else {
 						if (bookfontindex == bookfontcount - 1)
 							bookfontindex = 0;
@@ -2755,7 +2755,9 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 	STRCPY_S(curr->lastfile, prev->lastfile);
 	curr->isreading = prev->isreading;
 
+#ifdef ENABLE_IMAGE
 	img_needrf = img_needrc = img_needrp = true;
+#endif
 	cur_book_view.text_needrf = cur_book_view.text_needrp =
 		cur_book_view.text_needrb = true;
 
@@ -3105,7 +3107,8 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 
 		memcpy(bp, disp_ewidth, 0x80);
 		memset(disp_ewidth, DISP_FONTSIZE / 2, 0x80);
-		text_format(&preview, 347 - 7 * DISP_FONTSIZE / 2, config.wordspace);
+		text_format(&preview, 347 - 7 * DISP_FONTSIZE / 2, config.wordspace,
+					false);
 		memcpy(disp_ewidth, bp, 0x80);
 		if (preview.rows[0] != NULL) {
 			dword i;

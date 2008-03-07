@@ -23,7 +23,8 @@ typedef struct
 	p_textrow rows[1024];
 } t_text, *p_text;
 
-extern bool text_format(p_text txt, dword rowpixels, dword wordspace);
+extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
+						bool ttf_mode);
 extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 						dword wordspace, t_conf_encode encode, bool reorder);
 extern p_text text_open_binary(const char *filename, bool vert);
