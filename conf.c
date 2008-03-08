@@ -220,6 +220,11 @@ static void conf_default(p_conf conf)
 	conf->selbcolor = RGB(0x20, 0x20, 0xDF);
 	conf->msgbcolor = RGB(0x18, 0x28, 0x50);
 	conf->usedyncolor = false;
+
+	STRCPY_S(conf->cttfpath, appdir);
+	STRCAT_S(conf->cttfpath, "fonts/gbk.ttf");
+	STRCPY_S(conf->ettfpath, appdir);
+	STRCAT_S(conf->ettfpath, "fonts/asc.ttf");
 }
 
 extern bool conf_load(p_conf conf)

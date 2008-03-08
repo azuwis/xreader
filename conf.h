@@ -127,8 +127,8 @@ typedef struct
 	t_conf_encode lyricencode;
 	t_conf_cycle mp3cycle;
 	bool isreading;
-	char bgarch[256];
-	char bgfile[256];
+	char bgarch[PATH_MAX];
+	char bgfile[PATH_MAX];
 	int bgwhere;
 	dword slideinterval;
 	bool hprmctrl;
@@ -161,6 +161,10 @@ typedef struct
 	dword lyricex;
 	bool autoplay;
 	bool usettf;
+	char cttfarch[PATH_MAX];
+	char cttfpath[PATH_MAX];
+	char ettfarch[PATH_MAX];
+	char ettfpath[PATH_MAX];
 	int freqs[3];
 	short imgbrightness;
 	bool dis_scrsave;
