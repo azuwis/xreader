@@ -55,7 +55,7 @@
 #ifdef ENABLE_PMPAVC
 bool pmp_restart = false;
 #endif
-char appdir[256], copydir[512], cutdir[512];
+char appdir[PATH_MAX], copydir[PATH_MAX], cutdir[PATH_MAX];
 bool copy_archmode = false;
 int copy_where = scene_in_dir;
 dword drperpage, rowsperpage, pixelsperrow;
@@ -118,7 +118,7 @@ t_win_menu_op exit_confirm()
 
 bool scene_load_font()
 {
-	char fontzipfile[256], efontfile[256], cfontfile[256];
+	char fontzipfile[PATH_MAX], efontfile[PATH_MAX], cfontfile[PATH_MAX];
 
 	if (fontindex >= fontcount)
 		fontindex = 0;
@@ -149,7 +149,7 @@ bool scene_load_font()
 
 bool scene_load_book_font()
 {
-	char fontzipfile[256], efontfile[256], cfontfile[256];
+	char fontzipfile[PATH_MAX], efontfile[PATH_MAX], cfontfile[PATH_MAX];
 
 	if (bookfontindex >= bookfontcount)
 		bookfontindex = 0;
@@ -169,18 +169,12 @@ bool scene_load_book_font()
 #ifdef ENABLE_TTF
 	if (config.usettf) {
 		scene_power_save(false);
-		STRCPY_S(fontzipfile, appdir);
-		STRCAT_S(fontzipfile, "fonts.zip");
 		loaded =
-			disp_load_zipped_truetype_book_font(fontzipfile, "ASC.TTF",
-												"GBK.TTF", config.bookfontsize);
-		if (!loaded) {
-			SPRINTF_S(efontfile, "%sfonts/ASC.TTF", appdir);
-			SPRINTF_S(cfontfile, "%sfonts/GBK.TTF", appdir);
-			loaded =
-				disp_load_truetype_book_font(efontfile, cfontfile,
-											 config.bookfontsize);
-		}
+			disp_load_zipped_truetype_book_font(config.ettfarch,
+												config.cttfarch,
+												config.ettfpath,
+												config.cttfpath,
+												config.bookfontsize);
 		scene_power_save(imgreading || fs != NULL);
 	}
 #endif
@@ -521,7 +515,7 @@ static const char *GetFileExt(const char *filename)
 #ifdef ENABLE_BG
 static void set_background_image(p_win_menuitem item, dword * index)
 {
-	char bgfile[256], bgarchname[256];
+	char bgfile[PATH_MAX], bgarchname[PATH_MAX];
 
 	if (where == scene_in_dir) {
 		STRCPY_S(bgfile, config.shortpath);
@@ -2446,8 +2440,8 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item,
 			return exit_confirm();
 		case PSP_CTRL_CIRCLE:
 			if (*index < 10) {
-				char comppath[256] = "", shortpath[256] = "", compname[256] =
-					"";
+				char comppath[PATH_MAX] = "", shortpath[PATH_MAX] =
+					"", compname[PATH_MAX] = "";
 				if (location_get
 					(*index, comppath, shortpath, compname, &locreading)
 					&& comppath[0] != 0 && shortpath[0] != 0
@@ -2650,9 +2644,9 @@ void scene_setting_mgr_predraw(p_win_menuitem item, dword index, dword topindex,
 	char infomsg[80];
 
 	SPRINTF_S(infomsg, "%d号设置", config_num);
-	char conffile[256], appdir[256];
+	char conffile[PATH_MAX], appdir[PATH_MAX];
 
-	getcwd(appdir, 256);
+	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
 	STRCPY_S(conffile, appdir);
 	char conffilename[80];
@@ -2784,9 +2778,9 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 		case PSP_CTRL_CIRCLE:
 			{
 				disp_waitv();
-				char conffile[256], appdir[256];
+				char conffile[PATH_MAX], appdir[PATH_MAX];
 
-				getcwd(appdir, 256);
+				getcwd(appdir, PATH_MAX);
 				STRCAT_S(appdir, "/");
 				STRCPY_S(conffile, appdir);
 				char conffilename[80];
@@ -3034,7 +3028,7 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 			if (win_msgbox
 				("是否要导出书签？", getmsgbyid(YES), getmsgbyid(NO),
 				 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
-				char bmfn[256];
+				char bmfn[PATH_MAX];
 
 				if (where == scene_in_zip || where == scene_in_chm
 					|| where == scene_in_rar) {
@@ -3128,7 +3122,7 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 
 bool scene_bookmark(dword * orgp)
 {
-	char archname[256];
+	char archname[PATH_MAX];
 
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
 		STRCPY_S(archname, config.shortpath);
@@ -3631,7 +3625,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 					if (win_msgbox
 						("删除所选文件？", getmsgbyid(YES), getmsgbyid(NO),
 						 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
-						char fn[256];
+						char fn[PATH_MAX];
 
 						config.lastfile[0] = 0;
 						for (sidx = 0; sidx < filecount; sidx++)
@@ -3672,7 +3666,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 									 getmsgbyid(YES), getmsgbyid(NO),
 									 COLOR_WHITE, COLOR_WHITE,
 									 config.msgbcolor)) {
-									char cfn[256];
+									char cfn[PATH_MAX];
 
 									SPRINTF_S(cfn, "%s%s/", config.path,
 											  item[sidx].compname);
@@ -3690,7 +3684,8 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 									("添加歌曲到播放列表？", getmsgbyid(YES),
 									 getmsgbyid(NO), COLOR_WHITE, COLOR_WHITE,
 									 config.msgbcolor)) {
-									char mp3name[256], mp3longname[256];
+									char mp3name[PATH_MAX],
+										mp3longname[PATH_MAX];
 
 									STRCPY_S(mp3name, config.shortpath);
 									STRCAT_S(mp3name, filelist[sidx].shortname);
@@ -3750,7 +3745,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 #ifdef ENABLE_MUSIC
 									case fs_filetype_dir:
 										if (bmcount == 0) {
-											char cfn[256];
+											char cfn[PATH_MAX];
 
 											SPRINTF_S(cfn, "%s%s/", config.path,
 													  item[sidx].compname);
@@ -3760,7 +3755,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 #endif
 									case fs_filetype_ebm:
 										if (bmcount > 0) {
-											char bmfn[256];
+											char bmfn[PATH_MAX];
 
 											STRCPY_S(bmfn, config.path);
 											STRCAT_S(bmfn,
@@ -3775,7 +3770,8 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 									case fs_filetype_wma:
 #endif
 										if (bmcount == 0) {
-											char mp3name[256], mp3longname[256];
+											char mp3name[PATH_MAX],
+												mp3longname[PATH_MAX];
 
 											STRCPY_S(mp3name, config.shortpath);
 											STRCAT_S(mp3name,
@@ -3832,7 +3828,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 #ifdef ENABLE_MUSIC
 									case fs_filetype_dir:
 										if (dircount > 0) {
-											char cfn[256];
+											char cfn[PATH_MAX];
 
 											SPRINTF_S(cfn, "%s%s/", config.path,
 													  item[sidx].compname);
@@ -3842,7 +3838,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 #endif
 									case fs_filetype_ebm:
 										if (mp3count + dircount == 0) {
-											char bmfn[256];
+											char bmfn[PATH_MAX];
 
 											STRCPY_S(bmfn, config.path);
 											STRCAT_S(bmfn,
@@ -3857,7 +3853,8 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 									case fs_filetype_wma:
 #endif
 										if (mp3count > 0) {
-											char mp3name[256], mp3longname[256];
+											char mp3name[PATH_MAX],
+												mp3longname[PATH_MAX];
 
 											STRCPY_S(mp3name, config.shortpath);
 											STRCAT_S(mp3name,
@@ -3998,7 +3995,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 						dword width, height;
 						pixel *imgdata = NULL;
 						pixel bgcolor = 0;
-						char filename[256];
+						char filename[PATH_MAX];
 
 						if (where == scene_in_zip || where == scene_in_chm
 							|| where == scene_in_rar)
@@ -4593,7 +4590,7 @@ void scene_filelist()
 					if (win_msgbox
 						(infomsg, "是", "否", COLOR_WHITE, COLOR_WHITE,
 						 config.msgbcolor)) {
-						char path[256], upper[256];
+						char path[PATH_MAX], upper[PATH_MAX];
 
 						STRCPY_S(path, config.path);
 						strtoupper(upper, filelist[idx].compname);
@@ -4604,7 +4601,7 @@ void scene_filelist()
 				break;
 			case fs_filetype_dir:
 				{
-					char pdir[256];
+					char pdir[PATH_MAX];
 					bool isup = false;
 
 					pdir[0] = 0;
@@ -4753,7 +4750,7 @@ void scene_filelist()
 #ifdef ENABLE_PMPAVC
 			case fs_filetype_pmp:
 				{
-					char pmpname[256];
+					char pmpname[PATH_MAX];
 
 					STRCPY_S(pmpname, config.shortpath);
 					STRCAT_S(pmpname, filelist[idx].shortname);
@@ -4847,7 +4844,7 @@ void scene_filelist()
 				if (win_msgbox
 					("是否要导入书签？", getmsgbyid(YES), getmsgbyid(NO),
 					 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
-					char bmfn[256];
+					char bmfn[PATH_MAX];
 
 					STRCPY_S(bmfn, config.shortpath);
 					STRCAT_S(bmfn, filelist[idx].shortname);
@@ -4862,13 +4859,49 @@ void scene_filelist()
 			case fs_filetype_wma:
 #endif
 				{
-					char fn[256], lfn[256];
+					char fn[PATH_MAX], lfn[PATH_MAX];
 
 					STRCPY_S(fn, config.shortpath);
 					STRCAT_S(fn, filelist[idx].shortname);
 					STRCPY_S(lfn, config.path);
 					STRCAT_S(lfn, filelist[idx].compname);
 					mp3_directplay(fn, lfn);
+				}
+				break;
+#endif
+#ifdef ENABLE_TTF
+			case fs_filetype_font:
+				{
+					char fn[PATH_MAX];
+
+					if (where == scene_in_dir) {
+						STRCPY_S(fn, config.shortpath);
+						STRCAT_S(fn, filelist[idx].shortname);
+					} else {
+						STRCPY_S(fn, filelist[idx].compname);
+					}
+
+					if (win_msgbox
+						("是否为中文字体？", getmsgbyid(YES), getmsgbyid(NO),
+						 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
+						STRCPY_S(config.cttfpath, fn);
+						if (where == scene_in_dir)
+							STRCPY_S(config.cttfarch, "");
+						else
+							STRCPY_S(config.cttfarch, config.shortpath);
+					} else {
+						STRCPY_S(config.ettfpath, fn);
+						if (where == scene_in_dir)
+							STRCPY_S(config.ettfarch, "");
+						else
+							STRCPY_S(config.ettfarch, config.shortpath);
+					}
+					dbg_printf(d, "ettf: %s %s cttf: %s %s", config.ettfarch,
+							   config.ettfpath, config.cttfarch,
+							   config.cttfpath);
+					if (config.usettf) {
+						scene_load_book_font();
+					}
 				}
 				break;
 #endif
@@ -4917,9 +4950,9 @@ DBG *d = 0;
 
 extern void scene_init()
 {
-	char logfile[256];
+	char logfile[PATH_MAX];
 
-	getcwd(appdir, 256);
+	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
 	STRCPY_S(logfile, appdir);
 	STRCAT_S(logfile, "log.txt");
@@ -4957,10 +4990,10 @@ extern void scene_init()
 	dbg_printf(d, "usb_open(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 
 	sceRtcGetCurrentTick(&dbglasttick);
-	char fontzipfile[256], efontfile[256], cfontfile[256], conffile[256],
-		locconf[256], bmfile[256]
+	char fontzipfile[PATH_MAX], efontfile[PATH_MAX], cfontfile[PATH_MAX],
+		conffile[PATH_MAX], locconf[PATH_MAX], bmfile[PATH_MAX]
 #ifdef ENABLE_MUSIC
-	, mp3conf[256]
+	, mp3conf[PATH_MAX]
 #endif
 	;
 
@@ -5136,7 +5169,7 @@ extern void scene_init()
 
 	sceRtcGetCurrentTick(&dbglasttick);
 	if (sceKernelDevkitVersion() >= 0x03070100) {
-		char prxfn[256];
+		char prxfn[PATH_MAX];
 
 		SPRINTF_S(prxfn, "%sxrPrx.prx", appdir);
 		SceUID uid = pspSdkLoadStartModule(prxfn, PSP_MEMORY_PARTITION_KERNEL);
@@ -5198,7 +5231,7 @@ extern void scene_exit()
 		bm = NULL;
 	}
 	if (fs != NULL) {
-		char archname[256];
+		char archname[PATH_MAX];
 
 		if (where == scene_in_zip || where == scene_in_chm
 			|| where == scene_in_rar) {
@@ -5215,9 +5248,9 @@ extern void scene_exit()
 		}
 	}
 	// always save to xreader0.conf
-	char conffile[256], appdir[256];
+	char conffile[PATH_MAX], appdir[PATH_MAX];
 
-	getcwd(appdir, 256);
+	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
 	STRCPY_S(conffile, appdir);
 	char conffilename[80];
@@ -5236,7 +5269,7 @@ extern void scene_exit()
 	MusicMgrRelease(pMMgr);
 	DirRelease();
 #endif
-	char mp3conf[256];
+	char mp3conf[PATH_MAX];
 
 	STRCPY_S(mp3conf, appdir);
 	STRCAT_S(mp3conf, "music.lst");
