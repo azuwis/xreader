@@ -976,7 +976,7 @@ extern bool mp3_list_load(const char *filename)
 	if (fp == NULL)
 		return false;
 	mp3_nfiles = 0;
-	char fname[MAX_PATH], cname[MAX_PATH];
+	char fname[PATH_MAX], cname[PATH_MAX];
 
 	while (fgets(fname, PATH_MAX, fp) != NULL
 		   && fgets(cname, PATH_MAX, fp) != NULL) {
