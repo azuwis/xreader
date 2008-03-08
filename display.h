@@ -70,7 +70,8 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 									   const char *cfont);
 extern bool disp_load_truetype_book_font(const char *ettffile,
 										 const char *cttffile, int size);
-extern bool disp_load_zipped_truetype_book_font(const char *zipfile,
+extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
+												const char *czipfile,
 												const char *ettffile,
 												const char *cttffile, int size);
 extern bool disp_has_font(const char *efont, const char *cfont);

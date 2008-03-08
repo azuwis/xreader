@@ -14,6 +14,7 @@
 #include "pspscreen.h"
 #include "iniparser.h"
 #include "strsafe.h"
+#include "fs.h"
 #include "dbg.h"
 
 extern t_conf config;
@@ -338,6 +339,9 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 
 static void load_ttf_config(void)
 {
+	if (cttf == NULL || ettf == NULL)
+		return;
+
 	dictionary *ini;
 
 	char inifile[256], appdir[256];
@@ -442,11 +446,45 @@ extern bool disp_load_truetype_book_font(const char *ettffile,
 #endif
 }
 
-extern bool disp_load_zipped_truetype_book_font(const char *zipfile,
+static p_ttf load_archieve_truetype_book_font(const char *zipfile,
+											  const char *zippath, int size)
+{
+#ifdef ENABLE_TTF
+	p_ttf ttf = NULL;
+
+	if (ttf == NULL && zipfile[0] != '\0') {
+		buffer *b = NULL;
+
+		extract_archive_file_into_buffer(&b, zipfile, zippath,
+										 fs_file_get_type(zipfile));
+
+		if (b == NULL) {
+			return false;
+		}
+
+		if ((ttf = ttf_open_buffer(b->ptr, b->used, size, zippath)) == NULL) {
+			return false;
+		}
+	} else {
+		ttf_set_pixel_size(ttf, size);
+	}
+
+	use_ttf = 1;
+	return ttf;
+#else
+	return NULL;
+#endif
+}
+
+extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
+												const char *czipfile,
 												const char *ettffile,
 												const char *cttffile, int size)
 {
 #ifdef ENABLE_TTF
+	static char prev_ettfpath[PATH_MAX] = "", prev_ettfarch[PATH_MAX] = "";
+	static char prev_cttfpath[PATH_MAX] = "", prev_cttfarch[PATH_MAX] = "";
+
 	use_ttf = 0;
 	memset(disp_ewidth, size / 2, 0x80);
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
@@ -457,74 +495,45 @@ extern bool disp_load_zipped_truetype_book_font(const char *zipfile,
 		free((void *) book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
-	unzFile unzf = unzOpen(zipfile);
-	unz_file_info info;
-	dword usize;
-	byte *buf;
-
-	if (unzf == NULL)
-		return false;
-
-	if (unzLocateFile(unzf, ettffile, 0) != UNZ_OK
-		|| unzOpenCurrentFile(unzf) != UNZ_OK) {
-		unzClose(unzf);
-		return false;
-	}
-	if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK) {
-		unzCloseCurrentFile(unzf);
-		unzClose(unzf);
-		return false;
-	}
-	usize = info.uncompressed_size;
-	if ((buf = (byte *) calloc(1, usize)) == NULL) {
-		disp_free_font();
-		unzCloseCurrentFile(unzf);
-		unzClose(unzf);
-		return false;
-	}
-	unzReadCurrentFile(unzf, buf, usize);
-	unzCloseCurrentFile(unzf);
-
-	if ((ettf = ttf_open_buffer(buf, usize, size, ettffile)) == NULL) {
-		unzClose(unzf);
-		return false;
-	}
-
-	if (cttf == NULL) {
-		if (unzLocateFile(unzf, cttffile, 0) != UNZ_OK
-			|| unzOpenCurrentFile(unzf) != UNZ_OK) {
-			unzClose(unzf);
-			return false;
-		}
-		if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) !=
-			UNZ_OK) {
-			unzCloseCurrentFile(unzf);
-			unzClose(unzf);
-			return false;
-		}
-		usize = info.uncompressed_size;
-		if ((buf = (byte *) calloc(1, usize)) == NULL) {
-			disp_free_font();
-			unzCloseCurrentFile(unzf);
-			unzClose(unzf);
-			return false;
-		}
-		unzReadCurrentFile(unzf, buf, usize);
-		unzCloseCurrentFile(unzf);
-		if ((cttf = ttf_open_buffer(buf, usize, size, cttffile)) == NULL) {
-			free((void *) book_efont_buffer);
-			book_efont_buffer = NULL;
-			return false;
-		}
+	if (ettf != NULL && strcmp(prev_ettfarch, config.ettfarch) == 0
+		&& strcmp(prev_ettfpath, config.ettfpath) == 0) {
+		ttf_set_pixel_size(ettf, size);
 	} else {
-		ttf_set_pixel_size(cttf, size);
+		ttf_close(ettf);
+		ettf = NULL;
+		if (config.ettfarch[0] != '\0') {
+			ettf =
+				load_archieve_truetype_book_font(config.ettfarch,
+												 config.ettfpath,
+												 config.bookfontsize);
+		} else {
+			ettf = ttf_open(config.ettfpath, config.bookfontsize);
+		}
+		STRCPY_S(prev_ettfarch, config.ettfarch);
+		STRCPY_S(prev_ettfpath, config.ettfpath);
 	}
-	unzClose(unzf);
-	ttf_set_anti_alias(ettf, true);
-	ttf_set_anti_alias(cttf, true);
-	ttf_set_cleartype(ettf, true);
-	ttf_set_cleartype(cttf, true);
-	ttf_set_embolden(ettf, false);
+	if (cttf != NULL && strcmp(prev_cttfarch, config.cttfarch) == 0
+		&& strcmp(prev_cttfpath, config.cttfpath) == 0) {
+		ttf_set_pixel_size(cttf, size);
+	} else {
+		if (cttf != NULL) {
+			ttf_close(cttf);
+			cttf = NULL;
+		}
+		if (config.cttfarch[0] != '\0') {
+			cttf =
+				load_archieve_truetype_book_font(config.cttfarch,
+												 config.cttfpath,
+												 config.bookfontsize);
+		} else {
+			cttf = ttf_open(config.cttfpath, config.bookfontsize);
+		}
+		STRCPY_S(prev_cttfarch, config.cttfarch);
+		STRCPY_S(prev_cttfpath, config.cttfpath);
+	}
+
+	load_ttf_config();
+
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
 	use_ttf = 1;
 	return true;
