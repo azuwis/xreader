@@ -7,7 +7,7 @@
 #ifdef ENABLE_PMPAVC
 extern bool pmp_restart;
 #endif
-extern char appdir[256], copydir[512], cutdir[512];
+extern char appdir[PATH_MAX], copydir[PATH_MAX], cutdir[PATH_MAX];
 extern dword drperpage, rowsperpage, pixelsperrow;
 extern p_bookmark bm;
 extern p_text fs;
