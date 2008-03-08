@@ -804,7 +804,6 @@ static int rarcbproc(UINT msg, LONG UserData, LONG P1, LONG P2)
 		buffer *buf = (buffer *) UserData;
 
 		if (buffer_append_memory(buf, (void *) P1, P2) == -1) {
-			win_msg("ÄÚ´æ²»×ã", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 			return -1;
 		}
 	}
@@ -815,6 +814,7 @@ static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
 										 const char *archpath)
 {
 	struct RAROpenArchiveData arcdata;
+	int code = 0;
 
 	arcdata.ArcName = (char *) archname;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
@@ -831,12 +831,18 @@ static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
 		if (RARReadHeader(hrar, &header) != 0)
 			break;
 		if (stricmp(header.FileName, archpath) == 0) {
-			RARProcessFile(hrar, RAR_TEST, NULL, NULL);
+			code = RARProcessFile(hrar, RAR_TEST, NULL, NULL);
 			goto exit;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
   exit:
 	RARCloseArchive(hrar);
+
+	if (code != 0) {
+		free(buf->ptr);
+		buf->ptr = NULL;
+		buf->size = buf->used = 0;
+	}
 }
 
 static void extract_chm_file_into_buffer(buffer * buf, const char *archname,
@@ -908,6 +914,8 @@ extern void extract_archive_file_into_buffer(buffer ** buf,
 
 	if (b != NULL && b->ptr != NULL)
 		*buf = b;
-	else
+	else {
 		*buf = NULL;
+		buffer_free(b);
+	}
 }

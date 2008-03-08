@@ -555,7 +555,7 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 	FT_UInt cprevious = 0, eprevious = 0;
 	int x = 0, count = 0;
 
-	if (str == NULL || maxpixels == 0)
+	if (str == NULL || maxpixels == 0 || cttf == NULL || ettf == NULL)
 		return 0;
 
 	while (*str != 0 && x < maxpixels && bytetable[*(byte *) str] != 1) {
@@ -729,6 +729,8 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 
 	if (str == NULL)
 		return 0;
+	if (cttf == NULL)
+		return DISP_BOOK_FONTSIZE;
 
 	useKerning = FT_HAS_KERNING(cttf->face);
 	word ucs = charsets_gbk_to_ucs(str);

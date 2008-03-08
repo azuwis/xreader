@@ -463,6 +463,7 @@ static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 		}
 
 		if ((ttf = ttf_open_buffer(b->ptr, b->used, size, zippath)) == NULL) {
+			buffer_free_weak(b);
 			return false;
 		}
 	} else {
