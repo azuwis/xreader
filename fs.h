@@ -37,6 +37,9 @@ typedef enum
 #endif
 	fs_filetype_ebm,
 	fs_filetype_unknown
+#ifdef ENABLE_TTF
+		, fs_filetype_font
+#endif
 } t_fs_filetype;
 
 extern dword fs_list_device(const char *dir, const char *sdir,

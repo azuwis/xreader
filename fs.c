@@ -100,6 +100,10 @@ t_fs_filetype_entry ft_table[] = {
 #endif
 #endif
 	{"ebm", fs_filetype_ebm},
+#ifdef ENABLE_TTF
+	{"ttf", fs_filetype_font},
+	{"ttc", fs_filetype_font},
+#endif
 	{NULL, fs_filetype_unknown}
 };
 
@@ -860,7 +864,7 @@ static void extract_chm_file_into_buffer(buffer * buf, const char *archname,
  * @param archname 档案文件路径
  * @param archpath 解压文件路径
  * @param filetype 档案文件类型
- * @note 如果解压失败, *buffer = NULL
+ * @note 如果解压失败, *buf = NULL
  */
 extern void extract_archive_file_into_buffer(buffer ** buf,
 											 const char *archname,
