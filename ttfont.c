@@ -1091,14 +1091,16 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
 		if (error)
 			return;
-		if (ttf->cleartype) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
-		} else if (ttf->antiAlias) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-		} else
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
-		if (error) {
-			return;
+		if(ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+			if (ttf->cleartype) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+			} else if (ttf->antiAlias) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+			} else
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			if (error) {
+				return;
+			}
 		}
 		slot = ttf->face->glyph;
 
