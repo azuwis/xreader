@@ -45,4 +45,6 @@ typedef int bool;
 #define INVALID ((dword)-1)
 #endif
 
+#define PATH_MAX 512
+
 #endif
