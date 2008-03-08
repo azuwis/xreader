@@ -1051,7 +1051,6 @@ extern bool mp3_list_add(const char *filename, const char *longname)
 		else
 			mp3_files = (char (*)[2][PATH_MAX]) malloc(PATH_MAX * 2 * 256);
 		if (mp3_files == NULL) {
-			win_msg("ÄÚ´æ²»×ã", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 			mp3_nfiles = 0;
 			mp3_stop();
 			return false;
