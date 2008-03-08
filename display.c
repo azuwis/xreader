@@ -466,6 +466,7 @@ static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 			buffer_free_weak(b);
 			return false;
 		}
+		buffer_free_weak(b);
 	} else {
 		ttf_set_pixel_size(ttf, size);
 	}
