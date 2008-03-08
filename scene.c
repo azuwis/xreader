@@ -3332,6 +3332,17 @@ static const char *get_file_basename(char *dst, size_t dstsize, const char *src)
 	return dst;
 }
 
+static bool confirm_overwrite(const char* filename, void *dummy)
+{
+	char infomsg[PATH_MAX];
+	SPRINTF_S(infomsg, "ÊÇ·ñ¸²¸ÇÎÄ±¾%s£¿", filename);
+	if (win_msgbox(infomsg, getmsgbyid(YES), getmsgbyid(NO),
+				   COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
+		return true;
+	}
+	return false;
+}
+
 static void scene_copy_files(int sidx)
 {
 	if (copy_archmode == true) {
@@ -3376,7 +3387,7 @@ static void scene_copy_files(int sidx)
 
 		if ((t_fs_filetype) copylist[sidx].data != fs_filetype_dir)
 			extract_archive_file(archname, copylist[sidx].compname, copydest,
-								 NULL, NULL, NULL);
+								 NULL, confirm_overwrite, NULL);
 	} else {
 		char copysrc[512], copydest[512];
 
@@ -3385,9 +3396,9 @@ static void scene_copy_files(int sidx)
 		STRCPY_S(copydest, config.shortpath);
 		STRCAT_S(copydest, copylist[sidx].shortname);
 		if ((t_fs_filetype) copylist[sidx].data == fs_filetype_dir)
-			copy_dir(copysrc, copydest, NULL, NULL, NULL);
+			copy_dir(copysrc, copydest, NULL, confirm_overwrite, NULL);
 		else
-			copy_file(copysrc, copydest, NULL, NULL, NULL);
+			copy_file(copysrc, copydest, NULL, confirm_overwrite, NULL);
 	}
 }
 
