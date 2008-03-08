@@ -379,7 +379,7 @@ static bool mp3_load()
 	manualSw = false;
 	mp3_jump = 0;
 #ifdef ENABLE_LYRIC
-	char lyricname[256];
+	char lyricname[PATH_MAX];
 
 	strncpy_s(lyricname, NELEMS(lyricname), mp3_files[mp3_index], 256);
 	int lsize = strlen(lyricname);
@@ -893,7 +893,7 @@ extern void mp3_powerup()
 extern void mp3_list_add_dir(const char *comppath)
 {
 	p_fat_info info;
-	char path[256];
+	char path[PATH_MAX];
 	dword i, count = fat_readdir(comppath, path, &info);
 
 	if (count == INVALID)
