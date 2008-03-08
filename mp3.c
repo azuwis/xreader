@@ -147,7 +147,7 @@ __inline unsigned int resample_block(struct resample_state *state,
 
 static int mp3_handle = -1;
 static int fd = -1;
-static char mp3_tag[128], mp3_tag_encode[260], (*mp3_files)[512];
+static char mp3_tag[128], mp3_tag_encode[260], (*mp3_files)[2][PATH_MAX];
 static int mp3_direct = -1, mp3_nfiles = 0, mp3_index = 0, mp3_jump = 0;
 static t_conf_cycle mp3_cycle = conf_cycle_repeat;
 static t_conf_encode mp3_encode = conf_encode_gbk;
@@ -291,10 +291,11 @@ static bool mp3_load()
 		mad_timer_reset(&Timer);
 		while (mp3_nfiles > 0
 			   && (fd =
-				   sceIoOpen(mp3_files[mp3_index], PSP_O_RDONLY, 0777)) < 0) {
+				   sceIoOpen(mp3_files[mp3_index][0], PSP_O_RDONLY,
+							 0777)) < 0) {
 			if (mp3_index < mp3_nfiles - 1)
-				memmove(&mp3_files[mp3_index], &mp3_files[mp3_index + 1],
-						512 * (mp3_nfiles - 1 - mp3_index));
+				memmove(mp3_files[mp3_index][0], mp3_files[mp3_index + 1][0],
+						PATH_MAX * 2 * (mp3_nfiles - 1 - mp3_index));
 			mp3_nfiles--;
 			if (mp3_nfiles == 0) {
 				mp3_tag_encode[0] = 0;
@@ -312,7 +313,7 @@ static bool mp3_load()
 		mp3info_free(&mp3info);
 #ifdef ENABLE_WMA
 	}
-	const char *ext = utils_fileext(mp3_files[mp3_index]);
+	const char *ext = utils_fileext(mp3_files[mp3_index][0]);
 
 	file_is_mp3 = (ext && stricmp(ext, "mp3") == 0);
 	if (file_is_mp3) {
@@ -330,7 +331,7 @@ static bool mp3_load()
 			else
 				SPRINTF_S(mp3_tag, "? - %s", mp3info.title);
 		} else {
-			char *mp3_tag2 = strrchr(mp3_files[mp3_index], '/');
+			char *mp3_tag2 = strrchr(mp3_files[mp3_index][0], '/');
 
 			if (mp3_tag2 != NULL)
 				mp3_tag2++;
@@ -345,7 +346,7 @@ static bool mp3_load()
 	} else {
 		sceIoClose(fd);
 		fd = -1;
-		wma = wma_open(mp3_files[mp3_index]);
+		wma = wma_open(mp3_files[mp3_index][0]);
 		if (wma == NULL)
 			return false;
 		// the wma tag library is buggy!!!
@@ -360,7 +361,7 @@ static bool mp3_load()
 			else
 				SPRINTF_S(mp3_tag, "? - %s", (const char *) wma->title);
 		} else {
-			char *mp3_tag2 = strrchr(mp3_files[mp3_index], '/');
+			char *mp3_tag2 = strrchr(mp3_files[mp3_index][0], '/');
 
 			if (mp3_tag2 != NULL)
 				mp3_tag2++;
@@ -381,7 +382,7 @@ static bool mp3_load()
 #ifdef ENABLE_LYRIC
 	char lyricname[PATH_MAX];
 
-	strncpy_s(lyricname, NELEMS(lyricname), mp3_files[mp3_index], 256);
+	strncpy_s(lyricname, NELEMS(lyricname), mp3_files[mp3_index][0], PATH_MAX);
 	int lsize = strlen(lyricname);
 
 	lyricname[lsize - 3] = 'l';
@@ -876,13 +877,14 @@ extern void mp3_powerup()
 	if (file_is_mp3) {
 #endif
 		if (mp3_nfiles == 0 || mp3_files == NULL
-			|| (fd = sceIoOpen(mp3_files[mp3_index], PSP_O_RDONLY, 0777)) < 0)
+			|| (fd =
+				sceIoOpen(mp3_files[mp3_index][0], PSP_O_RDONLY, 0777)) < 0)
 			return;
 		sceIoLseek32(fd, lastpos, PSP_SEEK_SET);
 #ifdef ENABLE_WMA
 	} else {
 		if (mp3_nfiles == 0 || mp3_files == NULL
-			|| (wma = wma_open(mp3_files[mp3_index])) == NULL)
+			|| (wma = wma_open(mp3_files[mp3_index][0])) == NULL)
 			return;
 	}
 #endif
@@ -919,22 +921,26 @@ extern void mp3_list_add_dir(const char *comppath)
 		if ((mp3_nfiles % 256) == 0) {
 			if (mp3_nfiles > 0)
 				mp3_files =
-					(char (*)[512]) realloc(mp3_files,
-											512 * (mp3_nfiles + 256));
+					(char (*)[2][PATH_MAX]) realloc(mp3_files,
+													PATH_MAX * 2 * (mp3_nfiles +
+																	256));
 			else
-				mp3_files = (char (*)[512]) malloc(512 * (mp3_nfiles + 256));
+				mp3_files =
+					(char (*)[2][PATH_MAX]) malloc(PATH_MAX * 2 *
+												   (mp3_nfiles + 256));
 			if (mp3_files == NULL) {
 				mp3_nfiles = 0;
 				break;
 			}
 		}
-		snprintf_s(mp3_files[mp3_nfiles], 256, "%s%s", path, info[i].filename);
-		snprintf_s(&mp3_files[mp3_nfiles][256], 256, "%s%s", comppath,
+		snprintf_s(mp3_files[mp3_nfiles][0], PATH_MAX, "%s%s", path,
+				   info[i].filename);
+		snprintf_s(mp3_files[mp3_nfiles][1], PATH_MAX, "%s%s", comppath,
 				   info[i].longname);
 		dword j;
 
 		for (j = 0; j < mp3_nfiles; j++)
-			if (stricmp(mp3_files[j], mp3_files[mp3_nfiles]) == 0)
+			if (stricmp(mp3_files[j][0], mp3_files[mp3_nfiles][0]) == 0)
 				break;
 		if (j < mp3_nfiles)
 			continue;
@@ -970,9 +976,10 @@ extern bool mp3_list_load(const char *filename)
 	if (fp == NULL)
 		return false;
 	mp3_nfiles = 0;
-	char fname[256], cname[256];
+	char fname[MAX_PATH], cname[MAX_PATH];
 
-	while (fgets(fname, 256, fp) != NULL && fgets(cname, 256, fp) != NULL) {
+	while (fgets(fname, PATH_MAX, fp) != NULL
+		   && fgets(cname, PATH_MAX, fp) != NULL) {
 		dword len1 = strlen(fname), len2 = strlen(cname);
 
 		if (len1 > 1 && len2 > 1) {
@@ -986,18 +993,19 @@ extern bool mp3_list_load(const char *filename)
 			continue;
 		if (mp3_nfiles % 256 == 0) {
 			if (mp3_nfiles == 0)
-				mp3_files = (char (*)[512]) malloc(512 * 256);
+				mp3_files = (char (*)[2][PATH_MAX]) malloc(PATH_MAX * 2 * 256);
 			else
 				mp3_files =
-					(char (*)[512]) realloc(mp3_files,
-											512 * (mp3_nfiles + 256));
+					(char (*)[2][PATH_MAX]) realloc(mp3_files,
+													PATH_MAX * 2 * (mp3_nfiles +
+																	256));
 			if (mp3_files == NULL) {
 				mp3_nfiles = 0;
 				return false;
 			}
 		}
-		strcpy_s(mp3_files[mp3_nfiles], 256, fname);
-		strcpy_s(&mp3_files[mp3_nfiles][256], 256, cname);
+		strcpy_s(mp3_files[mp3_nfiles][0], PATH_MAX, fname);
+		strcpy_s(mp3_files[mp3_nfiles][1], PATH_MAX, cname);
 		mp3_nfiles++;
 	}
 	fclose(fp);
@@ -1021,8 +1029,8 @@ extern void mp3_list_save(const char *filename)
 	if (fp == NULL)
 		return;
 	for (i = 0; i < mp3_nfiles; i++) {
-		fprintf(fp, "%s\n", mp3_files[i]);
-		fprintf(fp, "%s\n", &mp3_files[i][256]);
+		fprintf(fp, "%s\n", mp3_files[i][0]);
+		fprintf(fp, "%s\n", mp3_files[i][1]);
 	}
 	fclose(fp);
 }
@@ -1032,14 +1040,16 @@ extern bool mp3_list_add(const char *filename, const char *longname)
 	dword i;
 
 	for (i = 0; i < mp3_nfiles; i++)
-		if (stricmp(mp3_files[i], filename) == 0)
+		if (stricmp(mp3_files[i][0], filename) == 0)
 			return false;
 	if (mp3_nfiles % 256 == 0) {
 		if (mp3_nfiles > 0)
 			mp3_files =
-				(char (*)[512]) realloc(mp3_files, 512 * (mp3_nfiles + 256));
+				(char (*)[2][PATH_MAX]) realloc(mp3_files,
+												PATH_MAX * 2 * (mp3_nfiles +
+																256));
 		else
-			mp3_files = (char (*)[512]) malloc(512 * 256);
+			mp3_files = (char (*)[2][PATH_MAX]) malloc(PATH_MAX * 2 * 256);
 		if (mp3_files == NULL) {
 			win_msg("ÄÚ´æ²»×ã", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 			mp3_nfiles = 0;
@@ -1047,8 +1057,8 @@ extern bool mp3_list_add(const char *filename, const char *longname)
 			return false;
 		}
 	}
-	strcpy_s(mp3_files[mp3_nfiles], 256, filename);
-	strcpy_s(&mp3_files[mp3_nfiles][256], 256, longname);
+	strcpy_s(mp3_files[mp3_nfiles][0], PATH_MAX, filename);
+	strcpy_s(mp3_files[mp3_nfiles][1], PATH_MAX, longname);
 	mp3_nfiles++;
 	return true;
 }
@@ -1065,8 +1075,8 @@ extern void mp3_list_delete(dword index)
 		mp3_next();
 	}
 	if (index < mp3_nfiles - 1)
-		memmove(&mp3_files[index], &mp3_files[index + 1],
-				512 * (mp3_nfiles - 1 - index));
+		memmove(mp3_files[index][0], mp3_files[index + 1][0],
+				PATH_MAX * 2 * (mp3_nfiles - 1 - index));
 	mp3_nfiles--;
 	if (mp3_nfiles == 0) {
 		mp3_index = 0;
@@ -1089,11 +1099,14 @@ extern void mp3_list_moveup(dword index)
 {
 	if (index == 0)
 		return;
-	char tempname[512];
+	char tempname[PATH_MAX], tempname2[PATH_MAX];
 
-	memcpy(tempname, mp3_files[index], 512);
-	memcpy(mp3_files[index], mp3_files[index - 1], 512);
-	memcpy(mp3_files[index - 1], tempname, 512);
+	STRCPY_S(tempname, mp3_files[index][0]);
+	STRCPY_S(tempname2, mp3_files[index][1]);
+	STRCPY_S(mp3_files[index][0], mp3_files[index - 1][0]);
+	STRCPY_S(mp3_files[index][1], mp3_files[index - 1][1]);
+	STRCPY_S(mp3_files[index - 1][0], tempname);
+	STRCPY_S(mp3_files[index - 1][1], tempname2);
 	if (mp3_index == index)
 		mp3_index = index - 1;
 	else if (mp3_index == index - 1)
@@ -1104,11 +1117,14 @@ extern void mp3_list_movedown(dword index)
 {
 	if (index >= mp3_nfiles - 1)
 		return;
-	char tempname[512];
+	char tempname[PATH_MAX], tempname2[PATH_MAX];
 
-	memcpy(tempname, mp3_files[index], 512);
-	memcpy(mp3_files[index], mp3_files[index + 1], 512);
-	memcpy(mp3_files[index + 1], tempname, 512);
+	STRCPY_S(tempname, mp3_files[index][0]);
+	STRCPY_S(tempname2, mp3_files[index][1]);
+	STRCPY_S(mp3_files[index][0], mp3_files[index + 1][0]);
+	STRCPY_S(mp3_files[index][1], mp3_files[index + 1][1]);
+	STRCPY_S(mp3_files[index + 1][0], tempname);
+	STRCPY_S(mp3_files[index + 1][1], tempname2);
 	if (mp3_index == index)
 		mp3_index = index + 1;
 	else if (mp3_index == index + 1)
@@ -1124,14 +1140,14 @@ extern const char *mp3_list_get_path(dword index)
 {
 	if (index >= mp3_nfiles)
 		return NULL;
-	return mp3_files[index];
+	return mp3_files[index][0];
 }
 
 extern const char *mp3_list_get(dword index)
 {
 	if (index >= mp3_nfiles)
 		return NULL;
-	return &mp3_files[index][256];
+	return mp3_files[index][1];
 }
 
 extern void mp3_prev()
@@ -1163,24 +1179,25 @@ extern void mp3_directplay(const char *filename, const char *longname)
 	dword i;
 
 	for (i = 0; i < mp3_nfiles; i++)
-		if (stricmp(mp3_files[i], filename) == 0)
+		if (stricmp(mp3_files[i][0], filename) == 0)
 			break;
 	if (i >= mp3_nfiles) {
 		if (mp3_nfiles % 256 == 0) {
 			if (mp3_nfiles > 0)
 				mp3_files =
-					(char (*)[512]) realloc(mp3_files,
-											512 * (mp3_nfiles + 256));
+					(char (*)[2][PATH_MAX]) realloc(mp3_files,
+													PATH_MAX * 2 * (mp3_nfiles +
+																	256));
 			else
-				mp3_files = (char (*)[512]) malloc(512 * 256);
+				mp3_files = (char (*)[2][PATH_MAX]) malloc(PATH_MAX * 2 * 256);
 			if (mp3_files == NULL) {
 				mp3_nfiles = 0;
 				mp3_stop();
 				return;
 			}
 		}
-		strcpy_s(mp3_files[mp3_nfiles], 256, filename);
-		strcpy_s(&mp3_files[mp3_nfiles][256], 256, longname);
+		strcpy_s(mp3_files[mp3_nfiles][0], PATH_MAX, filename);
+		strcpy_s(mp3_files[mp3_nfiles][1], PATH_MAX, longname);
 		i = mp3_nfiles;
 		mp3_nfiles++;
 	}
@@ -1272,11 +1289,11 @@ extern void mp3_set_encode(t_conf_encode encode)
 					STRCPY_S(mp3_tag_encode, (char *) targ);
 					free(targ);
 				} else
-					STRCPY_S(mp3_tag_encode, mp3_files[mp3_index]);
+					STRCPY_S(mp3_tag_encode, mp3_files[mp3_index][1]);
 			}
 			break;
 		default:
-			STRCPY_S(mp3_tag_encode, &mp3_files[mp3_index][256]);
+			STRCPY_S(mp3_tag_encode, mp3_files[mp3_index][1]);
 			break;
 	}
 }
