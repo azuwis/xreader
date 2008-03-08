@@ -16,6 +16,10 @@
 #include "fat.h"
 #include "fs.h"
 #include "scene.h"
+#include "conf.h"
+#include "win.h"
+
+extern t_conf config;
 
 typedef struct
 {
@@ -799,7 +803,10 @@ static int rarcbproc(UINT msg, LONG UserData, LONG P1, LONG P2)
 	if (msg == UCM_PROCESSDATA) {
 		buffer *buf = (buffer *) UserData;
 
-		buffer_append_memory(buf, (void *) P1, P2);
+		if (buffer_append_memory(buf, (void *) P1, P2) == -1) {
+			win_msg("ÄÚ´æ²»×ã", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
+			return -1;
+		}
 	}
 	return 0;
 }
