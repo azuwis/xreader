@@ -4,8 +4,6 @@
 #include <string.h>
 
 #include <stdio.h>
-#define NDEBUG
-#include <assert.h>
 #include <ctype.h>
 
 #include "buffer.h"
@@ -22,7 +20,6 @@ buffer *buffer_init(void)
 	buffer *b;
 
 	b = malloc(sizeof(*b));
-	assert(b);
 
 	b->ptr = NULL;
 	b->size = 0;
@@ -104,7 +101,6 @@ int buffer_prepare_copy(buffer * b, size_t size)
 		b->size += BUFFER_PIECE_SIZE - (b->size % BUFFER_PIECE_SIZE);
 
 		b->ptr = malloc(b->size);
-		assert(b->ptr);
 	}
 	b->used = 0;
 	return 0;
@@ -130,15 +126,17 @@ int buffer_prepare_append(buffer * b, size_t size)
 
 		b->ptr = malloc(b->size);
 		b->used = 0;
-		assert(b->ptr);
 	} else if (b->used + size > b->size) {
 		b->size += size;
 
 		/* always allocate a multiply of BUFFER_PIECE_SIZE */
 		b->size += BUFFER_PIECE_SIZE - (b->size % BUFFER_PIECE_SIZE);
 
-		b->ptr = realloc(b->ptr, b->size);
-		assert(b->ptr);
+		char *ptr = realloc(b->ptr, b->size);
+
+		if (ptr == NULL)
+			return -1;
+		b->ptr = ptr;
 	}
 	return 0;
 }
@@ -257,9 +255,12 @@ int buffer_append_memory(buffer * b, const char *s, size_t s_len)
 	if (s_len == 0)
 		return 0;
 
-	buffer_prepare_append(b, s_len);
-	memcpy(b->ptr + b->used, s, s_len);
-	b->used += s_len;
+	if (buffer_prepare_append(b, s_len) == 0) {
+		memcpy(b->ptr + b->used, s, s_len);
+		b->used += s_len;
+	} else {
+		return -1;
+	}
 
 	return 0;
 }
@@ -285,7 +286,6 @@ buffer_array *buffer_array_init(void)
 
 	b = malloc(sizeof(*b));
 
-	assert(b);
 	b->ptr = NULL;
 	b->size = 0;
 	b->used = 0;
@@ -335,14 +335,12 @@ buffer *buffer_array_append_get_buffer(buffer_array * b)
 	if (b->size == 0) {
 		b->size = 16;
 		b->ptr = malloc(sizeof(*b->ptr) * b->size);
-		assert(b->ptr);
 		for (i = 0; i < b->size; i++) {
 			b->ptr[i] = NULL;
 		}
 	} else if (b->size == b->used) {
 		b->size += 16;
 		b->ptr = realloc(b->ptr, sizeof(*b->ptr) * b->size);
-		assert(b->ptr);
 		for (i = b->used; i < b->size; i++) {
 			b->ptr[i] = NULL;
 		}
