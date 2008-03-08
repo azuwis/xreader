@@ -58,6 +58,8 @@ t_fs_filetype_entry ft_table[] = {
 	{"cxx", fs_filetype_txt},
 	{"pas", fs_filetype_txt},
 	{"bas", fs_filetype_txt},
+	{"py", fs_filetype_txt},
+	{"mk", fs_filetype_txt},
 	{"rc", fs_filetype_txt},
 	{"pl", fs_filetype_txt},
 	{"cgi", fs_filetype_txt},
