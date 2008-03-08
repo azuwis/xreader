@@ -469,14 +469,16 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
 		if (error)
 			return;
-		if (ttf->cleartype) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
-		} else if (ttf->antiAlias) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-		} else
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
-		if (error) {
-			return;
+		if(ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+			if (ttf->cleartype) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+			} else if (ttf->antiAlias) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+			} else
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			if (error) {
+				return;
+			}
 		}
 		slot = ttf->face->glyph;
 
@@ -582,18 +584,20 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 					FT_Load_Glyph(cttf->face, glyphIndex, FT_LOAD_NO_HINTING);
 				if (error)
 					return count;
-				if (cttf->cleartype) {
-					error =
-						FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_LCD);
-				} else if (cttf->antiAlias) {
-					error =
-						FT_Render_Glyph(cttf->face->glyph,
-										FT_RENDER_MODE_NORMAL);
-				} else
-					error =
-						FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_MONO);
-				if (error) {
-					return count;
+				if(cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+					if (cttf->cleartype) {
+						error =
+							FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_LCD);
+					} else if (cttf->antiAlias) {
+						error =
+							FT_Render_Glyph(cttf->face->glyph,
+									FT_RENDER_MODE_NORMAL);
+					} else
+						error =
+							FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_MONO);
+					if (error) {
+						return count;
+					}
 				}
 				slot = cttf->face->glyph;
 
@@ -648,18 +652,20 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				error = FT_Load_Glyph(ettf->face, glyphIndex, FT_LOAD_DEFAULT);
 				if (error)
 					return count;
-				if (ettf->cleartype) {
-					error =
-						FT_Render_Glyph(ettf->face->glyph, FT_RENDER_MODE_LCD);
-				} else if (ettf->antiAlias) {
-					error =
-						FT_Render_Glyph(ettf->face->glyph,
-										FT_RENDER_MODE_NORMAL);
-				} else
-					error =
-						FT_Render_Glyph(ettf->face->glyph, FT_RENDER_MODE_MONO);
-				if (error) {
-					return count;
+				if(ettf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+					if (ettf->cleartype) {
+						error =
+							FT_Render_Glyph(ettf->face->glyph, FT_RENDER_MODE_LCD);
+					} else if (ettf->antiAlias) {
+						error =
+							FT_Render_Glyph(ettf->face->glyph,
+									FT_RENDER_MODE_NORMAL);
+					} else
+						error =
+							FT_Render_Glyph(ettf->face->glyph, FT_RENDER_MODE_MONO);
+					if (error) {
+						return count;
+					}
 				}
 				slot = ettf->face->glyph;
 
@@ -727,14 +733,16 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 	error = FT_Load_Glyph(cttf->face, glyphIndex, FT_LOAD_NO_HINTING);
 	if (error)
 		return x;
-	if (cttf->cleartype) {
-		error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_LCD);
-	} else if (cttf->antiAlias) {
-		error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_NORMAL);
-	} else
-		error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_MONO);
-	if (error) {
-		return x;
+	if(cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+		if (cttf->cleartype) {
+			error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_LCD);
+		} else if (cttf->antiAlias) {
+			error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_NORMAL);
+		} else
+			error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_MONO);
+		if (error) {
+			return x;
+		}
 	}
 	slot = cttf->face->glyph;
 
@@ -877,14 +885,16 @@ extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 		error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
 		if (error)
 			return;
-		if (ttf->cleartype) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
-		} else if (ttf->antiAlias) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-		} else
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
-		if (error) {
-			return;
+		if(ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+			if (ttf->cleartype) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+			} else if (ttf->antiAlias) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+			} else
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			if (error) {
+				return;
+			}
 		}
 		slot = ttf->face->glyph;
 
@@ -940,7 +950,7 @@ static void _drawBitmap_reversal(byte * buffer, int format, int width,
 			for (i = 0; i < width; i++) {
 				if (x - i < 0 || x - i >= scr_width
 					|| y - j < PSP_SCREEN_HEIGHT - scr_height
-					|| j + y >= PSP_SCREEN_HEIGHT)
+					|| y - j >= PSP_SCREEN_HEIGHT)
 					continue;
 				if (buffer[j * pitch + i / 8] & (0x80 >> (i % 8)))
 					*(pixel *) disp_get_vaddr((x - i), (y - j)) = (color);
@@ -1378,14 +1388,16 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
 		if (error)
 			return;
-		if (ttf->cleartype) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
-		} else if (ttf->antiAlias) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-		} else
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
-		if (error) {
-			return;
+		if(ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+			if (ttf->cleartype) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+			} else if (ttf->antiAlias) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+			} else
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			if (error) {
+				return;
+			}
 		}
 		slot = ttf->face->glyph;
 
@@ -1661,14 +1673,16 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
 		if (error)
 			return;
-		if (ttf->cleartype) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
-		} else if (ttf->antiAlias) {
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-		} else
-			error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
-		if (error) {
-			return;
+		if(ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
+			if (ttf->cleartype) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+			} else if (ttf->antiAlias) {
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
+			} else
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			if (error) {
+				return;
+			}
 		}
 		slot = ttf->face->glyph;
 
