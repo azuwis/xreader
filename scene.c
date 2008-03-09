@@ -3332,9 +3332,10 @@ static const char *get_file_basename(char *dst, size_t dstsize, const char *src)
 	return dst;
 }
 
-static bool confirm_overwrite(const char* filename, void *dummy)
+static bool confirm_overwrite(const char *filename, void *dummy)
 {
 	char infomsg[PATH_MAX];
+
 	SPRINTF_S(infomsg, "ÊÇ·ñ¸²¸ÇÎÄ±¾%s£¿", filename);
 	if (win_msgbox(infomsg, getmsgbyid(YES), getmsgbyid(NO),
 				   COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
