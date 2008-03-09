@@ -4652,8 +4652,7 @@ void scene_filelist()
 										   config.
 										   usedyncolor ? GetBGColorByTime() :
 										   config.menubcolor, config.selbcolor);
-					}
-					else if (strnicmp(config.path, "ms0:/", 5) == 0) {
+					} else if (strnicmp(config.path, "ms0:/", 5) == 0) {
 						if (fat_inited == false) {
 							fat_init();
 							fat_inited = true;
@@ -4667,8 +4666,7 @@ void scene_filelist()
 										   config.menubcolor, config.selbcolor,
 										   config.showhidden,
 										   config.showunknown);
-					}
-					else
+					} else
 						filecount =
 							fs_flashdir_to_menu(config.path, config.shortpath,
 												&filelist, config.menutextcolor,
@@ -5150,7 +5148,7 @@ extern void scene_init()
 #ifdef ENABLE_GE
 	init_gu();
 #endif
-	if (fat_init()) 
+	if (fat_init())
 		fat_inited = true;
 
 	STRCPY_S(bmfile, appdir);
