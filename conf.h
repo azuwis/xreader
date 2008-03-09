@@ -93,7 +93,7 @@ typedef enum
 
 typedef struct
 {
-	char path[256];
+	char path[PATH_MAX];
 	dword forecolor;
 	dword bgcolor;
 	bool have_bg;
@@ -117,12 +117,12 @@ typedef struct
 	t_conf_rotate rotate;
 	dword txtkey[20];
 	dword imgkey[20];
-	char shortpath[256];
+	char shortpath[PATH_MAX];
 	dword confver;
 	bool bicubic;
 	dword wordspace;
 	dword borderspace;
-	char lastfile[256];
+	char lastfile[PATH_MAX];
 	t_conf_encode mp3encode;
 	t_conf_encode lyricencode;
 	t_conf_cycle mp3cycle;

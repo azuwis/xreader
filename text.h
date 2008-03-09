@@ -14,7 +14,7 @@ typedef struct
 
 typedef struct
 {
-	char filename[256];
+	char filename[PATH_MAX];
 	dword crow;
 	dword size;
 	char *buf;

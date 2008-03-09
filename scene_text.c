@@ -66,7 +66,7 @@ void ScreenShot()
 	unsigned char lineBuffer[width * 4];
 	u32 *vram = disp_get_vaddr(0, 0);
 	int x, y;
-	char filename[256];
+	char filename[PATH_MAX];
 	int i = 0;
 
 	do {
@@ -155,7 +155,7 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 	}
 	offset = offset / 1023 + 1;
 	if (where == scene_in_chm) {
-		char fname[256];
+		char fname[PATH_MAX];
 
 		charsets_utf8_conv((unsigned char *) filelist[selidx].
 						   compname, (unsigned char *) fname);

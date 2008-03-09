@@ -8,7 +8,7 @@
 
 typedef struct _Element
 {
-	char path[256];
+	char path[PATH_MAX];
 } Element;
 
 typedef struct _Array

@@ -54,7 +54,7 @@ typedef struct _BookViewData
 	int rowtop;
 	char tr[8], *trow;
 	bool text_needrf, text_needrp, text_needrb;
-	char filename[512], bookmarkname[512], archname[512];
+	char filename[PATH_MAX], bookmarkname[PATH_MAX], archname[PATH_MAX];
 	dword rrow;
 } BookViewData, *PBookViewData;
 
