@@ -13,14 +13,16 @@ struct _fat_mbr_dpt
 	byte ending[3];
 	dword start_sec;
 	dword total_sec;
-} __attribute__ ((packed));
+}
+__attribute__ ((packed));
 
 struct _fat_mbr
 {
 	byte mb_data[0x1BE];
 	struct _fat_mbr_dpt dpt[4];
 	word ending_flag;
-} __attribute__ ((packed));
+}
+__attribute__ ((packed));
 typedef struct _fat_mbr t_fat_mbr, *p_fat_mbr;
 
 struct _fat_dbr
@@ -49,7 +51,8 @@ struct _fat_dbr
 			byte vol_id[4];
 			char vol_lab[11];
 			char file_sys_type[8];
-		} __attribute__ ((packed)) fat16;
+		}
+		__attribute__ ((packed)) fat16;
 		struct
 		{
 			dword sec_per_fat;
@@ -59,11 +62,14 @@ struct _fat_dbr
 			word info_sec;
 			word back_sec;
 			byte reserved[10];
-		} __attribute__ ((packed)) fat32;
-	} __attribute__ ((packed)) ufat;
+		}
+		__attribute__ ((packed)) fat32;
+	}
+	__attribute__ ((packed)) ufat;
 	byte exe_code[448];
 	word ending_flag;
-} __attribute__ ((packed));
+}
+__attribute__ ((packed));
 typedef struct _fat_dbr t_fat_dbr, *p_fat_dbr;
 
 struct _fat_normentry
@@ -81,7 +87,8 @@ struct _fat_normentry
 	word last_mod_date;
 	word clus;
 	dword filesize;
-} __attribute__ ((packed));
+}
+__attribute__ ((packed));
 
 struct _fat_longfile
 {
@@ -93,13 +100,15 @@ struct _fat_longfile
 	word uni_name2[6];
 	word clus;
 	word uni_name3[2];
-} __attribute__ ((packed));
+}
+__attribute__ ((packed));
 
 union _fat_entry
 {
 	struct _fat_normentry norm;
 	struct _fat_longfile longfile;
-} __attribute__ ((packed));
+}
+__attribute__ ((packed));
 typedef union _fat_entry t_fat_entry, *p_fat_entry;
 
 #define FAT_FILEATTR_READONLY	0x01
@@ -120,7 +129,8 @@ typedef struct
 	word mtime;
 	dword clus;
 	byte attr;
-} __attribute__ ((aligned(16))) t_fat_info, *p_fat_info;
+}
+__attribute__ ((aligned(16))) t_fat_info, *p_fat_info;
 
 void fat_lock();
 void fat_unlock();
