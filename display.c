@@ -534,6 +534,9 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 		STRCPY_S(prev_cttfpath, config.cttfpath);
 	}
 
+	if (cttf == NULL || ettf == NULL)
+		return false;
+
 	load_ttf_config();
 
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
