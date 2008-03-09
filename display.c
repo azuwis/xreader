@@ -337,6 +337,7 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 	return true;
 }
 
+#ifdef ENABLE_TTF
 static void load_ttf_config(void)
 {
 	if (cttf == NULL || ettf == NULL)
@@ -406,6 +407,7 @@ static void load_ttf_config(void)
 		iniparser_freedict(ini);
 	}
 }
+#endif
 
 extern bool disp_load_truetype_book_font(const char *ettffile,
 										 const char *cttffile, int size)
@@ -446,10 +448,10 @@ extern bool disp_load_truetype_book_font(const char *ettffile,
 #endif
 }
 
+#ifdef ENABLE_TTF
 static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 											  const char *zippath, int size)
 {
-#ifdef ENABLE_TTF
 	p_ttf ttf = NULL;
 
 	if (ttf == NULL && zipfile[0] != '\0') {
@@ -473,10 +475,8 @@ static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 
 	use_ttf = 1;
 	return ttf;
-#else
-	return NULL;
-#endif
 }
+#endif
 
 extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 												const char *czipfile,
