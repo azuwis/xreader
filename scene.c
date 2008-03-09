@@ -3347,14 +3347,14 @@ static bool confirm_overwrite(const char *filename, void *dummy)
 static void scene_copy_files(int sidx)
 {
 	if (copy_archmode == true) {
-		char archname[512], copydest[512];
-		char temp[512];
+		char archname[PATH_MAX], copydest[PATH_MAX];
+		char temp[PATH_MAX];
 
 		STRCPY_S(archname, copydir);
 		STRCPY_S(copydest, config.shortpath);
 		if (copy_where == scene_in_chm) {
 			// CHM Compname is UTF8 encoding.
-			char fname[512];
+			char fname[PATH_MAX];
 
 			charsets_utf8_conv((unsigned char *) copylist[sidx].
 							   compname, (unsigned char *) fname);
@@ -3362,7 +3362,7 @@ static void scene_copy_files(int sidx)
 		} else
 			STRCPY_S(temp, copylist[sidx].compname);
 		if (strrchr(temp, '/') != NULL) {
-			char t[512];
+			char t[PATH_MAX];
 
 			STRCPY_S(t, strrchr(temp, '/') + 1);
 			STRCPY_S(temp, t);
@@ -3372,9 +3372,9 @@ static void scene_copy_files(int sidx)
 			if (strrchr(temp, '.') == NULL) {
 				STRCAT_S(temp, copylist[sidx].shortname);
 			} else {
-				char basename[512];
+				char basename[PATH_MAX];
 
-				get_file_basename(basename, 512, temp);
+				get_file_basename(basename, PATH_MAX, temp);
 				if (basename[0] != '\0') {
 					insert_string(temp, NELEMS(temp),
 								  "_", strrchr(temp, '.') - temp);
@@ -3390,7 +3390,7 @@ static void scene_copy_files(int sidx)
 			extract_archive_file(archname, copylist[sidx].compname, copydest,
 								 NULL, confirm_overwrite, NULL);
 	} else {
-		char copysrc[512], copydest[512];
+		char copysrc[PATH_MAX], copydest[PATH_MAX];
 
 		STRCPY_S(copysrc, copydir);
 		STRCAT_S(copysrc, copylist[sidx].shortname);
@@ -3978,7 +3978,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 						inop = false;
 					} else if (cutcount > 0) {
 						for (sidx = 0; sidx < cutcount; sidx++) {
-							char cutsrc[512], cutdest[512];
+							char cutsrc[PATH_MAX], cutdest[PATH_MAX];
 
 							STRCPY_S(cutsrc, cutdir);
 							STRCAT_S(cutsrc, cutlist[sidx].shortname);

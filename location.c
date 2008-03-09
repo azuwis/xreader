@@ -7,21 +7,21 @@
 #include "location.h"
 #include "common/utils.h"
 
-static char fn[256];
+static char fn[PATH_MAX];
 static bool slot[10];
 
 struct _location
 {
-	char comppath[256];
-	char shortpath[256];
-	char compname[256];
+	char comppath[PATH_MAX];
+	char shortpath[PATH_MAX];
+	char compname[PATH_MAX];
 	bool isreading;
 } __attribute__ ((packed));
 typedef struct _location t_location;
 
 extern void location_init(const char *filename, int *slotaval)
 {
-	strncpy_s(fn, 256, filename, 256);
+	strcpy(fn, filename);
 	memset(slot, 0, sizeof(bool) * 10);
 	int fd = sceIoOpen(fn, PSP_O_RDONLY, 0777);
 
@@ -83,9 +83,9 @@ extern bool location_get(dword index, char *comppath, char *shortpath,
 	memset(&l, 0, sizeof(t_location));
 	sceIoRead(fd, &l, sizeof(t_location));
 	sceIoClose(fd);
-	strcpy_s(comppath, 256, l.comppath);
-	strcpy_s(shortpath, 256, l.shortpath);
-	strcpy_s(compname, 256, l.compname);
+	strcpy_s(comppath, PATH_MAX, l.comppath);
+	strcpy_s(shortpath, PATH_MAX, l.shortpath);
+	strcpy_s(compname, PATH_MAX, l.compname);
 	*isreading = l.isreading;
 	return true;
 }

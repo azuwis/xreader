@@ -473,11 +473,11 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 		return 1;
 	}
 	do {
-		char fname[256];
+		char fname[PATH_MAX];
 		unz_file_info file_info;
 
 		if (unzGetCurrentFileInfo
-			(unzf, &file_info, fname, 256, NULL, 0, NULL, 0) != UNZ_OK)
+			(unzf, &file_info, fname, PATH_MAX, NULL, 0, NULL, 0) != UNZ_OK)
 			break;
 		if (file_info.uncompressed_size == 0)
 			continue;
@@ -650,7 +650,7 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 		item = *mitem;
 	}
 
-	char fname[256] = "";
+	char fname[PATH_MAX] = "";
 
 	STRCPY_S(item[cur_count].compname, ui->path);
 	SPRINTF_S(item[cur_count].shortname, "%u", (unsigned int) ui->length);
@@ -660,11 +660,7 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 		strncpy_s(fname, NELEMS(fname), ui->path, 256);
 	}
 
-	// CHM Dir in UTF-8 Format???
-	char fname_temp[256] = "";
-
-	STRCPY_S(fname_temp, fname);
-	charsets_utf8_conv((unsigned char *) fname_temp, (unsigned char *) fname);
+	charsets_utf8_conv((unsigned char *) fname, (unsigned char *) fname);
 
 	item[cur_count].data = (void *) ft;
 	filename_to_itemname(item, cur_count, fname);

@@ -9,7 +9,7 @@
 // Menu item structure
 typedef struct
 {
-	char compname[512];
+	char compname[PATH_MAX];
 	char shortname[256];
 	char name[64];				// item name
 	dword width;				// display width in bytes (for align/span)

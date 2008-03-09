@@ -26,7 +26,7 @@ static dword flagbits[32] = {
 	0x40000000, 0x80000000,
 };
 
-static char bmfile[256];
+static char bmfile[PATH_MAX];
 
 extern dword bookmark_encode(const char *filename)
 {

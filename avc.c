@@ -39,9 +39,9 @@ extern bool avc_init()
 	sceUtilityLoadAvModule(PSP_AV_MODULE_SASCORE);
 
 	gu_font_init();
-	char ftn[256];
+	char ftn[PATH_MAX];
 
-	getcwd(ftn, 256);
+	getcwd(ftn, PATH_MAX);
 	STRCAT_S(ftn, "/font10.f");
 	gu_font_load(ftn);
 

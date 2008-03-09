@@ -17,7 +17,7 @@
 extern bool scene_load_font();
 extern bool scene_load_book_font();
 
-static char conf_filename[256];
+static char conf_filename[PATH_MAX];
 
 extern void conf_set_file(const char *filename)
 {
@@ -99,9 +99,9 @@ extern void conf_get_keyname(dword key, char *res)
 
 static void conf_default(p_conf conf)
 {
-	char appdir[256];
+	char appdir[PATH_MAX];
 
-	getcwd(appdir, 256);
+	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
 	memset(conf, 0, sizeof(t_conf));
 	STRCPY_S(conf->path, "ms0:/");

@@ -52,7 +52,7 @@ dword width, height, w2 = 0, h2 = 0, thumbw = 0, thumbh = 0, paintleft =
 pixel *imgdata = NULL, *imgshow = NULL;
 pixel bgcolor = 0, thumbimg[128 * 128];
 dword oldangle = 0;
-char filename[512];
+char filename[PATH_MAX];
 int curtop = 0, curleft = 0, xpos = 0, ypos = 0;
 bool img_needrf = true, img_needrc = true, img_needrp = true;
 static bool showinfo = false, thumb = false;

@@ -120,7 +120,7 @@ extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
 extern bool bg_display()
 {
 	if (config.have_bg) {
-		memcpy(vram_start, bg_start, 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
+		memcpy(vram_start, bg_start, PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 		return true;
 	}
 	return false;
@@ -139,10 +139,10 @@ extern void bg_cache()
 		return;
 	if (_cache != NULL)
 		free((void *) _cache);
-	_cache = malloc(512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
+	_cache = malloc(PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 	if (_cache == NULL)
 		return;
-	memcpy(_cache, bg_start, 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
+	memcpy(_cache, bg_start, PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 }
 
 extern void bg_restore()
@@ -151,7 +151,7 @@ extern void bg_restore()
 		return;
 	if (_cache == NULL)
 		return;
-	memcpy(bg_start, _cache, 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
+	memcpy(bg_start, _cache, PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 	free((void *) _cache);
 	_cache = NULL;
 }

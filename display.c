@@ -344,9 +344,9 @@ static void load_ttf_config(void)
 
 	dictionary *ini;
 
-	char inifile[256], appdir[256];
+	char inifile[PATH_MAX], appdir[PATH_MAX];
 
-	getcwd(appdir, 256);
+	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
 	STRCPY_S(inifile, appdir);
 	STRCAT_S(inifile, "fontcfg.ini");
