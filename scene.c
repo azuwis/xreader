@@ -65,6 +65,8 @@ t_conf config;
 p_win_menuitem filelist = NULL, copylist = NULL, cutlist = NULL;
 dword filecount = 0, copycount = 0, cutcount = 0;
 
+static bool fat_inited = false;
+
 #ifdef ENABLE_BG
 bool repaintbg = true;
 #endif
@@ -4640,7 +4642,9 @@ void scene_filelist()
 						STRCAT_S(config.path, filelist[idx].compname);
 						STRCAT_S(config.path, "/");
 					}
-					if (config.path[0] == 0)
+					if (config.path[0] == 0) {
+						fat_inited = false;
+						fat_free();
 						filecount =
 							fs_list_device(config.path, config.shortpath,
 										   &filelist, config.menutextcolor,
@@ -4648,7 +4652,12 @@ void scene_filelist()
 										   config.
 										   usedyncolor ? GetBGColorByTime() :
 										   config.menubcolor, config.selbcolor);
-					else if (strnicmp(config.path, "ms0:/", 5) == 0)
+					}
+					else if (strnicmp(config.path, "ms0:/", 5) == 0) {
+						if (fat_inited == false) {
+							fat_init();
+							fat_inited = true;
+						}
 						filecount =
 							fs_dir_to_menu(config.path, config.shortpath,
 										   &filelist, config.menutextcolor,
@@ -4658,6 +4667,7 @@ void scene_filelist()
 										   config.menubcolor, config.selbcolor,
 										   config.showhidden,
 										   config.showunknown);
+					}
 					else
 						filecount =
 							fs_flashdir_to_menu(config.path, config.shortpath,
@@ -5140,7 +5150,8 @@ extern void scene_init()
 #ifdef ENABLE_GE
 	init_gu();
 #endif
-	fat_init();
+	if (fat_init()) 
+		fat_inited = true;
 
 	STRCPY_S(bmfile, appdir);
 	STRCAT_S(bmfile, "bookmark.conf");
