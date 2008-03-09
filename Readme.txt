@@ -82,3 +82,14 @@ xReader中在mp3信息条内按左+三角键切换歌词编码,原ID3编码切换改为右+三角键
 自动换行的TXT给较小显示空间的PSP带来显示上的极大麻烦。
 如果字体较大，一行显示不完。
 开启了自动编排文本后，就能自动将换行和段落开始分开了。
+
+有关fontcfg.ini
+这是xReader的字体配置文件，目前有如下选项
+[cfont] ; 这是中文TTF字体配置
+antialias=1; 是否抗锯齿
+cleartype=1; 是否使用ClearType，如果是会覆盖antialias选项
+embolden=0; 字体是否加粗
+[efont] ; 这是英文TTF字体配置
+antialias=1; 是否抗锯齿
+cleartype=1; 是否使用ClearType，如果是会覆盖antialias选项
+embolden=0; 字体是否加粗
