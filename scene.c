@@ -3988,9 +3988,11 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 							STRCAT_S(cutdest, cutlist[sidx].shortname);
 							if ((t_fs_filetype) cutlist[sidx].data ==
 								fs_filetype_dir)
-								move_dir(cutsrc, cutdest, NULL, NULL, NULL);
+								move_dir(cutsrc, cutdest, NULL,
+										 confirm_overwrite, NULL);
 							else
-								move_file(cutsrc, cutdest, NULL, NULL, NULL);
+								move_file(cutsrc, cutdest, NULL,
+										  confirm_overwrite, NULL);
 						}
 						STRCPY_S(config.lastfile, item[*index].compname);
 						retop = win_menu_op_cancel;
