@@ -1778,7 +1778,7 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 					if (config.usettf) {
 						ttfsize--;
 						if (ttfsize < 8)
-							ttfsize = 64;
+							ttfsize = 128;
 					} else {
 						if (bookfontindex == 0)
 							bookfontindex = bookfontcount - 1;
@@ -1814,7 +1814,7 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 				case 1:
 					if (config.usettf) {
 						ttfsize++;
-						if (ttfsize > 64)
+						if (ttfsize > 128)
 							ttfsize = 8;
 					} else {
 						if (bookfontindex == bookfontcount - 1)
