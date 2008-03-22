@@ -179,6 +179,7 @@ typedef struct
 	bool efont_antialias;
 	bool efont_cleartype;
 	bool efont_embolden;
+	bool img_no_repeat;
 } t_conf, *p_conf;
 
 /* txt key:

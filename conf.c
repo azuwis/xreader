@@ -236,6 +236,8 @@ static void conf_default(p_conf conf)
 	conf->efont_antialias = false;
 	conf->efont_cleartype = true;
 	conf->efont_embolden = false;
+
+	conf->img_no_repeat = false;
 }
 
 static char* hexToString(char* str, int size, unsigned int hex)
@@ -398,6 +400,8 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->efont_cleartype = iniparser_getboolean(dict, "Text:efont_cleartype", conf->efont_cleartype);
 	conf->efont_embolden = iniparser_getboolean(dict, "Text:efont_embolden", conf->efont_embolden);
 
+	conf->img_no_repeat = iniparser_getboolean(dict, "Image:no_repeat", conf->img_no_repeat);
+
 	dictionary_del(dict);
 
 	return true;
@@ -540,7 +544,9 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Text:efont_antialias", booleanToString(buf, sizeof(buf), conf->efont_antialias));
 	iniparser_setstring(dict, "Text:efont_cleartype", booleanToString(buf, sizeof(buf), conf->efont_cleartype));
 	iniparser_setstring(dict, "Text:efont_embolden", booleanToString(buf, sizeof(buf), conf->efont_embolden));
-	
+
+	iniparser_setstring(dict, "Image:no_repeat", booleanToString(buf, sizeof(buf), conf->img_no_repeat));
+
 	iniparser_dump_ini(dict, fp);
 
 	fclose(fp);
