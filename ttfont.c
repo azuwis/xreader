@@ -792,18 +792,17 @@ extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 			if (width > maxpixels)
 				break;
 			str += 2;
-		} else {
+		} else if (*str != 0x20) {
 			width += disp_ewidth[*str];
 			width += wordspace;
 			if (width > maxpixels)
 				break;
 			str++;
 		}
-	}
-	if (bytetable[*str] == 1) {
-		if (*str == '\r' && *(str + 1) == '\n') {
-			str += 2;
-		} else {
+		else {
+			width += DISP_BOOK_FONTSIZE / 2 + wordspace;
+			if (width > maxpixels)
+				break;
 			str++;
 		}
 	}
@@ -850,7 +849,7 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			ttf_disp_putnstring_horz(cttf, &x, &y, color, &str, &count,
 									 wordspace, top, height, bot,
 									 &cprevious, true);
-		} else if (*str > 0x1F) {
+		} else if (*str > 0x1F && *str != 0x20) {
 			ttf_disp_putnstring_horz(ettf, &x, &y, color, &str, &count,
 									 wordspace, top, height, bot,
 									 &eprevious, false);
@@ -1200,7 +1199,7 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 			ttf_disp_putnstring_reversal(cttf, &x, &y, color, &str, &count,
 										 wordspace, top, height, bot,
 										 &cprevious, true);
-		} else if (*str > 0x1F) {
+		} else if (*str > 0x1F && *str != 0x20) {
 			ttf_disp_putnstring_reversal(ettf, &x, &y, color, &str, &count,
 										 wordspace, top, height, bot,
 										 &eprevious, false);
@@ -1485,7 +1484,7 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			ttf_disp_putnstring_lvert(cttf, &x, &y, color, &str, &count,
 									  wordspace, top, height, bot,
 									  &cprevious, true);
-		} else if (*str > 0x1F) {
+		} else if (*str > 0x1F && *str != 0x20) {
 			if (y < DISP_RSPAN + disp_ewidth[*str] - 1)
 				break;
 			ttf_disp_putnstring_lvert(ettf, &x, &y, color, &str, &count,
@@ -1769,7 +1768,7 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			ttf_disp_putnstring_rvert(cttf, &x, &y, color, &str, &count,
 									  wordspace, top, height, bot,
 									  &cprevious, true);
-		} else if (*str > 0x1F) {
+		} else if (*str > 0x1F && *str != 0x20) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - disp_ewidth[*str])
 				break;
 			ttf_disp_putnstring_rvert(ettf, &x, &y, color, &str, &count,

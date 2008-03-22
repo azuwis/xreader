@@ -225,6 +225,7 @@ static void conf_default(p_conf conf)
 	STRCAT_S(conf->cttfpath, "fonts/gbk.ttf");
 	STRCPY_S(conf->ettfpath, appdir);
 	STRCAT_S(conf->ettfpath, "fonts/asc.ttf");
+	conf->infobar_use_ttf_mode = true;
 }
 
 extern bool conf_load(p_conf conf)
@@ -235,6 +236,9 @@ extern bool conf_load(p_conf conf)
 	if (fd < 0)
 		return false;
 	sceIoRead(fd, conf, sizeof(t_conf));
+
+	if (conf->confver != XREADER_VERSION_NUM)
+		conf_default(conf);
 #ifndef ENABLE_USB
 	conf->enableusb = false;
 #endif
@@ -246,7 +250,6 @@ extern bool conf_load(p_conf conf)
 #ifndef ENABLE_MUSIC
 	conf->autoplay = false;
 	conf->hprmctrl = true;
-	conf->lyricex = 0;
 #else
 #ifndef ENABLE_LYRIC
 	conf->lyricex = 0;

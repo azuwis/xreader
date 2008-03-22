@@ -134,9 +134,9 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 				count = ttf_get_string_width(cttf, ettf, (const byte *) pos,
 											 rowpixels, wordspace);
 			pos += count;
-		} else 
+		} else
 #endif
-	   	{
+		{
 			while (pos < posend && bytetable[*(byte *) pos] != 1)
 				if ((*(byte *) pos) >= 0x80) {
 					width += DISP_BOOK_FONTSIZE;

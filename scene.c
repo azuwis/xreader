@@ -4382,7 +4382,6 @@ void exec_homebrew(int method, char *path)
 		dbg_printf(d, infomsg);
 	} else
 		sceKernelExitDeleteThread(0);
-
 }
 
 void scene_filelist()

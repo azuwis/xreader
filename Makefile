@@ -10,7 +10,7 @@ INCDIR = ./include ./include/freetype2 $(PSPSDK)/../include
 ifeq ($(DEBUG), 1)
 CFLAGS = -O0 -G0 -g -Wall
 else
-CFLAGS = -O2 -G0 -Wall
+CFLAGS = -O3 -G0 -fomit-frame-pointer -ffast-math -frename-registers -Wall
 endif		
 CXXFLAGS = $(CFLAGS) -fno-rtti
 

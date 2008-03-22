@@ -172,6 +172,7 @@ typedef struct
 	bool load_exif;
 	int brightness;
 	int launchtype;
+	bool infobar_use_ttf_mode;
 } t_conf, *p_conf;
 
 /* txt key:

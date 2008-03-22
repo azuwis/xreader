@@ -338,10 +338,10 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 }
 
 #ifdef ENABLE_TTF
-static void load_ttf_config(void)
+static bool load_ttf_config(void)
 {
 	if (cttf == NULL || ettf == NULL)
-		return;
+		return false;
 
 	dictionary *ini;
 
@@ -368,7 +368,7 @@ static void load_ttf_config(void)
 
 		fp = fopen(inifile, "w");
 		if (fp == NULL) {
-			return;
+			return false;
 		}
 		/*
 		   iniparser_dump_ini(ini, fp);
@@ -382,7 +382,9 @@ static void load_ttf_config(void)
 		fprintf(fp, "cleartype=1;\r\n");
 		fprintf(fp, "embolden=0;\r\n");
 		fclose(fp);
-		load_ttf_config();
+		if (load_ttf_config() == false) {
+			return false;
+		}
 	} else {
 		bool res;
 
@@ -406,6 +408,8 @@ static void load_ttf_config(void)
 		ttf_set_embolden(ettf, res);
 		iniparser_freedict(ini);
 	}
+
+	return true;
 }
 #endif
 
