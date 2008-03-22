@@ -1,7 +1,0 @@
-Build instructions:
-
-a) type ./make.sh will generate 1.00/1.50/2.xx homebrew in release folder.
-
-b) if you wanna apply your own settings:
-   1) type ./configure --help for details
-   2) after running configure, type make to get 1.00/2.xx homebrew, or type make SCEkxploit to get 1.50 homebrew
