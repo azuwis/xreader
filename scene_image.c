@@ -648,8 +648,7 @@ int image_handle_input(dword * selidx, dword key)
 			else {
 				if (config.img_no_repeat == false) {
 					*selidx = 0;
-				}
-				else {
+				} else {
 					return *selidx;
 				}
 			}

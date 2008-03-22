@@ -181,7 +181,8 @@ int iniparser_getint(dictionary * d, const char *key, int notfound);
   Credits: Thanks to A. Becker for suggesting strtol()
  */
 /*--------------------------------------------------------------------------*/
-unsigned long iniparser_getunsigned(dictionary * d, const char *key, unsigned long notfound);
+unsigned long iniparser_getunsigned(dictionary * d, const char *key,
+									unsigned long notfound);
 
 /*-------------------------------------------------------------------------*/
 /**

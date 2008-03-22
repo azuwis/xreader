@@ -237,17 +237,17 @@ void iniparser_dump_ini(dictionary * d, FILE * f)
 			fprintf(f, "%s = %s\r\n", d->key[i], d->val[i]);
 		}
 		return;
-	}
-	else {
+	} else {
 		// sort section name
 		for (i = 0; i < d->size; i++) {
 			if (d->key[i] == NULL)
 				continue;
-			for (j=d->size-1; j>=i; j--) {
+			for (j = d->size - 1; j >= i; j--) {
 				if (d->key[j] == NULL)
 					continue;
 				if (strcmp(d->key[i], d->key[j]) > 0) {
 					char *t, *tval;
+
 					t = d->key[i];
 					d->key[i] = d->key[j];
 					d->key[j] = t;
@@ -346,7 +346,8 @@ int iniparser_getint(dictionary * d, const char *key, int notfound)
 	return (int) strtol(str, NULL, 0);
 }
 
-unsigned long iniparser_getunsigned(dictionary * d, const char *key, unsigned long notfound)
+unsigned long iniparser_getunsigned(dictionary * d, const char *key,
+									unsigned long notfound)
 {
 	char *str;
 

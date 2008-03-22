@@ -798,8 +798,7 @@ extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 			if (width > maxpixels)
 				break;
 			str++;
-		}
-		else {
+		} else {
 			width += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			if (width > maxpixels)
 				break;

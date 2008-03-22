@@ -2785,8 +2785,7 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 				STRCPY_S(conffile, appdir);
 				char conffilename[80];
 
-				SPRINTF_S(conffilename, "%s%d%s", "config", config_num,
-						  ".ini");
+				SPRINTF_S(conffilename, "%s%d%s", "config", config_num, ".ini");
 				STRCAT_S(conffile, conffilename);
 				conf_set_file(conffile);
 				if (*index == 0) {
