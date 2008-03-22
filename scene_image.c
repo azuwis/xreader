@@ -645,8 +645,14 @@ int image_handle_input(dword * selidx, dword key)
 		do {
 			if (*selidx < filecount - 1)
 				(*selidx)++;
-			else
-				*selidx = 0;
+			else {
+				if (config.img_no_repeat == false) {
+					*selidx = 0;
+				}
+				else {
+					return *selidx;
+				}
+			}
 		} while (!fs_is_image((t_fs_filetype) filelist[*selidx].data));
 		if (*selidx != orgidx)
 			img_needrf = img_needrc = img_needrp = true;
