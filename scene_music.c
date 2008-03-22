@@ -260,7 +260,7 @@ void scene_mp3bar()
 		} else
 			disp_duptocache();
 		disp_rectangle(5, 5, 474, 8 + DISP_FONTSIZE * 2, COLOR_WHITE);
-		disp_fillrect(6, 6, 473, 7 + DISP_FONTSIZE * 2, config.msgbcolor);
+		disp_fillrect(6, 6, 473, 7 + DISP_FONTSIZE * 2, config.usedyncolor ? GetBGColorByTime() : config.msgbcolor);
 		char timestr[80];
 		pspTime tm;
 
@@ -299,7 +299,7 @@ void scene_mp3bar()
 					   136 + (DISP_FONTSIZE + 1) * config.lyricex, COLOR_WHITE);
 		disp_fillrect(6, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex) + 1,
 					  473, 136 + (DISP_FONTSIZE + 1) * config.lyricex - 1,
-					  config.msgbcolor);
+					  config.usedyncolor ? GetBGColorByTime() : config.msgbcolor);
 		{
 			const char *ly[config.lyricex * 2 + 1];
 			dword ss[config.lyricex * 2 + 1];
@@ -337,7 +337,7 @@ void scene_mp3bar()
 
 #ifdef ENABLE_MUSIC
 		disp_rectangle(5, 262 - DISP_FONTSIZE * 4, 474, 267, COLOR_WHITE);
-		disp_fillrect(6, 263 - DISP_FONTSIZE * 4, 473, 266, config.msgbcolor);
+		disp_fillrect(6, 263 - DISP_FONTSIZE * 4, 473, 266, config.usedyncolor ? GetBGColorByTime() : config.msgbcolor);
 		int bitrate, sample, len, tlen;
 		char infostr[80];
 

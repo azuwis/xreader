@@ -11,6 +11,8 @@ extern void scene_power_save(bool save);
 extern void scene_exception();
 extern const char *scene_appdir();
 
+extern dword GetBGColorByTime(void);
+
 enum
 {
 	scene_in_dir,

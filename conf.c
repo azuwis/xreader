@@ -12,7 +12,9 @@
 #include "display.h"
 #include "version.h"
 #include "conf.h"
+#include "iniparser.h"
 #include "xrPrx/xrPrx.h"
+#include "dbg.h"
 
 extern bool scene_load_font();
 extern bool scene_load_book_font();
@@ -226,16 +228,337 @@ static void conf_default(p_conf conf)
 	STRCPY_S(conf->ettfpath, appdir);
 	STRCAT_S(conf->ettfpath, "fonts/asc.ttf");
 	conf->infobar_use_ttf_mode = true;
+
+	conf->cfont_antialias = false;
+	conf->cfont_cleartype = true;
+	conf->cfont_embolden = false;
+
+	conf->efont_antialias = false;
+	conf->efont_cleartype = true;
+	conf->efont_embolden = false;
+}
+
+static char* hexToString(char* str, int size, unsigned int hex)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	snprintf_s(str, size, "0x%08x", hex);
+
+	return str;
+}
+
+static char* booleanToString(char* str, int size, bool b)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	snprintf_s(str, size, "%s", b ? "true" : "false");
+
+	return str;
+}
+
+static char* intToString(char* str, int size, int i)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	snprintf_s(str, size, "%ld", i);
+
+	return str;
+}
+
+static char* dwordToString(char* str, int size, dword dw)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	snprintf_s(str, size, "%lu", dw);
+
+	return str;
+}
+
+extern bool ini_conf_load(const char *inifilename, p_conf conf)
+{
+	if (conf == NULL || inifilename == NULL) {
+		return false;
+	}
+
+	dictionary *dict = iniparser_load(inifilename);
+
+	if (dict == NULL)
+		return false;
+
+	conf_default(conf);
+
+	STRCPY_S(conf->path, iniparser_getstring(dict, "Global:path", conf->path));
+	conf->forecolor = iniparser_getunsigned(dict, "UI:forecolor", conf->forecolor);
+	conf->bgcolor = iniparser_getunsigned(dict, "UI:bgcolor", conf->bgcolor);
+	conf->have_bg = iniparser_getboolean(dict, "UI:have_bg", conf->have_bg);
+	conf->titlecolor = iniparser_getunsigned(dict, "UI:titlecolor", conf->titlecolor);
+	conf->menutextcolor = iniparser_getunsigned(dict, "UI:menutextcolor", conf->menutextcolor);
+	conf->menubcolor = iniparser_getunsigned(dict, "UI:menubcolor", conf->menubcolor);
+	conf->selicolor = iniparser_getunsigned(dict, "UI:selicolor", conf->selicolor);
+	conf->selbcolor = iniparser_getunsigned(dict, "UI:selbcolor", conf->selbcolor);
+	conf->msgbcolor = iniparser_getunsigned(dict, "UI:msgbcolor", conf->msgbcolor);
+	conf->usedyncolor = iniparser_getboolean(dict, "UI:usedyncolor", conf->usedyncolor);
+	conf->rowspace = iniparser_getint(dict, "Text:rowspace", conf->rowspace);
+	conf->infobar = iniparser_getint(dict, "Text:infobar", conf->infobar);
+	conf->rlastrow = iniparser_getboolean(dict, "Text:rlastrow", conf->rlastrow);
+	conf->autobm = iniparser_getboolean(dict, "Text:autobm", conf->autobm);
+	conf->vertread = iniparser_getint(dict, "Text:vertread", conf->vertread);
+	conf->encode = iniparser_getint(dict, "Text:encode", conf->encode);
+	conf->fit = iniparser_getint(dict, "Image:fit", conf->fit);
+	conf->imginfobar = iniparser_getboolean(dict, "Image:imginfobar", conf->imginfobar);
+	conf->scrollbar = iniparser_getboolean(dict, "Text:scrollbar", conf->scrollbar);
+	conf->scale = iniparser_getint(dict, "Image:scale", conf->scale);
+	conf->rotate = iniparser_getint(dict, "Image:rotate", conf->rotate);
+	int i;
+	for(i=0; i<20; ++i) {
+		char key[20];
+		SPRINTF_S(key, "Text:txtkey1_%02d", i);
+		conf->txtkey[i] = iniparser_getint(dict, key, conf->txtkey[i]);
+		SPRINTF_S(key, "Image:imgkey1_%02d", i);
+		conf->imgkey[i] = iniparser_getint(dict, key, conf->imgkey[i]);
+	}
+	STRCPY_S(conf->shortpath, iniparser_getstring(dict, "Global:shortpath", conf->shortpath));
+	conf->confver = iniparser_getint(dict, "Global:confver", conf->confver);
+	conf->bicubic = iniparser_getboolean(dict, "Image:bicubic", conf->bicubic);
+	conf->wordspace = iniparser_getint(dict, "Text:wordspace", conf->wordspace);
+	STRCPY_S(conf->lastfile, iniparser_getstring(dict, "Global:lastfile", conf->lastfile));
+	conf->mp3encode = iniparser_getint(dict, "Music:mp3encode", conf->mp3encode);
+	conf->lyricencode = iniparser_getint(dict, "Music:lyricencode", conf->lyricencode);
+	conf->mp3cycle = iniparser_getint(dict, "Music:mp3cycle", conf->mp3cycle);
+	conf->isreading = iniparser_getboolean(dict, "Global:isreading", conf->isreading);
+	STRCPY_S(conf->bgarch, iniparser_getstring(dict, "UI:bgarch", conf->bgarch));
+	STRCPY_S(conf->bgfile, iniparser_getstring(dict, "UI:bgfile", conf->bgfile));
+	conf->bgwhere = iniparser_getint(dict, "UI:bgwhere", conf->bgwhere);
+	conf->slideinterval = iniparser_getint(dict, "Image:slideinterval", conf->slideinterval);
+	conf->hprmctrl = iniparser_getboolean(dict, "Music:hprmctrl", conf->hprmctrl);
+	conf->grayscale = iniparser_getint(dict, "UI:grayscale", conf->grayscale);
+	conf->showhidden = iniparser_getboolean(dict, "Global:showhidden", conf->showhidden);
+	conf->showunknown = iniparser_getboolean(dict, "Global:showunknown", conf->showunknown);
+	conf->showfinfo = iniparser_getboolean(dict, "Global:showfinfo", conf->showfinfo);
+	conf->allowdelete = iniparser_getboolean(dict, "Global:allowdelete", conf->allowdelete);
+	conf->arrange = iniparser_getint(dict, "Global:arrange", conf->arrange);
+	conf->enableusb = iniparser_getboolean(dict, "Global:enableusb", conf->enableusb);
+	conf->viewpos = iniparser_getint(dict, "Image:viewpos", conf->viewpos);
+	conf->imgmvspd = iniparser_getint(dict, "Image:imgmvspd", conf->imgmvspd);
+	conf->imgpaging = iniparser_getint(dict, "Image:imgpaging", conf->imgpaging);
+	for (i=0; i<20; ++i) {
+		char key[20];
+		SPRINTF_S(key, "Global:flkey1_%02d", i);
+		conf->flkey[i] = iniparser_getint(dict, key, conf->flkey[i]);
+	}
+	conf->fontsize = iniparser_getint(dict, "UI:fontsize", conf->fontsize);
+	conf->reordertxt = iniparser_getboolean(dict, "Text:reordertxt", conf->reordertxt);
+	conf->pagetonext = iniparser_getboolean(dict, "Text:pagetonext", conf->pagetonext);
+	conf->autopage = iniparser_getint(dict, "Text:autopage", conf->autopage);
+	conf->prev_autopage = iniparser_getint(dict, "Text:prev_autopage", conf->prev_autopage);
+	conf->autolinedelay = iniparser_getint(dict, "Text:autolinedelay", conf->autolinedelay);
+	conf->thumb = iniparser_getboolean(dict, "UI:fontsize", conf->thumb);
+	conf->bookfontsize = iniparser_getint(dict, "Text:bookfontsize", conf->bookfontsize);
+	conf->enable_analog = iniparser_getboolean(dict, "Text:enable_analog", conf->enable_analog);
+	conf->img_enable_analog = iniparser_getboolean(dict, "Image:img_enable_analog", conf->img_enable_analog);
+	for (i=0; i<20; ++i) {
+		char key[20];
+		SPRINTF_S(key, "Text:txtkey2_%02d", i);
+		conf->txtkey2[i] = iniparser_getint(dict, key, conf->txtkey2[i]);
+		SPRINTF_S(key, "Image:imgkey2_%02d", i);
+		conf->imgkey2[i] = iniparser_getint(dict, key, conf->imgkey2[i]);
+		SPRINTF_S(key, "Global:flkey2_%02d", i);
+		conf->flkey2[i] = iniparser_getint(dict, key, conf->flkey2[i]);
+	}
+	conf->imgpagereserve = iniparser_getint(dict, "Image:imgpagereserve", conf->imgpagereserve);
+	conf->lyricex = iniparser_getint(dict, "Music:lyricex", conf->lyricex);
+	conf->autoplay = iniparser_getboolean(dict, "Music:autoplay", conf->autoplay);
+	conf->usettf = iniparser_getboolean(dict, "Text:usettf", conf->usettf);
+	STRCPY_S(conf->cttfarch, iniparser_getstring(dict, "Text:cttfarch", conf->cttfarch));
+	STRCPY_S(conf->cttfpath, iniparser_getstring(dict, "Text:cttfpath", conf->cttfpath));
+	STRCPY_S(conf->ettfarch, iniparser_getstring(dict, "Text:ettfarch", conf->ettfarch));
+	STRCPY_S(conf->ettfpath, iniparser_getstring(dict, "Text:ettfpath", conf->ettfpath));
+	for (i=0; i<3; ++i) {
+		char key[20];
+		SPRINTF_S(key, "Global:freqs_%d", i);
+		conf->freqs[i] = iniparser_getint(dict, key, conf->freqs[i]);
+	}
+	conf->imgbrightness = iniparser_getint(dict, "Image:imgbrightness", conf->imgbrightness);
+	conf->dis_scrsave = iniparser_getboolean(dict, "Global:dis_scrsave", conf->dis_scrsave);
+	conf->autosleep = iniparser_getint(dict, "Global:autosleep", conf->autosleep);
+	conf->load_exif = iniparser_getboolean(dict, "Image:load_exif", conf->load_exif);
+	conf->brightness = iniparser_getint(dict, "Global:brightness", conf->brightness);
+	conf->launchtype = iniparser_getint(dict, "Global:launchtype", conf->launchtype);
+	conf->infobar_use_ttf_mode = iniparser_getboolean(dict, "Text:infobar_use_ttf_mode", conf->infobar_use_ttf_mode);
+
+	conf->cfont_antialias = iniparser_getboolean(dict, "Text:cfont_antialias", conf->cfont_antialias);
+	conf->cfont_cleartype = iniparser_getboolean(dict, "Text:cfont_cleartype", conf->cfont_cleartype);
+	conf->cfont_embolden = iniparser_getboolean(dict, "Text:cfont_embolden", conf->cfont_embolden);
+
+	conf->efont_antialias = iniparser_getboolean(dict, "Text:efont_antialias", conf->efont_antialias);
+	conf->efont_cleartype = iniparser_getboolean(dict, "Text:efont_cleartype", conf->efont_cleartype);
+	conf->efont_embolden = iniparser_getboolean(dict, "Text:efont_embolden", conf->efont_embolden);
+
+	dictionary_del(dict);
+
+	return true;
+}
+
+extern bool ini_conf_save(p_conf conf)
+{
+	if (conf == NULL) {
+		return false;
+	}
+
+	dictionary *dict = dictionary_new(0);
+
+	if (dict == NULL)
+		return false;
+
+	FILE *fp = fopen(conf_filename, "w");
+	if (fp == NULL) {
+		return false;
+	}
+
+	if (iniparser_setstring(dict, "Global", NULL) != 0)
+		goto error;
+	if (iniparser_setstring(dict, "UI", NULL) != 0)
+		goto error;
+	if (iniparser_setstring(dict, "Text", NULL) != 0)
+		goto error;
+	if (iniparser_setstring(dict, "Image", NULL) != 0)
+		goto error;
+	if (iniparser_setstring(dict, "Music", NULL) != 0)
+		goto error;
+
+	char buf[PATH_MAX];
+
+	iniparser_setstring(dict, "Global:path", conf->path);
+	iniparser_setstring(dict, "UI:forecolor", hexToString(buf, sizeof(buf), conf->forecolor));
+	iniparser_setstring(dict, "UI:bgcolor", hexToString(buf, sizeof(buf), conf->bgcolor));
+	iniparser_setstring(dict, "UI:have_bg", booleanToString(buf, sizeof(buf), conf->have_bg));
+	iniparser_setstring(dict, "UI:titlecolor", hexToString(buf, sizeof(buf), conf->titlecolor));
+	iniparser_setstring(dict, "UI:menutextcolor", hexToString(buf, sizeof(buf), conf->menutextcolor));
+	iniparser_setstring(dict, "UI:menubcolor", hexToString(buf, sizeof(buf), conf->menubcolor));
+	iniparser_setstring(dict, "UI:selicolor", hexToString(buf, sizeof(buf), conf->selicolor));
+	iniparser_setstring(dict, "UI:selbcolor", hexToString(buf, sizeof(buf), conf->selbcolor));
+	iniparser_setstring(dict, "UI:msgbcolor", hexToString(buf, sizeof(buf), conf->msgbcolor));
+	iniparser_setstring(dict, "UI:usedyncolor", booleanToString(buf, sizeof(buf), conf->usedyncolor));
+	iniparser_setstring(dict, "Text:rowspace", dwordToString(buf, sizeof(buf), conf->rowspace));
+	iniparser_setstring(dict, "Text:infobar", dwordToString(buf, sizeof(buf), conf->infobar));
+	iniparser_setstring(dict, "Text:rlastrow", booleanToString(buf, sizeof(buf), conf->rlastrow));
+	iniparser_setstring(dict, "Text:autobm", booleanToString(buf, sizeof(buf), conf->autobm));
+	iniparser_setstring(dict, "Text:vertread", dwordToString(buf, sizeof(buf), conf->vertread));
+	iniparser_setstring(dict, "Text:encode", dwordToString(buf, sizeof(buf), conf->encode));
+	iniparser_setstring(dict, "Image:fit", dwordToString(buf, sizeof(buf), conf->fit));
+	iniparser_setstring(dict, "Image:imginfobar", booleanToString(buf, sizeof(buf), conf->imginfobar));
+	iniparser_setstring(dict, "Text:scrollbar", booleanToString(buf, sizeof(buf), conf->scrollbar));
+	iniparser_setstring(dict, "Image:scale", dwordToString(buf, sizeof(buf), conf->scale));
+	iniparser_setstring(dict, "Image:rotate", dwordToString(buf, sizeof(buf), conf->rotate));
+	int i;
+	for(i=0; i<20; ++i) {
+		char key[20];
+		SPRINTF_S(key, "Text:txtkey1_%02d", i);
+		iniparser_setstring(dict, key, hexToString(buf, sizeof(buf), conf->txtkey[i]));
+		SPRINTF_S(key, "Image:imgkey1_%02d", i);
+		iniparser_setstring(dict, key, hexToString(buf, sizeof(buf), conf->imgkey[i]));
+	}
+	iniparser_setstring(dict, "Global:shortpath", conf->shortpath);
+	iniparser_setstring(dict, "Global:confver", hexToString(buf, sizeof(buf), conf->confver));
+	iniparser_setstring(dict, "Image:bicubic", booleanToString(buf, sizeof(buf), conf->bicubic));
+	iniparser_setstring(dict, "Text:wordspace", dwordToString(buf, sizeof(buf), conf->wordspace));
+	iniparser_setstring(dict, "Text:borderspace", dwordToString(buf, sizeof(buf), conf->borderspace));
+	iniparser_setstring(dict, "Global:lastfile", conf->lastfile);
+	iniparser_setstring(dict, "Music:mp3encode", dwordToString(buf, sizeof(buf), conf->mp3encode));
+	iniparser_setstring(dict, "Music:lyricencode", dwordToString(buf, sizeof(buf), conf->lyricencode));
+	iniparser_setstring(dict, "Music:mp3cycle", dwordToString(buf, sizeof(buf), conf->mp3cycle));
+	iniparser_setstring(dict, "Global:isreading", booleanToString(buf, sizeof(buf), conf->isreading));
+	iniparser_setstring(dict, "UI:bgarch", conf->bgarch);
+	iniparser_setstring(dict, "UI:bgfile", conf->bgfile);
+	iniparser_setstring(dict, "UI:bgwhere", intToString(buf, sizeof(buf), conf->bgwhere));
+	iniparser_setstring(dict, "Image:slideinterval", dwordToString(buf, sizeof(buf), conf->slideinterval));
+	iniparser_setstring(dict, "Music:hprmctrl", booleanToString(buf, sizeof(buf), conf->hprmctrl));
+	iniparser_setstring(dict, "UI:grayscale", intToString(buf, sizeof(buf), conf->grayscale));
+	iniparser_setstring(dict, "Global:showhidden", booleanToString(buf, sizeof(buf), conf->showhidden));
+	iniparser_setstring(dict, "Global:showunknown", booleanToString(buf, sizeof(buf), conf->showunknown));
+	iniparser_setstring(dict, "Global:showfinfo", booleanToString(buf, sizeof(buf), conf->showfinfo));
+	iniparser_setstring(dict, "Global:allowdelete", booleanToString(buf, sizeof(buf), conf->allowdelete));
+	iniparser_setstring(dict, "Global:arrange", dwordToString(buf, sizeof(buf), conf->arrange));
+	iniparser_setstring(dict, "Global:enableusb", booleanToString(buf, sizeof(buf), conf->enableusb));
+	iniparser_setstring(dict, "Image:viewpos", dwordToString(buf, sizeof(buf), conf->viewpos));
+	iniparser_setstring(dict, "Image:imgmvspd", dwordToString(buf, sizeof(buf), conf->imgmvspd));
+	iniparser_setstring(dict, "Image:imgpaging", dwordToString(buf, sizeof(buf), conf->imgpaging));
+	for (i=0; i<20; ++i) {
+		char key[20];
+		SPRINTF_S(key, "Text:txtkey1_%02d", i);
+		iniparser_setstring(dict, key, hexToString(buf, sizeof(buf), conf->txtkey[i]));
+	}
+	iniparser_setstring(dict, "UI:fontsize", intToString(buf, sizeof(buf), conf->fontsize));
+	iniparser_setstring(dict, "Text:reordertxt", booleanToString(buf, sizeof(buf), conf->reordertxt));
+	iniparser_setstring(dict, "Text:pagetonext", booleanToString(buf, sizeof(buf), conf->pagetonext));
+	iniparser_setstring(dict, "Text:autopage", intToString(buf, sizeof(buf), conf->autopage));
+	iniparser_setstring(dict, "Text:prev_autopage", intToString(buf, sizeof(buf), conf->prev_autopage));
+	iniparser_setstring(dict, "Text:autopagetype", intToString(buf, sizeof(buf), conf->autopagetype));
+	iniparser_setstring(dict, "Text:autolinedelay", intToString(buf, sizeof(buf), conf->autolinedelay));
+	iniparser_setstring(dict, "Image:thumb", booleanToString(buf, sizeof(buf), conf->thumb));
+	iniparser_setstring(dict, "Text:bookfontsize", intToString(buf, sizeof(buf), conf->bookfontsize));
+	iniparser_setstring(dict, "Text:enable_analog", booleanToString(buf, sizeof(buf), conf->enable_analog));
+	iniparser_setstring(dict, "Image:img_enable_analog", booleanToString(buf, sizeof(buf), conf->img_enable_analog));
+	for (i=0; i<20; ++i) {
+		char key[20];
+		SPRINTF_S(key, "Text:txtkey2_%02d", i);
+		iniparser_setstring(dict, key, hexToString(buf, sizeof(buf), conf->txtkey2[i]));
+		SPRINTF_S(key, "Image:imgkey2_%02d", i);
+		iniparser_setstring(dict, key, hexToString(buf, sizeof(buf), conf->imgkey2[i]));
+		SPRINTF_S(key, "Global:flkey2_%02d", i);
+		iniparser_setstring(dict, key, hexToString(buf, sizeof(buf), conf->flkey2[i]));
+	}
+	iniparser_setstring(dict, "Image:imgpagereserve", dwordToString(buf, sizeof(buf), conf->imgpagereserve));
+	iniparser_setstring(dict, "Music:lyricex", dwordToString(buf, sizeof(buf), conf->lyricex));
+	iniparser_setstring(dict, "Music:autoplay", booleanToString(buf, sizeof(buf), conf->autoplay));
+	iniparser_setstring(dict, "Text:usettf", booleanToString(buf, sizeof(buf), conf->usettf));
+	iniparser_setstring(dict, "Text:cttfarch", conf->cttfarch);
+	iniparser_setstring(dict, "Text:cttfpath", conf->cttfpath);
+	iniparser_setstring(dict, "Text:ettfarch", conf->ettfarch);
+	iniparser_setstring(dict, "Text:ettfpath", conf->ettfpath);
+	for (i=0; i<3; ++i) {
+		char key[20];
+		SPRINTF_S(key, "Global:freqs_%d", i);
+		iniparser_setstring(dict, key, intToString(buf, sizeof(buf), conf->freqs[i]));
+	}
+	iniparser_setstring(dict, "Image:imgbrightness", intToString(buf, sizeof(buf), conf->imgbrightness));
+	iniparser_setstring(dict, "Global:dis_scrsave", booleanToString(buf, sizeof(buf), conf->dis_scrsave));
+	iniparser_setstring(dict, "Global:autosleep", intToString(buf, sizeof(buf), conf->autosleep));
+	iniparser_setstring(dict, "Image:load_exif", booleanToString(buf, sizeof(buf), conf->load_exif));
+	iniparser_setstring(dict, "Global:brightness", intToString(buf, sizeof(buf), conf->brightness));
+	iniparser_setstring(dict, "Global:launchtype", intToString(buf, sizeof(buf), conf->launchtype));
+	iniparser_setstring(dict, "Text:infobar_use_ttf_mode", booleanToString(buf, sizeof(buf), conf->infobar_use_ttf_mode));
+
+	iniparser_setstring(dict, "Text:cfont_antialias", booleanToString(buf, sizeof(buf), conf->cfont_antialias));
+	iniparser_setstring(dict, "Text:cfont_cleartype", booleanToString(buf, sizeof(buf), conf->cfont_cleartype));
+	iniparser_setstring(dict, "Text:cfont_embolden", booleanToString(buf, sizeof(buf), conf->cfont_embolden));
+
+	iniparser_setstring(dict, "Text:efont_antialias", booleanToString(buf, sizeof(buf), conf->efont_antialias));
+	iniparser_setstring(dict, "Text:efont_cleartype", booleanToString(buf, sizeof(buf), conf->efont_cleartype));
+	iniparser_setstring(dict, "Text:efont_embolden", booleanToString(buf, sizeof(buf), conf->efont_embolden));
+	
+	iniparser_dump_ini(dict, fp);
+
+	fclose(fp);
+
+	dictionary_del(dict);
+
+	return true;
+error:
+	if (fp != NULL)
+		fclose(fp);
+	return false;
 }
 
 extern bool conf_load(p_conf conf)
 {
 	conf_default(conf);
-	int fd = sceIoOpen(conf_filename, PSP_O_RDWR, 0777);
-
-	if (fd < 0)
+	if (ini_conf_load(conf_filename, conf) == false)
 		return false;
-	sceIoRead(fd, conf, sizeof(t_conf));
 
 	if (conf->confver != XREADER_VERSION_NUM)
 		conf_default(conf);
@@ -255,9 +578,8 @@ extern bool conf_load(p_conf conf)
 	conf->lyricex = 0;
 #endif
 #endif
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	sceIoWrite(fd, conf, sizeof(t_conf));
-	sceIoClose(fd);
+
+	ini_conf_save(conf);
 
 	return true;
 }
@@ -269,12 +591,7 @@ extern bool conf_save(p_conf conf)
 	if (prx_loaded)
 		conf->brightness = xrGetBrightness();
 
-	int fd = sceIoOpen(conf_filename, PSP_O_CREAT | PSP_O_RDWR, 0777);
-
-	if (fd < 0)
-		return false;
-	sceIoWrite(fd, conf, sizeof(t_conf));
-	sceIoClose(fd);
+	ini_conf_save(conf);
 	return true;
 }
 

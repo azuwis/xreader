@@ -106,8 +106,6 @@ static void load_fontsize_to_config()
 	}
 }
 
-extern dword GetBGColorByTime(void);
-
 t_win_menu_op exit_confirm()
 {
 	if (win_msgbox(getmsgbyid(EXIT_PROMPT), getmsgbyid(YES), getmsgbyid(NO),
@@ -2653,7 +2651,7 @@ void scene_setting_mgr_predraw(p_win_menuitem item, dword index, dword topindex,
 	STRCPY_S(conffile, appdir);
 	char conffilename[80];
 
-	SPRINTF_S(conffilename, "%s%d%s", "xreader", config_num, ".conf");
+	SPRINTF_S(conffilename, "%s%d%s", "config", config_num, ".ini");
 	STRCAT_S(conffile, conffilename);
 	if (utils_is_file_exists(conffile)) {
 		STRCAT_S(infomsg, "*");
@@ -2787,8 +2785,8 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 				STRCPY_S(conffile, appdir);
 				char conffilename[80];
 
-				SPRINTF_S(conffilename, "%s%d%s", "xreader", config_num,
-						  ".conf");
+				SPRINTF_S(conffilename, "%s%d%s", "config", config_num,
+						  ".ini");
 				STRCAT_S(conffile, conffilename);
 				conf_set_file(conffile);
 				if (*index == 0) {
@@ -5036,7 +5034,7 @@ extern void scene_init()
 	STRCPY_S(conffile, appdir);
 	char conffilename[80];
 
-	SPRINTF_S(conffilename, "%s%d%s", "xreader", config_num, ".conf");
+	SPRINTF_S(conffilename, "%s%d%s", "config", config_num, ".ini");
 	STRCAT_S(conffile, conffilename);
 	conf_set_file(conffile);
 #ifdef ENABLE_MUSIC
@@ -5269,7 +5267,7 @@ extern void scene_exit()
 							   (fs->crow & 0x3FF))->start - fs->buf);
 		}
 	}
-	// always save to xreader0.conf
+	// always save to config0.ini
 	char conffile[PATH_MAX], appdir[PATH_MAX];
 
 	getcwd(appdir, PATH_MAX);
@@ -5277,7 +5275,7 @@ extern void scene_exit()
 	STRCPY_S(conffile, appdir);
 	char conffilename[80];
 
-	SPRINTF_S(conffilename, "%s%d%s", "xreader", 0, ".conf");
+	SPRINTF_S(conffilename, "%s%d%s", "config", 0, ".ini");
 	STRCAT_S(conffile, conffilename);
 	conf_set_file(conffile);
 	load_fontsize_to_config();

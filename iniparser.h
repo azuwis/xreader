@@ -156,6 +156,35 @@ int iniparser_getint(dictionary * d, const char *key, int notfound);
 
 /*-------------------------------------------------------------------------*/
 /**
+  @brief    Get the string associated to a key, convert to an unsigned long
+  @param    d Dictionary to search
+  @param    key Key string to look for
+  @param    notfound Value to return in case of error
+  @return   integer
+
+  This function queries a dictionary for a key. A key as read from an
+  ini file is given as "section:key". If the key cannot be found,
+  the notfound value is returned.
+
+  Supported values for integers include the usual C notation
+  so decimal, octal (starting with 0) and hexadecimal (starting with 0x)
+  are supported. Examples:
+
+  - "42"      ->  42
+  - "042"     ->  34 (octal -> decimal)
+  - "0x42"    ->  66 (hexa  -> decimal)
+
+  Warning: the conversion may overflow in various ways. Conversion is
+  totally outsourced to strtol(), see the associated man page for overflow
+  handling.
+
+  Credits: Thanks to A. Becker for suggesting strtol()
+ */
+/*--------------------------------------------------------------------------*/
+unsigned long iniparser_getunsigned(dictionary * d, const char *key, unsigned long notfound);
+
+/*-------------------------------------------------------------------------*/
+/**
   @brief    Get the string associated to a key, convert to a double
   @param    d Dictionary to search
   @param    key Key string to look for

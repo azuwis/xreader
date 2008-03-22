@@ -152,8 +152,8 @@ typedef struct
 	int autolinedelay;
 	bool thumb;
 	int bookfontsize;
-	int enable_analog;
-	int img_enable_analog;
+	bool enable_analog;
+	bool img_enable_analog;
 	dword txtkey2[20];
 	dword imgkey2[20];
 	dword flkey2[20];
@@ -166,13 +166,19 @@ typedef struct
 	char ettfarch[PATH_MAX];
 	char ettfpath[PATH_MAX];
 	int freqs[3];
-	short imgbrightness;
+	int imgbrightness;
 	bool dis_scrsave;
 	int autosleep;
 	bool load_exif;
 	int brightness;
 	int launchtype;
 	bool infobar_use_ttf_mode;
+	bool cfont_antialias;
+	bool cfont_cleartype;
+	bool cfont_embolden;
+	bool efont_antialias;
+	bool efont_cleartype;
+	bool efont_embolden;
 } t_conf, *p_conf;
 
 /* txt key:

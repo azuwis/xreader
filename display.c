@@ -340,74 +340,12 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 #ifdef ENABLE_TTF
 static bool load_ttf_config(void)
 {
-	if (cttf == NULL || ettf == NULL)
-		return false;
-
-	dictionary *ini;
-
-	char inifile[PATH_MAX], appdir[PATH_MAX];
-
-	getcwd(appdir, PATH_MAX);
-	STRCAT_S(appdir, "/");
-	STRCPY_S(inifile, appdir);
-	STRCAT_S(inifile, "fontcfg.ini");
-
-	ini = iniparser_load(inifile);
-	if (!ini) {
-		dbg_printf(d, "Creating ini");
-		/*
-		   ini = dictionary_new(0);
-		   iniparser_setstr(ini, "cfont:antialias", "1");
-		   iniparser_setstr(ini, "efont:antialias", "1");
-		   iniparser_setstr(ini, "cfont:cleartype", "1");
-		   iniparser_setstr(ini, "efont:cleartype", "1");
-		   iniparser_setstr(ini, "cfont:embolden", "0");
-		   iniparser_setstr(ini, "efont:embolden", "0");
-		 */
-		FILE *fp;
-
-		fp = fopen(inifile, "w");
-		if (fp == NULL) {
-			return false;
-		}
-		/*
-		   iniparser_dump_ini(ini, fp);
-		 */
-		fprintf(fp, "[cfont]\r\n");
-		fprintf(fp, "antialias=1;\r\n");
-		fprintf(fp, "cleartype=1;\r\n");
-		fprintf(fp, "embolden=0;\r\n");
-		fprintf(fp, "[efont]\r\n");
-		fprintf(fp, "antialias=1;\r\n");
-		fprintf(fp, "cleartype=1;\r\n");
-		fprintf(fp, "embolden=0;\r\n");
-		fclose(fp);
-		if (load_ttf_config() == false) {
-			return false;
-		}
-	} else {
-		bool res;
-
-		res = iniparser_getboolean(ini, "cfont:antialias", 1);
-		dbg_printf(d, "iniparser_getboolean returns %d", res);
-		ttf_set_anti_alias(cttf, res);
-		res = iniparser_getboolean(ini, "efont:antialias", 1);
-		dbg_printf(d, "iniparser_getboolean returns %d", res);
-		ttf_set_anti_alias(ettf, res);
-		res = iniparser_getboolean(ini, "cfont:cleartype", 1);
-		dbg_printf(d, "iniparser_getboolean returns %d", res);
-		ttf_set_cleartype(cttf, res);
-		res = iniparser_getboolean(ini, "efont:cleartype", 1);
-		dbg_printf(d, "iniparser_getboolean returns %d", res);
-		ttf_set_cleartype(ettf, res);
-		res = iniparser_getboolean(ini, "cfont:embolden", 0);
-		dbg_printf(d, "iniparser_getboolean returns %d", res);
-		ttf_set_embolden(cttf, res);
-		res = iniparser_getboolean(ini, "efont:embolden", 0);
-		dbg_printf(d, "iniparser_getboolean returns %d", res);
-		ttf_set_embolden(ettf, res);
-		iniparser_freedict(ini);
-	}
+	ttf_set_anti_alias(cttf, config.cfont_antialias);
+	ttf_set_anti_alias(ettf, config.efont_antialias);
+	ttf_set_cleartype(cttf, config.cfont_cleartype);
+	ttf_set_cleartype(ettf, config.efont_cleartype);
+	ttf_set_embolden(cttf, config.cfont_embolden);
+	ttf_set_embolden(ettf, config.efont_embolden);
 
 	return true;
 }

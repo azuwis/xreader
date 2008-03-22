@@ -234,26 +234,50 @@ void iniparser_dump_ini(dictionary * d, FILE * f)
 		for (i = 0; i < d->size; i++) {
 			if (d->key[i] == NULL)
 				continue;
-			fprintf(f, "%s = %s\n", d->key[i], d->val[i]);
+			fprintf(f, "%s = %s\r\n", d->key[i], d->val[i]);
 		}
 		return;
 	}
+	else {
+		// sort section name
+		for (i = 0; i < d->size; i++) {
+			if (d->key[i] == NULL)
+				continue;
+			for (j=d->size-1; j>=i; j--) {
+				if (d->key[j] == NULL)
+					continue;
+				if (strcmp(d->key[i], d->key[j]) > 0) {
+					char *t, *tval;
+					t = d->key[i];
+					d->key[i] = d->key[j];
+					d->key[j] = t;
+					tval = d->val[i];
+					d->val[i] = d->val[j];
+					d->val[j] = tval;
+				}
+			}
+		}
+	}
+	// and sort key name in section
 	for (i = 0; i < nsec; i++) {
 		secname = iniparser_getsecname(d, i);
 		seclen = (int) strlen(secname);
-		fprintf(f, "\n[%s]\n", secname);
 		sprintf(keym, "%s:", secname);
+		if (i == 0)
+			fprintf(f, "[%s]\r\n", secname);
+		else
+			fprintf(f, "\r\n[%s]\r\n", secname);
 		for (j = 0; j < d->size; j++) {
 			if (d->key[j] == NULL)
 				continue;
 			if (!strncmp(d->key[j], keym, seclen + 1)) {
 				fprintf(f,
-						"%-30s = %s\n",
+						"%s=%s\r\n",
 						d->key[j] + seclen + 1, d->val[j] ? d->val[j] : "");
 			}
 		}
 	}
-	fprintf(f, "\n");
+	fprintf(f, "\r\n");
 	return;
 }
 
@@ -320,6 +344,16 @@ int iniparser_getint(dictionary * d, const char *key, int notfound)
 	if (str == INI_INVALID_KEY)
 		return notfound;
 	return (int) strtol(str, NULL, 0);
+}
+
+unsigned long iniparser_getunsigned(dictionary * d, const char *key, unsigned long notfound)
+{
+	char *str;
+
+	str = iniparser_getstring(d, key, INI_INVALID_KEY);
+	if (str == INI_INVALID_KEY)
+		return notfound;
+	return strtoul(str, NULL, 0);
 }
 
 /*-------------------------------------------------------------------------*/
