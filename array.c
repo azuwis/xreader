@@ -68,7 +68,8 @@ size_t array_add_element(Array * arr, size_t pos, Element * elem)
 		while (arr->capable <= arr->size)
 			arr->capable += INCREMENT_CAPABLE;
 		arr->elem =
-			(Element *) realloc(arr->elem, arr->capable * sizeof(Element));
+			(Element *) realloc_free_when_fail(arr->elem,
+											   arr->capable * sizeof(Element));
 		if (arr->elem == NULL)
 			return 0;
 	}
@@ -118,7 +119,8 @@ size_t array_del_element(Array * arr, size_t pos)
 	if (arr->size < arr->capable / 2 && arr->size >= INITIAL_CAPABLE) {
 		arr->capable = arr->size + INITIAL_CAPABLE;
 		arr->elem =
-			(Element *) realloc(arr->elem, arr->capable * sizeof(Element));
+			(Element *) realloc_free_when_fail(arr->elem,
+											   arr->capable * sizeof(Element));
 		if (arr->elem == NULL)
 			return 0;
 	}

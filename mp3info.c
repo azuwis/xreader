@@ -7,6 +7,7 @@
 #include <pspkernel.h>
 #include <stdlib.h>
 #include <string.h>
+#include "common/utils.h"
 #include "charsets.h"
 #include "mp3info.h"
 
@@ -122,8 +123,9 @@ extern bool mp3info_read(p_mp3info info, int fd)
 						info->frameoff = malloc(sizeof(dword) * 1024);
 					else
 						info->frameoff =
-							realloc(info->frameoff,
-									sizeof(dword) * (info->framecount + 1024));
+							realloc_free_when_fail(info->frameoff,
+												   sizeof(dword) *
+												   (info->framecount + 1024));
 					if (info->frameoff == NULL)
 						info->framecount = -1;
 					else

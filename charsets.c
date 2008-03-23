@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "common/utils.h"
 #include "charsets.h"
 
 /* definitions */
@@ -12305,7 +12306,7 @@ extern void charsets_sjis_conv(const byte * jis, byte ** cjk, dword * newsize)
 		j += charsets_sjis2cjk(jis + i, cjks + j, &p);
 		i += p;
 		if (j >= jlen - 1) {
-			cjks = (byte *) realloc(cjks, jlen + 256);
+			cjks = (byte *) realloc_free_when_fail(cjks, jlen + 256);
 			if (cjks == NULL) {
 				*cjk = NULL;
 				*newsize = 0;

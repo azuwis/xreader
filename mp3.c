@@ -921,8 +921,10 @@ extern void mp3_list_add_dir(const char *comppath)
 		if ((mp3_nfiles % 256) == 0) {
 			if (mp3_nfiles > 0)
 				mp3_files =
-					(char (*)[2][PATH_MAX]) realloc(mp3_files,
-													PATH_MAX * 2 * (mp3_nfiles +
+					(char (*)[2][PATH_MAX]) realloc_free_when_fail(mp3_files,
+																   PATH_MAX *
+																   2 *
+																   (mp3_nfiles +
 																	256));
 			else
 				mp3_files =
@@ -996,8 +998,10 @@ extern bool mp3_list_load(const char *filename)
 				mp3_files = (char (*)[2][PATH_MAX]) malloc(PATH_MAX * 2 * 256);
 			else
 				mp3_files =
-					(char (*)[2][PATH_MAX]) realloc(mp3_files,
-													PATH_MAX * 2 * (mp3_nfiles +
+					(char (*)[2][PATH_MAX]) realloc_free_when_fail(mp3_files,
+																   PATH_MAX *
+																   2 *
+																   (mp3_nfiles +
 																	256));
 			if (mp3_files == NULL) {
 				mp3_nfiles = 0;
@@ -1045,8 +1049,9 @@ extern bool mp3_list_add(const char *filename, const char *longname)
 	if (mp3_nfiles % 256 == 0) {
 		if (mp3_nfiles > 0)
 			mp3_files =
-				(char (*)[2][PATH_MAX]) realloc(mp3_files,
-												PATH_MAX * 2 * (mp3_nfiles +
+				(char (*)[2][PATH_MAX]) realloc_free_when_fail(mp3_files,
+															   PATH_MAX * 2 *
+															   (mp3_nfiles +
 																256));
 		else
 			mp3_files = (char (*)[2][PATH_MAX]) malloc(PATH_MAX * 2 * 256);
@@ -1184,8 +1189,10 @@ extern void mp3_directplay(const char *filename, const char *longname)
 		if (mp3_nfiles % 256 == 0) {
 			if (mp3_nfiles > 0)
 				mp3_files =
-					(char (*)[2][PATH_MAX]) realloc(mp3_files,
-													PATH_MAX * 2 * (mp3_nfiles +
+					(char (*)[2][PATH_MAX]) realloc_free_when_fail(mp3_files,
+																   PATH_MAX *
+																   2 *
+																   (mp3_nfiles +
 																	256));
 			else
 				mp3_files = (char (*)[2][PATH_MAX]) malloc(PATH_MAX * 2 * 256);

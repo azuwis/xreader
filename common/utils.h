@@ -12,5 +12,6 @@ extern const char * utils_fileext(const char * filename);
 extern void utils_del_file(const char * file);
 extern void utils_del_dir(const char * dir);
 bool utils_is_file_exists(const char *filename);
+void *realloc_free_when_fail(void *ptr, size_t size);
 
 #endif

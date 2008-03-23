@@ -290,7 +290,7 @@ static size_t text_paragraph_join_alloc_memory(char **txtbuf, size_t txtlen)
 				/*
 				   // ²åÈë¶ÎÂä¿ªÊ¼¡®¡¡¡¯×Ö·û
 				   size_t pos = p - dst;
-				   dst = realloc(dst, txtlen+strlen("    "));
+				   dst = realloc_free_when_fail(dst, txtlen+strlen("    "));
 				   p = pos + dst;
 				   memcpy((char*)p, "    ", strlen("    "));
 				   p += strlen("    ");

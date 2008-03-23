@@ -45,7 +45,9 @@ static int dbg_add_handle(DBG * d, void (*init) (void *), dbg_func writer,
 		return -1;
 	if (d->otsize) {
 		d->ot =
-			(dbg_handle *) realloc(d->ot, sizeof(dbg_handle) * (d->otsize + 1));
+			(dbg_handle *) realloc_free_when_fail(d->ot,
+												  sizeof(dbg_handle) *
+												  (d->otsize + 1));
 	} else {
 		d->ot = (dbg_handle *) malloc(sizeof(dbg_handle));
 	}
@@ -358,7 +360,7 @@ int dbg_printf(DBG * d, const char *fmt, ...)
 	buf[size + timelen + 2 - 1] = '\0';
 	while (strlen(buf) == size - 1) {
 		size *= 2 + 16;
-		buf = (char *) realloc(buf, size + timelen + 2);
+		buf = (char *) realloc_free_when_fail(buf, size + timelen + 2);
 		if (!buf)
 			return 0;
 		strcpy_s(buf, size + timelen + 2, timestr);
@@ -394,7 +396,7 @@ int dbg_printf_raw(DBG * d, const char *fmt, ...)
 	buf[size - 1] = '\0';
 	while (strlen(buf) == size - 1) {
 		size *= 2 + 16;
-		buf = (char *) realloc(buf, size);
+		buf = (char *) realloc_free_when_fail(buf, size);
 		l = vsnprintf(buf, size, fmt, ap);
 		buf[size - 1] = '\0';
 	}

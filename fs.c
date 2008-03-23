@@ -244,9 +244,11 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 						(p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
 				else
 					*mitem =
-						(p_win_menuitem) realloc(*mitem,
-												 sizeof(t_win_menuitem) *
-												 (cur_count + 256));
+						(p_win_menuitem) realloc_free_when_fail(*mitem,
+																sizeof
+																(t_win_menuitem)
+																* (cur_count +
+																   256));
 				if (*mitem == NULL) {
 					scene_power_save(true);
 					return 0;
@@ -278,9 +280,11 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 						(p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
 				else
 					*mitem =
-						(p_win_menuitem) realloc(*mitem,
-												 sizeof(t_win_menuitem) *
-												 (cur_count + 256));
+						(p_win_menuitem) realloc_free_when_fail(*mitem,
+																sizeof
+																(t_win_menuitem)
+																* (cur_count +
+																   256));
 				if (*mitem == NULL) {
 					scene_power_save(true);
 					return 0;
@@ -371,9 +375,10 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 				*mitem = (p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
 			else
 				*mitem =
-					(p_win_menuitem) realloc(*mitem,
-											 sizeof(t_win_menuitem) *
-											 (cur_count + 256));
+					(p_win_menuitem) realloc_free_when_fail(*mitem,
+															sizeof
+															(t_win_menuitem) *
+															(cur_count + 256));
 			if (*mitem == NULL) {
 				free((void *) info);
 				scene_power_save(true);
@@ -488,9 +493,9 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 			continue;
 		if (cur_count % 256 == 0) {
 			*mitem =
-				(p_win_menuitem) realloc(*mitem,
-										 sizeof(t_win_menuitem) * (cur_count +
-																   256));
+				(p_win_menuitem) realloc_free_when_fail(*mitem,
+														sizeof(t_win_menuitem) *
+														(cur_count + 256));
 			if (*mitem == NULL) {
 				unzClose(unzf);
 				scene_power_save(true);
@@ -571,9 +576,9 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 			continue;
 		if (cur_count % 256 == 0) {
 			*mitem =
-				(p_win_menuitem) realloc(*mitem,
-										 sizeof(t_win_menuitem) * (cur_count +
-																   256));
+				(p_win_menuitem) realloc_free_when_fail(*mitem,
+														sizeof(t_win_menuitem) *
+														(cur_count + 256));
 			if (*mitem == NULL) {
 				RARCloseArchive(hrar);
 				scene_power_save(true);
@@ -642,9 +647,9 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 
 	if (cur_count % 256 == 0) {
 		*mitem =
-			(p_win_menuitem) realloc(*mitem,
-									 sizeof(t_win_menuitem) * (cur_count +
-															   256));
+			(p_win_menuitem) realloc_free_when_fail(*mitem,
+													sizeof(t_win_menuitem) *
+													(cur_count + 256));
 		if (*mitem == NULL) {
 			((p_fs_chm_enum) context)->cur_count = 0;
 			return CHM_ENUMERATOR_FAILURE;

@@ -20,8 +20,10 @@ __inline bool lyric_add(p_lyric l, dword sec, dword fra, const char *line,
 		l->lines = (p_lyricline) malloc(sizeof(t_lyricline) * 64);
 	} else if (l->count % 64 == 0) {
 		l->lines =
-			(p_lyricline) realloc(l->lines,
-								  sizeof(t_lyricline) * (64 + l->count));
+			(p_lyricline) realloc_free_when_fail(l->lines,
+												 sizeof(t_lyricline) * (64 +
+																		l->
+																		count));
 	}
 	if (l->lines == NULL) {
 		l->count = 0;
@@ -132,13 +134,15 @@ extern bool lyric_open(p_lyric l, const char *filename)
 								iex = (dword *) malloc(sizeof(dword) * 16);
 							} else if (tc % 16 == 0) {
 								isec =
-									(dword *) realloc(isec,
-													  sizeof(dword) * (tc +
-																	   16));
+									(dword *) realloc_free_when_fail(isec,
+																	 sizeof
+																	 (dword) *
+																	 (tc + 16));
 								iex =
-									(dword *) realloc(iex,
-													  sizeof(dword) * (tc +
-																	   16));
+									(dword *) realloc_free_when_fail(iex,
+																	 sizeof
+																	 (dword) *
+																	 (tc + 16));
 							}
 							if (isec == NULL || iex == NULL) {
 								if (isec != NULL)

@@ -811,7 +811,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->scrollbar =
 		iniparser_getboolean(dict, "Text:scrollbar", conf->scrollbar);
 	conf->scale = iniparser_getint(dict, "Image:scale", conf->scale);
-	conf->rotate = stringToRotate(iniparser_getstring(dict, "Image:rotate", rotateToString(buf, sizeof(buf), conf->rotate)));
+	conf->rotate =
+		stringToRotate(iniparser_getstring
+					   (dict, "Image:rotate",
+						rotateToString(buf, sizeof(buf), conf->rotate)));
 	int i;
 
 	for (i = 0; i < 20; ++i) {
@@ -827,7 +830,8 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->confver = iniparser_getint(dict, "Global:confver", conf->confver);
 	conf->bicubic = iniparser_getboolean(dict, "Image:bicubic", conf->bicubic);
 	conf->wordspace = iniparser_getint(dict, "Text:wordspace", conf->wordspace);
-	conf->borderspace = iniparser_getunsigned(dict, "Text:borderspace", conf->borderspace);
+	conf->borderspace =
+		iniparser_getunsigned(dict, "Text:borderspace", conf->borderspace);
 	STRCPY_S(conf->lastfile,
 			 iniparser_getstring(dict, "Global:lastfile", conf->lastfile));
 	conf->mp3encode =
@@ -892,7 +896,8 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->autopage = iniparser_getint(dict, "Text:autopage", conf->autopage);
 	conf->prev_autopage =
 		iniparser_getint(dict, "Text:prev_autopage", conf->prev_autopage);
-	conf->autopagetype = iniparser_getint(dict, "Text:autopagetype", conf->autopagetype);
+	conf->autopagetype =
+		iniparser_getint(dict, "Text:autopagetype", conf->autopagetype);
 	conf->autolinedelay =
 		iniparser_getint(dict, "Text:autolinedelay", conf->autolinedelay);
 	conf->thumb =
