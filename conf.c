@@ -661,7 +661,7 @@ static t_conf_infobar stringToInfobar(char *str)
 	if (stricmp(str, "info") == 0) {
 		return conf_infobar_info;
 	}
-	if (stricmp(str, "lryic") == 0) {
+	if (stricmp(str, "lyric") == 0) {
 		return conf_infobar_lyric;
 	}
 
