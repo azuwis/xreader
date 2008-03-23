@@ -240,6 +240,7 @@ static void conf_default(p_conf conf)
 	conf->img_no_repeat = false;
 
 	conf->hide_flash = true;
+	conf->tabstop = 4;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -982,6 +983,8 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 
 	conf->hide_flash =
 		iniparser_getboolean(dict, "Global:hide_flash", conf->hide_flash);
+	conf->tabstop=
+		iniparser_getunsigned(dict, "Text:tabstop", conf->tabstop);
 
 	dictionary_del(dict);
 
@@ -1141,7 +1144,7 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Text:autolinedelay",
 						intToString(buf, sizeof(buf), conf->autolinedelay));
 	iniparser_setstring(dict, "Image:thumb",
-						booleanToString(buf, sizeof(buf), conf->thumb));
+						thumbToString(buf, sizeof(buf), conf->thumb));
 	iniparser_setstring(dict, "Text:bookfontsize",
 						intToString(buf, sizeof(buf), conf->bookfontsize));
 	iniparser_setstring(dict, "Text:enable_analog",
@@ -1222,6 +1225,9 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "Global:hide_flash",
 						booleanToString(buf, sizeof(buf), conf->hide_flash));
+
+	iniparser_setstring(dict, "Text:tabstop",
+						dwordToString(buf, sizeof(buf), conf->tabstop));
 
 	iniparser_dump_ini(dict, fp);
 
