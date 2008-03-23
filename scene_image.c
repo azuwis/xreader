@@ -146,10 +146,10 @@ int scene_reloadimage(dword selidx)
 	scene_power_save(false);
 	reset_image_ptr();
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
-		STRCPY_S(filename, filelist[selidx].compname);
+		STRCPY_S(filename, filelist[selidx].compname->ptr);
 	else {
 		STRCPY_S(filename, config.shortpath);
-		STRCAT_S(filename, filelist[selidx].shortname);
+		STRCAT_S(filename, filelist[selidx].shortname->ptr);
 	}
 	int result = open_image(selidx);
 
@@ -160,7 +160,7 @@ int scene_reloadimage(dword selidx)
 	if (config.imgbrightness != 100) {
 		recalc_brightness();
 	}
-	STRCPY_S(config.lastfile, filelist[selidx].compname);
+	STRCPY_S(config.lastfile, filelist[selidx].compname->ptr);
 	oldangle = 0;
 	scene_power_save(true);
 	return 0;

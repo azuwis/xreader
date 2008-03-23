@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
+#include "common/utils.h"
 #include "display.h"
 #include "ctrl.h"
 #include "win.h"
@@ -332,4 +333,40 @@ extern void win_msg(const char *prompt, pixel fontcolor, pixel bordercolor,
 					  saveimage);
 		free((void *) saveimage);
 	}
+}
+
+extern p_win_menuitem win_realloc_items(p_win_menuitem item, int orgsize,
+										int newsize)
+{
+	item = (p_win_menuitem) realloc_free_when_fail(item, sizeof(t_win_menuitem)
+												   * newsize);
+	if (item == NULL)
+		return NULL;
+
+	int i;
+
+	for (i = orgsize; i < newsize; ++i) {
+		item[i].compname = buffer_init();
+		item[i].shortname = buffer_init();
+	}
+
+	return item;
+}
+
+extern void win_item_destroy(p_win_menuitem * item, dword * size)
+{
+	if (item == NULL || *item == NULL || size == 0) {
+		return;
+	}
+
+	int i;
+
+	for (i = 0; i < *size; ++i) {
+		buffer_free((*item)[i].compname);
+		buffer_free((*item)[i].shortname);
+	}
+
+	free(*item);
+	*size = 0;
+	*item = NULL;
 }

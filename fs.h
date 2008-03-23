@@ -61,6 +61,8 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 							dword icolor, dword selicolor, dword selrcolor,
 							dword selbcolor);
+p_win_menuitem fs_empty_dir(dword * filecount, dword icolor,
+							dword selicolor, dword selrcolor, dword selbcolor);
 extern t_fs_filetype fs_file_get_type(const char *filename);
 extern bool fs_is_image(t_fs_filetype ft);
 extern bool fs_is_txtbook(t_fs_filetype ft);

@@ -180,7 +180,7 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 											  1 ? "UCS " :
 											  conf_get_encodename
 											  (config.encode)),
-				  filelist[selidx].compname, offset, autopageinfo);
+				  filelist[selidx].compname->ptr, offset, autopageinfo);
 	}
 	int wordspace = 0;
 
@@ -294,7 +294,7 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 											  1 ? "UCS " :
 											  conf_get_encodename
 											  (config.encode)),
-				  filelist[selidx].compname, offset, autopageinfo);
+				  filelist[selidx].compname->ptr, offset, autopageinfo);
 	}
 	int wordspace = (DISP_FONTSIZE == 10 ? 1 : 0);
 
@@ -514,7 +514,7 @@ PBookViewData new_book_view(PBookViewData p)
 int scene_book_reload(PBookViewData pView, dword selidx)
 {
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
-		STRCPY_S(pView->filename, filelist[selidx].compname);
+		STRCPY_S(pView->filename, filelist[selidx].compname->ptr);
 		STRCPY_S(pView->bookmarkname, config.shortpath);
 		STRCPY_S(pView->archname, config.shortpath);
 		if (config.shortpath[strlen(config.shortpath) - 1] != '/' &&
@@ -523,7 +523,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		STRCAT_S(pView->bookmarkname, pView->filename);
 	} else {
 		STRCPY_S(pView->filename, config.shortpath);
-		STRCAT_S(pView->filename, filelist[selidx].shortname);
+		STRCAT_S(pView->filename, filelist[selidx].shortname->ptr);
 		STRCPY_S(pView->archname, pView->filename);
 		STRCPY_S(pView->bookmarkname, pView->filename);
 	}
@@ -573,7 +573,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
 
 	pView->trow = &pView->tr[utils_dword2string(fs->row_count, pView->tr, 7)];
-	STRCPY_S(config.lastfile, filelist[selidx].compname);
+	STRCPY_S(config.lastfile, filelist[selidx].compname->ptr);
 	scene_power_save(true);
 	return 0;
 }

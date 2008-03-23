@@ -202,8 +202,8 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex,
 void scene_mp3_list()
 {
 #ifdef ENABLE_MUSIC
-	p_win_menuitem item =
-		(p_win_menuitem) calloc(mp3_list_count(), sizeof(t_win_menuitem));
+	p_win_menuitem item = win_realloc_items(NULL, 0, mp3_list_count());
+
 	if (item == NULL)
 		return;
 	dword i;

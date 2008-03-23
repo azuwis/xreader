@@ -35,11 +35,15 @@ size_t
 strncpy_s(char *strDest,
 		  size_t numberOfElements, const char *strSource, size_t count)
 {
-	if (!strDest || !strSource || numberOfElements == 0)
+	if (!strDest || !strSource || numberOfElements == 0) {
+#ifdef _DEBUG
+		dbg_printf(d, "%s: invalid argument.", __func__);
+#endif
 		return 0;
+	}
 #ifdef _DEBUG
 	if (numberOfElements == 4) {
-		dbg_printf(d, "strncpy_s: strDest可能退化为指针: %s", strSource);
+		dbg_printf(d, "%s: strDest may be a pointer: %s", __func__, strSource);
 	}
 #endif
 	strncpy(strDest, strSource, numberOfElements < count ?
@@ -59,12 +63,15 @@ size_t strncat_s(char *strDest,
 {
 	size_t rest;
 
-	if (!strDest || !strSource || numberOfElements == 0)
+	if (!strDest || !strSource || numberOfElements == 0) {
+#ifdef _DEBUG
+		dbg_printf(d, "%s: invalid argument.", __func__);
+#endif
 		return 0;
-
+	}
 #ifdef _DEBUG
 	if (numberOfElements == 4) {
-		dbg_printf(d, "strncat_s: strDest可能退化为指针: %s", strSource);
+		dbg_printf(d, "%s: strDest may be a pointer: %s", __func__, strSource);
 	}
 #endif
 
@@ -82,12 +89,15 @@ strcat_s(char *strDestination, size_t numberOfElements, const char *strSource)
 
 int snprintf_s(char *buffer, size_t sizeOfBuffer, const char *format, ...)
 {
-	if (!buffer || sizeOfBuffer == 0)
+	if (!buffer || sizeOfBuffer == 0) {
+#ifdef _DEBUG
+		dbg_printf(d, "%s: invalid argument.", __func__);
+#endif
 		return -1;
-
+	}
 #ifdef _DEBUG
 	if (sizeOfBuffer == 4) {
-		dbg_printf(d, "snprintf_s: strDest可能退化为指针: %s", format);
+		dbg_printf(d, "%s: strDest may be a pointer: %s", __func__, format);
 	}
 #endif
 
@@ -129,12 +139,15 @@ size_t mbcsncpy_s(unsigned char *dst, size_t nBytes, const unsigned char *src,
 {
 	unsigned char *start = dst;
 
-	if (!dst || !src || nBytes == 0 || n == 0)
+	if (!dst || !src || nBytes == 0 || n == 0) {
+#ifdef _DEBUG
+		dbg_printf(d, "%s: invalid argument.", __func__);
+#endif
 		return 0;
-
+	}
 #ifdef _DEBUG
 	if (nBytes == 4) {
-		dbg_printf(d, "mbcsncpy_s: dst可能退化为指针: %s", src);
+		dbg_printf(d, "%s: dst may be a pointer: %s", __func__, src);
 	}
 #endif
 

@@ -131,6 +131,7 @@ t_fs_specfiletype_entry ft_spec_table[] = {
 };
 
 int MAX_ITEM_NAME_LEN = 40;
+int DIR_INC_SIZE = 256;
 
 void filename_to_itemname(p_win_menuitem item, int cur_count,
 						  const char *filename)
@@ -161,12 +162,12 @@ extern dword fs_list_device(const char *dir, const char *sdir,
 	p_win_menuitem item = NULL;
 
 	cur_count = 3;
-	*mitem = (p_win_menuitem) malloc(sizeof(t_win_menuitem) * 3);
+	*mitem = win_realloc_items(NULL, 0, 3);
 	if (*mitem == NULL)
 		return 0;
 	item = *mitem;
 	STRCPY_S(item[0].name, "<MemoryStick>");
-	STRCPY_S(item[0].compname, "ms0:");
+	buffer_copy_string(item[0].compname, "ms0:");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 13;
 	item[0].selected = false;
@@ -175,7 +176,7 @@ extern dword fs_list_device(const char *dir, const char *sdir,
 	item[0].selrcolor = selrcolor;
 	item[0].selbcolor = selbcolor;
 	STRCPY_S(item[1].name, "<NandFlash 0>");
-	STRCPY_S(item[1].compname, "flash0:");
+	buffer_copy_string(item[1].compname, "flash0:");
 	item[1].data = (void *) fs_filetype_dir;
 	item[1].width = 13;
 	item[1].selected = false;
@@ -184,7 +185,7 @@ extern dword fs_list_device(const char *dir, const char *sdir,
 	item[1].selrcolor = selrcolor;
 	item[1].selbcolor = selbcolor;
 	STRCPY_S(item[2].name, "<NandFlash 1>");
-	STRCPY_S(item[2].compname, "flash1:");
+	buffer_copy_string(item[2].compname, "flash1:");
 	item[2].data = (void *) fs_filetype_dir;
 	item[2].width = 13;
 	item[2].selected = false;
@@ -200,6 +201,10 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 								 dword selicolor, dword selrcolor,
 								 dword selbcolor)
 {
+	extern dword filecount;
+
+	win_item_destroy(mitem, &filecount);
+
 	scene_power_save(false);
 	strcpy_s((char *) sdir, 256, dir);
 	SceIoDirent info;
@@ -213,16 +218,16 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 	}
 //  if(stricmp(dir, "ms0:/") == 0)
 	{
-		cur_count = 1;
-		*mitem = (p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
+		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 		if (*mitem == NULL) {
 			sceIoDclose(fd);
 			scene_power_save(true);
 			return 0;
 		}
+		cur_count = 1;
 		item = *mitem;
 		STRCPY_S(item[0].name, "<..>");
-		STRCPY_S(item[0].compname, "..");
+		buffer_copy_string(item[0].compname, "..");
 		item[0].data = (void *) fs_filetype_dir;
 		item[0].width = 4;
 		item[0].selected = false;
@@ -238,17 +243,13 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 				continue;
 			if (strcmp(info.d_name, "..") == 0)
 				continue;
-			if (cur_count % 256 == 0) {
+			if (cur_count % DIR_INC_SIZE == 0) {
 				if (cur_count == 0)
-					*mitem =
-						(p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
+					*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 				else
 					*mitem =
-						(p_win_menuitem) realloc_free_when_fail(*mitem,
-																sizeof
-																(t_win_menuitem)
-																* (cur_count +
-																   256));
+						win_realloc_items(*mitem, cur_count,
+										  cur_count + DIR_INC_SIZE);
 				if (*mitem == NULL) {
 					scene_power_save(true);
 					return 0;
@@ -256,7 +257,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 				item = *mitem;
 			}
 			item[cur_count].data = (void *) fs_filetype_dir;
-			STRCPY_S(item[cur_count].compname, info.d_name);
+			buffer_copy_string(item[cur_count].compname, info.d_name);
 			item[cur_count].name[0] = '<';
 			if ((item[cur_count].width =
 				 strlen(info.d_name) + 2) > MAX_ITEM_NAME_LEN) {
@@ -274,17 +275,15 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		} else {
 			t_fs_filetype ft = fs_file_get_type(info.d_name);
 
-			if (cur_count % 256 == 0) {
+			if (cur_count % DIR_INC_SIZE == 0) {
 				if (cur_count == 0)
 					*mitem =
-						(p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
+						win_realloc_items(NULL, cur_count,
+										  cur_count + DIR_INC_SIZE);
 				else
 					*mitem =
-						(p_win_menuitem) realloc_free_when_fail(*mitem,
-																sizeof
-																(t_win_menuitem)
-																* (cur_count +
-																   256));
+						win_realloc_items(*mitem, cur_count,
+										  cur_count + DIR_INC_SIZE);
 				if (*mitem == NULL) {
 					scene_power_save(true);
 					return 0;
@@ -292,8 +291,8 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 				item = *mitem;
 			}
 			item[cur_count].data = (void *) ft;
-			STRCPY_S(item[cur_count].compname, info.d_name);
-			STRCPY_S(item[cur_count].shortname, info.d_name);
+			buffer_copy_string(item[cur_count].compname, info.d_name);
+			buffer_copy_string(item[cur_count].shortname, info.d_name);
 			filename_to_itemname(item, cur_count, info.d_name);
 		}
 		item[cur_count].icolor = icolor;
@@ -328,37 +327,33 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 							dword icolor, dword selicolor, dword selrcolor,
 							dword selbcolor, bool showhidden, bool showunknown)
 {
+	extern dword filecount;
+
+	win_item_destroy(mitem, &filecount);
+
 	scene_power_save(false);
 	p_win_menuitem item = NULL;
 	p_fat_info info;
 
-	if (*mitem != NULL) {
-		free((void *) *mitem);
-		*mitem = NULL;
-	}
 	dword count = fat_readdir(dir, sdir, &info);
 
 	if (count == INVALID) {
 		scene_power_save(true);
 		return 0;
 	}
-	if (*mitem != NULL) {
-		free((void *) *mitem);
-		*mitem = NULL;
-	}
 	dword i, cur_count = 0;
 
 	if (stricmp(dir, "ms0:/") == 0) {
-		cur_count = 1;
-		*mitem = (p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
+		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 		if (*mitem == NULL) {
 			free((void *) info);
 			scene_power_save(true);
 			return 0;
 		}
+		cur_count = 1;
 		item = *mitem;
 		STRCPY_S(item[0].name, "<..>");
-		STRCPY_S(item[0].compname, "..");
+		buffer_copy_string(item[0].compname, "..");
 		item[0].data = (void *) fs_filetype_dir;
 		item[0].width = 4;
 		item[0].selected = false;
@@ -370,15 +365,15 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 	for (i = 0; i < count; i++) {
 		if (!showhidden && (info[i].attr & FAT_FILEATTR_HIDDEN) > 0)
 			continue;
-		if (cur_count % 256 == 0) {
+		if (cur_count % DIR_INC_SIZE == 0) {
 			if (cur_count == 0)
-				*mitem = (p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
+				*mitem =
+					win_realloc_items(NULL, cur_count,
+									  cur_count + DIR_INC_SIZE);
 			else
 				*mitem =
-					(p_win_menuitem) realloc_free_when_fail(*mitem,
-															sizeof
-															(t_win_menuitem) *
-															(cur_count + 256));
+					win_realloc_items(*mitem, cur_count,
+									  cur_count + DIR_INC_SIZE);
 			if (*mitem == NULL) {
 				free((void *) info);
 				scene_power_save(true);
@@ -388,8 +383,8 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 		}
 		if (info[i].attr & FAT_FILEATTR_DIRECTORY) {
 			item[cur_count].data = (void *) fs_filetype_dir;
-			STRCPY_S(item[cur_count].shortname, info[i].filename);
-			STRCPY_S(item[cur_count].compname, info[i].longname);
+			buffer_copy_string(item[cur_count].shortname, info[i].filename);
+			buffer_copy_string(item[cur_count].compname, info[i].longname);
 			item[cur_count].name[0] = '<';
 			if ((item[cur_count].width =
 				 strlen(info[i].longname) + 2) > MAX_ITEM_NAME_LEN) {
@@ -417,8 +412,8 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 			if (!showunknown && ft == fs_filetype_unknown)
 				continue;
 			item[cur_count].data = (void *) ft;
-			STRCPY_S(item[cur_count].shortname, info[i].filename);
-			STRCPY_S(item[cur_count].compname, info[i].longname);
+			buffer_copy_string(item[cur_count].shortname, info[i].filename);
+			buffer_copy_string(item[cur_count].compname, info[i].longname);
 			filename_to_itemname(item, cur_count, info[i].longname);
 		}
 		item[cur_count].icolor = icolor;
@@ -442,21 +437,21 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 							dword icolor, dword selicolor, dword selrcolor,
 							dword selbcolor)
 {
+	extern dword filecount;
+
+	win_item_destroy(mitem, &filecount);
+
 	scene_power_save(false);
 	unzFile unzf = unzOpen(zipfile);
 	p_win_menuitem item = NULL;
 
-	if (*mitem != NULL) {
-		free((void *) *mitem);
-		*mitem = NULL;
-	}
 	if (unzf == NULL) {
 		scene_power_save(true);
 		return 0;
 	}
 	dword cur_count = 1;
 
-	*mitem = (p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
+	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 	if (*mitem == NULL) {
 		unzClose(unzf);
 		scene_power_save(true);
@@ -464,7 +459,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 	}
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
-	STRCPY_S(item[0].compname, "..");
+	buffer_copy_string(item[0].compname, "..");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;
@@ -491,11 +486,15 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 		if (ft == fs_filetype_chm || ft == fs_filetype_zip
 			|| ft == fs_filetype_rar)
 			continue;
-		if (cur_count % 256 == 0) {
-			*mitem =
-				(p_win_menuitem) realloc_free_when_fail(*mitem,
-														sizeof(t_win_menuitem) *
-														(cur_count + 256));
+		if (cur_count % DIR_INC_SIZE == 0) {
+			if (cur_count == 0)
+				*mitem =
+					win_realloc_items(NULL, cur_count,
+									  cur_count + DIR_INC_SIZE);
+			else
+				*mitem =
+					win_realloc_items(*mitem, cur_count,
+									  cur_count + DIR_INC_SIZE);
 			if (*mitem == NULL) {
 				unzClose(unzf);
 				scene_power_save(true);
@@ -504,9 +503,11 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 			item = *mitem;
 		}
 		item[cur_count].data = (void *) ft;
-		STRCPY_S(item[cur_count].compname, fname);
-		SPRINTF_S(item[cur_count].shortname, "%u",
-				  (unsigned int) file_info.uncompressed_size);
+		buffer_copy_string(item[cur_count].compname, fname);
+		char t[20];
+
+		SPRINTF_S(t, "%u", (unsigned int) file_info.uncompressed_size);
+		buffer_copy_string(item[cur_count].shortname, t);
 		filename_to_itemname(item, cur_count, fname);
 		item[cur_count].selected = false;
 		item[cur_count].icolor = icolor;
@@ -524,13 +525,13 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 							dword icolor, dword selicolor, dword selrcolor,
 							dword selbcolor)
 {
+	extern dword filecount;
+
+	win_item_destroy(mitem, &filecount);
+
 	scene_power_save(false);
 	p_win_menuitem item = NULL;
 
-	if (*mitem != NULL) {
-		free((void *) *mitem);
-		*mitem = NULL;
-	}
 	struct RAROpenArchiveData arcdata;
 
 	arcdata.ArcName = (char *) rarfile;
@@ -545,7 +546,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 	}
 	dword cur_count = 1;
 
-	*mitem = (p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
+	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 	if (*mitem == NULL) {
 		RARCloseArchive(hrar);
 		scene_power_save(true);
@@ -553,7 +554,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 	}
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
-	STRCPY_S(item[0].compname, "..");
+	buffer_copy_string(item[0].compname, "..");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;
@@ -574,11 +575,15 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 		if (ft == fs_filetype_chm || ft == fs_filetype_zip
 			|| ft == fs_filetype_rar)
 			continue;
-		if (cur_count % 256 == 0) {
-			*mitem =
-				(p_win_menuitem) realloc_free_when_fail(*mitem,
-														sizeof(t_win_menuitem) *
-														(cur_count + 256));
+		if (cur_count % DIR_INC_SIZE == 0) {
+			if (cur_count == 0)
+				*mitem =
+					win_realloc_items(NULL, cur_count,
+									  cur_count + DIR_INC_SIZE);
+			else
+				*mitem =
+					win_realloc_items(*mitem, cur_count,
+									  cur_count + DIR_INC_SIZE);
 			if (*mitem == NULL) {
 				RARCloseArchive(hrar);
 				scene_power_save(true);
@@ -594,16 +599,18 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 			const byte *uni = (byte *) header.FileNameW;
 
 			charsets_utf32_conv(uni, (byte *) str);
-			strncpy_s(item[cur_count].compname,
-					  NELEMS(item[cur_count].compname), header.FileName, 256);
+			buffer_copy_string_len(item[cur_count].compname, header.FileName,
+								   256);
 			filename_to_itemname(item, cur_count, str);
 		} else {
-			strncpy_s(item[cur_count].compname,
-					  NELEMS(item[cur_count].compname), header.FileName, 256);
+			buffer_copy_string_len(item[cur_count].compname, header.FileName,
+								   256);
 			filename_to_itemname(item, cur_count, header.FileName);
 		}
-		SPRINTF_S(item[cur_count].shortname, "%u",
-				  (unsigned int) header.UnpSize);
+		char t[20];
+
+		SPRINTF_S(t, "%u", (unsigned int) header.UnpSize);
+		buffer_copy_string(item[cur_count].shortname, t);
 		item[cur_count].selected = false;
 		item[cur_count].icolor = icolor;
 		item[cur_count].selicolor = selicolor;
@@ -616,6 +623,29 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 	RARCloseArchive(hrar);
 	scene_power_save(true);
 	return cur_count;
+}
+
+p_win_menuitem fs_empty_dir(dword * filecount, dword icolor,
+							dword selicolor, dword selrcolor, dword selbcolor)
+{
+	p_win_menuitem p;
+
+	p = win_realloc_items(NULL, 0, 1);
+	if (p == NULL) {
+		return NULL;
+	}
+	STRCPY_S(p->name, "<..>");
+	buffer_copy_string(p->compname, "..");
+	p->data = (void *) fs_filetype_dir;
+	p->width = 4;
+	p->selected = false;
+	p->icolor = icolor;
+	p->selicolor = selicolor;
+	p->selrcolor = selrcolor;
+	p->selbcolor = selbcolor;
+
+	*filecount = 1;
+	return p;
 }
 
 typedef struct
@@ -645,11 +675,13 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 
 	dword cur_count = ((p_fs_chm_enum) context)->cur_count;
 
-	if (cur_count % 256 == 0) {
-		*mitem =
-			(p_win_menuitem) realloc_free_when_fail(*mitem,
-													sizeof(t_win_menuitem) *
-													(cur_count + 256));
+	if (cur_count % DIR_INC_SIZE == 0) {
+		if (cur_count == 0)
+			*mitem =
+				win_realloc_items(NULL, cur_count, cur_count + DIR_INC_SIZE);
+		else
+			*mitem =
+				win_realloc_items(*mitem, cur_count, cur_count + DIR_INC_SIZE);
 		if (*mitem == NULL) {
 			((p_fs_chm_enum) context)->cur_count = 0;
 			return CHM_ENUMERATOR_FAILURE;
@@ -659,8 +691,11 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 
 	char fname[PATH_MAX] = "";
 
-	STRCPY_S(item[cur_count].compname, ui->path);
-	SPRINTF_S(item[cur_count].shortname, "%u", (unsigned int) ui->length);
+	buffer_copy_string(item[cur_count].compname, ui->path);
+	char t[20];
+
+	SPRINTF_S(t, "%u", (unsigned int) ui->length);
+	buffer_copy_string(item[cur_count].shortname, t);
 	if (ui->path[0] == '/') {
 		strncpy_s(fname, NELEMS(fname), ui->path + 1, 256);
 	} else {
@@ -684,19 +719,19 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 							dword icolor, dword selicolor, dword selrcolor,
 							dword selbcolor)
 {
+	extern dword filecount;
+
+	win_item_destroy(mitem, &filecount);
+
 	scene_power_save(false);
 	struct chmFile *chm = chm_open(chmfile);
 	p_win_menuitem item = NULL;
 
-	if (*mitem != NULL) {
-		free((void *) *mitem);
-		*mitem = NULL;
-	}
 	if (chm == NULL) {
 		scene_power_save(true);
 		return 0;
 	}
-	*mitem = (p_win_menuitem) malloc(sizeof(t_win_menuitem) * 256);
+	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 	if (*mitem == NULL) {
 		chm_close(chm);
 		scene_power_save(true);
@@ -704,7 +739,7 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 	}
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
-	STRCPY_S(item[0].compname, "..");
+	buffer_copy_string(item[0].compname, "..");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;

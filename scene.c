@@ -519,11 +519,11 @@ static void set_background_image(p_win_menuitem item, dword * index)
 
 	if (where == scene_in_dir) {
 		STRCPY_S(bgfile, config.shortpath);
-		STRCAT_S(bgfile, item[*index].shortname);
+		STRCAT_S(bgfile, item[*index].shortname->ptr);
 		bgarchname[0] = '\0';
 	} else {
 		STRCPY_S(bgarchname, config.shortpath);
-		STRCPY_S(bgfile, item[*index].compname);
+		STRCPY_S(bgfile, item[*index].compname->ptr);
 	}
 
 	dbg_printf(d, "bgarchname: %s", bgarchname);
@@ -567,8 +567,13 @@ static void set_background_image(p_win_menuitem item, dword * index)
 
 int scene_filelist_compare_ext(void *data1, void *data2)
 {
-	const char *fn1 = ((p_win_menuitem) data1)->compname, *fn2 =
-		((p_win_menuitem) data2)->compname;
+	if (((p_win_menuitem) data1)->compname == NULL
+		|| ((p_win_menuitem) data2)->compname == NULL) {
+		dbg_printf(d, "%s: !!!!", __func__);
+		return 0;
+	}
+	const char *fn1 = ((p_win_menuitem) data1)->compname->ptr, *fn2 =
+		((p_win_menuitem) data2)->compname->ptr;
 	int cmp = stricmp(GetFileExt(fn1), GetFileExt(fn2));
 
 	if (cmp)
@@ -578,6 +583,11 @@ int scene_filelist_compare_ext(void *data1, void *data2)
 
 int scene_filelist_compare_name(void *data1, void *data2)
 {
+	if (((p_win_menuitem) data1)->compname == NULL
+		|| ((p_win_menuitem) data2)->compname == NULL) {
+		dbg_printf(d, "%s: !!!!", __func__);
+		return 0;
+	}
 	t_fs_filetype ft1 = (t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
 		(t_fs_filetype) ((p_win_menuitem) data2)->data;
 	if (ft1 == fs_filetype_dir) {
@@ -585,8 +595,8 @@ int scene_filelist_compare_name(void *data1, void *data2)
 			return -1;
 	} else if (ft2 == fs_filetype_dir)
 		return 1;
-	return stricmp(((p_win_menuitem) data1)->compname,
-				   ((p_win_menuitem) data2)->compname);
+	return stricmp(((p_win_menuitem) data1)->compname->ptr,
+				   ((p_win_menuitem) data2)->compname->ptr);
 }
 
 int scene_filelist_compare_size(void *data1, void *data2)
@@ -2333,19 +2343,20 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item,
 			if (*index < 10) {
 				if (location_set
 					(*index, config.path, config.shortpath,
-					 filelist[(dword) item[1].data].compname,
+					 filelist[(dword) item[1].data].compname->ptr,
 					 config.isreading)) {
 					dbg_printf(d, "location_set: %s %s %s %d", config.path,
 							   config.shortpath,
-							   filelist[(dword) item[1].data].compname,
+							   filelist[(dword) item[1].data].compname->ptr,
 							   config.isreading);
 					locaval[*index] = true;
 					STRCPY_S(item[*index].name, config.path);
 					if (config.path[strlen(config.path) - 1] != '/'
-						&& filelist[(dword) item[1].data].compname[0] != '/')
+						&& filelist[(dword) item[1].data].compname->ptr[0] !=
+						'/')
 						STRCAT_S(item[*index].name, "/");
 					STRCAT_S(item[*index].name,
-							 filelist[(dword) item[1].data].compname);
+							 filelist[(dword) item[1].data].compname->ptr);
 					if (strlen(item[*index].name) > 36) {
 						item[*index].name[36] = item[*index].name[37] =
 							item[*index].name[38] = '.';
@@ -2558,13 +2569,13 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item,
 					}
 					quicksort(filelist,
 							  (filecount > 0
-							   && filelist[0].compname[0] == '.') ? 1 : 0,
+							   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
 							  filecount - 1, sizeof(t_win_menuitem),
 							  compare_func[(int) config.arrange]);
 					dword idx = 0;
 
 					while (idx < filecount
-						   && stricmp(filelist[idx].compname,
+						   && stricmp(filelist[idx].compname->ptr,
 									  config.lastfile) != 0)
 						idx++;
 					if (idx >= filecount) {
@@ -3359,7 +3370,7 @@ static void scene_copy_files(int sidx)
 							   compname, (unsigned char *) fname);
 			STRCPY_S(temp, fname);
 		} else
-			STRCPY_S(temp, copylist[sidx].compname);
+			STRCPY_S(temp, copylist[sidx].compname->ptr);
 		if (strrchr(temp, '/') != NULL) {
 			char t[PATH_MAX];
 
@@ -3369,7 +3380,7 @@ static void scene_copy_files(int sidx)
 		if (is_contain_hanzi_str(temp) == true) {
 			remove_hanzi(temp, temp, NELEMS(temp));
 			if (strrchr(temp, '.') == NULL) {
-				STRCAT_S(temp, copylist[sidx].shortname);
+				STRCAT_S(temp, copylist[sidx].shortname->ptr);
 			} else {
 				char basename[PATH_MAX];
 
@@ -3379,22 +3390,22 @@ static void scene_copy_files(int sidx)
 								  "_", strrchr(temp, '.') - temp);
 				}
 				insert_string(temp, NELEMS(temp),
-							  copylist[sidx].shortname,
+							  copylist[sidx].shortname->ptr,
 							  strrchr(temp, '.') - temp);
 			}
 		}
 		STRCAT_S(copydest, temp);
 
 		if ((t_fs_filetype) copylist[sidx].data != fs_filetype_dir)
-			extract_archive_file(archname, copylist[sidx].compname, copydest,
-								 NULL, confirm_overwrite, NULL);
+			extract_archive_file(archname, copylist[sidx].compname->ptr,
+								 copydest, NULL, confirm_overwrite, NULL);
 	} else {
 		char copysrc[PATH_MAX], copydest[PATH_MAX];
 
 		STRCPY_S(copysrc, copydir);
-		STRCAT_S(copysrc, copylist[sidx].shortname);
+		STRCAT_S(copysrc, copylist[sidx].shortname->ptr);
 		STRCPY_S(copydest, config.shortpath);
-		STRCAT_S(copydest, copylist[sidx].shortname);
+		STRCAT_S(copydest, copylist[sidx].shortname->ptr);
 		if ((t_fs_filetype) copylist[sidx].data == fs_filetype_dir)
 			copy_dir(copysrc, copydest, NULL, confirm_overwrite, NULL);
 		else
@@ -3414,11 +3425,11 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 	} else if (key == config.flkey[3] || key == config.flkey2[3]) {
 		ctrl_waitrelease();
 		*index = 0;
-		if (item[*index].compname[0] == '.')
+		if (item[*index].compname->ptr[0] == '.')
 			return win_menu_op_ok;
 		return win_menu_op_redraw;
 	} else if (key == config.flkey[6] || key == config.flkey2[6]) {
-		if (strcmp(item[*index].compname, "..") == 0)
+		if (strcmp(item[*index].compname->ptr, "..") == 0)
 			return win_menu_op_continue;
 		item[*index].selected = !item[*index].selected;
 		if (*index < filecount - 1)
@@ -3453,7 +3464,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 			}
 		if (selcount == 0)
 			selidx = *index;
-		if (selcount <= 1 && strcmp(item[selidx].compname, "..") == 0
+		if (selcount <= 1 && strcmp(item[selidx].compname->ptr, "..") == 0
 			&& cutcount + copycount <= 0)
 			return win_menu_op_continue;
 		if (selcount == 0)
@@ -3473,7 +3484,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 					  config.msgbcolor);
 		disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 3,
 					   COLOR_WHITE, (const byte *) "△  退出操作");
-		if (selcount <= 1 && strcmp(item[selidx].compname, "..") != 0) {
+		if (selcount <= 1 && strcmp(item[selidx].compname->ptr, "..") != 0) {
 			switch ((t_fs_filetype) item[selidx].data) {
 				case fs_filetype_ebm:
 					if (where == scene_in_dir) {
@@ -3588,7 +3599,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 			}
 		}
 		if (where == scene_in_dir) {
-			if (selcount > 1 || strcmp(item[selidx].compname, "..") != 0) {
+			if (selcount > 1 || strcmp(item[selidx].compname->ptr, "..") != 0) {
 				if (strnicmp(config.path, "ms0:/", 5) == 0) {
 					if (config.allowdelete)
 						disp_putstring(240 - DISP_FONTSIZE * 3, 136,
@@ -3611,7 +3622,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 		}
 		if (where == scene_in_zip || where == scene_in_chm
 			|| where == scene_in_rar) {
-			if (selcount > 1 || strcmp(item[selidx].compname, "..") != 0) {
+			if (selcount > 1 || strcmp(item[selidx].compname->ptr, "..") != 0) {
 				if (config.path[0] != 0)
 					disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
 								   COLOR_WHITE, (const byte *) " L    复制");
@@ -3642,7 +3653,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 						for (sidx = 0; sidx < filecount; sidx++)
 							if (item[sidx].selected) {
 								STRCPY_S(fn, config.shortpath);
-								STRCAT_S(fn, item[sidx].shortname);
+								STRCAT_S(fn, item[sidx].shortname->ptr);
 								if ((t_fs_filetype) item[sidx].data ==
 									fs_filetype_dir)
 									utils_del_dir(fn);
@@ -3656,10 +3667,10 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 										idx++;
 									if (idx < filecount)
 										STRCPY_S(config.lastfile,
-												 item[idx].compname);
+												 item[idx].compname->ptr);
 									else if (sidx > 0)
 										STRCPY_S(config.lastfile,
-												 item[idx - 1].compname);
+												 item[idx - 1].compname->ptr);
 								}
 							}
 						retop = win_menu_op_cancel;
@@ -3680,7 +3691,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 									char cfn[PATH_MAX];
 
 									SPRINTF_S(cfn, "%s%s/", config.path,
-											  item[sidx].compname);
+											  item[sidx].compname->ptr);
 									mp3_list_add_dir(cfn);
 									win_msg("已添加歌曲到列表!", COLOR_WHITE,
 											COLOR_WHITE, config.msgbcolor);
@@ -3699,10 +3710,11 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 										mp3longname[PATH_MAX];
 
 									STRCPY_S(mp3name, config.shortpath);
-									STRCAT_S(mp3name, filelist[sidx].shortname);
+									STRCAT_S(mp3name,
+											 filelist[sidx].shortname->ptr);
 									STRCPY_S(mp3longname, config.path);
 									STRCAT_S(mp3longname,
-											 filelist[sidx].compname);
+											 filelist[sidx].compname->ptr);
 									mp3_list_add(mp3name, mp3longname);
 									win_msg("已添加歌曲到列表!", COLOR_WHITE,
 											COLOR_WHITE, config.msgbcolor);
@@ -3759,7 +3771,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 											char cfn[PATH_MAX];
 
 											SPRINTF_S(cfn, "%s%s/", config.path,
-													  item[sidx].compname);
+													  item[sidx].compname->ptr);
 											mp3_list_add_dir(cfn);
 										}
 										break;
@@ -3770,7 +3782,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 
 											STRCPY_S(bmfn, config.path);
 											STRCAT_S(bmfn,
-													 item[sidx].shortname);
+													 item[sidx].shortname->ptr);
 											bookmark_import(bmfn);
 										}
 										break;
@@ -3786,10 +3798,12 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 
 											STRCPY_S(mp3name, config.shortpath);
 											STRCAT_S(mp3name,
-													 filelist[sidx].shortname);
+													 filelist[sidx].shortname->
+													 ptr);
 											STRCPY_S(mp3longname, config.path);
 											STRCAT_S(mp3longname,
-													 filelist[sidx].compname);
+													 filelist[sidx].compname->
+													 ptr);
 											mp3_list_add(mp3name, mp3longname);
 										}
 										break;
@@ -3842,7 +3856,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 											char cfn[PATH_MAX];
 
 											SPRINTF_S(cfn, "%s%s/", config.path,
-													  item[sidx].compname);
+													  item[sidx].compname->ptr);
 											mp3_list_add_dir(cfn);
 										}
 										break;
@@ -3853,7 +3867,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 
 											STRCPY_S(bmfn, config.path);
 											STRCAT_S(bmfn,
-													 item[sidx].shortname);
+													 item[sidx].shortname->ptr);
 											bookmark_import(bmfn);
 										}
 										break;
@@ -3869,10 +3883,12 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 
 											STRCPY_S(mp3name, config.shortpath);
 											STRCAT_S(mp3name,
-													 filelist[sidx].shortname);
+													 filelist[sidx].shortname->
+													 ptr);
 											STRCPY_S(mp3longname, config.path);
 											STRCAT_S(mp3longname,
-													 filelist[sidx].compname);
+													 filelist[sidx].compname->
+													 ptr);
 											mp3_list_add(mp3name, mp3longname);
 										}
 										break;
@@ -3972,7 +3988,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 						for (sidx = 0; sidx < copycount; sidx++) {
 							scene_copy_files(sidx);
 						}
-						STRCPY_S(config.lastfile, item[*index].compname);
+						STRCPY_S(config.lastfile, item[*index].compname->ptr);
 						retop = win_menu_op_cancel;
 						inop = false;
 					} else if (cutcount > 0) {
@@ -3980,9 +3996,9 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 							char cutsrc[PATH_MAX], cutdest[PATH_MAX];
 
 							STRCPY_S(cutsrc, cutdir);
-							STRCAT_S(cutsrc, cutlist[sidx].shortname);
+							STRCAT_S(cutsrc, cutlist[sidx].shortname->ptr);
 							STRCPY_S(cutdest, config.shortpath);
-							STRCAT_S(cutdest, cutlist[sidx].shortname);
+							STRCAT_S(cutdest, cutlist[sidx].shortname->ptr);
 							if ((t_fs_filetype) cutlist[sidx].data ==
 								fs_filetype_dir)
 								move_dir(cutsrc, cutdest, NULL,
@@ -3991,7 +4007,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 								move_file(cutsrc, cutdest, NULL,
 										  confirm_overwrite, NULL);
 						}
-						STRCPY_S(config.lastfile, item[*index].compname);
+						STRCPY_S(config.lastfile, item[*index].compname->ptr);
 						retop = win_menu_op_cancel;
 						inop = false;
 						cutcount = 0;
@@ -4012,10 +4028,10 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 
 						if (where == scene_in_zip || where == scene_in_chm
 							|| where == scene_in_rar)
-							STRCPY_S(filename, filelist[selidx].compname);
+							STRCPY_S(filename, filelist[selidx].compname->ptr);
 						else {
 							STRCPY_S(filename, config.shortpath);
-							STRCAT_S(filename, filelist[selidx].shortname);
+							STRCAT_S(filename, filelist[selidx].shortname->ptr);
 						}
 
 						switch (where) {
@@ -4200,7 +4216,7 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex,
 void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 							 dword max_height)
 {
-	STRCPY_S(config.lastfile, item[index].compname);
+	STRCPY_S(config.lastfile, item[index].compname->ptr);
 	if (!config.showfinfo)
 		return;
 	if ((t_fs_filetype) item[index].data != fs_filetype_dir) {
@@ -4285,7 +4301,8 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 		} else {
 			char outstr[256];
 
-			SPRINTF_S(outstr, "文件大小: %s 字节\n", item[index].shortname);
+			SPRINTF_S(outstr, "文件大小: %s 字节\n",
+					  item[index].shortname->ptr);
 			if (index - topindex < HRR) {
 				disp_rectangle(239 - (WRR - 2) * DISP_FONTSIZE,
 							   135 + (HRR - 1) * (DISP_FONTSIZE + 1),
@@ -4317,32 +4334,6 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 			}
 		}
 	}
-}
-
-p_win_menuitem make_up_a_empty_dir(dword * filecount, dword icolor,
-								   dword selicolor, dword selrcolor,
-								   dword selbcolor)
-{
-	p_win_menuitem p;
-
-	p = (p_win_menuitem) malloc(sizeof(t_win_menuitem));
-	if (p == NULL) {
-		*filecount = 0;
-		return NULL;
-	}
-	memset(p, 0, sizeof(t_win_menuitem));
-	STRCPY_S(p->name, "<..>");
-	STRCPY_S(p->compname, "..");
-	p->data = (void *) fs_filetype_dir;
-	p->width = 4;
-	p->selected = false;
-	p->icolor = icolor;
-	p->selicolor = selicolor;
-	p->selrcolor = selrcolor;
-	p->selbcolor = selbcolor;
-
-	*filecount = 1;
-	return p;
 }
 
 char *strtoupper(char *d, const char *s)
@@ -4458,10 +4449,10 @@ void scene_filelist()
 	}
 	quicksort(filelist,
 			  (filecount > 0
-			   && filelist[0].compname[0] == '.') ? 1 : 0, filecount - 1,
+			   && filelist[0].compname->ptr[0] == '.') ? 1 : 0, filecount - 1,
 			  sizeof(t_win_menuitem), compare_func[(int) config.arrange]);
 	while (idx < filecount
-		   && stricmp(filelist[idx].compname, config.lastfile) != 0)
+		   && stricmp(filelist[idx].compname->ptr, config.lastfile) != 0)
 		idx++;
 	if (idx >= filecount) {
 		config.isreading = false;
@@ -4479,12 +4470,11 @@ void scene_filelist()
 				// empty directory ?
 				if (where == scene_in_dir) {
 					filelist =
-						make_up_a_empty_dir(&filecount, config.menutextcolor,
-											config.selicolor,
-											config.
-											usedyncolor ? GetBGColorByTime() :
-											config.menubcolor,
-											config.selbcolor);
+						fs_empty_dir(&filecount, config.menutextcolor,
+									 config.selicolor,
+									 config.
+									 usedyncolor ? GetBGColorByTime() :
+									 config.menubcolor, config.selbcolor);
 					idx = 0;
 					idx =
 						win_menu(240 - WRR * DISP_FONTSIZE,
@@ -4579,12 +4569,13 @@ void scene_filelist()
 			}
 			quicksort(filelist,
 					  (filecount > 0
-					   && filelist[0].compname[0] == '.') ? 1 : 0,
+					   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
 					  filecount - 1, sizeof(t_win_menuitem),
 					  compare_func[(int) config.arrange]);
 			idx = 0;
 			while (idx < filecount
-				   && stricmp(filelist[idx].compname, config.lastfile) != 0)
+				   && stricmp(filelist[idx].compname->ptr,
+							  config.lastfile) != 0)
 				idx++;
 			if (idx >= filecount) {
 				config.isreading = false;
@@ -4605,7 +4596,7 @@ void scene_filelist()
 						char path[PATH_MAX], upper[PATH_MAX];
 
 						STRCPY_S(path, config.path);
-						strtoupper(upper, filelist[idx].compname);
+						strtoupper(upper, filelist[idx].compname->ptr);
 						STRCAT_S(path, upper);
 						exec_homebrew(config.launchtype, path);
 					}
@@ -4617,7 +4608,7 @@ void scene_filelist()
 					bool isup = false;
 
 					pdir[0] = 0;
-					if (strcmp(filelist[idx].compname, "..") == 0) {
+					if (strcmp(filelist[idx].compname->ptr, "..") == 0) {
 						if (where == scene_in_dir) {
 							int ll;
 
@@ -4637,7 +4628,7 @@ void scene_filelist()
 						} else
 							config.path[0] = 0;
 					} else if (where == scene_in_dir) {
-						STRCAT_S(config.path, filelist[idx].compname);
+						STRCAT_S(config.path, filelist[idx].compname->ptr);
 						STRCAT_S(config.path, "/");
 					}
 					if (config.path[0] == 0) {
@@ -4675,12 +4666,12 @@ void scene_filelist()
 												config.selbcolor);
 					quicksort(filelist,
 							  (filecount > 0
-							   && filelist[0].compname[0] == '.') ? 1 : 0,
+							   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
 							  filecount - 1, sizeof(t_win_menuitem),
 							  compare_func[(int) config.arrange]);
 					if (isup) {
 						for (idx = 0; idx < filecount; idx++)
-							if (stricmp(filelist[idx].compname, pdir) == 0)
+							if (stricmp(filelist[idx].compname->ptr, pdir) == 0)
 								break;
 						if (idx == filecount)
 							idx = 0;
@@ -4691,10 +4682,11 @@ void scene_filelist()
 				}
 			case fs_filetype_gz:
 #if 0
-				if (strlen(filelist[idx].compname) >= 7) {
-					int len = strlen(filelist[idx].compname) - 7;
+				if (strlen(filelist[idx].compname->ptr) >= 7) {
+					int len = strlen(filelist[idx].compname->ptr) - 7;
 
-					if (stricmp(filelist[idx].compname + len, ".tar.gz") == 0) {
+					if (stricmp(filelist[idx].compname->ptr + len, ".tar.gz") ==
+						0) {
 						win_msg("TODO: SUPPORT Tar ", COLOR_WHITE, COLOR_WHITE,
 								config.msgbcolor);
 						break;
@@ -4716,8 +4708,8 @@ void scene_filelist()
 				break;
 			case fs_filetype_zip:
 				where = scene_in_zip;
-				STRCAT_S(config.path, filelist[idx].compname);
-				STRCAT_S(config.shortpath, filelist[idx].shortname);
+				STRCAT_S(config.path, filelist[idx].compname->ptr);
+				STRCAT_S(config.shortpath, filelist[idx].shortname->ptr);
 				idx = 0;
 				filecount =
 					fs_zip_to_menu(config.shortpath, &filelist,
@@ -4727,14 +4719,14 @@ void scene_filelist()
 								   menubcolor, config.selbcolor);
 				quicksort(filelist,
 						  (filecount > 0
-						   && filelist[0].compname[0] == '.') ? 1 : 0,
+						   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
 						  filecount - 1, sizeof(t_win_menuitem),
 						  compare_func[(int) config.arrange]);
 				break;
 			case fs_filetype_chm:
 				where = scene_in_chm;
-				STRCAT_S(config.path, filelist[idx].compname);
-				STRCAT_S(config.shortpath, filelist[idx].shortname);
+				STRCAT_S(config.path, filelist[idx].compname->ptr);
+				STRCAT_S(config.shortpath, filelist[idx].shortname->ptr);
 				idx = 0;
 				filecount =
 					fs_chm_to_menu(config.shortpath, &filelist,
@@ -4744,14 +4736,14 @@ void scene_filelist()
 								   menubcolor, config.selbcolor);
 				quicksort(filelist,
 						  (filecount > 0
-						   && filelist[0].compname[0] == '.') ? 1 : 0,
+						   && (filelist[0].compname->ptr)[0] == '.') ? 1 : 0,
 						  filecount - 1, sizeof(t_win_menuitem),
 						  compare_func[(int) config.arrange]);
 				break;
 			case fs_filetype_rar:
 				where = scene_in_rar;
-				STRCAT_S(config.path, filelist[idx].compname);
-				STRCAT_S(config.shortpath, filelist[idx].shortname);
+				STRCAT_S(config.path, filelist[idx].compname->ptr);
+				STRCAT_S(config.shortpath, filelist[idx].shortname->ptr);
 				idx = 0;
 				filecount =
 					fs_rar_to_menu(config.shortpath, &filelist,
@@ -4761,7 +4753,7 @@ void scene_filelist()
 								   menubcolor, config.selbcolor);
 				quicksort(filelist,
 						  (filecount > 0
-						   && filelist[0].compname[0] == '.') ? 1 : 0,
+						   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
 						  filecount - 1, sizeof(t_win_menuitem),
 						  compare_func[(int) config.arrange]);
 				break;
@@ -4771,7 +4763,7 @@ void scene_filelist()
 					char pmpname[PATH_MAX];
 
 					STRCPY_S(pmpname, config.shortpath);
-					STRCAT_S(pmpname, filelist[idx].shortname);
+					STRCAT_S(pmpname, filelist[idx].shortname->ptr);
 					avc_start();
 					pmp_play(pmpname, !pmp_restart);
 					avc_end();
@@ -4865,7 +4857,7 @@ void scene_filelist()
 					char bmfn[PATH_MAX];
 
 					STRCPY_S(bmfn, config.shortpath);
-					STRCAT_S(bmfn, filelist[idx].shortname);
+					STRCAT_S(bmfn, filelist[idx].shortname->ptr);
 					bookmark_import(bmfn);
 					win_msg("已导入书签!", COLOR_WHITE, COLOR_WHITE,
 							config.msgbcolor);
@@ -4880,9 +4872,9 @@ void scene_filelist()
 					char fn[PATH_MAX], lfn[PATH_MAX];
 
 					STRCPY_S(fn, config.shortpath);
-					STRCAT_S(fn, filelist[idx].shortname);
+					STRCAT_S(fn, filelist[idx].shortname->ptr);
 					STRCPY_S(lfn, config.path);
-					STRCAT_S(lfn, filelist[idx].compname);
+					STRCAT_S(lfn, filelist[idx].compname->ptr);
 					mp3_directplay(fn, lfn);
 				}
 				break;
@@ -4894,9 +4886,9 @@ void scene_filelist()
 
 					if (where == scene_in_dir) {
 						STRCPY_S(fn, config.shortpath);
-						STRCAT_S(fn, filelist[idx].shortname);
+						STRCAT_S(fn, filelist[idx].shortname->ptr);
 					} else {
-						STRCPY_S(fn, filelist[idx].compname);
+						STRCPY_S(fn, filelist[idx].compname->ptr);
 					}
 
 					if (win_msgbox
@@ -4979,6 +4971,7 @@ extern void scene_init()
 	d = dbg_init();
 #ifdef _DEBUG
 	dbg_switch(d, 1);
+	dbg_open_stream(d, stderr);
 #else
 	dbg_switch(d, 0);
 #endif

@@ -5,12 +5,14 @@
 
 #include "common/datatype.h"
 #include "display.h"
+#include "buffer.h"
 
 // Menu item structure
 typedef struct
 {
-	char compname[PATH_MAX];
-	char shortname[256];
+//  char compname[PATH_MAX];
+	buffer *compname;
+	buffer *shortname;
 	char name[64];				// item name
 	dword width;				// display width in bytes (for align/span)
 	pixel icolor;				// font color
@@ -58,5 +60,9 @@ extern bool win_msgbox(const char *prompt, const char *yesstr,
 // Message with any key pressed to close
 extern void win_msg(const char *prompt, pixel fontcolor, pixel bordercolor,
 					pixel bgcolor);
+
+extern void win_item_destroy(p_win_menuitem * item, dword * size);
+extern p_win_menuitem win_realloc_items(p_win_menuitem item, int orgsize,
+										int newsize);
 
 #endif
