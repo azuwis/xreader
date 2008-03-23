@@ -238,6 +238,8 @@ static void conf_default(p_conf conf)
 	conf->efont_embolden = false;
 
 	conf->img_no_repeat = false;
+
+	conf->hide_flash = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -978,6 +980,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->img_no_repeat =
 		iniparser_getboolean(dict, "Image:no_repeat", conf->img_no_repeat);
 
+	conf->hide_flash =
+		iniparser_getboolean(dict, "Global:hide_flash", conf->hide_flash);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1214,6 +1219,9 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "Image:no_repeat",
 						booleanToString(buf, sizeof(buf), conf->img_no_repeat));
+
+	iniparser_setstring(dict, "Global:hide_flash",
+						booleanToString(buf, sizeof(buf), conf->hide_flash));
 
 	iniparser_dump_ini(dict, fp);
 

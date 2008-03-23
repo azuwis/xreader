@@ -180,6 +180,7 @@ typedef struct
 	bool efont_cleartype;
 	bool efont_embolden;
 	bool img_no_repeat;
+	bool hide_flash;
 } t_conf, *p_conf;
 
 /* txt key:
