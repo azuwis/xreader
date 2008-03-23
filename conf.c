@@ -121,7 +121,7 @@ static void conf_default(p_conf conf)
 	conf->wordspace = 0;
 	conf->borderspace = 0;
 	conf->vertread = 0;
-	conf->infobar = true;
+	conf->infobar = conf_infobar_info;
 	conf->rlastrow = false;
 	conf->autobm = true;
 	conf->encode = conf_encode_gbk;
@@ -280,6 +280,479 @@ static char *dwordToString(char *str, int size, dword dw)
 	return str;
 }
 
+static char *encodeToString(char *str, int size, t_conf_encode encode)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (encode) {
+		case conf_encode_gbk:
+			snprintf_s(str, size, "gbk");
+			break;
+		case conf_encode_big5:
+			snprintf_s(str, size, "big5");
+			break;
+		case conf_encode_sjis:
+			snprintf_s(str, size, "sjis");
+			break;
+		case conf_encode_ucs:
+			snprintf_s(str, size, "ucs");
+			break;
+		case conf_encode_utf8:
+			snprintf_s(str, size, "utf8");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_encode stringToEncode(char *str)
+{
+	if (stricmp(str, "gbk") == 0) {
+		return conf_encode_gbk;
+	}
+	if (stricmp(str, "big5") == 0) {
+		return conf_encode_big5;
+	}
+	if (stricmp(str, "sjis") == 0) {
+		return conf_encode_sjis;
+	}
+	if (stricmp(str, "ucs") == 0) {
+		return conf_encode_ucs;
+	}
+	if (stricmp(str, "utf8") == 0) {
+		return conf_encode_utf8;
+	}
+
+	return conf_encode_gbk;
+}
+
+static char *fitToString(char *str, int size, t_conf_fit fit)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (fit) {
+		case conf_fit_none:
+			snprintf_s(str, size, "none");
+			break;
+		case conf_fit_width:
+			snprintf_s(str, size, "width");
+			break;
+		case conf_fit_dblwidth:
+			snprintf_s(str, size, "dblwidth");
+			break;
+		case conf_fit_height:
+			snprintf_s(str, size, "height");
+			break;
+		case conf_fit_dblheight:
+			snprintf_s(str, size, "dblheight");
+			break;
+		case conf_fit_custom:
+			snprintf_s(str, size, "custom");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_fit stringToFit(char *str)
+{
+	if (stricmp(str, "none") == 0) {
+		return conf_fit_none;
+	}
+	if (stricmp(str, "width") == 0) {
+		return conf_fit_width;
+	}
+	if (stricmp(str, "dblwidth") == 0) {
+		return conf_fit_dblwidth;
+	}
+	if (stricmp(str, "height") == 0) {
+		return conf_fit_height;
+	}
+	if (stricmp(str, "dblheight") == 0) {
+		return conf_fit_dblheight;
+	}
+	if (stricmp(str, "custom") == 0) {
+		return conf_fit_custom;
+	}
+
+	return conf_fit_none;
+}
+
+static char *cycleToString(char *str, int size, t_conf_cycle cycle)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (cycle) {
+		case conf_cycle_single:
+			snprintf_s(str, size, "single");
+			break;
+		case conf_cycle_repeat:
+			snprintf_s(str, size, "repeat");
+			break;
+		case conf_cycle_repeat_one:
+			snprintf_s(str, size, "repeat_one");
+			break;
+		case conf_cycle_random:
+			snprintf_s(str, size, "random");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_cycle stringToCycle(char *str)
+{
+	if (stricmp(str, "single") == 0) {
+		return conf_cycle_single;
+	}
+	if (stricmp(str, "repeat") == 0) {
+		return conf_cycle_repeat;
+	}
+	if (stricmp(str, "repeat_one") == 0) {
+		return conf_cycle_repeat_one;
+	}
+	if (stricmp(str, "random") == 0) {
+		return conf_cycle_random;
+	}
+
+	return conf_cycle_single;
+}
+
+static char *arrangeToString(char *str, int size, t_conf_arrange arrange)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (arrange) {
+		case conf_arrange_ext:
+			snprintf_s(str, size, "ext");
+			break;
+		case conf_arrange_name:
+			snprintf_s(str, size, "name");
+			break;
+		case conf_arrange_size:
+			snprintf_s(str, size, "size");
+			break;
+		case conf_arrange_ctime:
+			snprintf_s(str, size, "ctime");
+			break;
+		case conf_arrange_mtime:
+			snprintf_s(str, size, "mtime");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_arrange stringToArrange(char *str)
+{
+	if (stricmp(str, "ext") == 0) {
+		return conf_arrange_ext;
+	}
+	if (stricmp(str, "name") == 0) {
+		return conf_arrange_name;
+	}
+	if (stricmp(str, "size") == 0) {
+		return conf_arrange_size;
+	}
+	if (stricmp(str, "ctime") == 0) {
+		return conf_arrange_ctime;
+	}
+	if (stricmp(str, "mtime") == 0) {
+		return conf_arrange_mtime;
+	}
+
+	return conf_arrange_ext;
+}
+
+static char *viewposToString(char *str, int size, t_conf_viewpos viewpos)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (viewpos) {
+		case conf_viewpos_leftup:
+			snprintf_s(str, size, "leftup");
+			break;
+		case conf_viewpos_midup:
+			snprintf_s(str, size, "midup");
+			break;
+		case conf_viewpos_rightup:
+			snprintf_s(str, size, "rightup");
+			break;
+		case conf_viewpos_leftmid:
+			snprintf_s(str, size, "leftmid");
+			break;
+		case conf_viewpos_midmid:
+			snprintf_s(str, size, "midmid");
+			break;
+		case conf_viewpos_rightmid:
+			snprintf_s(str, size, "rightmid");
+			break;
+		case conf_viewpos_leftdown:
+			snprintf_s(str, size, "leftdown");
+			break;
+		case conf_viewpos_middown:
+			snprintf_s(str, size, "middown");
+			break;
+		case conf_viewpos_rightdown:
+			snprintf_s(str, size, "rightdown");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_viewpos stringToViewpos(char *str)
+{
+	if (stricmp(str, "leftup") == 0) {
+		return conf_viewpos_leftup;
+	}
+	if (stricmp(str, "midup") == 0) {
+		return conf_viewpos_midup;
+	}
+	if (stricmp(str, "rightup") == 0) {
+		return conf_viewpos_rightup;
+	}
+	if (stricmp(str, "leftmid") == 0) {
+		return conf_viewpos_leftmid;
+	}
+	if (stricmp(str, "midmid") == 0) {
+		return conf_viewpos_midmid;
+	}
+	if (stricmp(str, "leftdown") == 0) {
+		return conf_viewpos_leftdown;
+	}
+	if (stricmp(str, "middown") == 0) {
+		return conf_viewpos_middown;
+	}
+	if (stricmp(str, "rightdown") == 0) {
+		return conf_viewpos_rightmid;
+	}
+
+	return conf_viewpos_leftup;
+}
+
+static char *imgpagingToString(char *str, int size, t_conf_imgpaging imgpaging)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (imgpaging) {
+		case conf_imgpaging_direct:
+			snprintf_s(str, size, "direct");
+			break;
+		case conf_imgpaging_updown:
+			snprintf_s(str, size, "updown");
+			break;
+		case conf_imgpaging_leftright:
+			snprintf_s(str, size, "leftright");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_imgpaging stringToImgpaging(char *str)
+{
+	if (stricmp(str, "direct") == 0) {
+		return conf_imgpaging_direct;
+	}
+	if (stricmp(str, "updown") == 0) {
+		return conf_imgpaging_updown;
+	}
+	if (stricmp(str, "leftright") == 0) {
+		return conf_imgpaging_leftright;
+	}
+
+	return conf_imgpaging_direct;
+}
+
+static char *thumbToString(char *str, int size, t_conf_thumb thumb)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (thumb) {
+		case conf_thumb_none:
+			snprintf_s(str, size, "none");
+			break;
+		case conf_thumb_scroll:
+			snprintf_s(str, size, "scroll");
+			break;
+		case conf_thumb_always:
+			snprintf_s(str, size, "always");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_thumb stringToThumb(char *str)
+{
+	if (stricmp(str, "none") == 0) {
+		return conf_thumb_none;
+	}
+	if (stricmp(str, "scroll") == 0) {
+		return conf_thumb_scroll;
+	}
+	if (stricmp(str, "always") == 0) {
+		return conf_thumb_always;
+	}
+
+	return conf_thumb_none;
+}
+
+static char *infobarToString(char *str, int size, t_conf_infobar infobar)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (infobar) {
+		case conf_infobar_none:
+			snprintf_s(str, size, "none");
+			break;
+		case conf_infobar_info:
+			snprintf_s(str, size, "info");
+			break;
+		case conf_infobar_lyric:
+			snprintf_s(str, size, "lyric");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_infobar stringToInfobar(char *str)
+{
+	if (stricmp(str, "none") == 0) {
+		return conf_infobar_none;
+	}
+	if (stricmp(str, "info") == 0) {
+		return conf_infobar_info;
+	}
+	if (stricmp(str, "lryic") == 0) {
+		return conf_infobar_lyric;
+	}
+
+	return conf_infobar_none;
+}
+
+static char *vertreadToString(char *str, int size, t_conf_vertread vertread)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (vertread) {
+		case conf_vertread_horz:
+			snprintf_s(str, size, "horz");
+			break;
+		case conf_vertread_rvert:
+			snprintf_s(str, size, "rvert");
+			break;
+		case conf_vertread_lvert:
+			snprintf_s(str, size, "lvert");
+			break;
+		case conf_vertread_reversal:
+			snprintf_s(str, size, "reversal");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_vertread stringToVertread(char *str)
+{
+	if (stricmp(str, "horz") == 0) {
+		return conf_vertread_horz;
+	}
+	if (stricmp(str, "rvert") == 0) {
+		return conf_vertread_rvert;
+	}
+	if (stricmp(str, "lvert") == 0) {
+		return conf_vertread_lvert;
+	}
+	if (stricmp(str, "reversal") == 0) {
+		return conf_vertread_reversal;
+	}
+
+	return conf_vertread_horz;
+}
+
+static char *rotateToString(char *str, int size, t_conf_rotate rotate)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (rotate) {
+		case conf_rotate_0:
+			snprintf_s(str, size, "0");
+			break;
+		case conf_rotate_90:
+			snprintf_s(str, size, "90");
+			break;
+		case conf_rotate_180:
+			snprintf_s(str, size, "180");
+			break;
+		case conf_rotate_270:
+			snprintf_s(str, size, "270");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_rotate stringToRotate(char *str)
+{
+	if (stricmp(str, "0") == 0) {
+		return conf_rotate_0;
+	}
+	if (stricmp(str, "90") == 0) {
+		return conf_rotate_90;
+	}
+	if (stricmp(str, "180") == 0) {
+		return conf_rotate_180;
+	}
+	if (stricmp(str, "270") == 0) {
+		return conf_rotate_270;
+	}
+
+	return conf_rotate_0;
+}
+
 extern bool ini_conf_load(const char *inifilename, p_conf conf)
 {
 	if (conf == NULL || inifilename == NULL) {
@@ -287,6 +760,7 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	}
 
 	dictionary *dict = iniparser_load(inifilename);
+	char buf[80];
 
 	if (dict == NULL)
 		return false;
@@ -313,19 +787,31 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->usedyncolor =
 		iniparser_getboolean(dict, "UI:usedyncolor", conf->usedyncolor);
 	conf->rowspace = iniparser_getint(dict, "Text:rowspace", conf->rowspace);
-	conf->infobar = iniparser_getint(dict, "Text:infobar", conf->infobar);
+	conf->infobar =
+		stringToInfobar(iniparser_getstring
+						(dict, "Text:infobar",
+						 infobarToString(buf, sizeof(buf), conf->infobar)));
 	conf->rlastrow =
 		iniparser_getboolean(dict, "Text:rlastrow", conf->rlastrow);
 	conf->autobm = iniparser_getboolean(dict, "Text:autobm", conf->autobm);
-	conf->vertread = iniparser_getint(dict, "Text:vertread", conf->vertread);
-	conf->encode = iniparser_getint(dict, "Text:encode", conf->encode);
-	conf->fit = iniparser_getint(dict, "Image:fit", conf->fit);
+	conf->vertread =
+		stringToVertread(iniparser_getstring
+						 (dict, "Text:vertread",
+						  vertreadToString(buf, sizeof(buf), conf->vertread)));
+	conf->encode =
+		stringToEncode(iniparser_getstring
+					   (dict, "Text:encode",
+						encodeToString(buf, sizeof(buf), conf->encode)));
+	conf->fit =
+		stringToFit(iniparser_getstring
+					(dict, "Image:fit",
+					 fitToString(buf, sizeof(buf), conf->fit)));
 	conf->imginfobar =
 		iniparser_getboolean(dict, "Image:imginfobar", conf->imginfobar);
 	conf->scrollbar =
 		iniparser_getboolean(dict, "Text:scrollbar", conf->scrollbar);
 	conf->scale = iniparser_getint(dict, "Image:scale", conf->scale);
-	conf->rotate = iniparser_getint(dict, "Image:rotate", conf->rotate);
+	conf->rotate = stringToRotate(iniparser_getstring(dict, "Image:rotate", rotateToString(buf, sizeof(buf), conf->rotate)));
 	int i;
 
 	for (i = 0; i < 20; ++i) {
@@ -341,13 +827,21 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->confver = iniparser_getint(dict, "Global:confver", conf->confver);
 	conf->bicubic = iniparser_getboolean(dict, "Image:bicubic", conf->bicubic);
 	conf->wordspace = iniparser_getint(dict, "Text:wordspace", conf->wordspace);
+	conf->borderspace = iniparser_getunsigned(dict, "Text:borderspace", conf->borderspace);
 	STRCPY_S(conf->lastfile,
 			 iniparser_getstring(dict, "Global:lastfile", conf->lastfile));
 	conf->mp3encode =
-		iniparser_getint(dict, "Music:mp3encode", conf->mp3encode);
+		stringToEncode(iniparser_getstring
+					   (dict, "Music:mp3encode",
+						encodeToString(buf, sizeof(buf), conf->mp3encode)));
 	conf->lyricencode =
-		iniparser_getint(dict, "Music:lyricencode", conf->lyricencode);
-	conf->mp3cycle = iniparser_getint(dict, "Music:mp3cycle", conf->mp3cycle);
+		stringToEncode(iniparser_getstring
+					   (dict, "Music:lyricencode",
+						encodeToString(buf, sizeof(buf), conf->lyricencode)));
+	conf->mp3cycle =
+		stringToCycle(iniparser_getstring
+					  (dict, "Music:mp3cycle",
+					   cycleToString(buf, sizeof(buf), conf->mp3cycle)));
 	conf->isreading =
 		iniparser_getboolean(dict, "Global:isreading", conf->isreading);
 	STRCPY_S(conf->bgarch,
@@ -368,13 +862,22 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		iniparser_getboolean(dict, "Global:showfinfo", conf->showfinfo);
 	conf->allowdelete =
 		iniparser_getboolean(dict, "Global:allowdelete", conf->allowdelete);
-	conf->arrange = iniparser_getint(dict, "Global:arrange", conf->arrange);
+	conf->arrange =
+		stringToArrange(iniparser_getstring
+						(dict, "Global:arrange",
+						 arrangeToString(buf, sizeof(buf), conf->arrange)));
 	conf->enableusb =
 		iniparser_getboolean(dict, "Global:enableusb", conf->enableusb);
-	conf->viewpos = iniparser_getint(dict, "Image:viewpos", conf->viewpos);
+	conf->viewpos =
+		stringToViewpos(iniparser_getstring
+						(dict, "Image:viewpos",
+						 viewposToString(buf, sizeof(buf), conf->viewpos)));
 	conf->imgmvspd = iniparser_getint(dict, "Image:imgmvspd", conf->imgmvspd);
 	conf->imgpaging =
-		iniparser_getint(dict, "Image:imgpaging", conf->imgpaging);
+		stringToImgpaging(iniparser_getstring
+						  (dict, "Image:imgpaging",
+						   imgpagingToString(buf, sizeof(buf),
+											 conf->imgpaging)));
 	for (i = 0; i < 20; ++i) {
 		char key[20];
 
@@ -389,9 +892,13 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->autopage = iniparser_getint(dict, "Text:autopage", conf->autopage);
 	conf->prev_autopage =
 		iniparser_getint(dict, "Text:prev_autopage", conf->prev_autopage);
+	conf->autopagetype = iniparser_getint(dict, "Text:autopagetype", conf->autopagetype);
 	conf->autolinedelay =
 		iniparser_getint(dict, "Text:autolinedelay", conf->autolinedelay);
-	conf->thumb = iniparser_getboolean(dict, "UI:fontsize", conf->thumb);
+	conf->thumb =
+		stringToThumb(iniparser_getstring
+					  (dict, "Image:thumb",
+					   thumbToString(buf, sizeof(buf), conf->thumb)));
 	conf->bookfontsize =
 		iniparser_getint(dict, "Text:bookfontsize", conf->bookfontsize);
 	conf->enable_analog =
@@ -525,17 +1032,17 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Text:rowspace",
 						dwordToString(buf, sizeof(buf), conf->rowspace));
 	iniparser_setstring(dict, "Text:infobar",
-						dwordToString(buf, sizeof(buf), conf->infobar));
+						infobarToString(buf, sizeof(buf), conf->infobar));
 	iniparser_setstring(dict, "Text:rlastrow",
 						booleanToString(buf, sizeof(buf), conf->rlastrow));
 	iniparser_setstring(dict, "Text:autobm",
 						booleanToString(buf, sizeof(buf), conf->autobm));
 	iniparser_setstring(dict, "Text:vertread",
-						dwordToString(buf, sizeof(buf), conf->vertread));
+						vertreadToString(buf, sizeof(buf), conf->vertread));
 	iniparser_setstring(dict, "Text:encode",
-						dwordToString(buf, sizeof(buf), conf->encode));
+						encodeToString(buf, sizeof(buf), conf->encode));
 	iniparser_setstring(dict, "Image:fit",
-						dwordToString(buf, sizeof(buf), conf->fit));
+						fitToString(buf, sizeof(buf), conf->fit));
 	iniparser_setstring(dict, "Image:imginfobar",
 						booleanToString(buf, sizeof(buf), conf->imginfobar));
 	iniparser_setstring(dict, "Text:scrollbar",
@@ -543,7 +1050,7 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Image:scale",
 						dwordToString(buf, sizeof(buf), conf->scale));
 	iniparser_setstring(dict, "Image:rotate",
-						dwordToString(buf, sizeof(buf), conf->rotate));
+						rotateToString(buf, sizeof(buf), conf->rotate));
 	int i;
 
 	for (i = 0; i < 20; ++i) {
@@ -567,11 +1074,11 @@ extern bool ini_conf_save(p_conf conf)
 						dwordToString(buf, sizeof(buf), conf->borderspace));
 	iniparser_setstring(dict, "Global:lastfile", conf->lastfile);
 	iniparser_setstring(dict, "Music:mp3encode",
-						dwordToString(buf, sizeof(buf), conf->mp3encode));
+						encodeToString(buf, sizeof(buf), conf->mp3encode));
 	iniparser_setstring(dict, "Music:lyricencode",
-						dwordToString(buf, sizeof(buf), conf->lyricencode));
+						encodeToString(buf, sizeof(buf), conf->lyricencode));
 	iniparser_setstring(dict, "Music:mp3cycle",
-						dwordToString(buf, sizeof(buf), conf->mp3cycle));
+						cycleToString(buf, sizeof(buf), conf->mp3cycle));
 	iniparser_setstring(dict, "Global:isreading",
 						booleanToString(buf, sizeof(buf), conf->isreading));
 	iniparser_setstring(dict, "UI:bgarch", conf->bgarch);
@@ -593,21 +1100,21 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Global:allowdelete",
 						booleanToString(buf, sizeof(buf), conf->allowdelete));
 	iniparser_setstring(dict, "Global:arrange",
-						dwordToString(buf, sizeof(buf), conf->arrange));
+						arrangeToString(buf, sizeof(buf), conf->arrange));
 	iniparser_setstring(dict, "Global:enableusb",
 						booleanToString(buf, sizeof(buf), conf->enableusb));
 	iniparser_setstring(dict, "Image:viewpos",
-						dwordToString(buf, sizeof(buf), conf->viewpos));
+						viewposToString(buf, sizeof(buf), conf->viewpos));
 	iniparser_setstring(dict, "Image:imgmvspd",
 						dwordToString(buf, sizeof(buf), conf->imgmvspd));
 	iniparser_setstring(dict, "Image:imgpaging",
-						dwordToString(buf, sizeof(buf), conf->imgpaging));
+						imgpagingToString(buf, sizeof(buf), conf->imgpaging));
 	for (i = 0; i < 20; ++i) {
 		char key[20];
 
-		SPRINTF_S(key, "Text:txtkey1_%02d", i);
+		SPRINTF_S(key, "Global:flkey1_%02d", i);
 		iniparser_setstring(dict, key,
-							hexToString(buf, sizeof(buf), conf->txtkey[i]));
+							hexToString(buf, sizeof(buf), conf->flkey[i]));
 	}
 	iniparser_setstring(dict, "UI:fontsize",
 						intToString(buf, sizeof(buf), conf->fontsize));
