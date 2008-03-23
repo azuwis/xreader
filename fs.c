@@ -492,6 +492,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 										 sizeof(t_win_menuitem) * (cur_count +
 																   256));
 			if (*mitem == NULL) {
+				unzClose(unzf);
 				scene_power_save(true);
 				return 0;
 			}
@@ -574,6 +575,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 										 sizeof(t_win_menuitem) * (cur_count +
 																   256));
 			if (*mitem == NULL) {
+				RARCloseArchive(hrar);
 				scene_power_save(true);
 				return 0;
 			}
