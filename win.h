@@ -10,7 +10,6 @@
 // Menu item structure
 typedef struct
 {
-//  char compname[PATH_MAX];
 	buffer *compname;
 	buffer *shortname;
 	char name[64];				// item name
