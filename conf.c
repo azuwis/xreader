@@ -983,8 +983,7 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 
 	conf->hide_flash =
 		iniparser_getboolean(dict, "Global:hide_flash", conf->hide_flash);
-	conf->tabstop=
-		iniparser_getunsigned(dict, "Text:tabstop", conf->tabstop);
+	conf->tabstop = iniparser_getunsigned(dict, "Text:tabstop", conf->tabstop);
 
 	dictionary_del(dict);
 

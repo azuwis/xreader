@@ -74,7 +74,7 @@ static void text_decode(p_text txt, t_conf_encode encode)
 	}
 }
 
-static bool bytetable[256] = {
+bool bytetable[256] = {
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 1, 0, 0,	// 0x00
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x10
 	2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x20
@@ -145,7 +145,10 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 					width += wordspace * 2;
 					pos += 2;
 				} else {
-					width += disp_ewidth[*(byte *) pos];
+					int j;
+
+					for (j = 0; j < (*pos == 0x09 ? config.tabstop : 1); ++j)
+						width += disp_ewidth[*(byte *) pos];
 					if (width > rowpixels)
 						break;
 					width += wordspace;

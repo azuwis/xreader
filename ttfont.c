@@ -16,7 +16,10 @@
 #include "display.h"
 #include "charsets.h"
 #include "pspscreen.h"
+#include "conf.h"
 #include "dbg.h"
+
+extern t_conf config;
 
 /**
  * 打开TTF字体
@@ -515,24 +518,7 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 	}
 }
 
-static bool bytetable[256] = {
-	1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 1, 0, 0,	// 0x00
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x10
-	2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x20
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x30
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x40
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x50
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x60
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x70
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x80
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0x90
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xA0
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xB0
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xC0
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xD0
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	// 0xE0
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	// 0xF0
-};
+extern bool bytetable[256];
 
 /**
  * 得到字符串所能显示在maxpixels中的长度
@@ -701,7 +687,10 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 			(str)++;
 			(count)++;
 		} else {
-			x += DISP_BOOK_FONTSIZE / 2 + wordspace;
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				x += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			if (x > maxpixels)
 				break;
 			str++;
@@ -792,14 +781,20 @@ extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 			if (width > maxpixels)
 				break;
 			str += 2;
-		} else if (*str != 0x20) {
-			width += disp_ewidth[*str];
-			width += wordspace;
+		} else if (*str == 0x20) {
+			width += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			if (width > maxpixels)
 				break;
 			str++;
 		} else {
-			width += DISP_BOOK_FONTSIZE / 2 + wordspace;
+			if (*str == 0x09) {
+				int j;
+
+				for (j = 0; j < config.tabstop; ++j)
+					width += DISP_BOOK_FONTSIZE / 2;
+			} else
+				width += disp_ewidth[*str];
+			width += wordspace;
 			if (width > maxpixels)
 				break;
 			str++;
@@ -860,9 +855,12 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 				y += DISP_BOOK_FONTSIZE;
 #endif
 			}
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				x += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			x += DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
@@ -1210,9 +1208,12 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 				y += DISP_BOOK_FONTSIZE;
 #endif
 			}
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				x -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			x -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
@@ -1493,9 +1494,12 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			if (y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1) {
 				break;
 			}
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
@@ -1777,9 +1781,12 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
 			}
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				y += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			y += DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }

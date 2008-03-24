@@ -972,9 +972,12 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 			}
 			if (!check_range(x, y))
 				return;
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				x += DISP_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			x += DISP_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
@@ -1225,9 +1228,12 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 			}
 			if (!check_range(x, y))
 				return;
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				x -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			x -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
@@ -1466,9 +1472,12 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 			}
 			if (!check_range(x, y))
 				return;
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				x += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			x += DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
@@ -1615,7 +1624,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
-			if (y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1) {
+			if (y < 0) {
 				break;
 #if 0
 				y = 271;
@@ -1657,7 +1666,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			count -= 2;
 			y -= DISP_BOOK_FONTSIZE + wordspace * 2;
 		} else if (*str > 0x1F) {
-			if (y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1) {
+			if (y < 0) {
 				break;
 #if 0
 				y = 271;
@@ -1699,7 +1708,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			str++;
 			count--;
 		} else {
-			if (y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1) {
+			if (y < 0) {
 				break;
 #if 0
 				y = 271;
@@ -1708,9 +1717,12 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			}
 			if (!check_range(x, y))
 				return;
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
@@ -1948,9 +1960,12 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 			}
 			if (!check_range(x, y))
 				return;
+			int j;
+
+			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
+				y += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
 			count--;
-			y += DISP_BOOK_FONTSIZE / 2 + wordspace;
 		}
 	}
 }
