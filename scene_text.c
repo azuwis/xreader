@@ -371,7 +371,7 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 		lyric_decode(ls[0], t, &ss[0]);
 		switch (vertread) {
 			case conf_vertread_reversal:
-				disp_putnstringreversal_sys((240 -
+				disp_putnstringreversal((240 -
 											 ss[0] * DISP_BOOK_FONTSIZE / 4),
 											PSP_SCREEN_HEIGHT -
 											DISP_BOOK_FONTSIZE - 1,
@@ -380,7 +380,7 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 											DISP_BOOK_FONTSIZE, 0);
 				break;
 			case conf_vertread_lvert:
-				disp_putnstringlvert_sys(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE -
+				disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE -
 										 1,
 										 (PSP_SCREEN_HEIGHT - 1) - (136 -
 																	ss[0] *
@@ -391,14 +391,14 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 										 DISP_BOOK_FONTSIZE, 0);
 				break;
 			case conf_vertread_rvert:
-				disp_putnstringrvert_sys(DISP_BOOK_FONTSIZE,
+				disp_putnstringrvert(DISP_BOOK_FONTSIZE,
 										 (136 - ss[0] * DISP_BOOK_FONTSIZE / 4),
 										 config.forecolor, (const byte *) t,
 										 ss[0], wordspace, 0,
 										 DISP_BOOK_FONTSIZE, 0);
 				break;
 			case conf_vertread_horz:
-				disp_putnstringhorz_sys((240 - ss[0] * DISP_BOOK_FONTSIZE / 4),
+				disp_putnstringhorz((240 - ss[0] * DISP_BOOK_FONTSIZE / 4),
 										PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE -
 										1, config.forecolor, (const byte *) t,
 										ss[0], wordspace, 0, DISP_BOOK_FONTSIZE,

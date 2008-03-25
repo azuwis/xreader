@@ -242,6 +242,17 @@ void scene_mp3_list()
 #endif
 }
 
+static char *weekStr[] = {
+	"星期一",
+	"星期二",
+	"星期三",
+	"星期四",
+	"星期五",
+	"星期六",
+	"星期天",
+	"日期错误"
+};
+
 void scene_mp3bar()
 {
 	bool firstdup = true;
@@ -270,29 +281,33 @@ void scene_mp3bar()
 		dword cpu, bus;
 
 		power_get_clock(&cpu, &bus);
-		if (config.fontsize <= 14) {
-			SPRINTF_S(timestr,
-					  "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d   剩余内存: %dKB",
-					  tm.year, tm.month, tm.day, tm.hour, tm.minutes,
-					  tm.seconds, (int) cpu, (int) bus, getFreeMemory() / 1024);
-		} else {
-			SPRINTF_S(timestr, "%u年%u月%u日 %02u:%02u:%02u   CPU/BUS: %d/%d",
-					  tm.year, tm.month, tm.day, tm.hour, tm.minutes,
-					  tm.seconds, (int) cpu, (int) bus);
-		}
+		SPRINTF_S(timestr,
+				  "%u年%u月%u日  %s  %02u:%02u:%02u   CPU/BUS: %d/%d",
+				  tm.year, tm.month, tm.day,
+				  weekStr[sceRtcGetDayOfWeek(tm.year, tm.month, tm.day) -
+						  1], tm.hour, tm.minutes, tm.seconds, (int) cpu,
+				  (int) bus);
 		disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE,
 					   (const byte *) timestr);
 		int percent, lifetime, tempe, volt;
 		char battstr[80];
 
 		power_get_battery(&percent, &lifetime, &tempe, &volt);
-		if (percent >= 0)
-			SPRINTF_S(battstr,
-					  "%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃",
-					  power_get_battery_charging(), percent, lifetime / 60,
-					  lifetime % 60, tempe);
-		else
-			STRCPY_S(battstr, "[电源供电]");
+		if (percent >= 0) {
+			if (config.fontsize <= 14) {
+				SPRINTF_S(battstr,
+						  "%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃   剩余内存: %dKB",
+						  power_get_battery_charging(), percent, lifetime / 60,
+						  lifetime % 60, tempe, getFreeMemory() / 1024);
+			} else {
+				SPRINTF_S(battstr,
+						  "%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃",
+						  power_get_battery_charging(), percent, lifetime / 60,
+						  lifetime % 60, tempe);
+			}
+		} else
+			SPRINTF_S(battstr, "[电源供电]   剩余内存: %dKB",
+					  getFreeMemory() / 1024);
 		disp_putstring(6 + DISP_FONTSIZE, 7 + DISP_FONTSIZE, COLOR_WHITE,
 					   (const byte *) battstr);
 
