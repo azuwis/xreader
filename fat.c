@@ -15,6 +15,7 @@ static int fatfd = -1;
 static t_fat_dbr dbr;
 static t_fat_mbr mbr;
 static dword *fat_table = NULL;
+static dquad dbr_pos = 0;
 static dquad root_pos = 0;
 static dquad data_pos = 0;
 static dquad bytes_per_clus = 0;
@@ -69,56 +70,54 @@ extern bool fat_init()
 		fat_unlock();
 		return false;
 	}
-	if (sceIoLseek(fatfd, mbr.dpt[0].start_sec * 0x200, PSP_SEEK_SET) !=
-		mbr.dpt[0].start_sec * 0x200
-		|| sceIoRead(fatfd, &dbr, sizeof(dbr)) < sizeof(dbr)) {
-		sceIoClose(fatfd);
-		fatfd = -1;
-		fat_unlock();
-		return false;
+	dbr_pos = mbr.dpt[0].start_sec * 0x200;
+	if (sceIoLseek(fatfd, dbr_pos, PSP_SEEK_SET) !=
+		dbr_pos || sceIoRead(fatfd, &dbr, sizeof(dbr)) < sizeof(dbr)) {
+		dbr_pos = 0;
+		if (sceIoLseek(fatfd, dbr_pos, PSP_SEEK_SET) != dbr_pos
+			|| sceIoRead(fatfd, &dbr, sizeof(dbr)) < sizeof(dbr)) {
+			sceIoClose(fatfd);
+			fatfd = -1;
+			fat_unlock();
+			return false;
+		}
 	}
-	// Add Vista Format fat32 support
-	if (dbr.root_entry == 0) {
-		fat_type = fat32;
-		clus_max = 0x0FFFFFF0;
-	} else if (mbr.dpt[0].id == 0x1) {
+
+	u64 total_sec = (dbr.total_sec == 0) ? dbr.big_total_sec : dbr.total_sec;
+	u64 fat_sec =
+		(dbr.sec_per_fat == 0) ? dbr.ufat.fat32.sec_per_fat : dbr.sec_per_fat;
+	u64 root_sec =
+		(dbr.root_entry * 32 + dbr.bytes_per_sec - 1) / dbr.bytes_per_sec;
+	u64 data_sec =
+		total_sec - dbr.reserved_sec - (dbr.num_fats * fat_sec) - root_sec;
+	u64 data_clus = data_sec / dbr.sec_per_clus;
+
+	if (data_clus < 4085) {
 		fat_type = fat12;
 		clus_max = 0x0FF0;
-	} else						//if(mbr.dpt[0].id == 0x4 || mbr.dpt[0].id == 0x6 || mbr.dpt[0].id == 0xE || mbr.dpt[0].id == 0xB )
-	{
+	} else if (data_clus < 65525) {
 		fat_type = fat16;
 		clus_max = 0xFFF0;
+	} else {
+		fat_type = fat32;
+		clus_max = 0x0FFFFFF0;
 	}
+
 	bytes_per_clus = 1ull * dbr.sec_per_clus * dbr.bytes_per_sec;
 	if (fat_type == fat32) {
-		data_pos = 1ull * mbr.dpt[0].start_sec * 0x200;
+		data_pos = 1ull * dbr_pos;
 		data_pos +=
 			1ull * (dbr.ufat.fat32.sec_per_fat * dbr.num_fats +
 					dbr.reserved_sec) * dbr.bytes_per_sec;
 		root_pos = data_pos;
 		root_pos += 1ull * bytes_per_clus * dbr.ufat.fat32.root_clus;
-
-		/*
-		   data_pos =
-		   mbr.dpt[0].start_sec * 0x200 +
-		   (dbr.ufat.fat32.sec_per_fat * dbr.num_fats +
-		   dbr.reserved_sec) * dbr.bytes_per_sec;
-		   root_pos = data_pos + bytes_per_clus * dbr.ufat.fat32.root_clus;
-		 */
 	} else {
-		root_pos = 1ull * mbr.dpt[0].start_sec * 0x200;
+		root_pos = 1ull * dbr_pos;
 		root_pos +=
 			1ull * (dbr.num_fats * dbr.sec_per_fat +
 					dbr.reserved_sec) * dbr.bytes_per_sec;
 		data_pos = root_pos;
 		data_pos += 1ull * dbr.root_entry * sizeof(t_fat_entry);
-		/*
-		   root_pos =
-		   mbr.dpt[0].start_sec * 0x200 + (dbr.num_fats * dbr.sec_per_fat +
-		   dbr.reserved_sec) *
-		   dbr.bytes_per_sec;
-		   data_pos = root_pos + dbr.root_entry * sizeof(t_fat_entry);
-		 */
 	}
 	sceIoClose(fatfd);
 	fat_unlock();
@@ -189,9 +188,9 @@ static bool fat_load_table()
 		dbr.bytes_per_sec;
 	if (sceIoLseek32
 		(fatfd,
-		 mbr.dpt[0].start_sec * 0x200 + dbr.reserved_sec * dbr.bytes_per_sec,
+		 dbr_pos + dbr.reserved_sec * dbr.bytes_per_sec,
 		 PSP_SEEK_SET) !=
-		mbr.dpt[0].start_sec * 0x200 + dbr.reserved_sec * dbr.bytes_per_sec
+		dbr_pos + dbr.reserved_sec * dbr.bytes_per_sec
 		|| (fat_table = (dword *) malloc(fat_table_size)) == NULL) {
 		sceIoClose(fatfd);
 		fatfd = -1;
