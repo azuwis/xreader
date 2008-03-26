@@ -5049,10 +5049,6 @@ extern void scene_init()
 	}
 
 #ifdef ENABLE_BG
-	if (config.bgfile[0] == 0) {
-		STRCPY_S(config.bgfile, appdir);
-		STRCAT_S(config.bgfile, "bg.png");
-	}
 	sceRtcGetCurrentTick(&dbglasttick);
 	bg_load(config.bgfile, config.bgarch, config.bgcolor,
 			fs_file_get_type(config.bgfile), config.grayscale, config.bgwhere);
