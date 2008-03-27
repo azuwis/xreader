@@ -100,7 +100,6 @@ extern p_ttf ettf, cttf;
 extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 						bool ttf_mode)
 {
-
 	char *pos = txt->buf, *posend = pos + txt->size;
 	dword curs;
 
@@ -111,7 +110,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 			txt->rows[curs] = NULL;
 		}
 	curs = 0;
-	while (txt->row_count < 1024 * 1024 && pos + 1 < posend) {
+	while (txt->row_count < 1024 * 1024 && pos < posend) {
 		if ((txt->row_count % 1024) == 0) {
 			curs = txt->row_count >> 10;
 			if ((txt->rows[curs] =
@@ -168,7 +167,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 				curp --;
 			}
 		}*/
-		if (bytetable[*(byte *) pos] == 1) {
+		if (pos+1 < posend && bytetable[*(byte *) pos] == 1) {
 			if (*pos == '\r' && *(pos + 1) == '\n')
 				pos += 2;
 			else
@@ -176,6 +175,9 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 		}
 		txt->rows[curs][txt->row_count & 0x3FF].count = pos - startp;
 		txt->row_count++;
+		if (pos + 1 == posend && bytetable[*(byte *)pos] == 1) {
+			break;
+		}
 	}
 	return true;
 }
