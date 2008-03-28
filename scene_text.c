@@ -372,37 +372,36 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 		switch (vertread) {
 			case conf_vertread_reversal:
 				disp_putnstringreversal((240 -
-											 ss[0] * DISP_BOOK_FONTSIZE / 4),
-											PSP_SCREEN_HEIGHT -
-											DISP_BOOK_FONTSIZE - 1,
-											config.forecolor, (const byte *) t,
-											ss[0], wordspace, 0,
-											DISP_BOOK_FONTSIZE, 0);
+										 ss[0] * DISP_BOOK_FONTSIZE / 4),
+										PSP_SCREEN_HEIGHT -
+										DISP_BOOK_FONTSIZE - 1,
+										config.forecolor, (const byte *) t,
+										ss[0], wordspace, 0,
+										DISP_BOOK_FONTSIZE, 0);
 				break;
 			case conf_vertread_lvert:
 				disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE -
-										 1,
-										 (PSP_SCREEN_HEIGHT - 1) - (136 -
-																	ss[0] *
-																	DISP_BOOK_FONTSIZE
-																	/ 4),
-										 config.forecolor, (const byte *) t,
-										 ss[0], wordspace, 0,
-										 DISP_BOOK_FONTSIZE, 0);
+									 1,
+									 (PSP_SCREEN_HEIGHT - 1) - (136 -
+																ss[0] *
+																DISP_BOOK_FONTSIZE
+																/ 4),
+									 config.forecolor, (const byte *) t,
+									 ss[0], wordspace, 0,
+									 DISP_BOOK_FONTSIZE, 0);
 				break;
 			case conf_vertread_rvert:
 				disp_putnstringrvert(DISP_BOOK_FONTSIZE,
-										 (136 - ss[0] * DISP_BOOK_FONTSIZE / 4),
-										 config.forecolor, (const byte *) t,
-										 ss[0], wordspace, 0,
-										 DISP_BOOK_FONTSIZE, 0);
+									 (136 - ss[0] * DISP_BOOK_FONTSIZE / 4),
+									 config.forecolor, (const byte *) t,
+									 ss[0], wordspace, 0,
+									 DISP_BOOK_FONTSIZE, 0);
 				break;
 			case conf_vertread_horz:
 				disp_putnstringhorz((240 - ss[0] * DISP_BOOK_FONTSIZE / 4),
-										PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE -
-										1, config.forecolor, (const byte *) t,
-										ss[0], wordspace, 0, DISP_BOOK_FONTSIZE,
-										0);
+									PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE -
+									1, config.forecolor, (const byte *) t,
+									ss[0], wordspace, 0, DISP_BOOK_FONTSIZE, 0);
 				break;
 			default:
 				break;

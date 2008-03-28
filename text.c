@@ -167,7 +167,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 				curp --;
 			}
 		}*/
-		if (pos+1 < posend && bytetable[*(byte *) pos] == 1) {
+		if (pos + 1 < posend && bytetable[*(byte *) pos] == 1) {
 			if (*pos == '\r' && *(pos + 1) == '\n')
 				pos += 2;
 			else
@@ -175,7 +175,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 		}
 		txt->rows[curs][txt->row_count & 0x3FF].count = pos - startp;
 		txt->row_count++;
-		if (pos + 1 == posend && bytetable[*(byte *)pos] == 1) {
+		if (pos + 1 == posend && bytetable[*(byte *) pos] == 1) {
 			break;
 		}
 	}
