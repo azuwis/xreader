@@ -25,7 +25,6 @@ xReader支持8GMS卡，支持PSP2000（以及其64MB内存），支持最新M33版本。
 将支持多线程自动预读功能，系统空闲自动缓存图像或文字。
 将支持LRC歌词自动搜索下载
 将支持TXT目录自动跳转，并提供电脑上的生成目录工具
-将支持ClearType等TTF字体显示技术
 将重构代码以便代码复用
 
 xReader电子书目录生成工具: GenIndex
@@ -83,13 +82,30 @@ xReader中在mp3信息条内按左+三角键切换歌词编码,原ID3编码切换改为右+三角键
 如果字体较大，一行显示不完。
 开启了自动编排文本后，就能自动将换行和段落开始分开了。
 
-有关fontcfg.ini
-这是xReader的字体配置文件，目前有如下选项
-[cfont] ; 这是中文TTF字体配置
-antialias=1; 是否抗锯齿
-cleartype=1; 是否使用ClearType，如果是会覆盖antialias选项
-embolden=0; 字体是否加粗
-[efont] ; 这是英文TTF字体配置
-antialias=1; 是否抗锯齿
-cleartype=1; 是否使用ClearType，如果是会覆盖antialias选项
-embolden=0; 字体是否加粗
+部分ini配置解释：
+global:brightness:
+PSP屏幕亮度（0-100）
+
+global:hide_flash
+是否隐藏Flash0、Flash1
+
+image:no_repeat
+是否在最后一张图像显示完成时退回文件列表
+
+text:cfont_antialias
+text:efont_antialias
+分别决定是否使用中文、英文TTF字体反锯齿
+
+text:cfont_cleartype
+text:efont_cleartype
+分别决定是否使用中文、英文TTF字体ClearType效果
+
+text:cfont_embolden
+text:efont_embolden
+分别决定是否使用中文、英文TTF字体加粗效果
+
+text:infobar_use_ttf_mode
+阅读文本时是否使用TTF字体显示信息栏
+
+ui:usedyncolor
+是否打开xReader的复活节彩蛋
