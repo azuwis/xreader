@@ -1320,26 +1320,6 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 		case PSP_CTRL_LEFT:
 			switch (*index) {
 				case 0:
-					if (config.wordspace == 0)
-						config.wordspace = 128;
-					else {
-						config.wordspace--;
-						cur_book_view.text_needrf = true;
-					}
-					break;
-				case 1:
-					if (config.rowspace == 0)
-						config.rowspace = 128;
-					else
-						config.rowspace--;
-					break;
-				case 2:
-					if (config.borderspace == 0)
-						config.borderspace = 10;
-					else
-						config.borderspace--;
-					break;
-				case 3:
 					if (config.infobar == conf_infobar_none)
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 						config.infobar = conf_infobar_lyric;
@@ -1349,47 +1329,47 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 					else
 						config.infobar--;
 					break;
-				case 4:
+				case 1:
 					config.rlastrow = !config.rlastrow;
 					break;
-				case 5:
+				case 2:
 					if (config.vertread == 0)
 						config.vertread = 3;
 					else
 						config.vertread--;
 					break;
-				case 6:
+				case 3:
 					if (config.encode == 0)
 						config.encode = 4;
 					else
 						config.encode--;
 					break;
-				case 7:
+				case 4:
 					config.scrollbar = !config.scrollbar;
 					break;
-				case 8:
+				case 5:
 					config.autobm = !config.autobm;
 					break;
-				case 9:
+				case 6:
 					config.reordertxt = !config.reordertxt;
 					break;
-				case 10:
+				case 7:
 					config.pagetonext = !config.pagetonext;
 					break;
-				case 11:
+				case 8:
 					if (--config.autopagetype < 0)
 						config.autopagetype = 2;
 					config.prev_autopage = config.autopagetype;
 					break;
-				case 12:
+				case 9:
 					if (--config.autopage < -1000)
 						config.autopage = -1000;
 					break;
-				case 13:
+				case 10:
 					if (--config.autolinedelay < 0)
 						config.autolinedelay = 0;
 					break;
-				case 14:
+				case 11:
 					config.enable_analog = !config.enable_analog;
 					break;
 			}
@@ -1397,26 +1377,6 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 		case PSP_CTRL_RIGHT:
 			switch (*index) {
 				case 0:
-					if (config.wordspace == 128)
-						config.wordspace = 0;
-					else {
-						config.wordspace++;
-						cur_book_view.text_needrf = true;
-					}
-					break;
-				case 1:
-					if (config.rowspace == 128)
-						config.rowspace = 0;
-					else
-						config.rowspace++;
-					break;
-				case 2:
-					if (config.borderspace == 10)
-						config.borderspace = 0;
-					else
-						config.borderspace++;
-					break;
-				case 3:
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 					if (config.infobar == conf_infobar_lyric)
 #else
@@ -1426,46 +1386,46 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 					else
 						config.infobar++;
 					break;
-				case 4:
+				case 1:
 					config.rlastrow = !config.rlastrow;
 					break;
-				case 5:
+				case 2:
 					if (config.vertread == 3)
 						config.vertread = 0;
 					else
 						config.vertread++;
 					break;
-				case 6:
+				case 3:
 					if (config.encode == 4)
 						config.encode = 0;
 					else
 						config.encode++;
 					break;
-				case 7:
+				case 4:
 					config.scrollbar = !config.scrollbar;
 					break;
-				case 8:
+				case 5:
 					config.autobm = !config.autobm;
 					break;
-				case 9:
+				case 6:
 					config.reordertxt = !config.reordertxt;
 					break;
-				case 10:
+				case 7:
 					config.pagetonext = !config.pagetonext;
 					break;
-				case 11:
+				case 8:
 					config.autopagetype = (config.autopagetype + 1) % 3;
 					config.prev_autopage = config.autopagetype;
 					break;
-				case 12:
+				case 9:
 					if (++config.autopage > 1000)
 						config.autopage = 1000;
 					break;
-				case 13:
+				case 10:
 					if (++config.autolinedelay > 1000)
 						config.autolinedelay = 1000;
 					break;
-				case 14:
+				case 11:
 					config.enable_analog = !config.enable_analog;
 					break;
 			}
@@ -1483,7 +1443,7 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 	char number[5];
 
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 7 * DISP_FONTSIZE,
-				   240 + DISP_FONTSIZE * 6, 140 + 9 * DISP_FONTSIZE,
+				   240 + DISP_FONTSIZE * 6, 137 + 6 * DISP_FONTSIZE,
 				   COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 7 * DISP_FONTSIZE,
 				  239 + DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE,
@@ -1493,27 +1453,15 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE,
 			  239 + DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 6 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6,
-				  139 + 9 * DISP_FONTSIZE,
+				  136 + 6 * DISP_FONTSIZE,
 				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-	memset(number, ' ', 4);
-	utils_dword2string(config.wordspace, number, 4);
-	disp_putstring(242, 124 - 6 * DISP_FONTSIZE, COLOR_WHITE,
-				   (const byte *) number);
-	memset(number, ' ', 4);
-	utils_dword2string(config.rowspace, number, 4);
-	disp_putstring(242, 125 - 5 * DISP_FONTSIZE, COLOR_WHITE,
-				   (const byte *) number);
-	memset(number, ' ', 4);
-	utils_dword2string(config.borderspace, number, 4);
-	disp_putstring(242, 126 - 4 * DISP_FONTSIZE, COLOR_WHITE,
-				   (const byte *) number);
-	disp_putstring(242 + DISP_FONTSIZE, 127 - 3 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 124 - 6 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) conf_get_infobarname(config.infobar));
-	disp_putstring(242 + DISP_FONTSIZE, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 125 - 5 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.
 								   rlastrow ? getmsgbyid(YES) :
 								   getmsgbyid(NO)));
-	disp_putstring(242 + DISP_FONTSIZE, 129 - 1 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 126 - 4 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) ((config.vertread == 3) ?
 								   getmsgbyid(REVERSAL_DIRECT) : (config.
 																  vertread ==
@@ -1524,53 +1472,53 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 															  (RIGHT_DIRECT) :
 															  getmsgbyid
 															  (NONE_DIRECT))));
-	disp_putstring(242 + DISP_FONTSIZE, 130, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 127 - 3 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) conf_get_encodename(config.encode));
-	disp_putstring(242 + DISP_FONTSIZE, 131 + 1 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 128 - 2 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.
 								   scrollbar ? getmsgbyid(YES) :
 								   getmsgbyid(NO)));
-	disp_putstring(242 + DISP_FONTSIZE, 132 + 2 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 129 - 1 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.
 								   autobm ? getmsgbyid(YES) : getmsgbyid(NO)));
-	disp_putstring(242 + DISP_FONTSIZE, 133 + 3 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 130, COLOR_WHITE,
 				   (const byte *) (config.
 								   reordertxt ? getmsgbyid(YES) :
 								   getmsgbyid(NO)));
-	disp_putstring(242 + DISP_FONTSIZE, 134 + 4 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 131 + 1 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.
 								   pagetonext ? getmsgbyid(NEXT_ARTICLE) :
 								   getmsgbyid(NO_ACTION)));
 	if (config.autopagetype == 2) {
-		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE,
+		disp_putstring(242 + DISP_FONTSIZE, 132 + 2 * DISP_FONTSIZE,
 					   COLOR_WHITE, (const byte *) "无");
 	} else if (config.autopagetype == 1) {
-		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE,
+		disp_putstring(242 + DISP_FONTSIZE, 132 + 2 * DISP_FONTSIZE,
 					   COLOR_WHITE, (const byte *) "自动滚屏");
 	} else {
-		disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE,
+		disp_putstring(242 + DISP_FONTSIZE, 132 + 2 * DISP_FONTSIZE,
 					   COLOR_WHITE, (const byte *) "自动翻页");
 	}
 	if (config.autopage) {
 		char infomsg[80];
 
 		SPRINTF_S(infomsg, "%2d", config.autopage);
-		disp_putstring(242 + DISP_FONTSIZE, 136 + 6 * DISP_FONTSIZE,
+		disp_putstring(242 + DISP_FONTSIZE, 133 + 3 * DISP_FONTSIZE,
 					   COLOR_WHITE, (const byte *) infomsg);
 	} else {
-		disp_putstring(242 + DISP_FONTSIZE, 136 + 6 * DISP_FONTSIZE,
+		disp_putstring(242 + DISP_FONTSIZE, 133 + 3 * DISP_FONTSIZE,
 					   COLOR_WHITE, (const byte *) getmsgbyid(HAVE_SHUTDOWN));
 	}
 	if (config.autolinedelay) {
 		memset(number, ' ', 4);
 		utils_dword2string(config.autolinedelay, number, 2);
-		disp_putstring(242 + DISP_FONTSIZE, 137 + 7 * DISP_FONTSIZE,
+		disp_putstring(242 + DISP_FONTSIZE, 134 + 4 * DISP_FONTSIZE,
 					   COLOR_WHITE, (const byte *) number);
 	} else {
-		disp_putstring(242 + DISP_FONTSIZE, 137 + 7 * DISP_FONTSIZE,
+		disp_putstring(242 + DISP_FONTSIZE, 134 + 4 * DISP_FONTSIZE,
 					   COLOR_WHITE, (const byte *) getmsgbyid(HAVE_SHUTDOWN));
 	}
-	disp_putstring(242 + DISP_FONTSIZE, 138 + 8 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242 + DISP_FONTSIZE, 135 + 5 * DISP_FONTSIZE, COLOR_WHITE,
 				   config.
 				   enable_analog ? (const byte *) getmsgbyid(YES) : (const byte
 																	 *)
@@ -1579,27 +1527,29 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 
 dword scene_boptions(dword * selidx)
 {
-	t_win_menuitem item[15];
+	t_win_menuitem item[12];
 	dword i;
 
+	/*
 	STRCPY_S(item[0].name, getmsgbyid(WORD_SPACE));
 	STRCPY_S(item[1].name, getmsgbyid(LINE_SPACE));
 	STRCPY_S(item[2].name, getmsgbyid(REVERSE_SPAN_SPACE));
-	STRCPY_S(item[3].name, getmsgbyid(INFO_BAR_DISPLAY));
-	STRCPY_S(item[4].name, getmsgbyid(REVERSE_ONE_LINE_WHEN_PAGE_DOWN));
-	STRCPY_S(item[5].name, getmsgbyid(TEXT_DIRECTION));
-	STRCPY_S(item[6].name, getmsgbyid(TEXT_ENCODING));
-	STRCPY_S(item[7].name, getmsgbyid(SCROLLBAR));
-	STRCPY_S(item[8].name, getmsgbyid(AUTOSAVE_BOOKMARK));
-	STRCPY_S(item[9].name, getmsgbyid(TEXT_REALIGNMENT));
-	STRCPY_S(item[10].name, getmsgbyid(TEXT_TAIL_PAGE_DOWN));
-	STRCPY_S(item[11].name, getmsgbyid(AUTOPAGE_MODE));
+	*/
+	STRCPY_S(item[0].name, getmsgbyid(INFO_BAR_DISPLAY));
+	STRCPY_S(item[1].name, getmsgbyid(REVERSE_ONE_LINE_WHEN_PAGE_DOWN));
+	STRCPY_S(item[2].name, getmsgbyid(TEXT_DIRECTION));
+	STRCPY_S(item[3].name, getmsgbyid(TEXT_ENCODING));
+	STRCPY_S(item[4].name, getmsgbyid(SCROLLBAR));
+	STRCPY_S(item[5].name, getmsgbyid(AUTOSAVE_BOOKMARK));
+	STRCPY_S(item[6].name, getmsgbyid(TEXT_REALIGNMENT));
+	STRCPY_S(item[7].name, getmsgbyid(TEXT_TAIL_PAGE_DOWN));
+	STRCPY_S(item[8].name, getmsgbyid(AUTOPAGE_MODE));
 	if (!config.autopagetype) {
-		STRCPY_S(item[12].name, getmsgbyid(AUTOPAGE_DELAY));
+		STRCPY_S(item[9].name, getmsgbyid(AUTOPAGE_DELAY));
 	} else
-		STRCPY_S(item[12].name, getmsgbyid(AUTOLINE_STEP));
-	STRCPY_S(item[13].name, getmsgbyid(AUTOLINE_TIME));
-	STRCPY_S(item[14].name, getmsgbyid(ENABLE_ANALOG_KEY));
+		STRCPY_S(item[9].name, getmsgbyid(AUTOLINE_STEP));
+	STRCPY_S(item[10].name, getmsgbyid(AUTOLINE_TIME));
+	STRCPY_S(item[11].name, getmsgbyid(ENABLE_ANALOG_KEY));
 	for (i = 0; i < NELEMS(item); i++) {
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1612,13 +1562,13 @@ dword scene_boptions(dword * selidx)
 	}
 	dword index;
 	bool orgvert = config.vertread;
-	dword orgrowspace = config.rowspace;
 	bool orgibar = config.infobar;
 	bool orgscrollbar = config.scrollbar;
-	dword orgwordspace = config.wordspace;
-	dword orgborderspace = config.borderspace;
 	dword orgreordertxt = config.reordertxt;
 	dword orgencode = config.encode;
+	dword orgrowspace = config.rowspace;
+	dword orgwordspace = config.wordspace;
+	dword orgborderspace = config.borderspace;
 
 	while ((index =
 			win_menu(240 - DISP_FONTSIZE * 6, 123 - 6 * DISP_FONTSIZE, 12,
@@ -1795,6 +1745,26 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 					}
 					break;
 				case 2:
+					if (config.wordspace == 0)
+						config.wordspace = 128;
+					else {
+						config.wordspace--;
+						cur_book_view.text_needrf = true;
+					}
+					break;
+				case 3:
+					if (config.rowspace == 0)
+						config.rowspace = 128;
+					else
+						config.rowspace--;
+					break;
+				case 4:
+					if (config.borderspace == 0)
+						config.borderspace = 10;
+					else
+						config.borderspace--;
+					break;
+				case 5:
 #ifdef ENABLE_TTF
 					config.usettf = !config.usettf;
 					if (config.usettf)
@@ -1832,6 +1802,26 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 					}
 					break;
 				case 2:
+					if (config.wordspace == 128)
+						config.wordspace = 0;
+					else {
+						config.wordspace++;
+						cur_book_view.text_needrf = true;
+					}
+					break;
+				case 3:
+					if (config.rowspace == 128)
+						config.rowspace = 0;
+					else
+						config.rowspace++;
+					break;
+				case 4:
+					if (config.borderspace == 10)
+						config.borderspace = 0;
+					else
+						config.borderspace++;
+					break;
+				case 5:
 #ifdef ENABLE_TTF
 					config.usettf = !config.usettf;
 					if (config.usettf)
@@ -1861,7 +1851,7 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex,
 	char number[5];
 
 	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE,
-				   240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE,
+				   240 + DISP_FONTSIZE * 6, 131 + 1 * DISP_FONTSIZE,
 				   COLOR_WHITE);
 	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE,
 				  239 + DISP_FONTSIZE * 6, 127 - 2 * DISP_FONTSIZE,
@@ -1871,35 +1861,51 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex,
 	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE,
 			  239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
 	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6,
-				  126 - 3 * DISP_FONTSIZE,
+				  130 + 1 * DISP_FONTSIZE,
 				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	memset(number, ' ', 4);
 	utils_dword2string(fonts[fontindex].size, number, 4);
-	disp_putstring(242, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242, 123 - 5 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) number);
 	memset(number, ' ', 4);
 	utils_dword2string(config.usettf ? ttfsize : bookfonts[bookfontindex].size,
 					   number, 4);
-	disp_putstring(242, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(242, 124 - 4 * DISP_FONTSIZE, COLOR_WHITE,
+				   (const byte *) number);
+	memset(number, ' ', 4);
+	utils_dword2string(config.wordspace, number, 4);
+	disp_putstring(242, 125 - 3 * DISP_FONTSIZE, COLOR_WHITE,
+				   (const byte *) number);
+	memset(number, ' ', 4);
+	utils_dword2string(config.rowspace, number, 4);
+	disp_putstring(242, 126 - 2 * DISP_FONTSIZE, COLOR_WHITE,
+				   (const byte *) number);
+	memset(number, ' ', 4);
+	utils_dword2string(config.borderspace, number, 4);
+	disp_putstring(242, 127 - 1 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) number);
 #ifdef ENABLE_TTF
-	disp_putstring(240 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(240 + DISP_FONTSIZE, 128 + 0 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.
 								   usettf ? getmsgbyid(YES) : getmsgbyid(NO)));
 #else
-	disp_putstring(240 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(240 + DISP_FONTSIZE, 128 + 0 * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (getmsgbyid(HAVE_SHUTDOWN)));
 #endif
 }
 
 dword scene_fontsel(dword * selidx)
 {
-	t_win_menuitem item[3];
+	t_win_menuitem item[6];
 	dword i;
 
 	STRCPY_S(item[0].name, getmsgbyid(MENU_FONT_SIZE));
 	STRCPY_S(item[1].name, getmsgbyid(BOOK_FONT_SIZE));
-	STRCPY_S(item[2].name, getmsgbyid(TTF_FONT_SIZE));
+	STRCPY_S(item[2].name, getmsgbyid(WORD_SPACE));
+	STRCPY_S(item[3].name, getmsgbyid(LINE_SPACE));
+	STRCPY_S(item[4].name, getmsgbyid(REVERSE_SPAN_SPACE));
+	STRCPY_S(item[5].name, getmsgbyid(TTF_FONT_SIZE));
+	
 	for (i = 0; i < NELEMS(item); i++) {
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1915,6 +1921,12 @@ dword scene_fontsel(dword * selidx)
 	int orgbookfontindex = bookfontindex;
 	int orgttfsize = ttfsize;
 	bool orgusettf = config.usettf;
+	bool orgvert = config.vertread;
+	bool orgibar = config.infobar;
+	bool orgscrollbar = config.scrollbar;
+	dword orgrowspace = config.rowspace;
+	dword orgwordspace = config.wordspace;
+	dword orgborderspace = config.borderspace;
 
 	while ((index =
 			win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12,
@@ -1945,6 +1957,41 @@ dword scene_fontsel(dword * selidx)
 			config.borderspace * 2;
 		return 2;
 	}
+
+	dword result = 0;
+
+	if (orgibar != config.infobar || orgvert != config.vertread
+		|| orgrowspace != config.rowspace
+		|| orgborderspace != config.borderspace) {
+		int t = config.vertread;
+
+		if (t == 3)
+			t = 0;
+		drperpage =
+			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
+			 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
+			 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		rowsperpage =
+			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
+			 (config.infobar ? DISP_BOOK_FONTSIZE : 0) -
+			 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+	}
+	if (orgibar != config.infobar || orgvert != config.vertread
+		|| orgwordspace != config.wordspace
+		|| orgborderspace != config.borderspace
+		|| orgscrollbar != config.scrollbar) {
+		dword orgpixelsperrow = pixelsperrow;
+		int t = config.vertread;
+
+		if (t == 3)
+			t = 0;
+		pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
+						: (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
+			config.borderspace * 2;
+		if (orgpixelsperrow != pixelsperrow)
+			result = 4;
+	}
+
 	return 0;
 }
 
