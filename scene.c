@@ -1525,16 +1525,31 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   getmsgbyid(NO));
 }
 
+static void recalcSize(dword *drperpage, dword *rowsperpage, dword *pixelsperrow)
+{
+	int t = config.vertread;
+
+	if (t == 3)
+		t = 0;
+	
+	*drperpage =
+		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
+		 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
+		 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+	*rowsperpage =
+		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
+		 (config.infobar != conf_infobar_none ? DISP_BOOK_FONTSIZE : 0) -
+		 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+	*pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
+			: (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
+		config.borderspace * 2;
+}
+
 dword scene_boptions(dword * selidx)
 {
 	t_win_menuitem item[12];
 	dword i;
 
-	/*
-	STRCPY_S(item[0].name, getmsgbyid(WORD_SPACE));
-	STRCPY_S(item[1].name, getmsgbyid(LINE_SPACE));
-	STRCPY_S(item[2].name, getmsgbyid(REVERSE_SPAN_SPACE));
-	*/
 	STRCPY_S(item[0].name, getmsgbyid(INFO_BAR_DISPLAY));
 	STRCPY_S(item[1].name, getmsgbyid(REVERSE_ONE_LINE_WHEN_PAGE_DOWN));
 	STRCPY_S(item[2].name, getmsgbyid(TEXT_DIRECTION));
@@ -1581,31 +1596,14 @@ dword scene_boptions(dword * selidx)
 	if (orgibar != config.infobar || orgvert != config.vertread
 		|| orgrowspace != config.rowspace
 		|| orgborderspace != config.borderspace) {
-		int t = config.vertread;
-
-		if (t == 3)
-			t = 0;
-		drperpage =
-			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
-			 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage =
-			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 (config.infobar ? DISP_BOOK_FONTSIZE : 0) -
-			 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 	}
 	if (orgibar != config.infobar || orgvert != config.vertread
 		|| orgwordspace != config.wordspace
 		|| orgborderspace != config.borderspace
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
-		int t = config.vertread;
-
-		if (t == 3)
-			t = 0;
-		pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
-						: (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
-			config.borderspace * 2;
+		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 		if (orgpixelsperrow != pixelsperrow)
 			result = 4;
 	}
@@ -1940,21 +1938,7 @@ dword scene_fontsel(dword * selidx)
 		if (orgfontindex != fontindex)
 			scene_load_font();
 		scene_load_book_font();
-		int t = config.vertread;
-
-		if (t == 3)
-			t = 0;
-		drperpage =
-			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
-			 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage =
-			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 (config.infobar ? DISP_BOOK_FONTSIZE : 0) -
-			 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
-						: (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
-			config.borderspace * 2;
+		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 		return 2;
 	}
 
@@ -1973,7 +1957,7 @@ dword scene_fontsel(dword * selidx)
 			 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 		rowsperpage =
 			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 (config.infobar ? DISP_BOOK_FONTSIZE : 0) -
+			 (config.infobar != conf_infobar_none ? DISP_BOOK_FONTSIZE : 0) -
 			 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	}
 	if (orgibar != config.infobar || orgvert != config.vertread
@@ -1981,13 +1965,7 @@ dword scene_fontsel(dword * selidx)
 		|| orgborderspace != config.borderspace
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
-		int t = config.vertread;
-
-		if (t == 3)
-			t = 0;
-		pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
-						: (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
-			config.borderspace * 2;
+		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 		if (orgpixelsperrow != pixelsperrow)
 			result = 4;
 	}
@@ -2356,21 +2334,7 @@ dword scene_moptions(dword * selidx)
 	if (orgfontindex != fontindex || orgbookfontindex != bookfontindex) {
 		scene_load_font();
 		scene_load_book_font();
-		int t = config.vertread;
-
-		if (t == 3)
-			t = 0;
-		drperpage =
-			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
-			 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage =
-			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 (config.infobar ? DISP_BOOK_FONTSIZE : 0) -
-			 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
-						: (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
-			config.borderspace * 2;
+		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 		return 2;
 	}
 	if (orgshowhidden != config.showhidden
@@ -2771,21 +2735,7 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 		scene_load_book_font();
 	}
 
-	int t = curr->vertread;
-
-	if (t == 3)
-		t = 0;
-	drperpage =
-		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - curr->borderspace * 2 +
-		 curr->rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (curr->rowspace +
-														 DISP_BOOK_FONTSIZE);
-	rowsperpage =
-		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-		 (curr->infobar ? DISP_BOOK_FONTSIZE : 0) -
-		 curr->borderspace * 2) / (curr->rowspace + DISP_BOOK_FONTSIZE);
-	pixelsperrow = (t ? (curr->scrollbar ? 267 : PSP_SCREEN_HEIGHT)
-					: (curr->scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
-		curr->borderspace * 2;
+	recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 
 #ifdef ENABLE_BG
 	bg_load(curr->bgfile, curr->bgarch, curr->bgcolor,
@@ -5156,22 +5106,7 @@ extern void scene_init()
 		ctrl_waitany();
 		sceKernelExitGame();
 	}
-	int t = config.vertread;
-
-	if (t == 3)
-		t = 0;
-	drperpage =
-		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) - config.borderspace * 2 +
-		 config.rowspace + DISP_BOOK_FONTSIZE * 2 - 2) / (config.rowspace +
-														  DISP_BOOK_FONTSIZE);
-	rowsperpage =
-		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-		 (config.infobar ? DISP_BOOK_FONTSIZE : 0) -
-		 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-	pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
-					: (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
-		config.borderspace * 2;
-
+	recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "scene_load_font() & scene_load_book_font(): %.2f second",
 			   pspDiffTime(&dbgnow, &dbglasttick));
