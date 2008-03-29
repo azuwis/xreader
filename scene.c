@@ -5210,15 +5210,6 @@ extern void scene_init()
 
 extern void scene_exit()
 {
-	/*
-	   const char* log = dbg_get_memorylog();
-	   if(log) {
-	   SceUID fd = sceIoOpen("ms0:/log.txt", PSP_O_WRONLY | PSP_O_CREAT, 0777);
-	   if(fd >= 0) {
-	   sceIoWrite(fd, log, strlen(log));
-	   }
-	   }
-	 */
 	power_set_clock(222, 111);
 	if (bm != NULL) {
 		bookmark_close(bm);
@@ -5320,24 +5311,6 @@ extern const char *scene_appdir()
 
 dword ColorLerp(dword color1, dword color2, float fWeight)
 {
-	/*
-	   byte r1, g1, b1;
-	   byte r2, g2, b2;
-	   r1 = RGB_R(color1);
-	   g1 = RGB_G(color1);
-	   b1 = RGB_B(color1);
-	   r2 = RGB_R(color2);
-	   g2 = RGB_G(color2);
-	   b2 = RGB_B(color2);
-
-	   dword result = RGB(
-	   255-(255-r1)*fWeight-(255-r2)*(1-fWeight), 
-	   255-(255-g1)*fWeight-(255-g2)*(1-fWeight), 
-	   255-(255-b1)*fWeight-(255-b2)*(1-fWeight)
-	   );
-
-	   return result;
-	 */
 	fWeight = 1.0 - fWeight;
 	if (fWeight <= 0.01f)
 		return color1;
