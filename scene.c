@@ -1321,7 +1321,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 			switch (*index) {
 				case 0:
 					if (config.wordspace == 0)
-						config.wordspace = 5;
+						config.wordspace = 128;
 					else {
 						config.wordspace--;
 						cur_book_view.text_needrf = true;
@@ -1329,7 +1329,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 					break;
 				case 1:
 					if (config.rowspace == 0)
-						config.rowspace = 20;
+						config.rowspace = 128;
 					else
 						config.rowspace--;
 					break;
@@ -1397,7 +1397,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 		case PSP_CTRL_RIGHT:
 			switch (*index) {
 				case 0:
-					if (config.wordspace == 5)
+					if (config.wordspace == 128)
 						config.wordspace = 0;
 					else {
 						config.wordspace++;
@@ -1405,7 +1405,7 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 					}
 					break;
 				case 1:
-					if (config.rowspace == 20)
+					if (config.rowspace == 128)
 						config.rowspace = 0;
 					else
 						config.rowspace++;
