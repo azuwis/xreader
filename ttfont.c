@@ -681,9 +681,9 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 							 &slot->bitmap, slot->bitmap_left, slot->bitmap_top,
 							 slot->advance.x, slot->advance.y);
 			}
-			x += wordspace;
 			if (x > maxpixels)
 				break;
+			x += wordspace;
 			(str)++;
 			(count)++;
 		} else {
