@@ -777,14 +777,15 @@ extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 	while (*str != 0 && width <= maxpixels && bytetable[*str] != 1) {
 		if (*str > 0x80) {
 			width += hanzi_len;
-			width += wordspace * 2;
 			if (width > maxpixels)
 				break;
+			width += wordspace * 2;
 			str += 2;
 		} else if (*str == 0x20) {
-			width += DISP_BOOK_FONTSIZE / 2 + wordspace;
+			width += DISP_BOOK_FONTSIZE / 2;
 			if (width > maxpixels)
 				break;
+			width += wordspace;
 			str++;
 		} else {
 			if (*str == 0x09) {
@@ -794,9 +795,9 @@ extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 					width += DISP_BOOK_FONTSIZE / 2;
 			} else
 				width += disp_ewidth[*str];
-			width += wordspace;
 			if (width > maxpixels)
 				break;
+			width += wordspace;
 			str++;
 		}
 	}
