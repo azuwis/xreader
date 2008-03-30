@@ -97,6 +97,62 @@ bool bytetable[256] = {
 extern p_ttf ettf, cttf;
 #endif
 
+/*
+ * 得到文本长度，以像素计，系统使用
+ */
+int text_get_string_width_sys(const byte *pos, size_t size, dword wordspace)
+{
+	int width = 0;
+	const byte* posend = pos + size;
+	while (pos < posend && bytetable[*(byte *) pos] != 1) {
+		if ((*(byte *) pos) >= 0x80) {
+			width += DISP_FONTSIZE;
+			width += wordspace * 2;
+			pos += 2;
+		} else {
+			int j;
+
+			for (j = 0; j < (*pos == 0x09 ? config.tabstop : 1); ++j)
+				width += DISP_FONTSIZE / 2;
+			width += wordspace;
+			++pos;
+		}
+	}
+
+	return width;
+}
+
+/*
+ * 得到文本长度，以像素计，显示文本使用
+ */
+int text_get_string_width(const char *pos, const char* posend, dword maxpixel, dword wordspace, dword *count)
+{
+	int width = 0;
+	const char* posstart = pos;
+	while (pos < posend && bytetable[*(byte *) pos] != 1) {
+		if ((*(byte *) pos) >= 0x80) {
+			width += DISP_BOOK_FONTSIZE;
+			if (width > maxpixel)
+				break;
+			width += wordspace * 2;
+			pos += 2;
+		} else {
+			int j;
+
+			for (j = 0; j < (*pos == 0x09 ? config.tabstop : 1); ++j)
+				width += disp_ewidth[*(byte *) pos];
+			if (width > maxpixel)
+				break;
+			width += wordspace;
+			++pos;
+		}
+	}
+
+	*count = pos - posstart;
+
+	return width;
+}
+
 extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 						bool ttf_mode)
 {
@@ -119,8 +175,6 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 		}
 		txt->rows[curs][txt->row_count & 0x3FF].start = pos;
 		char *startp = pos;
-		dword width = 0;
-
 #ifdef ENABLE_TTF
 		if (ttf_mode) {
 			dword count;
@@ -136,23 +190,9 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 		} else
 #endif
 		{
-			while (pos < posend && bytetable[*(byte *) pos] != 1)
-				if ((*(byte *) pos) >= 0x80) {
-					width += DISP_BOOK_FONTSIZE;
-					if (width > rowpixels)
-						break;
-					width += wordspace * 2;
-					pos += 2;
-				} else {
-					int j;
-
-					for (j = 0; j < (*pos == 0x09 ? config.tabstop : 1); ++j)
-						width += disp_ewidth[*(byte *) pos];
-					if (width > rowpixels)
-						break;
-					width += wordspace;
-					++pos;
-				}
+			dword count = 0;
+			text_get_string_width(pos, posend, rowpixels, wordspace, &count);
+			pos += count;
 		}
 /*		if(pos + 1 < posend && ((*pos >= 'A' && *pos <= 'Z') || (*pos >= 'a' && *pos <= 'z')))
 		{
