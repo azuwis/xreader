@@ -243,13 +243,13 @@ void scene_mp3_list()
 }
 
 static char *weekStr[] = {
+	"星期天",
 	"星期一",
 	"星期二",
 	"星期三",
 	"星期四",
 	"星期五",
 	"星期六",
-	"星期天",
 	"日期错误"
 };
 
@@ -276,16 +276,16 @@ void scene_mp3bar()
 					  msgbcolor);
 		char timestr[80];
 		pspTime tm;
-
-		sceRtcGetCurrentClockLocalTime(&tm);
+		dword pos = sceRtcGetDayOfWeek(tm.year, tm.month, tm.day);
 		dword cpu, bus;
 
+		sceRtcGetCurrentClockLocalTime(&tm);
+		pos = pos >= 7 ? 7 : pos;
 		power_get_clock(&cpu, &bus);
 		SPRINTF_S(timestr,
 				  "%u年%u月%u日  %s  %02u:%02u:%02u   CPU/BUS: %d/%d",
 				  tm.year, tm.month, tm.day,
-				  weekStr[sceRtcGetDayOfWeek(tm.year, tm.month, tm.day) -
-						  1], tm.hour, tm.minutes, tm.seconds, (int) cpu,
+				  weekStr[pos], tm.hour, tm.minutes, tm.seconds, (int) cpu,
 				  (int) bus);
 		disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE,
 					   (const byte *) timestr);
