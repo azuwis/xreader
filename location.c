@@ -21,7 +21,7 @@ typedef struct _location t_location;
 
 extern void location_init(const char *filename, int *slotaval)
 {
-	strcpy(fn, filename);
+	STRCPY_S(fn, filename);
 	memset(slot, 0, sizeof(bool) * 10);
 	int fd = sceIoOpen(fn, PSP_O_RDONLY, 0777);
 

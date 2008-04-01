@@ -247,7 +247,7 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 	}
 	int slen = strlen(str);
 
-	strcpy(cstr, str);
+	strncpy(cstr, str, slen);
 	cstr += slen;
 	return cstr - string;
 }

@@ -102,7 +102,8 @@ extern bool move_file(const char *src, const char *dest, t_copy_cb cb,
 {
 	bool result = copy_file(src, dest, cb, ocb, data);
 
-	utils_del_file(src);
+	if (result)
+		utils_del_file(src);
 	return result;
 }
 
@@ -111,7 +112,8 @@ extern dword move_dir(const char *src, const char *dest, t_copy_cb cb,
 {
 	dword result = copy_dir(src, dest, cb, ocb, data);
 
-	utils_del_dir(src);
+	if (result > 0)
+		utils_del_dir(src);
 	return result;
 }
 

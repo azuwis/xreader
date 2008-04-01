@@ -20,6 +20,7 @@
    								Includes
  ---------------------------------------------------------------------------*/
 #include "dictionary.h"
+#include "strsafe.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,9 +71,11 @@ static char *xstrdup(char *s)
 
 	if (!s)
 		return NULL;
-	t = malloc(strlen(s) + 1);
+	int len = strlen(s) + 1;
+
+	t = malloc(len);
 	if (t) {
-		strcpy(t, s);
+		strcpy_s(t, len, s);
 	}
 	return t;
 }

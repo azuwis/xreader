@@ -370,3 +370,29 @@ extern void win_item_destroy(p_win_menuitem * item, dword * size)
 	*size = 0;
 	*item = NULL;
 }
+
+extern p_win_menuitem win_copy_item(p_win_menuitem dst,
+									const p_win_menuitem src)
+{
+	if (dst == NULL || src == NULL)
+		return NULL;
+
+	buffer_copy_string(dst->compname, src->compname->ptr);
+	buffer_copy_string(dst->shortname, src->shortname->ptr);
+	STRCPY_S(dst->name, src->name);
+	dst->width = src->width;
+	dst->icolor = src->icolor;
+	dst->selicolor = src->selicolor;
+	dst->selrcolor = src->selrcolor;
+	dst->selbcolor = src->selbcolor;
+	dst->selected = src->selected;
+	dst->data = src->data;
+	size_t i;
+
+	for (i = 0; i < 4; ++i) {
+		dst->data2[i] = src->data2[i];
+	}
+	dst->data3 = src->data3;
+
+	return dst;
+}

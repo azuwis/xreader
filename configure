@@ -175,8 +175,10 @@ fi
 
 if test "$_debug" = yes ; then
   _def_debug="#define _DEBUG 1"
+  _def_debug2="#define STR_CHECK_SIZE 1"
 else
   _def_debug="#undef _DEBUG"
+  _def_debug2="#undef STR_CHECK_SIZE"
 fi
 
 if test "$_ge" = yes ; then
@@ -222,6 +224,7 @@ $_inc_lyric
 $_inc_ttf
 $_inc_pmpavc
 $_def_debug
+$_def_debug2
 $_def_ge
 $_def_me
 $_def_lite

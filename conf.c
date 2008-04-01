@@ -1248,9 +1248,9 @@ extern bool conf_load(p_conf conf)
 		return false;
 
 	/*
-	if (conf->confver != XREADER_VERSION_NUM)
-		conf_default(conf);
-		*/
+	   if (conf->confver != XREADER_VERSION_NUM)
+	   conf_default(conf);
+	 */
 #ifndef ENABLE_USB
 	conf->enableusb = false;
 #endif

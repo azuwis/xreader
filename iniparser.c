@@ -14,7 +14,9 @@
     $Date: 2008-01-03 18:35:39 $
 */
 /*---------------------------- Includes ------------------------------------*/
+#include <stdio.h>
 #include <ctype.h>
+#include "strsafe.h"
 #include "iniparser.h"
 
 /*---------------------------- Defines -------------------------------------*/
@@ -83,22 +85,27 @@ static char *strlwc(const char *s)
 static char *strstrip(char *s)
 {
 	static char l[ASCIILINESZ + 1];
-	char *last;
 
 	if (s == NULL)
 		return NULL;
 
-	while (isspace((int) *s) && *s)
-		s++;
+	/*
+	   char *last;
+	   while (isspace((int) *s) && *s)
+	   s++;
+	   memset(l, 0, ASCIILINESZ + 1);
+	   STRCPY_S(l, s);
+	   last = l + strlen(l);
+	   while (last > l) {
+	   if (!isspace((int) *(last - 1)))
+	   break;
+	   last--;
+	   }
+	   *last = (char) 0;
+	   return (char *) l;
+	 */
 	memset(l, 0, ASCIILINESZ + 1);
-	strcpy(l, s);
-	last = l + strlen(l);
-	while (last > l) {
-		if (!isspace((int) *(last - 1)))
-			break;
-		last--;
-	}
-	*last = (char) 0;
+	STRCPY_S(l, s);
 	return (char *) l;
 }
 
@@ -262,7 +269,7 @@ void iniparser_dump_ini(dictionary * d, FILE * f)
 	for (i = 0; i < nsec; i++) {
 		secname = iniparser_getsecname(d, i);
 		seclen = (int) strlen(secname);
-		sprintf(keym, "%s:", secname);
+		SPRINTF_S(keym, "%s:", secname);
 		if (i == 0)
 			fprintf(f, "[%s]\r\n", secname);
 		else
@@ -503,7 +510,7 @@ static line_status iniparser_line(char *input_line,
 	char line[ASCIILINESZ + 1];
 	int len;
 
-	strcpy(line, strstrip(input_line));
+	STRCPY_S(line, strstrip(input_line));
 	len = (int) strlen(line);
 
 	sta = LINE_UNPROCESSED;
@@ -516,16 +523,16 @@ static line_status iniparser_line(char *input_line,
 	} else if (line[0] == '[' && line[len - 1] == ']') {
 		/* Section name */
 		sscanf(line, "[%[^]]", section);
-		strcpy(section, strstrip(section));
-		strcpy(section, strlwc(section));
+		strcpy_s(section, ASCIILINESZ + 1, strstrip(section));
+		strcpy_s(section, ASCIILINESZ + 1, strlwc(section));
 		sta = LINE_SECTION;
 	} else if (sscanf(line, "%[^=] = \"%[^\"]\"", key, value) == 2
 			   || sscanf(line, "%[^=] = '%[^\']'", key, value) == 2
 			   || sscanf(line, "%[^=] = %[^;#]", key, value) == 2) {
 		/* Usual key=value, with or without comments */
-		strcpy(key, strstrip(key));
-		strcpy(key, strlwc(key));
-		strcpy(value, strstrip(value));
+		strcpy_s(key, ASCIILINESZ + 1, strstrip(key));
+		strcpy_s(key, ASCIILINESZ + 1, strlwc(key));
+		strcpy_s(value, ASCIILINESZ + 1, strstrip(value));
 		/*
 		 * sscanf cannot handle '' or "" as empty values
 		 * this is done here
@@ -542,8 +549,8 @@ static line_status iniparser_line(char *input_line,
 		 * key=;
 		 * key=#
 		 */
-		strcpy(key, strstrip(key));
-		strcpy(key, strlwc(key));
+		strcpy_s(key, ASCIILINESZ + 1, strstrip(key));
+		strcpy_s(key, ASCIILINESZ + 1, strlwc(key));
 		value[0] = 0;
 		sta = LINE_VALUE;
 	} else {
@@ -636,7 +643,7 @@ dictionary *iniparser_load(const char *ininame)
 				break;
 
 			case LINE_VALUE:
-				sprintf(tmp, "%s:%s", section, key);
+				SPRINTF_S(tmp, "%s:%s", section, key);
 				errs = dictionary_set(dict, tmp, val);
 				break;
 

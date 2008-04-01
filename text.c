@@ -100,10 +100,11 @@ extern p_ttf ettf, cttf;
 /*
  * 得到文本长度，以像素计，系统使用
  */
-int text_get_string_width_sys(const byte *pos, size_t size, dword wordspace)
+int text_get_string_width_sys(const byte * pos, size_t size, dword wordspace)
 {
 	int width = 0;
-	const byte* posend = pos + size;
+	const byte *posend = pos + size;
+
 	while (pos < posend && bytetable[*(byte *) pos] != 1) {
 		if ((*(byte *) pos) >= 0x80) {
 			width += DISP_FONTSIZE;
@@ -125,10 +126,12 @@ int text_get_string_width_sys(const byte *pos, size_t size, dword wordspace)
 /*
  * 得到文本长度，以像素计，显示文本使用
  */
-int text_get_string_width(const char *pos, const char* posend, dword maxpixel, dword wordspace, dword *count)
+int text_get_string_width(const char *pos, const char *posend, dword maxpixel,
+						  dword wordspace, dword * count)
 {
 	int width = 0;
-	const char* posstart = pos;
+	const char *posstart = pos;
+
 	while (pos < posend && bytetable[*(byte *) pos] != 1) {
 		if ((*(byte *) pos) >= 0x80) {
 			width += DISP_BOOK_FONTSIZE;
@@ -175,6 +178,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 		}
 		txt->rows[curs][txt->row_count & 0x3FF].start = pos;
 		char *startp = pos;
+
 #ifdef ENABLE_TTF
 		if (ttf_mode) {
 			dword count;
@@ -191,6 +195,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 #endif
 		{
 			dword count = 0;
+
 			text_get_string_width(pos, posend, rowpixels, wordspace, &count);
 			pos += count;
 		}

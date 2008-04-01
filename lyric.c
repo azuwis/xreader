@@ -328,7 +328,7 @@ void lyric_decode(const char *lrcsrc, char *lrcdst, dword * size)
 			}
 			break;
 		default:
-			strcpy(lrcdst, lrcsrc);
+			strncpy(lrcdst, lrcsrc, *size);
 			break;
 	}
 }

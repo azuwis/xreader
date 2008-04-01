@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include "config.h"
 #include "utils.h"
+#include "strsafe.h"
 #include "dbg.h"
 
 extern dword utils_dword2string(dword dw, char * dest, dword width)
@@ -73,38 +74,54 @@ extern const char * utils_fileext(const char * filename)
 		return NULL;
 }
 
-extern void utils_del_file(const char * file)
+extern bool utils_del_file(const char * file)
 {
+	int result;
 	SceIoStat stat;
 	memset(&stat, 0, sizeof(SceIoStat));
-	sceIoGetstat(file, &stat);
+	result = sceIoGetstat(file, &stat);
+	if (result < 0)
+		return false;
 	stat.st_attr &= ~0x0F;
-	sceIoChstat(file, &stat, 3);
-	sceIoRemove(file);
+	result = sceIoChstat(file, &stat, 3);
+	if (result < 0)
+		return false;
+	result = sceIoRemove(file);
+	if (result < 0)
+		return false;
+
+	return true;
 }
 
-extern void utils_del_dir(const char * dir)
+extern dword utils_del_dir(const char * dir)
 {
+	dword count = 0;
 	int dl = sceIoDopen(dir);
 	if(dl < 0)
-		return;
+		return count;
 	SceIoDirent sid;
 	memset(&sid, 0, sizeof(SceIoDirent));
 	while(sceIoDread(dl, &sid))
 	{
 		if(sid.d_name[0] == '.') continue;
 		char compPath[260];
-		sprintf(compPath, "%s/%s", dir, sid.d_name);
+		SPRINTF_S(compPath, "%s/%s", dir, sid.d_name);
 		if(FIO_S_ISDIR(sid.d_stat.st_mode))
 		{
-			utils_del_dir(compPath);
+			if (utils_del_dir(compPath)) {
+				count++;
+			}
 			continue;
 		}
-		utils_del_file(compPath);
+		if (utils_del_file(compPath)) {
+			count++;
+		}
 		memset(&sid, 0, sizeof(SceIoDirent));
 	}
 	sceIoDclose(dl);
 	sceIoRmdir(dir);
+
+	return count;
 }
 
 bool utils_is_file_exists(const char *filename)

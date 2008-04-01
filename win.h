@@ -63,5 +63,7 @@ extern void win_msg(const char *prompt, pixel fontcolor, pixel bordercolor,
 extern void win_item_destroy(p_win_menuitem * item, dword * size);
 extern p_win_menuitem win_realloc_items(p_win_menuitem item, int orgsize,
 										int newsize);
+extern p_win_menuitem win_copy_item(p_win_menuitem dst,
+									const p_win_menuitem src);
 
 #endif

@@ -1525,13 +1525,14 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   getmsgbyid(NO));
 }
 
-static void recalcSize(dword *drperpage, dword *rowsperpage, dword *pixelsperrow)
+static void recalcSize(dword * drperpage, dword * rowsperpage,
+					   dword * pixelsperrow)
 {
 	int t = config.vertread;
 
 	if (t == 3)
 		t = 0;
-	
+
 	*drperpage =
 		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
 		 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
@@ -1541,7 +1542,7 @@ static void recalcSize(dword *drperpage, dword *rowsperpage, dword *pixelsperrow
 		 (config.infobar != conf_infobar_none ? DISP_BOOK_FONTSIZE : 0) -
 		 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	*pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
-			: (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
+					 : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
 		config.borderspace * 2;
 }
 
@@ -1603,6 +1604,7 @@ dword scene_boptions(dword * selidx)
 		|| orgborderspace != config.borderspace
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
+
 		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 		if (orgpixelsperrow != pixelsperrow)
 			result = 4;
@@ -1903,7 +1905,7 @@ dword scene_fontsel(dword * selidx)
 	STRCPY_S(item[3].name, getmsgbyid(LINE_SPACE));
 	STRCPY_S(item[4].name, getmsgbyid(REVERSE_SPAN_SPACE));
 	STRCPY_S(item[5].name, getmsgbyid(TTF_FONT_SIZE));
-	
+
 	for (i = 0; i < NELEMS(item); i++) {
 		item[i].width = 12;
 		item[i].selected = false;
@@ -1965,6 +1967,7 @@ dword scene_fontsel(dword * selidx)
 		|| orgborderspace != config.borderspace
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
+
 		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 		if (orgpixelsperrow != pixelsperrow)
 			result = 4;
@@ -2817,7 +2820,11 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 					}
 				} else {
 					// delete
-					utils_del_file(conffile);
+					if (!utils_del_file(conffile)) {
+						win_msg("É¾³ýÉèÖÃÊ§°Ü!", COLOR_WHITE, COLOR_WHITE,
+								config.msgbcolor);
+						return win_menu_op_redraw;
+					}
 				}
 				ctrl_waitrelease();
 				return win_menu_op_ok;
@@ -3393,20 +3400,36 @@ static void scene_copy_files(int sidx)
 		}
 		STRCAT_S(copydest, temp);
 
-		if ((t_fs_filetype) copylist[sidx].data != fs_filetype_dir)
-			extract_archive_file(archname, copylist[sidx].compname->ptr,
-								 copydest, NULL, confirm_overwrite, NULL);
+		if ((t_fs_filetype) copylist[sidx].data != fs_filetype_dir) {
+			dword result;
+
+			result = extract_archive_file(archname,
+										  copylist[sidx].compname->ptr,
+										  copydest, NULL, confirm_overwrite,
+										  NULL);
+			if (result == (dword) false) {
+				win_msg("ÎÄ¼þ½âÑ¹Ê§°Ü!", COLOR_WHITE,
+						COLOR_WHITE, config.msgbcolor);
+			}
+		}
 	} else {
 		char copysrc[PATH_MAX], copydest[PATH_MAX];
+		dword result;
 
 		STRCPY_S(copysrc, copydir);
 		STRCAT_S(copysrc, copylist[sidx].shortname->ptr);
 		STRCPY_S(copydest, config.shortpath);
 		STRCAT_S(copydest, copylist[sidx].shortname->ptr);
 		if ((t_fs_filetype) copylist[sidx].data == fs_filetype_dir)
-			copy_dir(copysrc, copydest, NULL, confirm_overwrite, NULL);
+			result = copy_dir(copysrc, copydest, NULL, confirm_overwrite, NULL);
 		else
-			copy_file(copysrc, copydest, NULL, confirm_overwrite, NULL);
+			result =
+				(dword) copy_file(copysrc, copydest, NULL, confirm_overwrite,
+								  NULL);
+		if (result == (dword) false) {
+			win_msg("ÎÄ¼þ/Ä¿Â¼¸´ÖÆÊ§°Ü!", COLOR_WHITE,
+					COLOR_WHITE, config.msgbcolor);
+		}
 	}
 }
 
@@ -3652,10 +3675,19 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 								STRCPY_S(fn, config.shortpath);
 								STRCAT_S(fn, item[sidx].shortname->ptr);
 								if ((t_fs_filetype) item[sidx].data ==
-									fs_filetype_dir)
-									utils_del_dir(fn);
-								else
-									utils_del_file(fn);
+									fs_filetype_dir) {
+									if (!utils_del_dir(fn)) {
+										win_msg("É¾³ýÄ¿Â¼Ê§°Ü!", COLOR_WHITE,
+												COLOR_WHITE, config.msgbcolor);
+										return win_menu_op_redraw;
+									}
+								} else {
+									if (!utils_del_file(fn)) {
+										win_msg("É¾³ýÎÄ¼þÊ§°Ü!", COLOR_WHITE,
+												COLOR_WHITE, config.msgbcolor);
+										return win_menu_op_redraw;
+									}
+								}
 								if (config.lastfile[0] == 0) {
 									int idx = sidx + 1;
 
@@ -3909,14 +3941,10 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 //                  if (where != scene_in_dir)
 //                      break;
 					if (copycount > 0 && copylist != NULL) {
-						copycount = 0;
-						free((void *) copylist);
-						copylist = NULL;
+						win_item_destroy(&copylist, &copycount);
 					}
 					if (cutcount > 0 && cutlist != NULL) {
-						cutcount = 0;
-						free((void *) cutlist);
-						cutlist = NULL;
+						win_item_destroy(&cutlist, &cutcount);
 					}
 					if (where == scene_in_dir) {
 						copy_archmode = false;
@@ -3927,19 +3955,18 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 						STRCPY_S(copydir, config.shortpath);
 					}
 					copylist =
-						(p_win_menuitem) malloc((selcount > 0 ? selcount : 1) *
-												sizeof(t_win_menuitem));
+						win_realloc_items(NULL, 0,
+										  (selcount > 0 ? selcount : 1));
 					if (selcount < 1) {
 						copycount = 1;
-						memcpy(&copylist[0], &filelist[selidx],
-							   sizeof(t_win_menuitem));
+						win_copy_item(&copylist[0], &filelist[selidx]);
 					} else {
 						copycount = selcount;
 						sidx = 0;
 						for (selidx = 0; selidx < filecount; selidx++)
 							if (item[selidx].selected)
-								memcpy(&copylist[sidx++], &filelist[selidx],
-									   sizeof(t_win_menuitem));
+								win_copy_item(&copylist[sidx++],
+											  &filelist[selidx]);
 					}
 					inop = false;
 					break;
@@ -3959,19 +3986,18 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 					}
 					STRCPY_S(cutdir, config.shortpath);
 					cutlist =
-						(p_win_menuitem) malloc((selcount > 0 ? selcount : 1) *
-												sizeof(t_win_menuitem));
+						win_realloc_items(NULL, 0,
+										  (selcount > 0 ? selcount : 1));
 					if (selcount < 1) {
 						cutcount = 1;
-						memcpy(&cutlist[0], &filelist[selidx],
-							   sizeof(t_win_menuitem));
+						win_copy_item(&cutlist[0], &filelist[selidx]);
 					} else {
 						cutcount = selcount;
 						sidx = 0;
 						for (selidx = 0; selidx < filecount; selidx++)
 							if (item[selidx].selected)
-								memcpy(&cutlist[sidx++], &filelist[selidx],
-									   sizeof(t_win_menuitem));
+								win_copy_item(&cutlist[sidx++],
+											  &filelist[selidx]);
 					}
 					inop = false;
 					break;
@@ -3996,13 +4022,20 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 							STRCAT_S(cutsrc, cutlist[sidx].shortname->ptr);
 							STRCPY_S(cutdest, config.shortpath);
 							STRCAT_S(cutdest, cutlist[sidx].shortname->ptr);
+							dword result;
+
 							if ((t_fs_filetype) cutlist[sidx].data ==
 								fs_filetype_dir)
-								move_dir(cutsrc, cutdest, NULL,
-										 confirm_overwrite, NULL);
+								result = (dword) move_dir(cutsrc, cutdest, NULL,
+														  confirm_overwrite,
+														  NULL);
 							else
-								move_file(cutsrc, cutdest, NULL,
-										  confirm_overwrite, NULL);
+								result = move_file(cutsrc, cutdest, NULL,
+												   confirm_overwrite, NULL);
+							if (result == (dword) false) {
+								win_msg("ÎÄ¼þ/Ä¿Â¼ÒÆ¶¯Ê§°Ü!", COLOR_WHITE,
+										COLOR_WHITE, config.msgbcolor);
+							}
 						}
 						STRCPY_S(config.lastfile, item[*index].compname->ptr);
 						retop = win_menu_op_cancel;
