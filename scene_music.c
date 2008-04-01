@@ -276,10 +276,11 @@ void scene_mp3bar()
 					  msgbcolor);
 		char timestr[80];
 		pspTime tm;
-		dword pos = sceRtcGetDayOfWeek(tm.year, tm.month, tm.day);
 		dword cpu, bus;
+		dword pos;
 
 		sceRtcGetCurrentClockLocalTime(&tm);
+		pos = sceRtcGetDayOfWeek(tm.year, tm.month, tm.day);
 		pos = pos >= 7 ? 7 : pos;
 		power_get_clock(&cpu, &bus);
 		SPRINTF_S(timestr,
