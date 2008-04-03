@@ -4625,6 +4625,7 @@ void scene_filelist()
 						 config.msgbcolor)) {
 						char path[PATH_MAX], upper[PATH_MAX];
 
+						conf_save(&config);
 						STRCPY_S(path, config.path);
 						strtoupper(upper, filelist[idx].compname->ptr);
 						STRCAT_S(path, upper);
