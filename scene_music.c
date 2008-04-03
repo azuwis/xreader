@@ -295,7 +295,7 @@ void scene_mp3bar()
 
 		power_get_battery(&percent, &lifetime, &tempe, &volt);
 		if (percent >= 0) {
-			if (config.fontsize <= 14) {
+			if (config.fontsize <= 12) {
 				SPRINTF_S(battstr,
 						  "%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃   剩余内存: %dKB",
 						  power_get_battery_charging(), percent, lifetime / 60,
