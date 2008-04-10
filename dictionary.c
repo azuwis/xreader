@@ -55,31 +55,6 @@ static void *mem_double(void *ptr, int size)
 	return newptr;
 }
 
-/*-------------------------------------------------------------------------*/
-/**
-  @brief    Duplicate a string
-  @param    s String to duplicate
-  @return   Pointer to a newly allocated string, to be freed with free()
-
-  This is a replacement for strdup(). This implementation is provided
-  for systems that do not have it.
- */
-/*--------------------------------------------------------------------------*/
-static char *xstrdup(char *s)
-{
-	char *t;
-
-	if (!s)
-		return NULL;
-	int len = strlen(s) + 1;
-
-	t = malloc(len);
-	if (t) {
-		strcpy_s(t, len, s);
-	}
-	return t;
-}
-
 /*---------------------------------------------------------------------------
   							Function codes
  ---------------------------------------------------------------------------*/
@@ -250,7 +225,7 @@ int dictionary_set(dictionary * d, char *key, char *val)
 					/* Found a value: modify and return */
 					if (d->val[i] != NULL)
 						free(d->val[i]);
-					d->val[i] = val ? xstrdup(val) : NULL;
+					d->val[i] = val ? strdup(val) : NULL;
 					/* Value has been modified: return */
 					return 0;
 				}
@@ -282,8 +257,8 @@ int dictionary_set(dictionary * d, char *key, char *val)
 		}
 	}
 	/* Copy key */
-	d->key[i] = xstrdup(key);
-	d->val[i] = val ? xstrdup(val) : NULL;
+	d->key[i] = strdup(key);
+	d->val[i] = val ? strdup(val) : NULL;
 	d->hash[i] = hash;
 	d->n++;
 	return 0;

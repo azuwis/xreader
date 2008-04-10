@@ -3,7 +3,8 @@ SRCS = avc.c bg.c bookmark.c charsets.c conf.c copy.c ctrl.c display.c fat.c \
 	fs.c html.c image.c location.c lyric.c main.c mp3.c mp3info.c power.c msgresource.c\
 	scene.c scene_image.c scene_music.c scene_text.c text.c ttfont.c usb.c win.c \
 	./common/qsort.c ./common/utils.c ./common/psp_utils.c ./xrPrx/xrPrx.c dbg.c buffer.c strsafe.c \
-	dictionary.c iniparser.c
+	dictionary.c iniparser.c \
+	apetaglib/APETag.c apetaglib/TagError.c apetaglib/TagItem.c
 OBJS = $(SRCS:.c=.o) 
 INCDIR = ./include ./include/freetype2 $(PSPSDK)/../include 
 

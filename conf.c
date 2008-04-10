@@ -312,7 +312,7 @@ static char *encodeToString(char *str, int size, t_conf_encode encode)
 	return str;
 }
 
-static t_conf_encode stringToEncode(char *str)
+static t_conf_encode stringToEncode(const char *str)
 {
 	if (stricmp(str, "gbk") == 0) {
 		return conf_encode_gbk;
