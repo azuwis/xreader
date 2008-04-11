@@ -182,6 +182,7 @@ typedef struct
 	bool img_no_repeat;
 	bool hide_flash;
 	dword tabstop;
+	bool apetagorder;
 } t_conf, *p_conf;
 
 /* txt key:

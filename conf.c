@@ -241,6 +241,8 @@ static void conf_default(p_conf conf)
 
 	conf->hide_flash = true;
 	conf->tabstop = 4;
+
+	conf->apetagorder = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -985,6 +987,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		iniparser_getboolean(dict, "Global:hide_flash", conf->hide_flash);
 	conf->tabstop = iniparser_getunsigned(dict, "Text:tabstop", conf->tabstop);
 
+	conf->apetagorder =
+		iniparser_getboolean(dict, "Music:apetagorder", conf->apetagorder);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1227,6 +1232,9 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "Text:tabstop",
 						dwordToString(buf, sizeof(buf), conf->tabstop));
+
+	iniparser_setstring(dict, "Music:apetagorder",
+						booleanToString(buf, sizeof(buf), conf->apetagorder));
 
 	iniparser_dump_ini(dict, fp);
 
