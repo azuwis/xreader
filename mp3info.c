@@ -87,10 +87,9 @@ void GetTagInfo(struct id3_tag *pTag, const char *key, char *dest, int size)
 	}
 
 	dbg_printf(d, "%s: id: %s desc: %s flags: 0x%08x group_id: %d "
-			"encryption_method: %d",
-			__func__, frame->id, frame->description, frame->flags, frame->group_id,
-			frame->encryption_method
-			);
+			   "encryption_method: %d",
+			   __func__, frame->id, frame->description, frame->flags,
+			   frame->group_id, frame->encryption_method);
 
 	int i;
 	union id3_field *field;
@@ -150,9 +149,13 @@ extern void readID3Tag(p_mp3info pInfo, const char *filename)
 		return;
 	}
 
-	dbg_printf(d, "%s: version: 0x%08x flags: 0x%08x extendedflags: 0x%08x restrictions: 0x%08x options: 0x%08x", __func__, pTag->version, pTag->flags, pTag->extendedflags, pTag->restrictions, pTag->options);
+	dbg_printf(d,
+			   "%s: version: 0x%08x flags: 0x%08x extendedflags: 0x%08x restrictions: 0x%08x options: 0x%08x",
+			   __func__, pTag->version, pTag->flags, pTag->extendedflags,
+			   pTag->restrictions, pTag->options);
 	if (g_libid3tag_found_id3v2 == 0) {
-		dbg_printf(d, "no ID3tagv2 found, don't use libid3tag to decode, aborting");
+		dbg_printf(d,
+				   "no ID3tagv2 found, don't use libid3tag to decode, aborting");
 		id3_file_close(pFile);
 		return;
 	}
@@ -238,9 +241,9 @@ extern bool mp3info_read(p_mp3info info, int fd)
 		memmove(buf, &buf[end], 2);
 		dcount++;
 	}
-	if ( !info->found_id3v2 && !info->found_apetag ) {
+	if (!info->found_id3v2 && !info->found_apetag) {
 		if ((dcount > 1 || off >= 128)
-				&& (info->artist[0] == 0 || info->title[0] == 0)) {
+			&& (info->artist[0] == 0 || info->title[0] == 0)) {
 			sceIoLseek32(fd, -128, PSP_SEEK_END);
 			sceIoRead(fd, buf, 128);
 			if (buf[0] == 'T' && buf[1] == 'A' && buf[2] == 'G') {
