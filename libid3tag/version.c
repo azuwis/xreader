@@ -28,18 +28,17 @@
 # include "id3tag.h"
 # include "version.h"
 
-char const id3_version[]   = "ID3 Tag Library " ID3_VERSION;
+char const id3_version[] = "ID3 Tag Library " ID3_VERSION;
 char const id3_copyright[] = "Copyright (C) " ID3_PUBLISHYEAR " " ID3_AUTHOR;
-char const id3_author[]    = ID3_AUTHOR " <" ID3_EMAIL ">";
+char const id3_author[] = ID3_AUTHOR " <" ID3_EMAIL ">";
 
 char const id3_build[] = ""
 # if defined(DEBUG)
-  "DEBUG "
+	"DEBUG "
 # elif defined(NDEBUG)
-  "NDEBUG "
+	"NDEBUG "
 # endif
-
 # if defined(EXPERIMENTAL)
-  "EXPERIMENTAL "
+	"EXPERIMENTAL "
 # endif
-;
+	;

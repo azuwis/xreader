@@ -44,7 +44,7 @@
 
 # if !defined(HAVE_ASSERT_H)
 #  if defined(NDEBUG)
-#   define assert(x)	/* nothing */
+#   define assert(x)			/* nothing */
 #  else
 #   define assert(x)	do { if (!(x)) abort(); } while (0)
 #  endif
