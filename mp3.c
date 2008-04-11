@@ -27,7 +27,6 @@
 #include "lyric.h"
 #endif
 #include "mp3info.h"
-#include "apetaglib/APETag.h"
 #include "common/utils.h"
 #include "mp3.h"
 #include "win.h"
@@ -57,8 +56,6 @@ static struct OutputPCM
 	unsigned int nsamples;
 	mad_fixed_t const *samples[2];
 } OutputPCM;
-
-bool g_bFoundAPETag = false;
 
 __inline int resample_init(struct resample_state *state, unsigned int oldrate,
 						   unsigned int newrate)
@@ -328,56 +325,31 @@ static bool mp3_load()
 		OutputPtr = (byte *) & OutputBuffer[0][0];
 		OutputBufferEnd = OutputPtr + OUTPUT_BUFFER_SIZE * 2;
 
-		mp3info_read(&mp3info, fd);
-		APETag *tag = loadAPETag(mp3_files[mp3_index][0]);
-
-		if (tag == NULL) {
-			g_bFoundAPETag = false;
-			if (mp3info.title[0] != 0) {
-				if (mp3info.artist[0] != 0)
-					SPRINTF_S(mp3_tag, "%s - %s", mp3info.title,
-							  mp3info.artist);
-				else
-					SPRINTF_S(mp3_tag, "? - %s", mp3info.title);
-			} else {
-				char *mp3_tag2 = strrchr(mp3_files[mp3_index][0], '/');
-
-				if (mp3_tag2 != NULL)
-					mp3_tag2++;
-				else
-					mp3_tag2 = "";
-				strncpy_s(mp3_tag, 128, mp3_tag2, 128);
-			}
+		if (config.apetagorder) {
+			readAPETag(&mp3info, mp3_files[mp3_index][0]);
+			if (mp3info.found_apetag == false)
+				readID3Tag(&mp3info, mp3_files[mp3_index][0]);
 		} else {
-			char *sTitle = APETag_SimpleGet(tag, "Title");
-			char *sArtist = APETag_SimpleGet(tag, "Artist");
-			char *sArtist2 = APETag_SimpleGet(tag, "Album artist");
+			readID3Tag(&mp3info, mp3_files[mp3_index][0]);
+			if (mp3info.found_id3v2 == false)
+				readAPETag(&mp3info, mp3_files[mp3_index][0]);
+		}
 
-			if (sTitle != NULL) {
-				if (sArtist != NULL || sArtist2 != NULL)
-					SPRINTF_S(mp3_tag, "%s - %s",
-							  sArtist != NULL ? sArtist : sArtist2, sTitle);
-				else
-					SPRINTF_S(mp3_tag, "? - %s", sTitle);
-			} else {
-				char *mp3_tag2 = strrchr(mp3_files[mp3_index][0], '/');
+		mp3info_read(&mp3info, fd);
 
-				if (mp3_tag2 != NULL)
-					mp3_tag2++;
-				else
-					mp3_tag2 = "";
-				strncpy_s(mp3_tag, 128, mp3_tag2, 128);
-			}
+		if (mp3info.title[0] != 0) {
+			if (mp3info.artist[0] != 0)
+				SPRINTF_S(mp3_tag, "%s - %s", mp3info.artist, mp3info.title);
+			else
+				SPRINTF_S(mp3_tag, "? - %s", mp3info.title);
+		} else {
+			char *mp3_tag2 = strrchr(mp3_files[mp3_index][0], '/');
 
-			if (sTitle)
-				free(sTitle);
-			if (sArtist)
-				free(sArtist);
-			if (sArtist2)
-				free(sArtist2);
-
-			freeAPETag(tag);
-			g_bFoundAPETag = true;
+			if (mp3_tag2 != NULL)
+				mp3_tag2++;
+			else
+				mp3_tag2 = "";
+			strncpy_s(mp3_tag, 128, mp3_tag2, 128);
 		}
 		mp3_handle =
 			sceAudioChReserve(PSP_AUDIO_NEXT_CHANNEL, OUTPUT_BUFFER_SIZE / 4,
@@ -1318,7 +1290,7 @@ extern void mp3_set_encode(t_conf_encode encode)
 	}
 	mp3_encode = encode;
 
-	if (g_bFoundAPETag == true) {
+	if (mp3info.found_apetag || mp3info.found_id3v2) {
 		mp3_encode = conf_encode_utf8;
 	}
 	switch (mp3_encode) {

@@ -5,11 +5,15 @@
 #ifdef ENABLE_MUSIC
 
 #include <pspkernel.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "common/utils.h"
 #include "charsets.h"
 #include "mp3info.h"
+#include "libid3tag/id3tag.h"
+#include "apetaglib/APETag.h"
+#include "dbg.h"
 
 static int _bitrate[9][16] = {
 	{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0},
@@ -28,6 +32,8 @@ static int _samplerate[3][4] = {
 	{22050, 24000, 16000, 0},
 	{11025, 12000, 8000, 0}
 };
+
+int g_libid3tag_found_id3v2 = 0;
 
 __inline int calc_framesize(byte h1, byte h2, int *mpl, int *br, int *sr)
 {
@@ -66,34 +72,126 @@ __inline int calc_framesize(byte h1, byte h2, int *mpl, int *br, int *sr)
 	return 0;
 }
 
-__inline void read_id3tag(byte * buf, byte * tag, int tsize)
-{
-	switch (buf[0]) {
-		case 0:
-			memcpy(tag, &buf[1], tsize - 1);
-			tag[tsize - 1] = 0;
-			break;
-		case 1:
-			memcpy(tag, &buf[3], tsize - 3);
-			tag[tsize - 1] = 0;
-			charsets_utf16_conv(tag, tag);
-			break;
-		case 2:
-			memcpy(tag, &buf[1], tsize - 1);
-			tag[tsize - 1] = 0;
-			charsets_utf16be_conv(tag, tag);
-			break;
-		case 3:
-			memcpy(tag, &buf[1], tsize - 1);
-			tag[tsize - 1] = 0;
-			charsets_utf8_conv(tag, tag);
-			break;
-	}
-}
-
 extern void mp3info_init(p_mp3info info)
 {
 	memset(info, 0, sizeof(t_mp3info));
+}
+
+void GetTagInfo(struct id3_tag *pTag, const char *key, char *dest, int size)
+{
+	struct id3_frame *frame = id3_tag_findframe(pTag, key, 0);
+
+	if (frame == 0) {
+		dbg_printf(d, "%s: Frame \"%s\" not found!", __func__, key);
+		return;
+	}
+
+	dbg_printf(d, "%s: id: %s desc: %s flags: 0x%08x group_id: %d "
+			"encryption_method: %d",
+			__func__, frame->id, frame->description, frame->flags, frame->group_id,
+			frame->encryption_method
+			);
+
+	int i;
+	union id3_field *field;
+
+	for (i = 0; i < frame->nfields; i++) {
+		dbg_printf(d, "field %d in frame", i);
+		field = id3_frame_field(frame, i);
+		if (field == NULL) {
+			dbg_printf(d, "continue1");
+			continue;
+		}
+		dbg_printf(d, "Type: %u", field->type);
+		id3_ucs4_t const *str = id3_field_getstrings(field, 0);
+
+		if (str == NULL) {
+			dbg_printf(d, "continue2");
+			continue;
+		}
+		id3_utf8_t *pUTF8Str = id3_ucs4_utf8duplicate(str);
+
+		if (pUTF8Str == NULL) {
+			dbg_printf(d, "continue3");
+			continue;
+		}
+		dbg_printf(d, "%s: Get UTF8 String: %s", __func__, pUTF8Str);
+		strcpy_s(dest, size, (const char *) pUTF8Str);
+		//          char *pChinese = ConvertUTF8toGB2312(pUTF8Str, -1);
+		//          dbg_printf(d, "标题：%s", pChinese);
+		//          free(pChinese);
+		free(pUTF8Str);
+	}
+}
+
+/// 使用ID3Taglib读取艺术家名和音乐名到mp3info.artist, mp3info.title
+/// 设置字ftruncate符编码为UTF8
+/// 如果ID3原始编码为LATIN1，使用config.mp3encode设置值进行编码
+extern void readID3Tag(p_mp3info pInfo, const char *filename)
+{
+	if (filename == NULL)
+		return;
+
+	STRCPY_S(pInfo->title, "");
+	STRCPY_S(pInfo->artist, "");
+
+	g_libid3tag_found_id3v2 = 0;
+
+	struct id3_file *pFile = id3_file_open(filename, ID3_FILE_MODE_READONLY);
+
+	if (pFile == NULL) {
+		return;
+	}
+
+	struct id3_tag *pTag = id3_file_tag(pFile);
+
+	if (pTag == NULL) {
+		id3_file_close(pFile);
+		return;
+	}
+
+	dbg_printf(d, "%s: version: 0x%08x flags: 0x%08x extendedflags: 0x%08x restrictions: 0x%08x options: 0x%08x", __func__, pTag->version, pTag->flags, pTag->extendedflags, pTag->restrictions, pTag->options);
+	if (g_libid3tag_found_id3v2 == 0) {
+		dbg_printf(d, "no ID3tagv2 found, don't use libid3tag to decode, aborting");
+		id3_file_close(pFile);
+		return;
+	}
+
+	GetTagInfo(pTag, ID3_FRAME_TITLE, pInfo->title, sizeof(pInfo->title));
+	GetTagInfo(pTag, ID3_FRAME_ARTIST, pInfo->artist, sizeof(pInfo->title));
+
+	id3_file_close(pFile);
+
+	pInfo->found_id3v2 = true;
+}
+
+extern void readAPETag(p_mp3info pInfo, const char *filename)
+{
+	APETag *tag = loadAPETag(filename);
+
+	if (tag == NULL) {
+		pInfo->found_apetag = false;
+	} else {
+		char *sTitle = APETag_SimpleGet(tag, "Title");
+		char *sArtist = APETag_SimpleGet(tag, "Artist");
+		char *sArtist2 = APETag_SimpleGet(tag, "Album artist");
+
+		STRCPY_S(pInfo->title, sTitle);
+		if (sArtist)
+			STRCPY_S(pInfo->artist, sArtist);
+		else if (sArtist2)
+			STRCPY_S(pInfo->artist, sArtist2);
+
+		if (sTitle)
+			free(sTitle);
+		if (sArtist)
+			free(sArtist);
+		if (sArtist2)
+			free(sArtist2);
+
+		freeAPETag(tag);
+		pInfo->found_apetag = true;
+	}
 }
 
 extern bool mp3info_read(p_mp3info info, int fd)
@@ -133,51 +231,6 @@ extern bool mp3info_read(p_mp3info info, int fd)
 							dcount * 65536 + off;
 				}
 				off += size;
-			} else if (buf[off + 1] == 'D'
-					   && ((buf[off] == 'I' && buf[off + 2] == '3')
-						   || (buf[off] == '3' && buf[off + 2] == 'I'))) {
-				// TODO: ID3v2 part parsing
-				off += 6;
-				int id3size =
-					((dword) buf[off] << 21) + ((dword) buf[off + 1] << 14) +
-					((dword) buf[off + 2] << 7) + (dword) buf[off + 3] + 4;
-				if (info->artist[0] == 0 || info->title[0] == 0) {
-					int off2 = off + 4, end2 = min(end, off + id3size);
-
-					while (off2 < end2) {
-						if (buf[off2] == 0)
-							break;
-						off2 += 4;
-						if (off2 + 4 < end2)
-							break;
-						int tsize =
-							(int) (((dword) buf[off2] << 21) +
-								   ((dword) buf[off2 + 1] << 14) +
-								   ((dword) buf[off2 + 2] << 7) +
-								   (dword) buf[off2 + 3]);
-						if (off2 + 6 + tsize < end2)
-							break;
-						if ((buf[off2 + 4] & 0x60) > 0)
-							off2 += 6;
-						else if (info->artist[0] == 0 && buf[off2 - 4] == 'T'
-								 && buf[off2 - 3] == 'P' && buf[off2 - 2] == 'E'
-								 && buf[off2 - 1] == '1') {
-							off2 += 6;
-							read_id3tag(&buf[off2], (byte *) info->artist,
-										tsize);
-						} else if (info->title[0] == 0 && buf[off2 - 4] == 'T'
-								   && buf[off2 - 3] == 'I'
-								   && buf[off2 - 2] == 'T'
-								   && buf[off2 - 1] == '2') {
-							off2 += 6;
-							read_id3tag(&buf[off2], (byte *) info->title,
-										tsize);
-						} else
-							off2 += 6;
-						off2 += tsize;
-					}
-				}
-				off += id3size;
 			} else
 				off++;
 		}
@@ -185,16 +238,19 @@ extern bool mp3info_read(p_mp3info info, int fd)
 		memmove(buf, &buf[end], 2);
 		dcount++;
 	}
-	if ((dcount > 1 || off >= 128)
-		&& (info->artist[0] == 0 || info->title[0] == 0)) {
-		sceIoLseek32(fd, -128, PSP_SEEK_END);
-		sceIoRead(fd, buf, 128);
-		if (buf[0] == 'T' && buf[1] == 'A' && buf[2] == 'G') {
-			if (info->artist[0] == 0) {
-				memcpy(info->artist, &buf[3], 30);
-			}
-			if (info->title[0] == 0) {
-				memcpy(info->title, &buf[33], 30);
+	if ( !info->found_id3v2 && !info->found_apetag ) {
+		if ((dcount > 1 || off >= 128)
+				&& (info->artist[0] == 0 || info->title[0] == 0)) {
+			sceIoLseek32(fd, -128, PSP_SEEK_END);
+			sceIoRead(fd, buf, 128);
+			if (buf[0] == 'T' && buf[1] == 'A' && buf[2] == 'G') {
+				if (info->artist[0] == 0) {
+					memcpy(info->artist, &buf[33], 30);
+				}
+				if (info->title[0] == 0) {
+					memcpy(info->title, &buf[3], 30);
+				}
+				info->found_id3v1 = true;
 			}
 		}
 	}
