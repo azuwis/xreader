@@ -109,3 +109,6 @@ text:infobar_use_ttf_mode
 
 ui:usedyncolor
 是否打开xReader的复活节彩蛋
+
+music::apetagorder
+APETagV2是否优先于ID3TagV2读取
