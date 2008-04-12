@@ -1624,7 +1624,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
-			if (y < 0) {
+			if (y < DISP_BOOK_FONTSIZE - 1) {
 				break;
 #if 0
 				y = 271;
@@ -1666,7 +1666,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			count -= 2;
 			y -= DISP_BOOK_FONTSIZE + wordspace * 2;
 		} else if (*str > 0x1F) {
-			if (y < 0) {
+			if (y < DISP_BOOK_FONTSIZE / 2 - 1) {
 				break;
 #if 0
 				y = 271;
@@ -1708,7 +1708,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			str++;
 			count--;
 		} else {
-			if (y < 0) {
+			if (y < DISP_BOOK_FONTSIZE / 2 - 1) {
 				break;
 #if 0
 				y = 271;

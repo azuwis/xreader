@@ -1596,16 +1596,13 @@ dword scene_boptions(dword * selidx)
 
 	if (orgibar != config.infobar || orgvert != config.vertread
 		|| orgrowspace != config.rowspace
-		|| orgborderspace != config.borderspace) {
-		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
-	}
-	if (orgibar != config.infobar || orgvert != config.vertread
 		|| orgwordspace != config.wordspace
 		|| orgborderspace != config.borderspace
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
 
 		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+		cur_book_view.text_needrf = true;
 		if (orgpixelsperrow != pixelsperrow)
 			result = 4;
 	}
@@ -1941,36 +1938,25 @@ dword scene_fontsel(dword * selidx)
 			scene_load_font();
 		scene_load_book_font();
 		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
-		return 2;
+		return win_menu_op_ok;
 	}
 
-	dword result = 0;
+	dword result = win_menu_op_continue;
 
-	if (orgibar != config.infobar || orgvert != config.vertread
-		|| orgrowspace != config.rowspace
+	if ( orgrowspace != config.rowspace
 		|| orgborderspace != config.borderspace) {
-		int t = config.vertread;
-
-		if (t == 3)
-			t = 0;
-		drperpage =
-			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
-			 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-		rowsperpage =
-			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 (config.infobar != conf_infobar_none ? DISP_BOOK_FONTSIZE : 0) -
-			 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+		cur_book_view.text_needrf = true;
 	}
 	if (orgibar != config.infobar || orgvert != config.vertread
 		|| orgwordspace != config.wordspace
-		|| orgborderspace != config.borderspace
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
 
+		cur_book_view.text_needrf = true;
 		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
 		if (orgpixelsperrow != pixelsperrow)
-			result = 4;
+			result = win_menu_op_force_redraw;
 	}
 
 	return 0;
@@ -3115,7 +3101,9 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 
 		memcpy(bp, disp_ewidth, 0x80);
 		memset(disp_ewidth, DISP_FONTSIZE / 2, 0x80);
-		text_format(&preview, 347 - 7 * DISP_FONTSIZE / 2, config.wordspace,
+		int old_book_fontsize = DISP_BOOK_FONTSIZE;
+		DISP_BOOK_FONTSIZE = DISP_FONTSIZE;
+		text_format(&preview, 347 - 7 * DISP_FONTSIZE / 2, config.fontsize <= 10 ? 1 : 0,
 					false);
 		memcpy(disp_ewidth, bp, 0x80);
 		if (preview.rows[0] != NULL) {
@@ -3127,10 +3115,11 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 				disp_putnstring(70 + 7 * DISP_FONTSIZE / 2,
 								66 + (2 + DISP_FONTSIZE) * i, COLOR_WHITE,
 								(const byte *) preview.rows[0][i].start,
-								preview.rows[0][i].count, 0, 0, DISP_FONTSIZE,
+								preview.rows[0][i].count, config.fontsize <= 10 ? 1 : 0, 0, DISP_FONTSIZE,
 								0);
 			free((void *) preview.rows[0]);
 		}
+		DISP_BOOK_FONTSIZE = old_book_fontsize;
 	}
 }
 
