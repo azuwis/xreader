@@ -140,7 +140,7 @@ APETag *loadAPETag(const char *filename)
 
 	FILE *fp = fopen(filename, "rb");
 
-	if (fp == 0) {
+	if (fp == NULL) {
 		apetag_errno = APETAG_ERROR_OPEN;
 		return 0;
 	}
@@ -149,16 +149,17 @@ APETag *loadAPETag(const char *filename)
 
 	if (p == NULL) {
 		apetag_errno = APETAG_MEMORY_NOT_ENOUGH;
+		fclose(fp);
 		return 0;
 	}
 
 	if (searchForAPETag(fp, p) == -1) {
 		apetag_errno = APETAG_ERROR_FILEFORMAT;
+		fclose(fp);
 		return 0;
 	}
 
 	apetag_errno = APETAG_OK;
-
 	fclose(fp);
 
 	return p;
