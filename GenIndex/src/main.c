@@ -91,7 +91,9 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "2    第二章 YYY\n");
 		fprintf(stderr, "===================\n");
 		fprintf(stderr, "3. 页数数字就是GI值，看书时在信息栏里有显示，如果你要移动到某章，翻页直到GI相等即可找到该章。GI是绝对页码，不会因为字体大小而改变。\n");
+#ifdef WIN32
 		system("pause");
+#endif
 		return -1;
 	}
 	dbg_printf(d, "处理文件名: %s", argv[1]);
@@ -186,7 +188,9 @@ void ParseFile(void)
 	if(str[0] == '\xef' && str[1] == '\xbb' && str[2] == '\xbf')
 	{
 		fprintf(stderr, "GenIndex不能处理UTF8 TXT文件，请先转换为GBK编码\n");
+#ifdef WIN32
 		system("pause");
+#endif
 		return;
 	}
 	
