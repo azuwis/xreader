@@ -18,6 +18,7 @@
 #include "common/utils.h"
 #include "buffer.h"
 #endif
+#include <time.h>
 #include "dbg.h"
 #include "strsafe.h"
 

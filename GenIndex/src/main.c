@@ -65,8 +65,14 @@ int main(int argc, char* argv[])
 	d = dbg_init();
 	dbg_open_stream(d, stderr);
 	dbg_switch(d, 0);
+#ifdef WIN32
 	if(stricmp(argv[argc-1], "-d") == 0)
 		dbg_switch(d, 1);
+#else
+	if(strcasecmp(argv[argc-1], "-d") == 0)
+		dbg_switch(d, 1);
+#endif
+
 	if(argc < 2) {
 		fprintf(stderr, "xReader 目录生成工具 GenIndex (version 0.1)\n");
 		fprintf(stderr, "用法: GenIndex.exe 文件名.txt [-d]\n");
@@ -211,8 +217,16 @@ void ParseFile(void)
 	}
 	fclose(fp);
 	fclose(foutp);
+#ifdef WIN32
 	DeleteFile(g_file.path);
+#else
+	unlink(g_file.path);
+#endif
+#ifdef WIN32
 	MoveFile(szOutFn, g_file.path);
+#else
+	rename(szOutFn, g_file.path);
+#endif
 	dbg_printf(d, "M630目录生成器 GenIndex: %s 目录大小%d字节 完成生成\n", g_file.name, g_file.dirsize);
 	free(szOutFn);
 }
