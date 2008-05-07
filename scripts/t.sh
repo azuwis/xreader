@@ -1,6 +1,7 @@
 #!/bin/sh
 
 DEST=/media/disk/psp/game/xReader
+SRC=./src
 
 while [ ! -x $DEST/ ]
 do 
@@ -15,6 +16,6 @@ echo "OK, PSP Connected"
 #done
 
 touch $DEST/
-'cp' -f EBOOT.* $DEST/ && sudo umount /media/disk
+('cp' -f $SRC/EBOOT.* $DEST/ 2>&1 > /dev/null && sudo umount /media/disk) || ('cp' -f ./EBOOT.* $DEST/ && sudo umount /media/disk)
 
 #echo "Have fun with xReader"

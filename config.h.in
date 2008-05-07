@@ -1,0 +1,72 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+#ifndef _XREADER_CONFIG_H
+#define _XREADER_CONFIG_H
+
+/* Enable analog option */
+#undef ENABLE_ANALOG
+
+/* Enable background image option */
+#undef ENABLE_BG
+
+/* Enable hprm option */
+#undef ENABLE_HPRM
+
+/* Enable image option */
+#undef ENABLE_IMAGE
+
+/* Enable lite version */
+#undef ENABLE_LITE
+
+/* Enable lyric option */
+#undef ENABLE_LYRIC
+
+/* Enable music option */
+#undef ENABLE_MUSIC
+
+/* Enable internationtial option */
+#undef ENABLE_NLS
+
+/* Enable ttf option */
+#undef ENABLE_TTF
+
+/* Enable USB option */
+#undef ENABLE_USB
+
+/* Enable wma option */
+#undef ENABLE_WMA
+
+/* Enable PSP firmware 2.0+ support */
+#undef HOMEBREW_2XX
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Toplevel directory where PSPSDK will be installed, relative to $prefix */
+#undef PSPSDK_TOPDIR
+
+/* Version number of package */
+#undef VERSION
+
+/* xReader version number */
+#undef XREADER_VERSION_NUM
+
+/* Debug option */
+#undef _DEBUG
+
+#endif
