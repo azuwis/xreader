@@ -37,7 +37,6 @@
 #ifdef ENABLE_PMPAVC
 #include "avc.h"
 #endif
-#include "version.h"
 #include "common/qsort.h"
 #include "common/utils.h"
 #include "scene_impl.h"
