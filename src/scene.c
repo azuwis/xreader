@@ -98,6 +98,35 @@ static int get_center_pos(int left, int right, const char *str)
 	return left + (right - left) / 2 - strlen(str) * DISP_FONTSIZE / 2 / 2;
 }
 
+static int default_predraw(const win_menu_predraw_data* pData, const char* str, int max_height,
+	   int *left, int *right, int *upper, int *bottom, int width_fixup)
+{
+	if (pData == NULL || left == NULL || right == NULL || bottom == NULL)
+		return -1;
+
+	*left = pData->left - 1;
+	*right =
+		pData->x + width_fixup + DISP_FONTSIZE / 2 * pData->max_item_len / 2;
+	*upper = pData->upper - (DISP_FONTSIZE + 1) - 1;
+	*bottom =
+		pData->upper + 2 + 1 + DISP_FONTSIZE + (max_height - 1) * (1 +
+																	  DISP_FONTSIZE
+																	  +
+																	  pData->
+																	  linespace);
+	
+	disp_rectangle(*left, *upper, *right, *bottom, COLOR_WHITE);
+	disp_fillrect(*left + 1, *upper + 1,
+				  *right - 1, *bottom - 1,
+				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
+	disp_putstring(get_center_pos(*left, *right, str), *upper + 1,
+				   COLOR_WHITE, (const byte *) str);
+	disp_line(*left, *upper + 1 + DISP_FONTSIZE,
+			  *right, *upper + 1 + DISP_FONTSIZE, COLOR_WHITE);
+
+	return 0;
+}
+
 static void load_fontsize_to_config()
 {
 	if (!config.usettf) {
@@ -1433,28 +1462,9 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 {
 	char number[5];
 
-	int left = g_predraw.left - 1;
-	int right =
-		g_predraw.x + 32 + DISP_FONTSIZE / 2 * g_predraw.max_item_len / 2;
-	int upper = g_predraw.upper - (DISP_FONTSIZE + 1) - 1;
-	int bottom =
-		g_predraw.upper + 2 + 1 + DISP_FONTSIZE + (max_height - 1) * (1 +
-																	  DISP_FONTSIZE
-																	  +
-																	  g_predraw.
-																	  linespace);
+	int left, right, upper, bottom, lines = 0;
 
-	disp_rectangle(left, upper, right, bottom, COLOR_WHITE);
-	disp_fillrect(left + 1, upper + 1,
-				  right - 1, bottom - 1,
-				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-
-	disp_putstring(get_center_pos(left, right, _("阅读选项")), upper + 1,
-				   COLOR_WHITE, (const byte *) _("阅读选项"));
-	disp_line(left, upper + 1 + DISP_FONTSIZE,
-			  right, upper + 1 + DISP_FONTSIZE, COLOR_WHITE);
-
-	int lines = 0;
+	default_predraw(&g_predraw, _("阅读选项"), max_height, &left, &right, &upper, &bottom, 32);
 
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
@@ -1891,29 +1901,10 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex,
 						   dword max_height)
 {
 	char number[5];
+	int left, right, upper, bottom;
 
-	int left = g_predraw.left - 1;
-	int right =
-		g_predraw.x + 4 + DISP_FONTSIZE / 2 * g_predraw.max_item_len / 2;
-	int upper = g_predraw.upper - (DISP_FONTSIZE + 1) - 1;
-	int bottom =
-		g_predraw.upper + 2 + 1 + DISP_FONTSIZE + (max_height - 1) * (1 +
-																	  DISP_FONTSIZE
-																	  +
-																	  g_predraw.
-																	  linespace);
+	default_predraw(&g_predraw, _("字体设置"), max_height, &left, &right, &upper, &bottom, 4);
 
-	disp_rectangle(left, upper, right, bottom, COLOR_WHITE);
-	disp_fillrect(left + 1, upper + 1,
-				  right - 1, bottom - 1,
-				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-	disp_putstring(get_center_pos(left, right, _("字体设置")), upper + 1,
-				   COLOR_WHITE, (const byte *) _("字体设置"));
-	disp_line(left, upper + 1 + DISP_FONTSIZE, right, upper + 1 + DISP_FONTSIZE,
-			  COLOR_WHITE);
-//  disp_fillrect(g_predraw.x + 1, g_predraw.y - 5 * DISP_FONTSIZE, g_predraw.x - 1 + DISP_FONTSIZE * 6,
-//                130 + 1 * DISP_FONTSIZE,
-//                config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
 	memset(number, ' ', 4);
 	utils_dword2string(fonts[fontindex].size, number, 4);
 
@@ -2288,35 +2279,39 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 							dword max_height)
 {
-	disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE,
-				   240 + DISP_FONTSIZE * 6, 137 + 7 * DISP_FONTSIZE,
-				   COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE,
-				  239 + DISP_FONTSIZE * 6, 122 - 4 * DISP_FONTSIZE,
-				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-	disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE,
-				   COLOR_WHITE, (const byte *) _("系统选项"));
-	disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE,
-			  239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6,
+	int left, right, upper, bottom, lines = 0;
+
+	default_predraw(&g_predraw, _("系统选项"), max_height, &left, &right, &upper, &bottom, 64);
+
+	/*
+	disp_fillrect(g_predraw.x + 1, g_predraw.y - 5 * DISP_FONTSIZE, g_predraw.x - 1 + DISP_FONTSIZE * 6,
 				  136 + 7 * DISP_FONTSIZE,
 				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-	disp_putstring(242 + DISP_FONTSIZE, 124 - 5 * DISP_FONTSIZE, COLOR_WHITE,
+				  */
+
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.showhidden ? _("显示") : _("隐藏")));
-	disp_putstring(242 + DISP_FONTSIZE, 125 - 4 * DISP_FONTSIZE, COLOR_WHITE,
+	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.showunknown ? _("显示") : _("隐藏")));
-	disp_putstring(242 + DISP_FONTSIZE, 126 - 3 * DISP_FONTSIZE, COLOR_WHITE,
+	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.showfinfo ? _("显示") : _("隐藏")));
-	disp_putstring(242 + DISP_FONTSIZE, 127 - 2 * DISP_FONTSIZE, COLOR_WHITE,
+	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.allowdelete ? _("是") : _("否")));
-	disp_putstring(242 + DISP_FONTSIZE, 128 - DISP_FONTSIZE, COLOR_WHITE,
+	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) conf_get_arrangename(config.arrange));
+	lines++;
 #ifdef ENABLE_USB
-	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE,
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.enableusb ? _("是") : _("否")));
+	lines++;
 #else
-	disp_putstring(242 + DISP_FONTSIZE, 129, COLOR_WHITE,
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) _("不支持"));
+	lines++;
 #endif
 	char infomsg[80];
 
@@ -2325,25 +2320,31 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 	} else {
 		SPRINTF_S(infomsg, _("%d分钟"), config.autosleep);
 	}
-	disp_putstring(242 + DISP_FONTSIZE, 130 + 1 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) infomsg);
+	lines++;
 	SPRINTF_S(infomsg, "%d/%d", freq_list[config.freqs[0]][0],
 			  freq_list[config.freqs[0]][1]);
-	disp_putstring(242 + DISP_FONTSIZE, 131 + 2 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) infomsg);
+	lines++;
 	SPRINTF_S(infomsg, "%d/%d", freq_list[config.freqs[1]][0],
 			  freq_list[config.freqs[1]][1]);
-	disp_putstring(242 + DISP_FONTSIZE, 132 + 3 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) infomsg);
+	lines++;
 	SPRINTF_S(infomsg, "%d/%d", freq_list[config.freqs[2]][0],
 			  freq_list[config.freqs[2]][1]);
-	disp_putstring(242 + DISP_FONTSIZE, 133 + 4 * DISP_FONTSIZE, COLOR_WHITE,
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) infomsg);
-	disp_putstring(242 + DISP_FONTSIZE, 134 + 5 * DISP_FONTSIZE, COLOR_WHITE,
+	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.dis_scrsave ? _("是") : _("否")));
-	disp_putstring(242 + DISP_FONTSIZE, 135 + 6 * DISP_FONTSIZE, COLOR_WHITE,
+	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE, g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *) (config.launchtype ==
 								   2 ? _("普通程序") : _("PS游戏")));
+	lines++;
 }
 
 dword scene_moptions(dword * selidx)
@@ -2390,13 +2391,14 @@ dword scene_moptions(dword * selidx)
 	g_predraw.x = 240;
 	g_predraw.y = 123;
 	g_predraw.linespace = 0;
-	g_predraw.left = g_predraw.x -
-		(DISP_FONTSIZE / 2) * g_predraw.max_item_len / 2;
+	g_predraw.left = g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2;
 	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
 
 	while ((index =
-			win_menu(240 - DISP_FONTSIZE * 6, 123 - 5 * DISP_FONTSIZE, 12,
-					 NELEMS(item), item, NELEMS(item), 0, 0,
+			win_menu(g_predraw.left,
+					 g_predraw.upper, g_predraw.max_item_len,
+					 g_predraw.item_count, item, NELEMS(item), 0,
+					 g_predraw.linespace,
 					 config.usedyncolor ? GetBGColorByTime() : config.
 					 menubcolor, true, scene_moptions_predraw, NULL,
 					 scene_moptions_menucb)) != INVALID);
@@ -3116,8 +3118,7 @@ dword scene_options(dword * selidx)
 	g_predraw.x = 238;
 	g_predraw.y = 122;
 	g_predraw.linespace = 0;
-	g_predraw.left = g_predraw.x -
-		(DISP_FONTSIZE / 2) * g_predraw.max_item_len / 2;
+	g_predraw.left = g_predraw.x - (DISP_FONTSIZE / 2) * g_predraw.max_item_len / 2;
 	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
 
 	while ((index =
