@@ -21,8 +21,8 @@ buffer.c buffer.h charsets.c charsets.h conf.c conf.h copy.c copy.h \
 ctrl.c ctrl.h dbg.c dbg.h dictionary.c dictionary.h display.c display.h \
 fat.c fat.h fs.c fs.h html.c html.h \
 image.c image.h iniparser.c iniparser.h location.c location.h lyric.c lyric.h \
-main.c mp3.c mp3.h mp3info.c mp3info.h msgresource.c \
-msgresource.h power.c power.h pspscreen.h scene.c scene.h scene_image.c scene_impl.h \
+main.c mp3.c mp3.h mp3info.c mp3info.h \
+power.c power.h pspscreen.h scene.c scene.h scene_image.c scene_impl.h \
 scene_music.c scene_text.c strsafe.c strsafe.h text.c \
 text.h ttfont.c ttfont.h usb.c usb.h version.h win.c win.h \
 common/datatype.h common/psp_utils.c common/psp_utils.h \

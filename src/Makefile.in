@@ -52,12 +52,12 @@ am__xReader_elf_SOURCES_DIST = array.c array.h avc.c avc.h bg.c bg.h \
 	dictionary.c dictionary.h display.c display.h fat.c fat.h fs.c \
 	fs.h html.c html.h image.c image.h iniparser.c iniparser.h \
 	location.c location.h lyric.c lyric.h main.c mp3.c mp3.h \
-	mp3info.c mp3info.h msgresource.c msgresource.h power.c \
-	power.h pspscreen.h scene.c scene.h scene_image.c scene_impl.h \
-	scene_music.c scene_text.c strsafe.c strsafe.h text.c text.h \
-	ttfont.c ttfont.h usb.c usb.h version.h win.c win.h \
-	common/datatype.h common/psp_utils.c common/psp_utils.h \
-	common/qsort.c common/qsort.h common/utils.c common/utils.h \
+	mp3info.c mp3info.h power.c power.h pspscreen.h scene.c \
+	scene.h scene_image.c scene_impl.h scene_music.c scene_text.c \
+	strsafe.c strsafe.h text.c text.h ttfont.c ttfont.h usb.c \
+	usb.h version.h win.c win.h common/datatype.h \
+	common/psp_utils.c common/psp_utils.h common/qsort.c \
+	common/qsort.h common/utils.c common/utils.h \
 	apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 	apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
 	$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h simple_gettext.c \
@@ -70,9 +70,8 @@ am_xReader_elf_OBJECTS = array.$(OBJEXT) avc.$(OBJEXT) bg.$(OBJEXT) \
 	dictionary.$(OBJEXT) display.$(OBJEXT) fat.$(OBJEXT) \
 	fs.$(OBJEXT) html.$(OBJEXT) image.$(OBJEXT) \
 	iniparser.$(OBJEXT) location.$(OBJEXT) lyric.$(OBJEXT) \
-	main.$(OBJEXT) mp3.$(OBJEXT) mp3info.$(OBJEXT) \
-	msgresource.$(OBJEXT) power.$(OBJEXT) scene.$(OBJEXT) \
-	scene_image.$(OBJEXT) scene_music.$(OBJEXT) \
+	main.$(OBJEXT) mp3.$(OBJEXT) mp3info.$(OBJEXT) power.$(OBJEXT) \
+	scene.$(OBJEXT) scene_image.$(OBJEXT) scene_music.$(OBJEXT) \
 	scene_text.$(OBJEXT) strsafe.$(OBJEXT) text.$(OBJEXT) \
 	ttfont.$(OBJEXT) usb.$(OBJEXT) win.$(OBJEXT) \
 	psp_utils.$(OBJEXT) qsort.$(OBJEXT) utils.$(OBJEXT) \
@@ -240,12 +239,12 @@ xReader_elf_SOURCES = array.c array.h avc.c avc.h bg.c bg.h bookmark.c \
 	dictionary.h display.c display.h fat.c fat.h fs.c fs.h html.c \
 	html.h image.c image.h iniparser.c iniparser.h location.c \
 	location.h lyric.c lyric.h main.c mp3.c mp3.h mp3info.c \
-	mp3info.h msgresource.c msgresource.h power.c power.h \
-	pspscreen.h scene.c scene.h scene_image.c scene_impl.h \
-	scene_music.c scene_text.c strsafe.c strsafe.h text.c text.h \
-	ttfont.c ttfont.h usb.c usb.h version.h win.c win.h \
-	common/datatype.h common/psp_utils.c common/psp_utils.h \
-	common/qsort.c common/qsort.h common/utils.c common/utils.h \
+	mp3info.h power.c power.h pspscreen.h scene.c scene.h \
+	scene_image.c scene_impl.h scene_music.c scene_text.c \
+	strsafe.c strsafe.h text.c text.h ttfont.c ttfont.h usb.c \
+	usb.h version.h win.c win.h common/datatype.h \
+	common/psp_utils.c common/psp_utils.h common/qsort.c \
+	common/qsort.h common/utils.c common/utils.h \
 	apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 	apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
 	$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h $(am__append_1)
@@ -349,7 +348,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mp3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mp3info.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgresource.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/power.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/psp_utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qsort.Po@am__quote@

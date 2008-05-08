@@ -60,6 +60,7 @@ int imgh;
 bool slideshow = false;
 time_t now = 0, lasttime = 0;
 extern void *framebuffer;
+extern win_menu_predraw_data g_predraw;
 
 static volatile int secticks = 0;
 
@@ -995,14 +996,17 @@ t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item, dword * count,
 		case PSP_CTRL_CIRCLE:
 			disp_duptocache();
 			disp_waitv();
-			disp_rectangle(239 - DISP_FONTSIZE * 3, 135 - DISP_FONTSIZE / 2,
-						   240 + DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE / 2,
-						   COLOR_WHITE);
-			disp_fillrect(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2,
-						  239 + DISP_FONTSIZE * 3, 135 + DISP_FONTSIZE / 2,
-						  RGB(0x8, 0x18, 0x10));
-			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE / 2,
-						   COLOR_WHITE, (const byte *) _("请按对应按键"));
+			{
+				int len = strlen(_("请按对应按键")) / 2 + 1;
+				disp_rectangle(239 - DISP_FONTSIZE * len, 135 - DISP_FONTSIZE / 2,
+						240 + DISP_FONTSIZE * len, 136 + DISP_FONTSIZE / 2,
+						COLOR_WHITE);
+				disp_fillrect(240 - DISP_FONTSIZE * len, 136 - DISP_FONTSIZE / 2,
+						239 + DISP_FONTSIZE * len, 135 + DISP_FONTSIZE / 2,
+						RGB(0x8, 0x18, 0x10));
+				disp_putstring(240 - DISP_FONTSIZE * len, 136 - DISP_FONTSIZE / 2,
+						COLOR_WHITE, (const byte *) _("请按对应按键"));
+			}
 			disp_flip();
 			dword key, key2;
 			SceCtrlData ctl;
@@ -1061,20 +1065,9 @@ void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex,
 						  dword max_height)
 {
 	char keyname[256];
+	int left, right, upper, bottom, lines = 0;
 
-	disp_rectangle(239 - DISP_FONTSIZE * 10, 128 - 7 * DISP_FONTSIZE,
-				   240 + DISP_FONTSIZE * 10, 144 + 6 * DISP_FONTSIZE,
-				   COLOR_WHITE);
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 129 - 7 * DISP_FONTSIZE,
-				  239 + DISP_FONTSIZE * 10, 128 - 6 * DISP_FONTSIZE,
-				  config.menubcolor);
-	disp_fillrect(240 - DISP_FONTSIZE * 10, 127 - 6 * DISP_FONTSIZE,
-				  239 + DISP_FONTSIZE * 10, 143 + 6 * DISP_FONTSIZE,
-				  config.menubcolor);
-	disp_putstring(240 - DISP_FONTSIZE * 5, 129 - 7 * DISP_FONTSIZE,
-				   COLOR_WHITE, (const byte *) _("按键设置   △ 删除"));
-	disp_line(240 - DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE,
-			  239 + DISP_FONTSIZE * 10, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
+	default_predraw(&g_predraw, _("按键设置   △ 删除"), max_height, &left, &right, &upper, &bottom, 8 * DISP_FONTSIZE + 4);
 	dword i;
 
 	for (i = topindex; i < topindex + max_height; i++) {
@@ -1086,14 +1079,17 @@ void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex,
 			STRCAT_S(keyname, " | ");
 			STRCAT_S(keyname, keyname2);
 		}
-		disp_putstring(238 - DISP_FONTSIZE * 5,
-					   131 - 6 * DISP_FONTSIZE + (1 + DISP_FONTSIZE) * i,
+		disp_putstring(left + (right - left) / 2,
+					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 + DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) keyname);
+		lines++;
 	}
 }
 
 dword scene_imgkey(dword * selidx)
 {
+	win_menu_predraw_data prev;
+	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
 	t_win_menuitem item[12];
 
 	STRCPY_S(item[0].name, _("上一张图"));
@@ -1108,10 +1104,12 @@ dword scene_imgkey(dword * selidx)
 	STRCPY_S(item[9].name, _("退出浏览"));
 	STRCPY_S(item[10].name, _("缩放引擎"));
 	STRCPY_S(item[11].name, _("幻灯播放"));
-	dword i;
+	dword i, index;
+
+	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
 
 	for (i = 0; i < 12; i++) {
-		item[i].width = 8;
+		item[i].width = g_predraw.max_item_len;
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
@@ -1119,14 +1117,25 @@ dword scene_imgkey(dword * selidx)
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
-	dword index;
 
+	g_predraw.item_count = NELEMS(item);
+	g_predraw.x = 240;
+	g_predraw.y = 123;
+	g_predraw.left = g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2;
+	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
+	g_predraw.linespace = 0;
+	
 	while ((index =
-			win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 8, 12,
-					 item, 12, 0, 0,
+			win_menu(g_predraw.left,
+					 g_predraw.upper, g_predraw.max_item_len,
+					 g_predraw.item_count, item, NELEMS(item), 0,
+					 g_predraw.linespace,
 					 config.usedyncolor ? GetBGColorByTime() : config.
 					 menubcolor, true, scene_imgkey_predraw, NULL,
 					 scene_imgkey_menucb)) != INVALID);
+
+	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
+
 	return 0;
 }
 #endif

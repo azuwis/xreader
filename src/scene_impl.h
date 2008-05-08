@@ -38,6 +38,9 @@ extern void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku,
 extern bool scene_bookmark(dword * orgp);
 extern dword scene_options(dword * selidx);
 extern void scene_mp3bar();
+extern int default_predraw(const win_menu_predraw_data * pData, const char *str,
+						   int max_height, int *left, int *right, int *upper,
+						   int *bottom, int width_fixup);
 
 #ifdef ENABLE_IMAGE
 dword scene_readimage(dword selidx);
