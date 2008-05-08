@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pspsdk.h>
-#include "config.h"
 #include "charsets.h"
 #include "common/qsort.h"
 #include "common/utils.h"

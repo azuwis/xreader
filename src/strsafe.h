@@ -24,8 +24,6 @@
 
 #pragma once
 
-#include "config.h"
-
 size_t strncpy_s(char *strDest, size_t numberOfElements, const char *strSource,
 				 size_t count);
 size_t strcpy_s(char *strDestination, size_t numberOfElements,

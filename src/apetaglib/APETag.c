@@ -7,7 +7,6 @@
 #include <pspsdk.h>
 #include "common/qsort.h"
 #include "common/utils.h"
-#include "config.h"
 #endif
 #include <stdio.h>
 #include <string.h>

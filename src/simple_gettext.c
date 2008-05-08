@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "config.h"
 #include "strsafe.h"
 #include "sofile.h"
 #ifdef DMALLOC
