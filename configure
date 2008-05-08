@@ -638,8 +638,8 @@ am__leading_dot
 AMTAR
 am__tar
 am__untar
-DEBUG_TRUE
-DEBUG_FALSE
+OPTIMIZE_TRUE
+OPTIMIZE_FALSE
 NLS_TRUE
 NLS_FALSE
 PSP_CC
@@ -1342,6 +1342,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-debug   Enable debug option	default is disabled
+  --enable-optimize   Enable compiler optimize option	default is enabled
   --enable-homebrew_2xx   Enable PSP firmware 2.0+ support	default is enabled
   --enable-image   Enable image option	default is enabled
   --enable-bg   Enable background image option	default is enabled
@@ -2575,6 +2576,13 @@ else
   debug=no
 fi
 
+# Check whether --enable-optimize was given.
+if test "${enable_optimize+set}" = set; then
+  enableval=$enable_optimize; optimize="$enableval"
+else
+  optimize=yes
+fi
+
 # Check whether --enable-homebrew_2xx was given.
 if test "${enable_homebrew_2xx+set}" = set; then
   enableval=$enable_homebrew_2xx; homebrew_2xx="$enableval"
@@ -2682,12 +2690,12 @@ _ACEOF
 
 	usb=no
 fi
- if test x$debug = "xyes"; then
-  DEBUG_TRUE=
-  DEBUG_FALSE='#'
+ if test x$optimize = "xyes"; then
+  OPTIMIZE_TRUE=
+  OPTIMIZE_FALSE='#'
 else
-  DEBUG_TRUE='#'
-  DEBUG_FALSE=
+  OPTIMIZE_TRUE='#'
+  OPTIMIZE_FALSE=
 fi
 
 if test $homebrew_2xx = "yes"; then
@@ -7237,10 +7245,10 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
-if test -z "${DEBUG_TRUE}" && test -z "${DEBUG_FALSE}"; then
-  { { echo "$as_me:$LINENO: error: conditional \"DEBUG\" was never defined.
+if test -z "${OPTIMIZE_TRUE}" && test -z "${OPTIMIZE_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"OPTIMIZE\" was never defined.
 Usually this means the macro was only invoked conditionally." >&5
-echo "$as_me: error: conditional \"DEBUG\" was never defined.
+echo "$as_me: error: conditional \"OPTIMIZE\" was never defined.
 Usually this means the macro was only invoked conditionally." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -8042,8 +8050,8 @@ am__leading_dot!$am__leading_dot$ac_delim
 AMTAR!$AMTAR$ac_delim
 am__tar!$am__tar$ac_delim
 am__untar!$am__untar$ac_delim
-DEBUG_TRUE!$DEBUG_TRUE$ac_delim
-DEBUG_FALSE!$DEBUG_FALSE$ac_delim
+OPTIMIZE_TRUE!$OPTIMIZE_TRUE$ac_delim
+OPTIMIZE_FALSE!$OPTIMIZE_FALSE$ac_delim
 NLS_TRUE!$NLS_TRUE$ac_delim
 NLS_FALSE!$NLS_FALSE$ac_delim
 PSP_CC!$PSP_CC$ac_delim

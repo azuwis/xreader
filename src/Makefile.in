@@ -231,8 +231,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AR = @PSP_AR@
 AM_CPPFLAGS = -I$(srcdir)/ -I$(srcdir)/include -I$(srcdir)/include/freetype2 -I$(top_srcdir)/lib/ -I$(PSPSDK)/include
-@DEBUG_FALSE@AM_CFLAGS = -O3 -G0 -fomit-frame-pointer -ffast-math -frename-registers -Wall
-@DEBUG_TRUE@AM_CFLAGS = -O0 -G0 -g -Wall
+@OPTIMIZE_FALSE@AM_CFLAGS = -O0 -G0 -g -Wall
+@OPTIMIZE_TRUE@AM_CFLAGS = -O3 -G0 -fomit-frame-pointer -ffast-math -frename-registers -Wall
 xReaderdir = $(srcdir)/
 xReader_elf_SOURCES = array.c array.h avc.c avc.h bg.c bg.h bookmark.c \
 	bookmark.h buffer.c buffer.h charsets.c charsets.h conf.c \

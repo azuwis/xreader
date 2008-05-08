@@ -20,6 +20,8 @@ AM_INIT_AUTOMAKE([xReader], [$xReader_version])
 
 AC_ARG_ENABLE(debug, [  --enable-debug   Enable debug option	default is disabled],
 [debug="$enableval"], debug=no)
+AC_ARG_ENABLE(optimize, [  --enable-optimize   Enable compiler optimize option	default is enabled],
+[optimize="$enableval"], optimize=yes)
 AC_ARG_ENABLE(homebrew_2xx, [  --enable-homebrew_2xx   Enable PSP firmware 2.0+ support	default is enabled],
 homebrew_2xx="$enableval", homebrew_2xx=yes)
 AC_ARG_ENABLE(image, [  --enable-image   Enable image option	default is enabled],
@@ -60,7 +62,7 @@ if test $debug = "yes"; then
 	AC_DEFINE([_DEBUG], 1, [Debug option])
 	usb=no
 fi
-AM_CONDITIONAL([DEBUG], [test x$debug = "xyes"])
+AM_CONDITIONAL([OPTIMIZE], [test x$optimize = "xyes"])
 if test $homebrew_2xx = "yes"; then
 	AC_DEFINE([HOMEBREW_2XX], 1, [Enable PSP firmware 2.0+ support])
 fi

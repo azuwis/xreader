@@ -6,10 +6,10 @@ RANLIB = @PSP_RANLIB@
 EXEEXT =
 AM_CPPFLAGS = -I$(srcdir)/ -I$(srcdir)/include -I$(srcdir)/include/freetype2 -I$(top_srcdir)/lib/ -I$(PSPSDK)/include
 
-if DEBUG
-AM_CFLAGS = -O0 -G0 -g -Wall
-else
+if OPTIMIZE
 AM_CFLAGS = -O3 -G0 -fomit-frame-pointer -ffast-math -frename-registers -Wall
+else
+AM_CFLAGS = -O0 -G0 -g -Wall
 endif
 CCASFLAGS = $(CFLAGS) $(INCLUDES)
 
