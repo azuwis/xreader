@@ -78,7 +78,7 @@ msgstr "Next file"
 
 #: scene.c:330
 msgid "ÍË³öÔÄ¶Á"
-msgstr "Exit xReader"
+msgstr "Exit reading"
 
 #: scene.c:331
 msgid "ÇĞ»»·­Ò³"
@@ -138,7 +138,7 @@ msgstr "linear"
 
 #: scene.c:839
 msgid "Ãë"
-msgstr "second"
+msgstr "seconds"
 
 #: scene.c:873
 msgid "    Ëõ·ÅËã·¨"
