@@ -162,7 +162,7 @@ msgstr "Switch page mode"
 
 #: scene.c:878
 msgid "翻动保留宽度"
-msgstr "Rolling reverse width"
+msgstr "Rolling reserve width"
 
 #: scene.c:879
 msgid "  缩略图查看"
@@ -274,7 +274,7 @@ msgstr "Text encoding"
 
 #: scene.c:1530
 msgid "      滚动条"
-msgstr "Rolling bar"
+msgstr "Scroll bar"
 
 #: scene.c:1531
 msgid "自动保存书签"
@@ -302,7 +302,7 @@ msgstr "Rolling speed"
 
 #: scene.c:1539
 msgid "    滚屏时间"
-msgstr "Rolling time"
+msgstr "Scroll delay"
 
 #: scene.c:1632
 msgid "操作设置"
@@ -710,7 +710,7 @@ msgstr "No EXIF info"
 
 #: scene.c:4170
 msgid " 调试版"
-msgstr "Debug Version"
+msgstr " Debug Version"
 
 #: scene.c:4193
 msgid "START 音乐播放控制   SELECT 选项   选项内按□进入按键设置"
