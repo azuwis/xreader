@@ -2711,7 +2711,7 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item,
 							 filelist[(dword) item[1].data].compname->ptr);
 					scene_locname_to_itemname(item[*index].name,
 											  NELEMS(item[*index].name), t,
-											  MAX_LOCNAME_LEN,
+											  (config.filelistwidth / config.fontsize * 4),
 											  config.isreading);
 					item[*index].width = strlen(item[*index].name);
 				}
@@ -2746,7 +2746,7 @@ void scene_loc_enum(dword index, char *comppath, char *shortpath,
 		}
 		STRCAT_S(t, compname);
 		scene_locname_to_itemname(item[index].name, NELEMS(item[index].name), t,
-								  MAX_LOCNAME_LEN, isreading);
+								  (config.filelistwidth / config.fontsize * 4), isreading);
 		item[index].width = strlen(item[index].name);
 	}
 }
@@ -2774,7 +2774,7 @@ dword scene_locsave(dword * selidx)
 	location_enum(scene_loc_enum, item);
 	dword index;
 
-	g_predraw.max_item_len = MAX_LOCNAME_LEN;
+	g_predraw.max_item_len = (config.filelistwidth / config.fontsize * 4);
 	g_predraw.item_count = NELEMS(item);
 	g_predraw.x = 240;
 	g_predraw.y = 123;
@@ -2979,7 +2979,7 @@ dword scene_locload(dword * selidx)
 	location_enum(scene_loc_enum, item);
 	dword index;
 
-	g_predraw.max_item_len = MAX_LOCNAME_LEN;
+	g_predraw.max_item_len = (config.filelistwidth / config.fontsize * 4);
 	g_predraw.item_count = NELEMS(item);
 	g_predraw.x = 240;
 	g_predraw.y = 123;

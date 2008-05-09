@@ -65,6 +65,4 @@ typedef struct _BookViewData
 
 extern BookViewData cur_book_view, prev_book_view;
 
-#define MAX_LOCNAME_LEN 60
-
 #endif
