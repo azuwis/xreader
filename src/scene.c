@@ -3415,12 +3415,12 @@ dword scene_options(dword * selidx)
 	g_predraw.linespace = 0;
 	g_predraw.left =
 		g_predraw.x - (DISP_FONTSIZE / 2) * g_predraw.max_item_len / 2;
-	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
+	g_predraw.upper =
+		g_predraw.y - DISP_FONTSIZE * (g_predraw.item_count - 1) / 2;
 
 	while ((index =
-			win_menu(g_predraw.x -
-					 (DISP_FONTSIZE / 2) * g_predraw.max_item_len / 2,
-					 g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2,
+			win_menu(g_predraw.left,
+					 g_predraw.upper,
 					 g_predraw.max_item_len, NELEMS(item), item, NELEMS(item),
 					 index, g_predraw.linespace,
 					 config.usedyncolor ? GetBGColorByTime() : config.
