@@ -25,7 +25,7 @@ pixel *vram_start = NULL;
 static bool vram_page = 0;
 static byte *cfont_buffer = NULL, *book_cfont_buffer = NULL, *efont_buffer =
 	NULL, *book_efont_buffer = NULL;
-int DISP_FONTSIZE = 16, DISP_BOOK_FONTSIZE = 16, HRR = 6, WRR = 10;
+int DISP_FONTSIZE = 16, DISP_BOOK_FONTSIZE = 16, HRR = 6, WRR = 15;
 int use_ttf = 0;
 static int DISP_EFONTSIZE, DISP_CFONTSIZE, DISP_CROWSIZE, DISP_EROWSIZE,
 	fbits_last = 0, febits_last =
@@ -171,7 +171,7 @@ extern void disp_set_fontsize(int fontsize)
 	DISP_CFONTSIZE = DISP_FONTSIZE * DISP_CROWSIZE;
 	DISP_EFONTSIZE = DISP_FONTSIZE * DISP_EROWSIZE;
 	HRR = 100 / DISP_FONTSIZE;
-	WRR = 160 / DISP_FONTSIZE;
+	WRR = config.filelistwidth / DISP_FONTSIZE;
 
 	extern int MAX_ITEM_NAME_LEN;
 

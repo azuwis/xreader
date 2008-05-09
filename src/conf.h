@@ -184,6 +184,7 @@ typedef struct
 	dword tabstop;
 	bool apetagorder;
 	char language[20];
+	int filelistwidth;
 } t_conf, *p_conf;
 
 /* txt key:

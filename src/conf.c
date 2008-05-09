@@ -246,6 +246,7 @@ static void conf_default(p_conf conf)
 	conf->apetagorder = true;
 
 	STRCPY_S(conf->language, "zh_CN");
+	conf->filelistwidth = 160;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -996,6 +997,12 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	STRCPY_S(conf->language,
 			 iniparser_getstring(dict, "UI:language", conf->language));
 
+	conf->filelistwidth =
+		iniparser_getint(dict, "UI:filelistwidth", conf->filelistwidth);
+
+	if (conf->filelistwidth < 0 || conf->filelistwidth > 240)
+		conf->filelistwidth = 160;
+
 	dictionary_del(dict);
 
 	return true;
@@ -1243,6 +1250,9 @@ extern bool ini_conf_save(p_conf conf)
 						booleanToString(buf, sizeof(buf), conf->apetagorder));
 
 	iniparser_setstring(dict, "UI:language", conf->language);
+
+	iniparser_setstring(dict, "UI:filelistwidth",
+						intToString(buf, sizeof(buf), conf->filelistwidth));
 
 	iniparser_dump_ini(dict, fp);
 

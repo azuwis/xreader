@@ -45,6 +45,8 @@
 #include "simple_gettext.h"
 #include "dbg.h"
 
+extern win_menu_predraw_data g_predraw;
+
 static volatile int secticks = 0;
 
 unsigned int getFreeMemory();
@@ -131,26 +133,42 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 void scene_mp3_list_predraw(p_win_menuitem item, dword index, dword topindex,
 							dword max_height)
 {
-	disp_rectangle(239 - 10 * DISP_FONTSIZE, 128 - 7 * DISP_FONTSIZE,
-				   243 + 10 * DISP_FONTSIZE, 145 + 7 * DISP_FONTSIZE,
-				   COLOR_WHITE);
-	disp_line(240 - 10 * DISP_FONTSIZE, 129 - 6 * DISP_FONTSIZE,
-			  242 + 10 * DISP_FONTSIZE, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_line(240 - 10 * DISP_FONTSIZE, 144 + 6 * DISP_FONTSIZE,
-			  242 + 10 * DISP_FONTSIZE, 144 + 6 * DISP_FONTSIZE, COLOR_WHITE);
-	disp_fillrect(240 - 10 * DISP_FONTSIZE, 129 - 7 * DISP_FONTSIZE,
-				  242 + 10 * DISP_FONTSIZE, 128 - 6 * DISP_FONTSIZE, RGB(0x20,
-																		 0x40,
-																		 0x30));
-	disp_fillrect(240 - 10 * DISP_FONTSIZE, 145 + 6 * DISP_FONTSIZE,
-				  242 + 10 * DISP_FONTSIZE, 144 + 7 * DISP_FONTSIZE, RGB(0x20,
-																		 0x40,
-																		 0x30));
-	disp_putstring(240 - 10 * DISP_FONTSIZE, 129 - 7 * DISP_FONTSIZE,
-				   COLOR_WHITE,
-				   (const byte *) _(" ○删除 □下移 △上移 ×退出 START播放"));
-	disp_putstring(240 - 10 * DISP_FONTSIZE, 145 + 6 * DISP_FONTSIZE,
-				   COLOR_WHITE,
+	int left, right, upper, bottom;
+
+	default_predraw(&g_predraw, _(" ○删除 □下移 △上移 ×退出 START播放"),
+					max_height, &left, &right, &upper, &bottom, 4);
+	/*
+	   disp_rectangle(239 - 10 * DISP_FONTSIZE, 128 - 7 * DISP_FONTSIZE,
+	   243 + 10 * DISP_FONTSIZE, 145 + 7 * DISP_FONTSIZE,
+	   COLOR_WHITE);
+	   disp_line(240 - 10 * DISP_FONTSIZE, 129 - 6 * DISP_FONTSIZE,
+	   242 + 10 * DISP_FONTSIZE, 129 - 6 * DISP_FONTSIZE, COLOR_WHITE);
+	   disp_line(240 - 10 * DISP_FONTSIZE, 144 + 6 * DISP_FONTSIZE,
+	   242 + 10 * DISP_FONTSIZE, 144 + 6 * DISP_FONTSIZE, COLOR_WHITE);
+	   disp_fillrect(240 - 10 * DISP_FONTSIZE, 129 - 7 * DISP_FONTSIZE,
+	   242 + 10 * DISP_FONTSIZE, 128 - 6 * DISP_FONTSIZE, RGB(0x20,
+	   0x40,
+	   0x30));
+	   disp_fillrect(240 - 10 * DISP_FONTSIZE, 145 + 6 * DISP_FONTSIZE,
+	   242 + 10 * DISP_FONTSIZE, 144 + 7 * DISP_FONTSIZE, RGB(0x20,
+	   0x40,
+	   0x30));
+	   disp_putstring(240 - 10 * DISP_FONTSIZE, 129 - 7 * DISP_FONTSIZE,
+	   COLOR_WHITE,
+	   (const byte *) _(" ○删除 □下移 △上移 ×退出 START播放"));
+	 */
+
+	int pos =
+		get_center_pos(0, 480, _("要添加乐曲请到文件列表选取音乐文件按○"));
+	int posend =
+		pos + 1 +
+		strlen(_("要添加乐曲请到文件列表选取音乐文件按○")) * DISP_FONTSIZE / 2;
+	upper = bottom + 1;
+	bottom = bottom + 1 + 1 * DISP_FONTSIZE;
+
+	disp_rectangle(pos - 2, upper - 1, posend + 1, bottom + 1, COLOR_WHITE);
+	disp_fillrect(pos - 1, upper, posend, bottom, RGB(0x20, 0x40, 0x30));
+	disp_putstring(pos, upper, COLOR_WHITE,
 				   (const byte *) _("要添加乐曲请到文件列表选取音乐文件按○"));
 }
 
@@ -206,7 +224,17 @@ void scene_mp3_list()
 
 	if (item == NULL)
 		return;
+
+	win_menu_predraw_data prev;
+
+	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
+
 	dword i;
+
+	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0)
+		g_predraw.max_item_len = WRR * 4;
+	else
+		g_predraw.max_item_len = WRR * 5;
 
 	for (i = 0; i < mp3_list_count(); i++) {
 		char *rname = strrchr(mp3_list_get(i), '/');
@@ -215,10 +243,10 @@ void scene_mp3_list()
 			rname = (char *) mp3_list_get(i);
 		else
 			rname++;
-		if (strlen(rname) <= 38)
+		if (strlen(rname) <= g_predraw.max_item_len - 2)
 			STRCPY_S(item[i].name, rname);
 		else {
-			mbcsncpy_s((unsigned char *) item[i].name, 37,
+			mbcsncpy_s((unsigned char *) item[i].name, g_predraw.max_item_len - 3,
 					   (const unsigned char *) rname, -1);
 			STRCAT_S(item[i].name, "...");
 		}
@@ -229,16 +257,27 @@ void scene_mp3_list()
 		item[i].selrcolor = RGB(0x40, 0x40, 0x28);
 		item[i].selbcolor = config.selbcolor;
 	}
+
+	g_predraw.item_count = 12;
+	g_predraw.x = 240;
+	g_predraw.y = 130;
+	g_predraw.left =
+		g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2 / 2;
+	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
+	g_predraw.linespace = 0;
+
 	dword index = 0;
 
 	while ((index =
-			win_menu(240 - DISP_FONTSIZE * 10, 130 - 6 * DISP_FONTSIZE, 40, 12,
-					 item, mp3_list_count(), index, 0, RGB(0x40, 0x40, 0x28),
-					 true, scene_mp3_list_predraw, scene_mp3_list_postdraw,
+			win_menu(g_predraw.left, g_predraw.upper, g_predraw.max_item_len,
+					 g_predraw.item_count, item, mp3_list_count(), index, 0,
+					 RGB(0x40, 0x40, 0x28), true, scene_mp3_list_predraw,
+					 scene_mp3_list_postdraw,
 					 scene_mp3_list_menucb)) != INVALID)
 		if (mp3_list_count() == 0)
 			break;
 	free((void *) item);
+	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 #endif
 }
 
@@ -319,8 +358,12 @@ void scene_mp3bar()
 		} else
 			SPRINTF_S(battstr, _("[电源供电]   剩余内存: %dKB"),
 					  getFreeMemory() / 1024);
-		disp_putstring(6 + DISP_FONTSIZE, 7 + DISP_FONTSIZE, COLOR_WHITE,
-					   (const byte *) battstr);
+		if (strcmp(simple_textdomain(NULL), "en_US") == 0)
+			disp_putstring(6, 7 + DISP_FONTSIZE, COLOR_WHITE,
+						   (const byte *) battstr);
+		else
+			disp_putstring(6 + DISP_FONTSIZE, 7 + DISP_FONTSIZE, COLOR_WHITE,
+						   (const byte *) battstr);
 
 #ifdef ENABLE_LYRIC
 		disp_rectangle(5, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex), 474,

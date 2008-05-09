@@ -996,17 +996,7 @@ t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item, dword * count,
 		case PSP_CTRL_CIRCLE:
 			disp_duptocache();
 			disp_waitv();
-			{
-				int len = strlen(_("请按对应按键")) / 2 + 1;
-				disp_rectangle(239 - DISP_FONTSIZE * len, 135 - DISP_FONTSIZE / 2,
-						240 + DISP_FONTSIZE * len, 136 + DISP_FONTSIZE / 2,
-						COLOR_WHITE);
-				disp_fillrect(240 - DISP_FONTSIZE * len, 136 - DISP_FONTSIZE / 2,
-						239 + DISP_FONTSIZE * len, 135 + DISP_FONTSIZE / 2,
-						RGB(0x8, 0x18, 0x10));
-				disp_putstring(240 - DISP_FONTSIZE * len, 136 - DISP_FONTSIZE / 2,
-						COLOR_WHITE, (const byte *) _("请按对应按键"));
-			}
+			prompt_press_any_key();
 			disp_flip();
 			dword key, key2;
 			SceCtrlData ctl;

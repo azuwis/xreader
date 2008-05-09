@@ -44,6 +44,8 @@ t_fs_filetype_entry ft_table[] = {
 	{"xml", fs_filetype_txt},
 	{"cpp", fs_filetype_txt},
 	{"in", fs_filetype_txt},
+	{"ac", fs_filetype_txt},
+	{"m4", fs_filetype_txt},
 	{"am", fs_filetype_txt},
 	{"mak", fs_filetype_txt},
 	{"exp", fs_filetype_txt},

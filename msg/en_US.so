@@ -641,7 +641,7 @@ msgstr "¡ğ  Read text"
 
 #: scene.c:3548
 msgid "¡õ  ÔÄ¶ÁÎÄ±¾"
-msgstr "¡õ  Read text"
+msgstr "¡õ  Read text as txt"
 
 #: scene.c:3554 scene.c:3559
 msgid "¡ğ  Ìí¼ÓÒôÀÖ"

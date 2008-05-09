@@ -41,6 +41,8 @@ extern void scene_mp3bar();
 extern int default_predraw(const win_menu_predraw_data * pData, const char *str,
 						   int max_height, int *left, int *right, int *upper,
 						   int *bottom, int width_fixup);
+extern int prompt_press_any_key(void);
+extern int get_center_pos(int left, int right, const char *str);
 
 #ifdef ENABLE_IMAGE
 dword scene_readimage(dword selidx);
@@ -62,5 +64,7 @@ typedef struct _BookViewData
 } BookViewData, *PBookViewData;
 
 extern BookViewData cur_book_view, prev_book_view;
+
+#define MAX_LOCNAME_LEN 60
 
 #endif

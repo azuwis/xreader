@@ -543,10 +543,18 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	}
 	scene_power_save(false);
 
-	fs = text_open_archive(pView->filename, pView->archname,
-						   (t_fs_filetype) filelist[selidx].data,
-						   pixelsperrow, config.wordspace, config.encode,
-						   config.reordertxt, where, config.vertread);
+	extern bool g_force_text_view_mode;
+	if (g_force_text_view_mode == false) 
+		fs = text_open_archive(pView->filename, pView->archname,
+				(t_fs_filetype) filelist[selidx].data,
+				pixelsperrow, config.wordspace, config.encode,
+				config.reordertxt, where, config.vertread);
+	else
+		fs = text_open_archive(pView->filename, pView->archname,
+				fs_filetype_txt,
+				pixelsperrow, config.wordspace, config.encode,
+				config.reordertxt, where, config.vertread);
+	
 
 	if (fs == NULL) {
 		win_msg(_("文件打开失败"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);

@@ -12,7 +12,7 @@ typedef struct
 {
 	buffer *compname;
 	buffer *shortname;
-	char name[64];				// item name
+	char name[128];				// item name
 	dword width;				// display width in bytes (for align/span)
 	pixel icolor;				// font color
 	pixel selicolor;			// selected font color
