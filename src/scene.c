@@ -243,16 +243,14 @@ extern int prompt_press_any_key(void)
 	int center = get_center_pos(left + 1, right - 1, _("请按对应按键"));
 
 	disp_rectangle(left,
-			135 - DISP_FONTSIZE / 2,
-			right,
-			136 + DISP_FONTSIZE / 2, COLOR_WHITE);
+				   135 - DISP_FONTSIZE / 2,
+				   right, 136 + DISP_FONTSIZE / 2, COLOR_WHITE);
 	disp_fillrect(left + 1,
-			136 - DISP_FONTSIZE / 2,
-			right - 1,
-			135 + DISP_FONTSIZE / 2, RGB(0x8, 0x18, 0x10));
+				  136 - DISP_FONTSIZE / 2,
+				  right - 1, 135 + DISP_FONTSIZE / 2, RGB(0x8, 0x18, 0x10));
 	disp_putstring(center,
-			136 - DISP_FONTSIZE / 2, COLOR_WHITE,
-			(const byte *) _("请按对应按键"));
+				   136 - DISP_FONTSIZE / 2, COLOR_WHITE,
+				   (const byte *) _("请按对应按键"));
 
 	return 0;
 }
@@ -886,10 +884,10 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 
 	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0)
 		default_predraw(&g_predraw, _("看图选项"), max_height, &left, &right,
-				&upper, &bottom, 4 * DISP_FONTSIZE + 4);
+						&upper, &bottom, 4 * DISP_FONTSIZE + 4);
 	else
 		default_predraw(&g_predraw, _("看图选项"), max_height, &left, &right,
-				&upper, &bottom, 6 * DISP_FONTSIZE + 4);
+						&upper, &bottom, 6 * DISP_FONTSIZE + 4);
 	char number[20];
 
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
@@ -2648,7 +2646,8 @@ dword scene_moptions(dword * selidx)
 		return 2;
 	}
 	if (orgshowhidden != config.showhidden
-		|| orgshowunknown != config.showunknown || orgarrange != config.arrange) {
+		|| orgshowunknown != config.showunknown
+		|| orgarrange != config.arrange) {
 		memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 		return 1;
 	}
@@ -2702,16 +2701,17 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item,
 							   config.isreading);
 					locaval[*index] = true;
 					char t[128];
+
 					STRCPY_S(t, config.path);
 					if (config.path[strlen(config.path) - 1] != '/'
 						&& filelist[(dword) item[1].data].compname->ptr[0] !=
 						'/')
 						STRCAT_S(t, "/");
-					STRCAT_S(t,
-							 filelist[(dword) item[1].data].compname->ptr);
+					STRCAT_S(t, filelist[(dword) item[1].data].compname->ptr);
 					scene_locname_to_itemname(item[*index].name,
 											  NELEMS(item[*index].name), t,
-											  (config.filelistwidth / config.fontsize * 4),
+											  (config.filelistwidth /
+											   config.fontsize * 4),
 											  config.isreading);
 					item[*index].width = strlen(item[*index].name);
 				}
@@ -2740,13 +2740,15 @@ void scene_loc_enum(dword index, char *comppath, char *shortpath,
 
 	if (index < 10) {
 		char t[128];
+
 		STRCPY_S(t, comppath);
 		if (comppath[strlen(comppath) - 1] != '/' && compname[0] != '/') {
 			STRCAT_S(t, "/");
 		}
 		STRCAT_S(t, compname);
 		scene_locname_to_itemname(item[index].name, NELEMS(item[index].name), t,
-								  (config.filelistwidth / config.fontsize * 4), isreading);
+								  (config.filelistwidth / config.fontsize * 4),
+								  isreading);
 		item[index].width = strlen(item[index].name);
 	}
 }
@@ -4009,18 +4011,15 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 		if (strcmp(simple_textdomain(NULL), "zh_CN") == 0) {
 			left = 240 - DISP_FONTSIZE * 3 - 1;
 			right = 240 + DISP_FONTSIZE * 3 + 1;
-		}
-		else {
+		} else {
 			left = 240 - DISP_FONTSIZE * 3 - 1;
 			right = 240 + DISP_FONTSIZE * 12 + 1;
 		}
 
 		disp_rectangle(left, 136 - DISP_FONTSIZE * 3 - 1,
-					   right, 136 + DISP_FONTSIZE * 5,
-					   COLOR_WHITE);
+					   right, 136 + DISP_FONTSIZE * 5, COLOR_WHITE);
 		disp_fillrect(left + 1, 136 - DISP_FONTSIZE * 3,
-					  right - 1, 136 + DISP_FONTSIZE * 5 - 1,
-					  config.msgbcolor);
+					  right - 1, 136 + DISP_FONTSIZE * 5 - 1, config.msgbcolor);
 		disp_putstring(left + 1, 136 - DISP_FONTSIZE * 3,
 					   COLOR_WHITE, (const byte *) _("△  退出操作"));
 		if (selcount <= 1 && strcmp(item[selidx].compname->ptr, "..") != 0) {
@@ -4660,7 +4659,9 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex,
 				  config.titlecolor);
 	disp_putnstring(240 - WRR * DISP_FONTSIZE,
 					139 - (HRR + 1) * (DISP_FONTSIZE + 1), COLOR_WHITE,
-				(const byte *) config.path, config.filelistwidth * 4 / DISP_FONTSIZE - 3, 0, 0, DISP_FONTSIZE, 0);
+					(const byte *) config.path,
+					config.filelistwidth * 4 / DISP_FONTSIZE - 3, 0, 0,
+					DISP_FONTSIZE, 0);
 	disp_line(240 - WRR * DISP_FONTSIZE, 138 - HRR * (DISP_FONTSIZE + 1),
 			  242 + WRR * DISP_FONTSIZE, 138 - HRR * (DISP_FONTSIZE + 1),
 			  COLOR_WHITE);

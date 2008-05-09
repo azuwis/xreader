@@ -20,9 +20,9 @@ void simple_gettext_destroy();
 #else
 
 #define _(STRING) (STRING)
-#define simple_gettext(msgid) 
-#define simple_bindtextdomain(domainname, dirname) 
+#define simple_gettext(msgid)
+#define simple_bindtextdomain(domainname, dirname)
 #define simple_textdomain(domainname) (domainname)
-#define simple_gettext_destroy() 
+#define simple_gettext_destroy()
 
 #endif

@@ -246,7 +246,8 @@ void scene_mp3_list()
 		if (strlen(rname) <= g_predraw.max_item_len - 2)
 			STRCPY_S(item[i].name, rname);
 		else {
-			mbcsncpy_s((unsigned char *) item[i].name, g_predraw.max_item_len - 3,
+			mbcsncpy_s((unsigned char *) item[i].name,
+					   g_predraw.max_item_len - 3,
 					   (const unsigned char *) rname, -1);
 			STRCAT_S(item[i].name, "...");
 		}

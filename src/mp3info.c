@@ -82,41 +82,41 @@ void GetTagInfo(struct id3_tag *pTag, const char *key, char *dest, int size)
 	struct id3_frame *frame = id3_tag_findframe(pTag, key, 0);
 
 	if (frame == 0) {
-//		dbg_printf(d, "%s: Frame \"%s\" not found!", __func__, key);
+//      dbg_printf(d, "%s: Frame \"%s\" not found!", __func__, key);
 		return;
 	}
 
 	/*
-	dbg_printf(d, "%s: id: %s desc: %s flags: 0x%08x group_id: %d "
-			   "encryption_method: %d",
-			   __func__, frame->id, frame->description, frame->flags,
-			   frame->group_id, frame->encryption_method);
-			   */
+	   dbg_printf(d, "%s: id: %s desc: %s flags: 0x%08x group_id: %d "
+	   "encryption_method: %d",
+	   __func__, frame->id, frame->description, frame->flags,
+	   frame->group_id, frame->encryption_method);
+	 */
 
 	int i;
 	union id3_field *field;
 
 	for (i = 0; i < frame->nfields; i++) {
-//		dbg_printf(d, "field %d in frame", i);
+//      dbg_printf(d, "field %d in frame", i);
 		field = id3_frame_field(frame, i);
 		if (field == NULL) {
-//			dbg_printf(d, "continue1");
+//          dbg_printf(d, "continue1");
 			continue;
 		}
 		dbg_printf(d, "Type: %u", field->type);
 		id3_ucs4_t const *str = id3_field_getstrings(field, 0);
 
 		if (str == NULL) {
-//			dbg_printf(d, "continue2");
+//          dbg_printf(d, "continue2");
 			continue;
 		}
 		id3_utf8_t *pUTF8Str = id3_ucs4_utf8duplicate(str);
 
 		if (pUTF8Str == NULL) {
-//			dbg_printf(d, "continue3");
+//          dbg_printf(d, "continue3");
 			continue;
 		}
-//		dbg_printf(d, "%s: Get UTF8 String: %s", __func__, pUTF8Str);
+//      dbg_printf(d, "%s: Get UTF8 String: %s", __func__, pUTF8Str);
 		strcpy_s(dest, size, (const char *) pUTF8Str);
 		//          char *pChinese = ConvertUTF8toGB2312(pUTF8Str, -1);
 		//          dbg_printf(d, "±êÌâ£º%s", pChinese);
@@ -152,16 +152,16 @@ extern void readID3Tag(p_mp3info pInfo, const char *filename)
 	}
 
 	/*
-	dbg_printf(d,
-			   "%s: version: 0x%08x flags: 0x%08x extendedflags: 0x%08x restrictions: 0x%08x options: 0x%08x",
-			   __func__, pTag->version, pTag->flags, pTag->extendedflags,
-			   pTag->restrictions, pTag->options);
-			   */
+	   dbg_printf(d,
+	   "%s: version: 0x%08x flags: 0x%08x extendedflags: 0x%08x restrictions: 0x%08x options: 0x%08x",
+	   __func__, pTag->version, pTag->flags, pTag->extendedflags,
+	   pTag->restrictions, pTag->options);
+	 */
 	if (g_libid3tag_found_id3v2 == 0) {
 		/*
-		dbg_printf(d,
-				   "no ID3tagv2 found, don't use libid3tag to decode, aborting");
-				   */
+		   dbg_printf(d,
+		   "no ID3tagv2 found, don't use libid3tag to decode, aborting");
+		 */
 		id3_file_close(pFile);
 		return;
 	}

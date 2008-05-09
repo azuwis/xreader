@@ -1057,7 +1057,8 @@ void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex,
 	char keyname[256];
 	int left, right, upper, bottom, lines = 0;
 
-	default_predraw(&g_predraw, _("按键设置   △ 删除"), max_height, &left, &right, &upper, &bottom, 8 * DISP_FONTSIZE + 4);
+	default_predraw(&g_predraw, _("按键设置   △ 删除"), max_height, &left,
+					&right, &upper, &bottom, 8 * DISP_FONTSIZE + 4);
 	dword i;
 
 	for (i = topindex; i < topindex + max_height; i++) {
@@ -1070,7 +1071,8 @@ void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex,
 			STRCAT_S(keyname, keyname2);
 		}
 		disp_putstring(left + (right - left) / 2,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 + DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																		DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) keyname);
 		lines++;
 	}
@@ -1079,6 +1081,7 @@ void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex,
 dword scene_imgkey(dword * selidx)
 {
 	win_menu_predraw_data prev;
+
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
 	t_win_menuitem item[12];
 
@@ -1114,7 +1117,7 @@ dword scene_imgkey(dword * selidx)
 	g_predraw.left = g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2;
 	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
 	g_predraw.linespace = 0;
-	
+
 	while ((index =
 			win_menu(g_predraw.left,
 					 g_predraw.upper, g_predraw.max_item_len,
