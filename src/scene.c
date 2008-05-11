@@ -2591,6 +2591,9 @@ dword scene_moptions(dword * selidx)
 	STRCPY_S(item[10].name, _("禁用屏幕保护"));
 	STRCPY_S(item[11].name, _("启动程序类型"));
 
+	win_menu_predraw_data prev;
+	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
+
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
 
 	for (i = 0; i < NELEMS(item); i++) {
@@ -2609,10 +2612,6 @@ dword scene_moptions(dword * selidx)
 	int orgfontindex = fontindex;
 	int orgbookfontindex = bookfontindex;
 	t_conf_arrange orgarrange = config.arrange;
-
-	win_menu_predraw_data prev;
-
-	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
 
 	g_predraw.item_count = NELEMS(item);
 	g_predraw.x = 240;

@@ -76,7 +76,7 @@ static int ReadAPETag(FILE * fp, APETag * tag)
 			for (i = 0; i < tag->footer.item_count; ++i) {
 				int size = APE_ITEM_GET_VALUE_LEN((APETagItem *) p);
 				int m = APE_ITEM_GET_KEY_LEN((APETagItem *) p);
-				char str[80];
+//				char str[80];
 
 //				sprintf(str, "项目 %%d 大小 %%d %%.%ds: %%.%ds", m, size);
 //              dbg_printf(d, str, i+1, size, p+8, p + 8 + 1 + m);
