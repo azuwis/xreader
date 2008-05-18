@@ -183,6 +183,8 @@ int read_sofile(const char *path, struct hash_control **hash, int *size)
 		}
 	}
 
+	fclose(fp);
+
 	return 0;
 }
 
