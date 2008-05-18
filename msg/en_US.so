@@ -1088,3 +1088,12 @@ msgstr "Saturday"
 
 msgid "ÈÕÆÚ´íÎó"
 msgstr "Week error"
+
+#: scene.c:2593
+msgid "        ÁÁ¶È"
+msgstr "Brightness"
+
+#: scene.c:2631
+msgid "        ÓïÑÔ"
+msgstr "Language"
+

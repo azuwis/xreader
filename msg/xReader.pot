@@ -1020,3 +1020,11 @@ msgstr ""
 #: power.c:64
 msgid "[电量不足]"
 msgstr ""
+
+#: scene.c:2593
+msgid "        亮度"
+msgstr ""
+
+#: scene.c:2631
+msgid "        语言"
+msgstr ""

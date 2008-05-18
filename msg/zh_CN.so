@@ -1089,3 +1089,11 @@ msgstr "星期六"
 msgid "日期错误"
 msgstr "日期错误"
 
+#: scene.c:2593
+msgid "        亮度"
+msgstr "        亮度"
+
+#: scene.c:2631
+msgid "        语言"
+msgstr "        语言"
+
