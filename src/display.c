@@ -2114,8 +2114,8 @@ extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
-	CHECK_AND_VALID_4(x1, y1, x2, y2);
 #ifndef ENABLE_GE
+	CHECK_AND_VALID_4(x1, y1, x2, y2);
 	pixel *vram;
 	int dy, dx, x, y, d;
 
