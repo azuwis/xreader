@@ -103,7 +103,7 @@ void GetTagInfo(struct id3_tag *pTag, const char *key, char *dest, int size)
 //          dbg_printf(d, "continue1");
 			continue;
 		}
-		dbg_printf(d, "Type: %u", field->type);
+//		dbg_printf(d, "Type: %u", field->type);
 		id3_ucs4_t const *str = id3_field_getstrings(field, 0);
 
 		if (str == NULL) {
