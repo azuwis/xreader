@@ -2439,7 +2439,7 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 					break;
 				case 12:
 					if (config.brightness > 28) {
-						config.brightness --;
+						config.brightness--;
 						if (prx_loaded) {
 							xrSetBrightness(config.brightness);
 						}
@@ -2448,8 +2448,7 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 				case 13:
 					if (strcmp(config.language, "zh_CN") == 0) {
 						STRCPY_S(config.language, "en_US");
-					}
-					else {
+					} else {
 						STRCPY_S(config.language, "zh_CN");
 					}
 					set_language();
@@ -2511,8 +2510,7 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 				case 13:
 					if (strcmp(config.language, "zh_CN") == 0) {
 						STRCPY_S(config.language, "en_US");
-					}
-					else {
+					} else {
 						STRCPY_S(config.language, "zh_CN");
 					}
 					set_language();
@@ -2526,9 +2524,9 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 	return win_menu_defcb(key, item, count, max_height, topindex, index);
 }
 
-static const char* GetLanguageHelpString(const char* language)
+static const char *GetLanguageHelpString(const char *language)
 {
-	static char* langList[] = {
+	static char *langList[] = {
 		"÷–Œƒ",
 		"English"
 	};
@@ -2646,15 +2644,13 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
-				   COLOR_WHITE,
-				   (const byte *) infomsg);
+				   COLOR_WHITE, (const byte *) infomsg);
 	lines++;
 	SPRINTF_S(infomsg, "%s", GetLanguageHelpString(simple_textdomain(NULL)));
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
-				   COLOR_WHITE,
-				   (const byte *) infomsg);
+				   COLOR_WHITE, (const byte *) infomsg);
 	lines++;
 }
 
@@ -2679,6 +2675,7 @@ dword scene_moptions(dword * selidx)
 	STRCPY_S(item[13].name, _("        ”Ô—‘"));
 
 	win_menu_predraw_data prev;
+
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
@@ -2701,6 +2698,7 @@ dword scene_moptions(dword * selidx)
 	int orgbrightness = config.brightness;
 	t_conf_arrange orgarrange = config.arrange;
 	char orglanguage[20];
+
 	STRCPY_S(orglanguage, config.language);
 
 	g_predraw.item_count = NELEMS(item);
@@ -2708,7 +2706,8 @@ dword scene_moptions(dword * selidx)
 	g_predraw.y = 123;
 	g_predraw.linespace = 0;
 	g_predraw.left = g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2;
-	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * (g_predraw.item_count - 1) / 2;
+	g_predraw.upper =
+		g_predraw.y - DISP_FONTSIZE * (g_predraw.item_count - 1) / 2;
 
 	while ((index =
 			win_menu(g_predraw.left,
@@ -2730,7 +2729,6 @@ dword scene_moptions(dword * selidx)
 			orgbrightness = config.brightness;
 		}
 	}
-	
 #ifdef ENABLE_USB
 	if (config.isreading == false) {
 		if (config.enableusb)
@@ -5845,11 +5843,12 @@ extern void scene_exit()
 
 	if ((ctrl_read() == PSP_CTRL_LTRIGGER)) {
 		char path[PATH_MAX];
+
 		STRCPY_S(path, appdir);
 		STRCAT_S(path, "EBOOT.PBP");
+		ctrl_destroy();
 		exec_homebrew(2, path);
-	}
-	else {
+	} else {
 		ctrl_destroy();
 		sceKernelExitGame();
 	}

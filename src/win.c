@@ -73,9 +73,10 @@ extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item,
 
 static void win_menu_delay_action()
 {
+	extern bool prx_loaded;
+
 	if (config.dis_scrsave)
 		scePowerTick(0);
-	extern bool prx_loaded;
 	if (prx_loaded) {
 		xrSetBrightness(config.brightness);
 	}

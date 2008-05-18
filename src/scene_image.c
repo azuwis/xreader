@@ -890,9 +890,10 @@ int image_handle_input(dword * selidx, dword key)
 
 static void scene_image_delay_action()
 {
+	extern bool prx_loaded;
+
 	if (config.dis_scrsave)
 		scePowerTick(0);
-	extern bool prx_loaded;
 	if (prx_loaded) {
 		xrSetBrightness(config.brightness);
 	}

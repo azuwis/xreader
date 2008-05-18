@@ -1199,9 +1199,10 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 
 static void scene_text_delay_action()
 {
+	extern bool prx_loaded;
+
 	if (config.dis_scrsave)
 		scePowerTick(0);
-	extern bool prx_loaded;
 	if (prx_loaded) {
 		xrSetBrightness(config.brightness);
 	}
