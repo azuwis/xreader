@@ -9,6 +9,9 @@
 /* Enable background image option */
 #undef ENABLE_BG
 
+/* Enable Graphics Engine option */
+#undef ENABLE_GE
+
 /* Enable hprm option */
 #undef ENABLE_HPRM
 
