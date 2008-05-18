@@ -5521,7 +5521,7 @@ DBG *d = 0;
 extern void scene_init()
 {
 	char logfile[PATH_MAX];
-	char infomsg[80];
+	char infomsg[256];
 
 	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
