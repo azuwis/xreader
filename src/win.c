@@ -20,6 +20,7 @@
 #include "fat.h"
 #include "mp3.h"
 #include "text.h"
+#include "xrPrx/xrPrx.h"
 
 static volatile int secticks = 0;
 
@@ -68,6 +69,16 @@ extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item,
 			return win_menu_op_cancel;
 	}
 	return win_menu_op_continue;
+}
+
+static void win_menu_delay_action()
+{
+	if (config.dis_scrsave)
+		scePowerTick(0);
+	extern bool prx_loaded;
+	if (prx_loaded) {
+		xrSetBrightness(config.brightness);
+	}
 }
 
 extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
@@ -207,6 +218,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 				secticks = 0;
 			}
 			sceKernelDelayThread(20000);
+			win_menu_delay_action();
 		}
 		if (key != 0) {
 			secticks = 0;
@@ -229,6 +241,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 					secticks = 0;
 				}
 				sceKernelDelayThread(20000);
+				win_menu_delay_action();
 			}
 		}
 		switch (op) {
