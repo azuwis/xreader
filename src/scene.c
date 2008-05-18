@@ -5521,6 +5521,7 @@ DBG *d = 0;
 extern void scene_init()
 {
 	char logfile[PATH_MAX];
+	char infomsg[80];
 
 	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
@@ -5547,7 +5548,11 @@ extern void scene_init()
 		pspDebugScreenInit();
 		dbg_open_psp(d);
 	}
-	dbg_printf(d, "xReader now loading...");
+
+	SPRINTF_S(infomsg, "%s %s (gcc version %d.%d.%d %s) now loading...",
+			  PACKAGE_NAME, VERSION, __GNUC__, __GNUC_MINOR__,
+			  __GNUC_PATCHLEVEL__, "Built " __TIME__ " " __DATE__);
+	dbg_printf(d, infomsg);
 	u64 dbgnow, dbglasttick;
 	u64 start, end;
 
