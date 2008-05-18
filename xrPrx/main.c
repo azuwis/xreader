@@ -8,7 +8,8 @@
 
 typedef unsigned short bool;
 
-enum {
+enum
+{
 	false,
 	true
 };
@@ -16,7 +17,7 @@ enum {
 PSP_MODULE_INFO("xrPrx", PSP_MODULE_KERNEL, 1, 1);
 PSP_MAIN_THREAD_ATTR(0);
 
-unsigned long FindProc(const char* szMod, const char* szLib, unsigned long nid)
+unsigned long FindProc(const char *szMod, const char *szLib, unsigned long nid)
 {
 	unsigned int k = pspSdkSetK1(0);
 	struct SceLibraryEntryTable *entry;
@@ -26,38 +27,33 @@ unsigned long FindProc(const char* szMod, const char* szLib, unsigned long nid)
 
 	pMod = sceKernelFindModuleByName(szMod);
 
-	if (!pMod)
-	{
+	if (!pMod) {
 		Kprintf("Cannot find module %s\n", szMod);
 		pspSdkSetK1(k);
 		return 0;
 	}
-	
+
 	int i = 0;
 
 	entTab = pMod->ent_top;
 	entLen = pMod->ent_size;
 
-	while(i < entLen)
-    {
+	while (i < entLen) {
 		int count;
 		int total;
 		unsigned int *vars;
 
 		entry = (struct SceLibraryEntryTable *) (entTab + i);
 
-        if(entry->libname && !strcmp(entry->libname, szLib))
-		{
+		if (entry->libname && !strcmp(entry->libname, szLib)) {
 			total = entry->stubcount + entry->vstubcount;
 			vars = entry->entrytable;
 
-			if(entry->stubcount > 0)
-			{
-				for(count = 0; count < entry->stubcount; count++)
-				{
+			if (entry->stubcount > 0) {
+				for (count = 0; count < entry->stubcount; count++) {
 					if (vars[count] == nid) {
 						pspSdkSetK1(k);
-						return vars[count+total];					
+						return vars[count + total];
 					}
 				}
 			}
@@ -70,39 +66,44 @@ unsigned long FindProc(const char* szMod, const char* szLib, unsigned long nid)
 	return 0;
 }
 
-int (* scePowerSetClockFrequency2)(int cpufreq, int ramfreq, int busfreq) = 0;
-int (* scePowerIsBatteryCharging)(void) = 0;
-void (* scePower_driver_A09FC577)(int) = 0;
-void (* scePower_driver_191A3848)(int) = 0;
+int (*scePowerSetClockFrequency2) (int cpufreq, int ramfreq, int busfreq) = 0;
+int (*scePowerIsBatteryCharging) (void) = 0;
+void (*scePower_driver_A09FC577) (int) = 0;
+void (*scePower_driver_191A3848) (int) = 0;
 
 void xrPlayerSetSpeed(int cpu, int bus)
 {
 	unsigned int k = pspSdkSetK1(0);
 	static bool inited = false;
 
-	if(!inited)
-	{
-		scePowerSetClockFrequency2 = (void *)FindProc("scePower_Service", "scePower", 0x545A7F3C);
-		scePowerIsBatteryCharging = (void *)FindProc("scePower_Service", "scePower", 0x1E490401);
-		scePower_driver_A09FC577 = (void *)FindProc("scePower_Service", "scePower_driver", 0xA09FC577);
-		scePower_driver_191A3848 = (void *)FindProc("scePower_Service", "scePower_driver", 0x191A3848);
+	if (!inited) {
+		scePowerSetClockFrequency2 =
+			(void *) FindProc("scePower_Service", "scePower", 0x545A7F3C);
+		scePowerIsBatteryCharging =
+			(void *) FindProc("scePower_Service", "scePower", 0x1E490401);
+		scePower_driver_A09FC577 =
+			(void *) FindProc("scePower_Service", "scePower_driver",
+							  0xA09FC577);
+		scePower_driver_191A3848 =
+			(void *) FindProc("scePower_Service", "scePower_driver",
+							  0x191A3848);
 		inited = true;
 	}
 
-	if(scePowerSetClockFrequency2 == 0 || scePowerIsBatteryCharging == 0 || scePower_driver_A09FC577 == 0 || scePower_driver_191A3848 == 0)
-	{
+	if (scePowerSetClockFrequency2 == 0 || scePowerIsBatteryCharging == 0
+		|| scePower_driver_A09FC577 == 0 || scePower_driver_191A3848 == 0) {
 		inited = false;
 		return;
 	}
 
 	scePowerSetClockFrequency2(cpu, cpu, bus);
-	if(scePowerIsBatteryCharging() != 0) {
+	if (scePowerIsBatteryCharging() != 0) {
 		pspSdkSetK1(k);
 		return;
 	}
 	static int ps1 = 0;
-	if(ps1 == 0)
-	{
+
+	if (ps1 == 0) {
 		scePower_driver_A09FC577(1);
 		ps1 = 1;
 		pspSdkSetK1(k);
@@ -110,8 +111,8 @@ void xrPlayerSetSpeed(int cpu, int bus)
 	}
 
 	static int ps2 = 0;
-	if(ps2 == 0)
-	{
+
+	if (ps2 == 0) {
 		ps1 = 0;
 		ps2 = 1;
 		pspSdkSetK1(k);
@@ -150,7 +151,7 @@ int xrGetBrightness(void)
 	sceDisplayGetBrightness(&level, &unk1);
 
 	pspSdkSetK1(k);
-	
+
 	return level;
 }
 
@@ -163,15 +164,16 @@ void xrSetBrightness(int bright)
 	pspSdkSetK1(k);
 }
 
-int xrKernelLoadExecVSHMsX(int method, const char* exec, struct SceKernelLoadExecVSHParam *param)
+int xrKernelLoadExecVSHMsX(int method, const char *exec,
+						   struct SceKernelLoadExecVSHParam *param)
 {
 	unsigned int k = pspSdkSetK1(0);
 	int r = 0;
 
-	if(!exec || !param)
+	if (!exec || !param)
 		goto ret;
 
-	switch(method) {
+	switch (method) {
 		case 4:
 			r = sceKernelLoadExecVSHMs4(exec, param);
 			break;
@@ -189,7 +191,7 @@ int xrKernelLoadExecVSHMsX(int method, const char* exec, struct SceKernelLoadExe
 			break;
 	}
 
-ret:
+  ret:
 	pspSdkSetK1(k);
 
 	return r;
