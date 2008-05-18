@@ -152,6 +152,7 @@ static int mp3_direct = -1, mp3_nfiles = 0, mp3_index = 0, mp3_jump = 0;
 static t_conf_cycle mp3_cycle = conf_cycle_repeat;
 static t_conf_encode mp3_encode = conf_encode_gbk;
 static bool isPlaying = false, eos = true, isPause = true, manualSw = false;
+static bool isDirectPlay = false;
 
 #ifdef ENABLE_HPRM
 static bool hprmEnabled = true;
@@ -269,7 +270,7 @@ static bool mp3_load()
 				}
 			}
 			mp3_direct = 1;
-		} else if (mp3_cycle == conf_cycle_random)
+		} else if (mp3_cycle == conf_cycle_random && isDirectPlay == false)
 			mp3_index = rand() % mp3_nfiles;
 
 #ifdef ENABLE_WMA
@@ -391,6 +392,7 @@ static bool mp3_load()
 	eos = false;
 	manualSw = false;
 	mp3_jump = 0;
+	isDirectPlay = false;
 #ifdef ENABLE_LYRIC
 	char lyricname[PATH_MAX];
 
@@ -1225,6 +1227,7 @@ extern void mp3_directplay(const char *filename, const char *longname)
 	manualSw = false;
 	isPause = false;
 	isPlaying = true;
+	isDirectPlay = true;
 }
 
 extern void mp3_forward()
