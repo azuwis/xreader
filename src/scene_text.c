@@ -43,6 +43,7 @@
 #include "pspscreen.h"
 #include "dbg.h"
 #include "simple_gettext.h"
+#include "xrPrx/xrPrx.h"
 
 dword ctlkey[13], ctlkey2[13], ku, kd, kl, kr;
 static volatile int ticks = 0, secticks = 0;
@@ -1196,6 +1197,16 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 	return -1;
 }
 
+static void scene_text_delay_action()
+{
+	if (config.dis_scrsave)
+		scePowerTick(0);
+	extern bool prx_loaded;
+	if (prx_loaded) {
+		xrSetBrightness(config.brightness);
+	}
+}
+
 dword scene_reload_raw(const char *title, const unsigned char *data,
 					   size_t size, t_fs_filetype ft)
 {
@@ -1306,9 +1317,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 				if (scene_autopage(&cur_book_view, &selidx))
 					goto redraw;
 			}
-			if (config.dis_scrsave) {
-				scePowerTick(0);
-			}
+			scene_text_delay_action();
 		}
 		dword selidx = 0;
 		int ret = book_handle_input(&cur_book_view, &selidx, key);
@@ -1389,9 +1398,7 @@ dword scene_readbook(dword selidx)
 				if (scene_autopage(&cur_book_view, &selidx))
 					goto redraw;
 			}
-			if (config.dis_scrsave) {
-				scePowerTick(0);
-			}
+			scene_text_delay_action();
 		}
 		int ret = book_handle_input(&cur_book_view, &selidx, key);
 

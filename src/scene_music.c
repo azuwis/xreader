@@ -44,6 +44,7 @@
 #include "pspscreen.h"
 #include "simple_gettext.h"
 #include "dbg.h"
+#include "xrPrx/xrPrx.h"
 
 extern win_menu_predraw_data g_predraw;
 
@@ -561,6 +562,12 @@ void scene_mp3bar()
 			secticks = 0;
 		}
 		sceKernelDelayThread(20000);
+		if (config.dis_scrsave)
+			scePowerTick(0);
+		extern bool prx_loaded;
+		if (prx_loaded) {
+			xrSetBrightness(config.brightness);
+		}
 	}
 }
 

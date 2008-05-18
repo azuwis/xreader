@@ -2080,43 +2080,50 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex,
 	int lines = 0;
 
 	disp_putstring(g_predraw.x + 2,
-				   g_predraw.y + lines - (5 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
 	memset(number, ' ', 4);
 	utils_dword2string(config.usettf ? ttfsize : bookfonts[bookfontindex].size,
 					   number, 4);
 	disp_putstring(g_predraw.x + 2,
-				   g_predraw.y + lines - (5 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
 	memset(number, ' ', 4);
 	utils_dword2string(config.wordspace, number, 4);
 	disp_putstring(g_predraw.x + 2,
-				   g_predraw.y + lines - (5 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
 	memset(number, ' ', 4);
 	utils_dword2string(config.rowspace, number, 4);
 	disp_putstring(g_predraw.x + 2,
-				   g_predraw.y + lines - (5 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
 	memset(number, ' ', 4);
 	utils_dword2string(config.borderspace, number, 4);
 	disp_putstring(g_predraw.x + 2,
-				   g_predraw.y + lines - (5 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
 #ifdef ENABLE_TTF
 	disp_putstring(g_predraw.x + DISP_FONTSIZE,
-				   g_predraw.y + lines - (5 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) (config.usettf ? _("是") : _("否")));
 	lines++;
 #else
 	disp_putstring(g_predraw.x + DISP_FONTSIZE,
-				   g_predraw.y + lines - (5 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) (_("已关闭")));
 	lines++;
 #endif
@@ -2286,21 +2293,6 @@ void scene_musicopt_predraw(p_win_menuitem item, dword index, dword topindex,
 	default_predraw(&g_predraw, _("音乐设置"), max_height, &left, &right,
 					&upper, &bottom, 4);
 
-	/*
-	   disp_rectangle(239 - DISP_FONTSIZE * 6, 121 - 6 * DISP_FONTSIZE,
-	   240 + DISP_FONTSIZE * 6, 128 - 2 * DISP_FONTSIZE,
-	   COLOR_WHITE);
-	   disp_fillrect(240 - DISP_FONTSIZE * 6, 122 - 6 * DISP_FONTSIZE,
-	   239 + DISP_FONTSIZE * 6, 123 - 3 * DISP_FONTSIZE,
-	   config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-	   disp_putstring(240 - DISP_FONTSIZE * 2, 122 - 6 * DISP_FONTSIZE,
-	   COLOR_WHITE, (const byte *) _("音乐设置"));
-	   disp_line(240 - DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE,
-	   239 + DISP_FONTSIZE * 6, 122 - 5 * DISP_FONTSIZE, COLOR_WHITE);
-	   disp_fillrect(241, 123 - 5 * DISP_FONTSIZE, 239 + DISP_FONTSIZE * 6,
-	   127 - 2 * DISP_FONTSIZE,
-	   config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-	 */
 #ifdef ENABLE_MUSIC
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
@@ -2378,6 +2370,20 @@ dword scene_musicopt(dword * selidx)
 	return 0;
 }
 
+static void set_language()
+{
+	char msgpath[PATH_MAX];
+
+	SPRINTF_S(msgpath, "%smsg", appdir);
+	simple_bindtextdomain(config.language, msgpath);
+	if (simple_textdomain(config.language) == NULL) {
+		STRCPY_S(config.language, "zh_CN");
+		dbg_printf(d, "language file not found!");
+		simple_bindtextdomain("zh_CN", msgpath);
+		simple_textdomain("zh_CN");
+	}
+}
+
 t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 									dword * count, dword max_height,
 									dword * topindex, dword * index)
@@ -2431,6 +2437,23 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 				case 11:
 					config.launchtype = config.launchtype == 2 ? 4 : 2;
 					break;
+				case 12:
+					if (config.brightness > 28) {
+						config.brightness --;
+						if (prx_loaded) {
+							xrSetBrightness(config.brightness);
+						}
+					}
+					break;
+				case 13:
+					if (strcmp(config.language, "zh_CN") == 0) {
+						STRCPY_S(config.language, "en_US");
+					}
+					else {
+						STRCPY_S(config.language, "zh_CN");
+					}
+					set_language();
+					break;
 			}
 			return win_menu_op_redraw;
 		case PSP_CTRL_RIGHT:
@@ -2477,6 +2500,23 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 				case 11:
 					config.launchtype = config.launchtype == 2 ? 4 : 2;
 					break;
+				case 12:
+					if (config.brightness < 99) {
+						config.brightness++;
+						if (prx_loaded) {
+							xrSetBrightness(config.brightness);
+						}
+					}
+					break;
+				case 13:
+					if (strcmp(config.language, "zh_CN") == 0) {
+						STRCPY_S(config.language, "en_US");
+					}
+					else {
+						STRCPY_S(config.language, "zh_CN");
+					}
+					set_language();
+					break;
 			}
 			return win_menu_op_redraw;
 		case PSP_CTRL_CIRCLE:
@@ -2484,6 +2524,23 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 		default:;
 	}
 	return win_menu_defcb(key, item, count, max_height, topindex, index);
+}
+
+static const char* GetLanguageHelpString(const char* language)
+{
+	static char* langList[] = {
+		"中文",
+		"English"
+	};
+
+	if (strcmp(language, "zh_CN") == 0) {
+		return langList[0];
+	}
+	if (strcmp(language, "en_US") == 0) {
+		return langList[1];
+	}
+
+	return NULL;
 }
 
 void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
@@ -2495,39 +2552,46 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 					&upper, &bottom, 3 * DISP_FONTSIZE + 4);
 
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) (config.showhidden ? _("显示") : _("隐藏")));
 	lines++;
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) (config.showunknown ? _("显示") : _("隐藏")));
 	lines++;
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) (config.showfinfo ? _("显示") : _("隐藏")));
 	lines++;
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) (config.allowdelete ? _("是") : _("否")));
 	lines++;
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) conf_get_arrangename(config.arrange));
 	lines++;
 #ifdef ENABLE_USB
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) (config.enableusb ? _("是") : _("否")));
 	lines++;
 #else
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) _("不支持"));
 	lines++;
 #endif
@@ -2539,43 +2603,64 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 		SPRINTF_S(infomsg, _("%d分钟"), config.autosleep);
 	}
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) infomsg);
 	lines++;
 	SPRINTF_S(infomsg, "%d/%d", freq_list[config.freqs[0]][0],
 			  freq_list[config.freqs[0]][1]);
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) infomsg);
 	lines++;
 	SPRINTF_S(infomsg, "%d/%d", freq_list[config.freqs[1]][0],
 			  freq_list[config.freqs[1]][1]);
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) infomsg);
 	lines++;
 	SPRINTF_S(infomsg, "%d/%d", freq_list[config.freqs[2]][0],
 			  freq_list[config.freqs[2]][1]);
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) infomsg);
 	lines++;
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) (config.dis_scrsave ? _("是") : _("否")));
 	lines++;
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   g_predraw.y + lines - (6 - lines) * DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
 				   COLOR_WHITE,
 				   (const byte *) (config.launchtype ==
 								   2 ? _("普通程序") : _("PS游戏")));
+	lines++;
+
+	SPRINTF_S(infomsg, "%d", config.brightness);
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE,
+				   (const byte *) infomsg);
+	lines++;
+	SPRINTF_S(infomsg, "%s", GetLanguageHelpString(simple_textdomain(NULL)));
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE,
+				   (const byte *) infomsg);
 	lines++;
 }
 
 dword scene_moptions(dword * selidx)
 {
-	t_win_menuitem item[12];
+	t_win_menuitem item[14];
 	dword i;
 
 	STRCPY_S(item[0].name, _("    隐藏文件"));
@@ -2590,6 +2675,8 @@ dword scene_moptions(dword * selidx)
 	STRCPY_S(item[9].name, _("设置最高频率"));
 	STRCPY_S(item[10].name, _("禁用屏幕保护"));
 	STRCPY_S(item[11].name, _("启动程序类型"));
+	STRCPY_S(item[12].name, _("        亮度"));
+	STRCPY_S(item[13].name, _("        语言"));
 
 	win_menu_predraw_data prev;
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
@@ -2611,14 +2698,17 @@ dword scene_moptions(dword * selidx)
 	bool orgshowunknown = config.showunknown;
 	int orgfontindex = fontindex;
 	int orgbookfontindex = bookfontindex;
+	int orgbrightness = config.brightness;
 	t_conf_arrange orgarrange = config.arrange;
+	char orglanguage[20];
+	STRCPY_S(orglanguage, config.language);
 
 	g_predraw.item_count = NELEMS(item);
 	g_predraw.x = 240;
 	g_predraw.y = 123;
 	g_predraw.linespace = 0;
 	g_predraw.left = g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2;
-	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
+	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * (g_predraw.item_count - 1) / 2;
 
 	while ((index =
 			win_menu(g_predraw.left,
@@ -2628,6 +2718,19 @@ dword scene_moptions(dword * selidx)
 					 config.usedyncolor ? GetBGColorByTime() : config.
 					 menubcolor, true, scene_moptions_predraw, NULL,
 					 scene_moptions_menucb)) != INVALID);
+
+	if (strcmp(orglanguage, config.language) != 0) {
+		set_language();
+	}
+
+	if (prx_loaded) {
+		if (orgbrightness != config.brightness) {
+			dbg_printf(d, _("亮度设置为%d"), config.brightness);
+			xrSetBrightness(config.brightness);
+			orgbrightness = config.brightness;
+		}
+	}
+	
 #ifdef ENABLE_USB
 	if (config.isreading == false) {
 		if (config.enableusb)
@@ -3047,15 +3150,7 @@ void scene_setting_mgr_predraw(p_win_menuitem item, dword index, dword topindex,
 int detect_config_change(const p_conf prev, const p_conf curr)
 {
 	if (strcmp(prev->language, curr->language) != 0) {
-		char msgpath[PATH_MAX];
-
-		SPRINTF_S(msgpath, "%smsg", appdir);
-		simple_bindtextdomain(curr->language, msgpath);
-		if (simple_textdomain(curr->language) == NULL) {
-			dbg_printf(d, "language file not found!");
-			simple_bindtextdomain("zh_CN", msgpath);
-			simple_textdomain("zh_CN");
-		}
+		set_language();
 	}
 #ifdef ENABLE_USB
 	if (!prev->enableusb && curr->enableusb)
@@ -5665,15 +5760,7 @@ extern void scene_init()
 	disp_flip();
 	disp_fillvram(0);
 
-	char msgpath[PATH_MAX];
-
-	SPRINTF_S(msgpath, "%smsg", appdir);
-	simple_bindtextdomain(config.language, msgpath);
-	if (simple_textdomain(config.language) == NULL) {
-		dbg_printf(d, "language file not found!");
-		simple_bindtextdomain("zh_CN", msgpath);
-		simple_textdomain("zh_CN");
-	}
+	set_language();
 
 	if (prx_loaded) {
 		dbg_printf(d, _("亮度设置为%d"), config.brightness);
@@ -5750,13 +5837,22 @@ extern void scene_exit()
 #ifdef ENABLE_USB
 	usb_close();
 #endif
-	ctrl_destroy();
 #ifdef ENABLE_GE
 	sceGuTerm();
 #endif
 	dbg_close(d);
 	simple_gettext_destroy();
-	sceKernelExitGame();
+
+	if ((ctrl_read() == PSP_CTRL_LTRIGGER)) {
+		char path[PATH_MAX];
+		STRCPY_S(path, appdir);
+		STRCAT_S(path, "EBOOT.PBP");
+		exec_homebrew(2, path);
+	}
+	else {
+		ctrl_destroy();
+		sceKernelExitGame();
+	}
 }
 
 extern void scene_power_save(bool save)

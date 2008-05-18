@@ -44,6 +44,7 @@
 #include "pspscreen.h"
 #include "dbg.h"
 #include "simple_gettext.h"
+#include "xrPrx/xrPrx.h"
 
 #ifdef ENABLE_IMAGE
 
@@ -887,6 +888,16 @@ int image_handle_input(dword * selidx, dword key)
 	return -1;
 }
 
+static void scene_image_delay_action()
+{
+	if (config.dis_scrsave)
+		scePowerTick(0);
+	extern bool prx_loaded;
+	if (prx_loaded) {
+		xrSetBrightness(config.brightness);
+	}
+}
+
 dword scene_readimage(dword selidx)
 {
 	w2 = 0, h2 = 0, thumbw = 0, thumbh = 0, paintleft = 0, painttop = 0;
@@ -969,8 +980,7 @@ dword scene_readimage(dword selidx)
 		}
 		if (ret != -1)
 			return ret;
-		if (config.dis_scrsave)
-			scePowerTick(0);
+		scene_image_delay_action();
 	}
 	imgreading = false;
 	scene_power_save(false);
