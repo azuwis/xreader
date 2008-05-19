@@ -3386,6 +3386,11 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item,
 			if (*index == 13)
 				return exit_confirm();
 			if (*index == 14) {
+				if (dbg_memory_buffer == NULL) {
+					win_msg(_("无法打开调试信息!"), COLOR_WHITE, COLOR_WHITE,
+							config.msgbcolor);
+					return win_menu_op_cancel;
+				}
 				pixel *saveimage = (pixel *) memalign(16,
 													  PSP_SCREEN_WIDTH *
 													  PSP_SCREEN_HEIGHT *
