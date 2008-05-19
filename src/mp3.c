@@ -432,6 +432,14 @@ static void hprm_backward()
 	hprm_fb(PSP_HPRM_BACK);
 }
 
+/// set minimize playback freqs to 111Mhz
+static inline void setMinPlaybackFreqs(void)
+{
+	if (config.freqs[1] < 3)
+		config.freqs[1] = 3;
+	scene_power_save(false);
+}
+
 static int mp3_thread(unsigned int args, void *argp)
 {
 #ifdef ENABLE_HPRM
@@ -447,9 +455,7 @@ static int mp3_thread(unsigned int args, void *argp)
 				key = ctrl_hprm();
 				switch (key) {
 					case PSP_HPRM_PLAYPAUSE:
-						if (config.freqs[1] < 4)
-							config.freqs[1] = 4;
-						scene_power_save(false);
+						setMinPlaybackFreqs();
 						if (mp3_nfiles == 0 || mp3_files == NULL)
 							break;
 						isPause = false;
@@ -465,9 +471,7 @@ static int mp3_thread(unsigned int args, void *argp)
 			}
 			continue;
 		}
-		if (config.freqs[1] < 4)
-			config.freqs[1] = 4;
-		scene_power_save(false);
+		setMinPlaybackFreqs();
 #ifdef ENABLE_WMA
 		if (file_is_mp3) {
 #endif
@@ -838,9 +842,7 @@ extern void mp3_resume()
 {
 	if (mp3_nfiles == 0 || mp3_files == NULL)
 		return;
-	if (config.freqs[1] < 4)
-		config.freqs[1] = 4;
-	scene_power_save(false);
+	setMinPlaybackFreqs();
 	isPause = false;
 }
 
@@ -879,9 +881,7 @@ extern void mp3_powerdown()
 	}
 #endif
 	lastindex = mp3_index;
-	if (config.freqs[1] < 4)
-		config.freqs[1] = 4;
-	scene_power_save(false);
+	setMinPlaybackFreqs();
 }
 
 extern void mp3_powerup()
