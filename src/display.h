@@ -171,6 +171,7 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 										   pixel color, const byte * str,
 										   int count, dword wordspace, int top,
 										   int height, int bot);
-
 extern bool check_range(int x, int y);
+extern void disp_fix_osk(void *buffer);
+
 #endif

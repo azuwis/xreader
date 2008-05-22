@@ -829,6 +829,25 @@ extern void disp_duptocachealpha(int percent)
 	}
 }
 
+extern void disp_fix_osk(void *buffer)
+{
+	if (buffer) {
+		vram_page = 0;
+		vram_base =
+			(pixel *) 0x04000000 + (vram_page ? (512 * PSP_SCREEN_HEIGHT) : 0);
+		vram_start =
+			(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
+	} else {
+		vram_page = 1;
+		vram_base =
+			(pixel *) 0x04000000 + (vram_page ? (512 * PSP_SCREEN_HEIGHT) : 0);
+		vram_start =
+			(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
+	}
+	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
+						  PSP_DISPLAY_SETBUF_IMMEDIATE);
+}
+
 extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2)
 {
 	CHECK_AND_VALID_4(x1, y1, x2, y2);

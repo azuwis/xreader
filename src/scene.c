@@ -362,7 +362,7 @@ dword scene_txtkey(dword * selidx)
 	win_menu_predraw_data prev;
 
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
-	t_win_menuitem item[13];
+	t_win_menuitem item[14];
 
 	STRCPY_S(item[0].name, _("书签菜单"));
 	STRCPY_S(item[1].name, _("  上一页"));
@@ -377,6 +377,7 @@ dword scene_txtkey(dword * selidx)
 	STRCPY_S(item[10].name, _("下一文件"));
 	STRCPY_S(item[11].name, _("退出阅读"));
 	STRCPY_S(item[12].name, _("切换翻页"));
+	STRCPY_S(item[13].name, _("输入GI值"));
 	dword i, index;
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
@@ -3691,8 +3692,8 @@ void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd,
 {
 	dword i;
 
-	memcpy(ctlkey, config.txtkey, 13 * sizeof(dword));
-	memcpy(ctlkey2, config.txtkey2, 13 * sizeof(dword));
+	memcpy(ctlkey, config.txtkey, 14 * sizeof(dword));
+	memcpy(ctlkey2, config.txtkey2, 14 * sizeof(dword));
 	switch (config.vertread) {
 		case 3:
 			*ku = PSP_CTRL_DOWN;
@@ -3701,7 +3702,7 @@ void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd,
 			*kr = PSP_CTRL_LEFT;
 			break;
 		case 2:
-			for (i = 0; i < 13; i++) {
+			for (i = 0; i < 14; i++) {
 				if ((config.txtkey[i] & PSP_CTRL_LEFT) > 0)
 					ctlkey[i] = (ctlkey[i] & ~PSP_CTRL_LEFT) | PSP_CTRL_DOWN;
 				if ((config.txtkey[i] & PSP_CTRL_RIGHT) > 0)
@@ -3725,7 +3726,7 @@ void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku, dword * kd,
 			*kr = PSP_CTRL_UP;
 			break;
 		case 1:
-			for (i = 0; i < 13; i++) {
+			for (i = 0; i < 14; i++) {
 				if ((config.txtkey[i] & PSP_CTRL_LEFT) > 0)
 					ctlkey[i] = (ctlkey[i] & ~PSP_CTRL_LEFT) | PSP_CTRL_UP;
 				if ((config.txtkey[i] & PSP_CTRL_RIGHT) > 0)

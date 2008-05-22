@@ -60,8 +60,8 @@ am__xReader_elf_SOURCES_DIST = array.c array.h avc.c avc.h bg.c bg.h \
 	common/qsort.h common/utils.c common/utils.h \
 	apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 	apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
-	$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h simple_gettext.c \
-	sofile.c sofile.h hash.c hash.h
+	$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h \
+	simple_gettext.c sofile.c sofile.h hash.c hash.h
 @NLS_TRUE@am__objects_1 = simple_gettext.$(OBJEXT) sofile.$(OBJEXT) \
 @NLS_TRUE@	hash.$(OBJEXT)
 am_xReader_elf_OBJECTS = array.$(OBJEXT) avc.$(OBJEXT) bg.$(OBJEXT) \
@@ -76,7 +76,7 @@ am_xReader_elf_OBJECTS = array.$(OBJEXT) avc.$(OBJEXT) bg.$(OBJEXT) \
 	ttfont.$(OBJEXT) usb.$(OBJEXT) win.$(OBJEXT) \
 	psp_utils.$(OBJEXT) qsort.$(OBJEXT) utils.$(OBJEXT) \
 	APETag.$(OBJEXT) TagError.$(OBJEXT) TagItem.$(OBJEXT) \
-	xrPrx.$(OBJEXT) $(am__objects_1)
+	xrPrx.$(OBJEXT) osk.$(OBJEXT) $(am__objects_1)
 xReader_elf_OBJECTS = $(am_xReader_elf_OBJECTS)
 xReader_elf_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
@@ -153,7 +153,8 @@ LIBS = $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a $(libdir)/libpng.a
 	$(libdir)/libmad.a $(libdir)/libz.a $(libdir)/libfreetype.a $(libdir)/libwmadec.a \
 	$(libdir)/pmpmodavc/pmpmodavclib.a $(libdir)/pmpmodavc/libavformat.a $(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a $(libdir)/pmpmodavc/libpspmpeg.a $(libdir)/pmpmodavc/pmpmodavclib.a $(libdir)/libpspsystemctrl_kernel.a  \
 	-L$(libdir) -lexif -lm -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc \
-	-lpspusb -lpspusbstor -lstdc++ -lpspkubridge -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg 
+	-lpspusb -lpspusbstor -lstdc++ -lpspkubridge -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg \
+	-lpsputility
 
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
@@ -247,7 +248,8 @@ xReader_elf_SOURCES = array.c array.h avc.c avc.h bg.c bg.h bookmark.c \
 	common/qsort.h common/utils.c common/utils.h \
 	apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 	apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
-	$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h $(am__append_1)
+	$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h \
+	$(am__append_1)
 PSP_FW_VERSION = 390
 BUILD_PRX = 1
 PSP_LARGE_MEMORY = 1
@@ -348,6 +350,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mp3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mp3info.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osk.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/power.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/psp_utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qsort.Po@am__quote@

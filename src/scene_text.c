@@ -44,8 +44,9 @@
 #include "dbg.h"
 #include "simple_gettext.h"
 #include "xrPrx/xrPrx.h"
+#include "osk.h"
 
-dword ctlkey[13], ctlkey2[13], ku, kd, kl, kr;
+dword ctlkey[14], ctlkey2[14], ku, kd, kl, kr;
 static volatile int ticks = 0, secticks = 0;
 char g_titlename[256];
 bool scene_readbook_in_raw_mode = false;
@@ -1018,6 +1019,34 @@ static int scene_autopage(PBookViewData pView, dword * selidx)
 	return 0;
 }
 
+static void jump_to_gi(dword gi)
+{
+	dword offset = 0;
+	dword i;
+
+	gi++;
+
+	for (i = 0; i < fs->row_count; ++i) {
+		p_textrow tr;
+
+		tr = fs->rows[i >> 10] + (i & 0x3FF);
+		offset += tr->count;
+		if (offset >= (gi - 1) * 1023) {
+			cur_book_view.rowtop = 0;
+			cur_book_view.rrow =
+				(fs->rows[i >> 10] + (i & 0x3FF))->start - fs->buf;
+			fs->crow = 1;
+			while (fs->crow < fs->row_count
+				   && (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start -
+				   fs->buf <= cur_book_view.rrow)
+				fs->crow++;
+			fs->crow--;
+			return;
+		}
+	}
+	dbg_printf(d, "%s: 没有找到GI值%lu", __func__, gi);
+}
+
 int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 {
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
@@ -1188,6 +1217,27 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 			config.autopagetype = 2;
 		}
 		pView->text_needrp = true;
+	} else if (key == ctlkey[13] || key == ctlkey2[13]) {
+		scene_power_save(false);
+		char buf[128];
+
+		if (get_osk_input(buf, 128) == 1 && strcmp(buf, "") != 0) {
+			dbg_printf(d, "%s: input %s", __func__, buf);
+			unsigned long gi = strtoul(buf, NULL, 10);
+
+			if (gi != LONG_MIN) {
+				dbg_printf(d, "%s: GI值为%ld", __func__, gi);
+				jump_to_gi((dword) gi);
+			} else {
+				dbg_printf(d, "%s: 输入错误GI值%s", __func__, buf);
+			}
+		}
+
+		disp_duptocache();
+		disp_waitv();
+		cur_book_view.text_needrp = true;
+
+		scene_power_save(true);
 	} else
 		pView->text_needrp = pView->text_needrb = pView->text_needrf = false;
 	// reset ticks

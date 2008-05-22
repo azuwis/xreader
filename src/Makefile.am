@@ -29,7 +29,7 @@ common/datatype.h common/psp_utils.c common/psp_utils.h \
 common/qsort.c common/qsort.h common/utils.c common/utils.h \
 apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
-$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h 
+$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h
 
 if NLS
 xReader_elf_SOURCES += simple_gettext.c sofile.c sofile.h hash.c hash.h
@@ -50,7 +50,8 @@ LIBS = $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a $(libdir)/libpng.a
 	$(libdir)/libmad.a $(libdir)/libz.a $(libdir)/libfreetype.a $(libdir)/libwmadec.a \
 	$(libdir)/pmpmodavc/pmpmodavclib.a $(libdir)/pmpmodavc/libavformat.a $(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a $(libdir)/pmpmodavc/libpspmpeg.a $(libdir)/pmpmodavc/pmpmodavclib.a $(libdir)/libpspsystemctrl_kernel.a  \
 	-L$(libdir) -lexif -lm -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc \
-	-lpspusb -lpspusbstor -lstdc++ -lpspkubridge -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg 
+	-lpspusb -lpspusbstor -lstdc++ -lpspkubridge -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg \
+	-lpsputility
 
 TARGET = xReader
 EXTRA_TARGETS = EBOOT.PBP
