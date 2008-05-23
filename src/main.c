@@ -81,6 +81,11 @@ static int power_callback(int arg1, int powerInfo, void *arg)
 
 static int exit_callback(int arg1, int arg2, void *arg)
 {
+	extern bool xreader_scene_inited;
+
+	while (xreader_scene_inited == false) {
+		sceKernelDelayThread(1);
+	}
 #ifdef ENABLE_MUSIC
 	mp3_stop();
 #endif

@@ -5523,6 +5523,7 @@ extern double pspDiffTime(u64 * t1, u64 * t2);
 
 static const bool is_log = true;
 DBG *d = 0;
+bool xreader_scene_inited = false;
 
 extern void scene_init()
 {
@@ -5780,6 +5781,8 @@ extern void scene_init()
 
 	dbg_printf(d, "GetBGColorByTime() return %lu/%lu/%lu", RGB_R(c), RGB_G(c),
 			   RGB_B(c));
+
+	xreader_scene_inited = true;
 
 	scene_filelist();
 }
