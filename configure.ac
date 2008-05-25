@@ -24,8 +24,6 @@ AC_ARG_ENABLE(optimize, [  --enable-optimize   Enable compiler optimize option	d
 [optimize="$enableval"], optimize=yes)
 AC_ARG_ENABLE(homebrew_2xx, [  --enable-homebrew_2xx   Enable PSP firmware 2.0+ support	default is enabled],
 homebrew_2xx="$enableval", homebrew_2xx=yes)
-AC_ARG_ENABLE(ge, [  --enable-ge   Enable Graphics Engine option	default is enabled],
-ge="$enableval", ge=yes)
 AC_ARG_ENABLE(image, [  --enable-image   Enable image option	default is enabled],
 image="$enableval", image=yes)
 AC_ARG_ENABLE(bg, [  --enable-bg   Enable background image option	default is enabled],
@@ -67,9 +65,6 @@ fi
 AM_CONDITIONAL([OPTIMIZE], [test x$optimize = "xyes"])
 if test $homebrew_2xx = "yes"; then
 	AC_DEFINE([HOMEBREW_2XX], 1, [Enable PSP firmware 2.0+ support])
-fi
-if test $ge = "yes"; then
-	AC_DEFINE([ENABLE_GE], 1, [Enable Graphics Engine option])
 fi
 if test $image = "yes"; then
 	AC_DEFINE([ENABLE_IMAGE], 1, [Enable image option])

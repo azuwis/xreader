@@ -3,9 +3,7 @@
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
 
-#ifdef ENABLE_GE
 #include <pspgu.h>
-#endif
 #include <pspdisplay.h>
 #include "common/datatype.h"
 #include "ttfont.h"
@@ -14,23 +12,6 @@ extern int DISP_FONTSIZE, DISP_BOOK_FONTSIZE, HRR, WRR;
 extern byte disp_ewidth[0x80];
 
 // R,G,B color to word value color
-#ifdef COLOR16BIT
-typedef word pixel;
-
-#define PIXEL_BYTES 2
-#define COLOR_MAX 31
-#define COLOR_WHITE 0xFFFF
-
-#define RGB(r,g,b) ((((pixel)(b)*31/255)<<10)|(((pixel)(g)*31/255)<<5)|((pixel)(r)*31/255)|0x8000)
-#define RGB2(r,g,b) ((((pixel)(b))<<10)|(((pixel)(g))<<5)|((pixel)(r))|0x8000)
-#define RGBA(r,g,b,a) ((((pixel)(b))<<10)|(((pixel)(g))<<5)|((pixel)(r))|((a)?0x8000:0))
-#define RGB_R(c) ((c) & 0x1F)
-#define RGB_G(c) (((c) >> 5) & 0x1F)
-#define RGB_B(c) (((c) >> 10) & 0x1F)
-#define RGB_16to32(c) (c)
-
-#else
-
 typedef dword pixel;
 
 #define PIXEL_BYTES 4
@@ -46,16 +27,14 @@ typedef dword pixel;
 #define RGB_B(c) (((c) >> 16) & 0xFF)
 #define RGB_16to32(c) RGBA((((c)&0x1F)*255/31),((((c)>>5)&0x1F)*255/31),((((c)>>10)&0x1F)*255/31),((c&0x8000)?0xFF:0))
 
-#endif
-
 #define disp_grayscale(c,r,g,b,gs) RGB2(((r)*(gs)+RGB_R(c)*(100-(gs)))/100,((g)*(gs)+RGB_G(c)*(100-(gs)))/100,((b)*(gs)+RGB_B(c)*(100-(gs)))/100)
 
-extern pixel *vram_start;
+extern pixel *vram_draw;
 
 // sceDisplayWaitVblankStart function alias name, define is faster than function call (even at most time this is inline linked)
 #define disp_waitv() sceDisplayWaitVblankStart()
 
-#define disp_get_vaddr(x, y) (vram_start + (x) + ((y) << 9))
+#define disp_get_vaddr(x, y) (vram_draw + (x) + ((y) << 9))
 
 extern void disp_putpixel(int x, int y, pixel color);
 extern void disp_init();
@@ -82,11 +61,9 @@ extern void disp_free_font();
 extern void disp_flip();
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf);
 
-#ifdef ENABLE_GE
 extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
 							 int starty, int ow, int oh, pixel * buf,
 							 bool swizzled);
-#endif
 extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx,
 						  dword starty, pixel * buf);
 extern void disp_duptocache();

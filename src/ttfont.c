@@ -821,18 +821,6 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 //      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
 	}
 
-	/*
-	   #define CHECK_AND_VALID(x, y) \
-	   {\
-	   x = (x < 0) ? 0 : x; \
-	   y = (y < 0) ? 0 : y; \
-	   x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
-	   y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
-	   }
-
-	   CHECK_AND_VALID(x, y);
-	 */
-
 	FT_UInt cprevious, eprevious;
 
 	cprevious = eprevious = 0;
@@ -1170,18 +1158,6 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 //      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
 	}
 
-	/*
-	   #define CHECK_AND_VALID(x, y) \
-	   {\
-	   x = (x < 0) ? 0 : x; \
-	   y = (y < 0) ? 0 : y; \
-	   x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
-	   y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
-	   }
-
-	   CHECK_AND_VALID(x, y);
-	 */
-
 	x = PSP_SCREEN_WIDTH - x - 1, y = PSP_SCREEN_HEIGHT - y - 1;
 
 	FT_UInt cprevious, eprevious;
@@ -1460,18 +1436,6 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 //      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
 	}
 
-	/*
-	   #define CHECK_AND_VALID(x, y) \
-	   {\
-	   x = (x < 0) ? 0 : x; \
-	   y = (y < 0) ? 0 : y; \
-	   x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
-	   y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
-	   }
-
-	   CHECK_AND_VALID(x, y);
-	 */
-
 	FT_UInt cprevious, eprevious;
 
 	cprevious = eprevious = 0;
@@ -1746,18 +1710,6 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 		return;
 	if (x + 1 - height < bot)
 		height = x + 1 - bot;
-
-	/*
-	   #define CHECK_AND_VALID(x, y) \
-	   {\
-	   x = (x < 0) ? 0 : x; \
-	   y = (y < 0) ? 0 : y; \
-	   x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
-	   y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
-	   }
-
-	   CHECK_AND_VALID(x, y);
-	 */
 
 	FT_UInt cprevious, eprevious;
 

@@ -20,8 +20,8 @@
 extern t_conf config;
 
 static bool auto_inc_wordspace_on_small_font = false;
-static pixel *vram_base = NULL;
-pixel *vram_start = NULL;
+static pixel *vram_disp = NULL;
+pixel *vram_draw = NULL;
 static bool vram_page = 0;
 static byte *cfont_buffer = NULL, *book_cfont_buffer = NULL, *efont_buffer =
 	NULL, *book_efont_buffer = NULL;
@@ -54,53 +54,18 @@ typedef struct _Vertex
 
 #define DISP_RSPAN 0
 
-#define CHECK_DISPLAY_BORDER
-
-#ifdef CHECK_DISPLAY_BORDER
-#define CHECK_AND_VALID(x, y) \
-{\
-	x = (x < 0) ? 0 : x; \
-	y = (y < 0) ? 0 : y; \
-	x = (x >= PSP_SCREEN_WIDTH )? PSP_SCREEN_WIDTH - 1: x;\
-	y = (y >= PSP_SCREEN_HEIGHT )? PSP_SCREEN_HEIGHT - 1: y;\
-}
-
-#define CHECK_AND_VALID_4(x1, y1, x2, y2) \
-{\
-	CHECK_AND_VALID(x1, y1);\
-	CHECK_AND_VALID(x2, y2);\
-}
-
-#define CHECK_AND_VALID_WH(x, y, w, h) \
-{\
-	CHECK_AND_VALID(x, y);\
-	w = x + w > PSP_SCREEN_WIDTH ? PSP_SCREEN_WIDTH - x : w; \
-	h = y + h > PSP_SCREEN_HEIGHT ? PSP_SCREEN_HEIGHT - y : h; \
-}
-#else
-#define CHECK_AND_VALID(x, y)
-#define CHECK_AND_VALID_4(x1, y1, x2, y2)
-#define CHECK_AND_VALID_WH(x, y, w, h)
-#endif
-
 extern void disp_init()
 {
 	sceDisplaySetMode(0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 	vram_page = 0;
-	vram_base = (pixel *) 0x04000000;
-	vram_start = (pixel *) (0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
-#ifdef COLOR16BIT
-	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_5551,
+	vram_disp = (pixel *) 0x04000000;
+	vram_draw = (pixel *) (0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
+	sceDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
 						  PSP_DISPLAY_SETBUF_NEXTFRAME);
-#else
-	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
-						  PSP_DISPLAY_SETBUF_NEXTFRAME);
-#endif
 }
 
 unsigned int __attribute__ ((aligned(16))) list[262144];
 
-#ifdef ENABLE_GE
 extern void init_gu(void)
 {
 	sceGuInit();
@@ -125,26 +90,14 @@ extern void init_gu(void)
 	sceDisplayWaitVblankStart();
 	sceGuDisplay(1);
 }
-#endif
 
 extern void disp_putpixel(int x, int y, pixel color)
 {
-	CHECK_AND_VALID(x, y);
-#ifndef ENABLE_GE
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 	*(pixel *) disp_get_vaddr((x), (y)) = (color);
-#else
-	sceGuStart(GU_DIRECT, list);
-	VertexColor *vertices = (VertexColor *) sceGuGetMemory(sizeof(VertexColor));
-
-	vertices[0].color = color;
-	vertices[0].x = x;
-	vertices[0].y = y;
-	vertices[0].z = 0;
-	sceGuDrawArray(GU_POINTS, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
-				   1, 0, vertices);
-	sceGuFinish();
-	sceGuSync(0, 0);
-#endif
 }
 
 extern void disp_set_fontsize(int fontsize)
@@ -684,34 +637,25 @@ extern void disp_free_font()
 #endif
 }
 
-#ifdef ENABLE_GE
 void *framebuffer = 0;
-#endif
 
 extern void disp_flip()
 {
 	vram_page ^= 1;
-	vram_base =
+	vram_disp =
 		(pixel *) 0x04000000 + (vram_page ? (512 * PSP_SCREEN_HEIGHT) : 0);
-	vram_start =
+	vram_draw =
 		(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
 	disp_waitv();
-#ifdef COLOR16BIT
-	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_5551,
+	sceDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
 						  PSP_DISPLAY_SETBUF_IMMEDIATE);
-#else
-	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
-						  PSP_DISPLAY_SETBUF_IMMEDIATE);
-#endif
-#ifdef ENABLE_GE
 	framebuffer = sceGuSwapBuffers();
-#endif
 }
 
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf)
 {
-	CHECK_AND_VALID_WH(x, y, w, h);
-	pixel *lines = vram_base + 0x40000000 / PIXEL_BYTES, *linesend =
+//  CHECK_AND_VALID_WH(x, y, w, h);
+	pixel *lines = vram_disp + 0x40000000 / PIXEL_BYTES, *linesend =
 		lines + (min(PSP_SCREEN_HEIGHT - y, h) << 9);
 	dword rw = min(512 - x, w) * PIXEL_BYTES;
 
@@ -721,23 +665,6 @@ extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf)
 	}
 }
 
-#ifndef ENABLE_GE
-extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
-							 int starty, int ow, int oh, pixel * buf,
-							 bool swizzled)
-{
-	int pitch = (w + 15) & ~15;
-	pixel *lines = disp_get_vaddr(x, y), *linesend =
-		lines + (min(PSP_SCREEN_HEIGHT - y, h - starty) << 9);
-	buf = buf + starty * pitch + startx;
-	dword rw = min(512 - x, pitch - startx) * PIXEL_BYTES;
-
-	for (; lines < linesend; lines += 512) {
-		memcpy(lines, buf, rw);
-		buf += w;
-	}
-}
-#else
 /**
  * x: x 坐标
  * y: y 坐标
@@ -783,16 +710,40 @@ extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
 	sceGuFinish();
 	sceGuSync(0, 0);
 }
-#endif
 
-// TODO: use Gu CopyImage
-// buf: 图像数据: 现在大小为(16-8对齐)
-// w: 要复制的宽度, 为图像
-// h: 要复制的高度
+/**
+ * 复制图像到屏幕
+ * @param x 目的x坐标地址
+ * @param y 目的y坐标地址
+ * @param w 复制图像的宽度
+ * @param h 复制图像的高度
+ * @param startx 复制图像的源x坐标地址
+ * @param starty 复制图像的源y坐标地址
+ * @param buf 图像数据
+ * @note TODO should use GE to copy image
+ */
 extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx,
 						  dword starty, pixel * buf)
 {
-	CHECK_AND_VALID(x, y);
+	if (x < 0) {
+		w += x;
+		startx -= x;
+		x = 0;
+		if (w < 0)
+			return;
+	} else if (x >= PSP_SCREEN_WIDTH) {
+		return;
+	}
+	if (y < 0) {
+		h += y;
+		starty -= y;
+		y = 0;
+		if (h < 0)
+			return;
+	} else if (y >= PSP_SCREEN_HEIGHT) {
+		return;
+	}
+
 	pixel *lines = disp_get_vaddr(x, y), *linesend =
 		lines + (min(PSP_SCREEN_HEIGHT - y, h - starty) << 9);
 	buf = buf + starty * w + startx;
@@ -802,19 +753,18 @@ extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx,
 		memcpy(lines, buf, rw);
 		buf += w;
 	}
-	return;
 }
 
 extern void disp_duptocache()
 {
-	memmove(vram_start, ((byte *) vram_base) + 0x40000000,
+	memmove(vram_draw, ((byte *) vram_disp) + 0x40000000,
 			512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 }
 
 extern void disp_duptocachealpha(int percent)
 {
-	pixel *vsrc = (pixel *) (((byte *) vram_base) + 0x40000000), *vdest =
-		vram_start;
+	pixel *vsrc = (pixel *) (((byte *) vram_disp) + 0x40000000), *vdest =
+		vram_draw;
 	int i, j;
 
 	for (i = 0; i < PSP_SCREEN_HEIGHT; i++) {
@@ -829,31 +779,34 @@ extern void disp_duptocachealpha(int percent)
 	}
 }
 
+/**
+ * fix osk buffer mismatch by checking swap buffer
+ */
 extern void disp_fix_osk(void *buffer)
 {
 	if (buffer) {
 		vram_page = 0;
-		vram_base =
+		vram_disp =
 			(pixel *) 0x04000000 + (vram_page ? (512 * PSP_SCREEN_HEIGHT) : 0);
-		vram_start =
+		vram_draw =
 			(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
 	} else {
 		vram_page = 1;
-		vram_base =
+		vram_disp =
 			(pixel *) 0x04000000 + (vram_page ? (512 * PSP_SCREEN_HEIGHT) : 0);
-		vram_start =
+		vram_draw =
 			(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
 	}
-	sceDisplaySetFrameBuf(vram_base, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
+	sceDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
 						  PSP_DISPLAY_SETBUF_IMMEDIATE);
 }
 
 extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2)
 {
-	CHECK_AND_VALID_4(x1, y1, x2, y2);
+//  CHECK_AND_VALID_4(x1, y1, x2, y2);
 	pixel *lines = disp_get_vaddr(x1, y1), *linesend =
 		disp_get_vaddr(x1, y2), *lined =
-		vram_base + 0x40000000 / PIXEL_BYTES + x1 + (y1 << 9);
+		vram_disp + 0x40000000 / PIXEL_BYTES + x1 + (y1 << 9);
 	dword w = (x2 - x1 + 1) * PIXEL_BYTES;
 
 	for (; lines <= linesend; lines += 512, lined += 512)
@@ -863,10 +816,10 @@ extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2)
 extern void disp_rectduptocachealpha(dword x1, dword y1, dword x2, dword y2,
 									 int percent)
 {
-	CHECK_AND_VALID_4(x1, y1, x2, y2);
+//  CHECK_AND_VALID_4(x1, y1, x2, y2);
 	pixel *lines = disp_get_vaddr(x1, y1), *linesend =
 		disp_get_vaddr(x1, y2), *lined =
-		vram_base + 0x40000000 / PIXEL_BYTES + x1 + (y1 << 9);
+		vram_disp + 0x40000000 / PIXEL_BYTES + x1 + (y1 << 9);
 	dword w = x2 - x1 + 1;
 
 	for (; lines <= linesend; lines += 512, lined += 512) {
@@ -899,16 +852,15 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 			height = bot - y;
 	}
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -945,10 +897,6 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 		} else if (*str > 0x1F) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -984,10 +932,6 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 		} else {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1016,7 +960,10 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 			height = bot - y;
 	}
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	x = PSP_SCREEN_WIDTH - x - 1, y = PSP_SCREEN_HEIGHT - y - 1;
 
@@ -1027,10 +974,6 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 		if (*str > 0x80) {
 			if (x < 0) {
 				break;
-#if 0
-				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE;
-				y -= DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1068,10 +1011,6 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 		} else if (*str > 0x1F) {
 			if (x < 0) {
 				break;
-#if 0
-				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2;
-				y -= DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1109,10 +1048,6 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 		} else {
 			if (x < 0) {
 				break;
-#if 0
-				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2;
-				y -= DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1145,7 +1080,10 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 			height = bot - y;
 	}
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	x = PSP_SCREEN_WIDTH - x - 1, y = PSP_SCREEN_HEIGHT - y - 1;
 
@@ -1156,10 +1094,6 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 		if (*str > 0x80) {
 			if (x < 0) {
 				break;
-#if 0
-				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE;
-				y -= DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1198,10 +1132,6 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 		} else if (*str > 0x1F) {
 			if (x < 0) {
 				break;
-#if 0
-				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2;
-				y -= DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1240,10 +1170,6 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 		} else {
 			if (x < 0) {
 				break;
-#if 0
-				x = PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2;
-				y -= DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1271,16 +1197,15 @@ extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
 			height = bot - y;
 	}
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1317,10 +1242,6 @@ extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
 		} else if (*str > 0x1F) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1358,10 +1279,6 @@ extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
 		} else {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1394,16 +1311,15 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 			height = bot - y;
 	}
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1442,10 +1358,6 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 		} else if (*str > 0x1F) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1484,10 +1396,6 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 		} else {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1516,16 +1424,15 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 			height = bot - x;
 	}
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (y < DISP_RSPAN + DISP_FONTSIZE - 1) {
 				break;
-#if 0
-				y = 271;
-				x += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1562,10 +1469,6 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 		} else if (*str > 0x1F) {
 			if (y < DISP_RSPAN + DISP_FONTSIZE - 1) {
 				break;
-#if 0
-				y = 271;
-				x += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1603,10 +1506,6 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 		} else {
 			if (y < DISP_RSPAN + DISP_FONTSIZE - 1) {
 				break;
-#if 0
-				y = 271;
-				x += DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1639,16 +1538,15 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			height = bot - x;
 	}
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (y < DISP_BOOK_FONTSIZE - 1) {
 				break;
-#if 0
-				y = 271;
-				x += DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1687,10 +1585,6 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 		} else if (*str > 0x1F) {
 			if (y < DISP_BOOK_FONTSIZE / 2 - 1) {
 				break;
-#if 0
-				y = 271;
-				x += DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1729,10 +1623,6 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 		} else {
 			if (y < DISP_BOOK_FONTSIZE / 2 - 1) {
 				break;
-#if 0
-				y = 271;
-				x += DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1754,7 +1644,10 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 	pixel *vaddr;
 	const byte *ccur, *cend;
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	if (x < bot)
 		return;
@@ -1765,10 +1658,6 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 		if (*str > 0x80) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_FONTSIZE) {
 				break;
-#if 0
-				y = 0;
-				x -= DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1806,10 +1695,6 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 		} else if (*str > 0x1F) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
-#if 0
-				y = 0;
-				x -= DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1847,10 +1732,6 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 		} else {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
-#if 0
-				y = 0;
-				x -= DISP_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1876,7 +1757,10 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 	}
 #endif
 
-	CHECK_AND_VALID(x, y);
+	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
+		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
+		return;
+	}
 
 	if (x < bot)
 		return;
@@ -1887,10 +1771,6 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 		if (*str > 0x80) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE) {
 				break;
-#if 0
-				y = 0;
-				x -= DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1930,10 +1810,6 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 		} else if (*str > 0x1F) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
-#if 0
-				y = 0;
-				x -= DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1972,10 +1848,6 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 		} else {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
-#if 0
-				y = 0;
-				x -= DISP_BOOK_FONTSIZE;
-#endif
 			}
 			if (!check_range(x, y))
 				return;
@@ -1991,51 +1863,15 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 
 extern void disp_fillvram(pixel color)
 {
-#ifndef ENABLE_GE
-	pixel *vram, *vram_end;
-
-	if (color == 0 || color == (pixel) - 1)
-		memset(vram_start, (color & 0xFF),
-			   512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
-	else
-		for (vram = vram_start, vram_end = vram + 0x22000; vram < vram_end;
-			 vram++)
-			*vram = color;
-#else
 	sceGuStart(GU_DIRECT, list);
 	sceGuClearColor(color);
 	sceGuClear(GU_COLOR_BUFFER_BIT);
 	sceGuFinish();
 	sceGuSync(0, 0);
-#endif
 }
 
 extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
-#ifndef ENABLE_GE
-	CHECK_AND_VALID_4(x1, y1, x2, y2);
-	pixel *vsram, *vsram_end, *vram, *vram_end;
-	dword wdwords;
-
-	if (x1 > x2) {
-		dword t = x1;
-
-		x1 = x2;
-		x2 = t;
-	}
-	if (y1 > y2) {
-		dword t = y1;
-
-		y1 = y2;
-		y2 = t;
-	}
-	vsram = disp_get_vaddr(x1, y1);
-	vsram_end = vsram + 512 * (y2 - y1);
-	wdwords = (x2 - x1);
-	for (; vsram <= vsram_end; vsram += 512)
-		for (vram = vsram, vram_end = vram + wdwords; vram <= vram_end; vram++)
-			*vram = color;
-#else
 	sceGuStart(GU_DIRECT, list);
 	VertexColor *vertices =
 		(VertexColor *) sceGuGetMemory(2 * sizeof(VertexColor));
@@ -2058,39 +1894,10 @@ extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 	sceGuFinish();
 	sceGuSync(0, 0);
-#endif
 }
 
 extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
-#ifndef ENABLE_GE
-	CHECK_AND_VALID_4(x1, y1, x2, y2);
-	pixel *vsram, *vram, *vram_end;
-
-	if (x1 > x2) {
-		dword t = x1;
-
-		x1 = x2;
-		x2 = t;
-	}
-	if (y1 > y2) {
-		dword t = y1;
-
-		y1 = y2;
-		y2 = t;
-	}
-	vsram = disp_get_vaddr(x1, y1);
-	for (vram = vsram, vram_end = vram + (x2 - x1); vram < vram_end; vram++)
-		*vram = color;
-	for (vram_end = vram + 512 * (y2 - y1); vram < vram_end; vram += 512)
-		*vram = color;
-	for (vram = vsram, vram_end = vram + 512 * (y2 - y1); vram < vram_end;
-		 vram += 512)
-		*vram = color;
-	for (vram_end = vram + (x2 - x1); vram < vram_end; vram++)
-		*vram = color;
-	*vram = color;
-#else
 	sceGuStart(GU_DIRECT, list);
 	VertexColor *vertices =
 		(VertexColor *) sceGuGetMemory(5 * sizeof(VertexColor));
@@ -2128,95 +1935,10 @@ extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 	sceGuFinish();
 	sceGuSync(0, 0);
-#endif
 }
 
 extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
-#ifndef ENABLE_GE
-	CHECK_AND_VALID_4(x1, y1, x2, y2);
-	pixel *vram;
-	int dy, dx, x, y, d;
-
-	dx = (int) x2 - (int) x1;
-	dy = (int) y2 - (int) y1;
-	if (dx < 0)
-		dx = -dx;
-	if (dy < 0)
-		dy = -dy;
-	d = -dx;
-	x = (int) x1;
-	y = (int) y1;
-	if (dx >= dy) {
-		if (y2 < y1) {
-			dword t = x1;
-
-			x1 = x2;
-			x2 = t;
-			t = y1;
-			y1 = y2;
-			y2 = t;
-		}
-		vram = disp_get_vaddr(x1, y1);
-		if (x1 < x2) {
-			for (x = x1; x <= x2; x++) {
-				if (d > 0) {
-					y++;
-					vram += 512;
-					d -= 2 * dx;
-				}
-				d += 2 * dy;
-				*vram = color;
-				vram++;
-			}
-		} else {
-			for (x = x1; x >= x2; x--) {
-				if (d > 0) {
-					y++;
-					vram += 512;
-					d -= 2 * dx;
-				}
-				d += 2 * dy;
-				*vram = color;
-				vram--;
-			}
-		}
-	} else {
-		if (x2 < x1) {
-			dword t = x1;
-
-			x1 = x2;
-			x2 = t;
-			t = y1;
-			y1 = y2;
-			y2 = t;
-		}
-		vram = disp_get_vaddr(x1, y1);
-		if (y1 < y2) {
-			for (y = y1; y <= y2; y++) {
-				if (d > 0) {
-					x++;
-					vram++;
-					d -= 2 * dy;
-				}
-				d += 2 * dx;
-				*vram = color;
-				vram += 512;
-			}
-		} else {
-			for (y = y1; y >= y2; y--) {
-				if (d > 0) {
-					x++;
-					vram++;
-					d -= 2 * dy;
-				}
-				d += 2 * dx;
-				*vram = color;
-				vram -= 512;
-			}
-		}
-	}
-#else
 	sceGuStart(GU_DIRECT, list);
 	VertexColor *vertices =
 		(VertexColor *) sceGuGetMemory(2 * sizeof(VertexColor));
@@ -2238,5 +1960,4 @@ extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 	sceGuFinish();
 	sceGuSync(0, 0);
-#endif
 }

@@ -120,7 +120,7 @@ extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
 extern bool bg_display()
 {
 	if (config.have_bg) {
-		memcpy(vram_start, bg_start,
+		memcpy(vram_draw, bg_start,
 			   PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 		return true;
 	}

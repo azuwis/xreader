@@ -5332,14 +5332,6 @@ void scene_filelist()
 					avc_start();
 					pmp_play(pmpname, !pmp_restart);
 					avc_end();
-#ifdef COLOR16BIT
-					disp_fillvram(config.bgcolor);
-					bg_display();
-					disp_flip();
-					disp_fillvram(config.bgcolor);
-					bg_display();
-					disp_flip();
-#endif
 					break;
 				}
 #endif
@@ -5689,9 +5681,7 @@ extern void scene_init()
 #ifdef ENABLE_HPRM
 	ctrl_enablehprm(config.hprmctrl);
 #endif
-#ifdef ENABLE_GE
 	init_gu();
-#endif
 	if (fat_init())
 		fat_inited = true;
 
@@ -5849,9 +5839,7 @@ extern void scene_exit()
 #ifdef ENABLE_USB
 	usb_close();
 #endif
-#ifdef ENABLE_GE
 	sceGuTerm();
-#endif
 	dbg_close(d);
 	simple_gettext_destroy();
 
