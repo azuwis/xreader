@@ -1009,28 +1009,17 @@ static int scene_autopage(PBookViewData pView, dword * selidx)
 	return 0;
 }
 
-static int gi_search(const void *k1, const void *k2)
-{
-	const p_textrow t1 = (const p_textrow) k1;
-	const p_textrow t2 = (const p_textrow) k2;
-
-	return t1->GI - t2->GI;
-}
-
 static void jump_to_gi(dword gi)
 {
-	dword offset = 0;
 	dword i;
 
 	for (i = 0; i < fs->row_count; ++i) {
 		p_textrow tr;
 
 		tr = fs->rows[i >> 10] + (i & 0x3FF);
-		offset += tr->count;
-		if (offset >= (gi - 1) * 1023) {
+		if (tr->GI == gi) {
 			cur_book_view.rowtop = 0;
-			cur_book_view.rrow =
-				(fs->rows[i >> 10] + (i & 0x3FF))->start - fs->buf;
+			cur_book_view.rrow = tr->start - fs->buf;
 			fs->crow = 1;
 			while (fs->crow < fs->row_count
 				   && (fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start -
