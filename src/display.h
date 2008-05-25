@@ -150,5 +150,6 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 										   int height, int bot);
 extern bool check_range(int x, int y);
 extern void disp_fix_osk(void *buffer);
+pixel *disp_swizzle_image(pixel * buf, int width, int height);
 
 #endif

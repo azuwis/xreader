@@ -52,6 +52,22 @@ typedef struct _Vertex
 	u16 x, y, z;
 } Vertex;
 
+static inline void setVertex(VertexColor * vertex, u16 x, u16 y, u16 z,
+							 u32 color)
+{
+	vertex->x = x, vertex->y = y, vertex->z = z;
+	vertex->color = color;
+}
+
+static inline void setVertexUV(Vertex * vertex, u16 x, u16 y, u16 z, u32 color,
+							   u16 u, u16 v)
+{
+	vertex->x = x, vertex->y = y, vertex->z = z;
+	vertex->color = color;
+	vertex->u = u;
+	vertex->v = v;
+}
+
 #define DISP_RSPAN 0
 
 extern void disp_init()
@@ -1873,18 +1889,10 @@ extern void disp_fillvram(pixel color)
 extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
 	sceGuStart(GU_DIRECT, list);
-	VertexColor *vertices =
-		(VertexColor *) sceGuGetMemory(2 * sizeof(VertexColor));
+	VertexColor *vertices = sceGuGetMemory(2 * sizeof(*vertices));
 
-	vertices[0].color = color;
-	vertices[0].x = x1;
-	vertices[0].y = y1;
-	vertices[0].z = 0;
-
-	vertices[1].color = color;
-	vertices[1].x = x2 + 1;
-	vertices[1].y = y2 + 1;
-	vertices[1].z = 0;
+	setVertex(&vertices[0], x1, y1, 0, color);
+	setVertex(&vertices[1], x2 + 1, y2 + 1, 0, color);
 
 	sceGuDisable(GU_TEXTURE_2D);
 	sceGuDrawArray(GU_SPRITES,
@@ -1899,33 +1907,13 @@ extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
 	sceGuStart(GU_DIRECT, list);
-	VertexColor *vertices =
-		(VertexColor *) sceGuGetMemory(5 * sizeof(VertexColor));
+	VertexColor *vertices = sceGuGetMemory(5 * sizeof(*vertices));
 
-	vertices[0].color = color;
-	vertices[0].x = x1;
-	vertices[0].y = y1;
-	vertices[0].z = 0;
-
-	vertices[1].color = color;
-	vertices[1].x = x2;
-	vertices[1].y = y1;
-	vertices[1].z = 0;
-
-	vertices[2].color = color;
-	vertices[2].x = x2;
-	vertices[2].y = y2;
-	vertices[2].z = 0;
-
-	vertices[3].color = color;
-	vertices[3].x = x1;
-	vertices[3].y = y2;
-	vertices[3].z = 0;
-
-	vertices[4].color = color;
-	vertices[4].x = x1;
-	vertices[4].y = y1;
-	vertices[4].z = 0;
+	setVertex(&vertices[0], x1, y1, 0, color);
+	setVertex(&vertices[1], x2, y1, 0, color);
+	setVertex(&vertices[2], x2, y2, 0, color);
+	setVertex(&vertices[3], x1, y2, 0, color);
+	setVertex(&vertices[4], x1, y1, 0, color);
 
 	sceGuDisable(GU_TEXTURE_2D);
 	sceGuDrawArray(GU_LINE_STRIP,
@@ -1940,18 +1928,10 @@ extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
 	sceGuStart(GU_DIRECT, list);
-	VertexColor *vertices =
-		(VertexColor *) sceGuGetMemory(2 * sizeof(VertexColor));
+	VertexColor *vertices = sceGuGetMemory(2 * sizeof(*vertices));
 
-	vertices[0].color = color;
-	vertices[0].x = x1;
-	vertices[0].y = y1;
-	vertices[0].z = 0;
-
-	vertices[1].color = color;
-	vertices[1].x = x2;
-	vertices[1].y = y2;
-	vertices[1].z = 0;
+	setVertex(&vertices[0], x1, y1, 0, color);
+	setVertex(&vertices[1], x2, y2, 0, color);
 
 	sceGuDisable(GU_TEXTURE_2D);
 	sceGuDrawArray(GU_LINES, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
@@ -1960,4 +1940,45 @@ extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 	sceGuFinish();
 	sceGuSync(0, 0);
+}
+
+pixel *disp_swizzle_image(pixel * buf, int width, int height)
+{
+	int pitch = (PIXEL_BYTES * width + 15) & ~0xF;
+
+	pixel *out;
+
+	if ((out = (pixel *) memalign(16, pitch * ((height + 7) & ~0x7))) == NULL)
+		return out;
+	unsigned blockx, blocky;
+	unsigned j;
+
+	unsigned width_blocks = pitch / 16;
+	unsigned height_blocks = (height + 7) / 8;
+
+	unsigned src_pitch = (pitch - 16) / 4;
+	unsigned src_row = pitch * 8;
+
+	const byte *ysrc = (const byte *) buf;
+	u32 *dst = (u32 *) out;
+
+	for (blocky = 0; blocky < height_blocks; ++blocky) {
+		const byte *xsrc = ysrc;
+
+		for (blockx = 0; blockx < width_blocks; ++blockx) {
+			const u32 *src = (u32 *) xsrc;
+
+			for (j = 0; j < 8; ++j) {
+				*(dst++) = *(src++);
+				*(dst++) = *(src++);
+				*(dst++) = *(src++);
+				*(dst++) = *(src++);
+				src += src_pitch;
+			}
+			xsrc += 16;
+		}
+		ysrc += src_row;
+	}
+
+	return out;
 }

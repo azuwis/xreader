@@ -14,14 +14,12 @@
 
 extern t_conf config;
 
-static void ClearScreen()
+static void ClearScreen(pixel * saveimage)
 {
-	extern unsigned int __attribute__ ((aligned(16))) list[262144];
-
-	sceGuStart(GU_DIRECT, list);
-	sceGuClearColor(config.bgcolor);
-	sceGuClear(GU_COLOR_BUFFER_BIT);
-	sceGuFinish();
+	if (saveimage) {
+		disp_newputimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT,
+						 PSP_SCREEN_WIDTH, 0, 0, 0, 0, saveimage, true);
+	}
 }
 
 int get_osk_input(char *buf, int size)
@@ -30,6 +28,23 @@ int get_osk_input(char *buf, int size)
 	unsigned short intext[128] = { 0 };	// text already in the edit box on start
 	unsigned short outtext[128] = { 0 };	// text after input
 	unsigned short desc[128] = { 'E', 'n', 't', 'e', 'r', ' ', 'G', 'I', 0 };	// description
+
+	pixel *saveimage = (pixel *) memalign(16,
+										  PSP_SCREEN_WIDTH *
+										  PSP_SCREEN_HEIGHT * sizeof(pixel));
+	if (saveimage) {
+		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
+		pixel *t;
+
+		t = disp_swizzle_image(saveimage, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
+		if (t == NULL) {
+			free(saveimage);
+			return -1;
+		}
+		free(saveimage);
+		saveimage = t;
+	} else
+		return -1;
 
 	SceUtilityOskData data;
 
@@ -61,17 +76,20 @@ int get_osk_input(char *buf, int size)
 	int rc = sceUtilityOskInitStart(&osk);
 
 	if (rc) {
+		free(saveimage);
 		return 0;
 	}
 
 	bool done = false;
 
+	ClearScreen(saveimage);
+
 	while (!done) {
-		ClearScreen();
 		switch (sceUtilityOskGetStatus()) {
 			case PSP_UTILITY_DIALOG_INIT:
 				break;
 			case PSP_UTILITY_DIALOG_VISIBLE:
+				ClearScreen(saveimage);
 				sceUtilityOskUpdate(2);	// 2 is taken from ps2dev.org recommendation
 				break;
 			case PSP_UTILITY_DIALOG_QUIT:
@@ -104,6 +122,7 @@ int get_osk_input(char *buf, int size)
 	sceDisplayWaitVblankStart();
 	void *buffer = sceGuSwapBuffers();
 
+	free(saveimage);
 	disp_fix_osk(buffer);
 
 	return 1;
