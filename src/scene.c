@@ -73,8 +73,6 @@ int locaval[10];
 t_fonts fonts[5], bookfonts[21];
 static int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex =
 	0, ttfsize = 0;
-int offset = 0;
-
 bool g_force_text_view_mode = false;
 
 int freq_list[][2] = {

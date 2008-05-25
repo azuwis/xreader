@@ -59,6 +59,14 @@ static void WriteByte(int fd, unsigned char b)
 	sceIoWrite(fd, &b, 1);
 }
 
+static inline int calc_gi()
+{
+	int i = min(fs->crow, fs->row_count);
+	p_textrow tr = fs->rows[i >> 10] + (i & 0x3FF);
+
+	return tr->GI;
+}
+
 void ScreenShot()
 {
 	const char tgaHeader[] = { 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -107,7 +115,6 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 								  int vertread)
 {
 	char ci[8] = "       ";
-	int i;
 	char cr[512];
 
 	switch (vertread) {
@@ -150,14 +157,6 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 		} else
 			autopageinfo[0] = 0;
 	}
-	offset = 0;
-	for (i = 0; i < fs->crow && i < fs->row_count; ++i) {
-		p_textrow tr;
-
-		tr = fs->rows[i >> 10] + (i & 0x3FF);
-		offset += tr->count;
-	}
-	offset = offset / 1023 + 1;
 	if (where == scene_in_chm) {
 		char fname[PATH_MAX];
 
@@ -168,21 +167,21 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 											  1 ? "UCS " :
 											  conf_get_encodename
 											  (config.encode)),
-				  fname, offset, autopageinfo);
+				  fname, calc_gi(), autopageinfo);
 	} else if (scene_readbook_in_raw_mode == true) {
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename
 											  (config.encode)),
-				  g_titlename, offset, autopageinfo);
+				  g_titlename, calc_gi(), autopageinfo);
 	} else {
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename
 											  (config.encode)),
-				  filelist[selidx].compname->ptr, offset, autopageinfo);
+				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo);
 	}
 	int wordspace = 0;
 
@@ -221,7 +220,6 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 {
 	char ci[8] = "       ";
-	int i;
 	char cr[512];
 
 	switch (vertread) {
@@ -264,14 +262,6 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 		} else
 			autopageinfo[0] = 0;
 	}
-	offset = 0;
-	for (i = 0; i < fs->crow && i < fs->row_count; ++i) {
-		p_textrow tr;
-
-		tr = fs->rows[i >> 10] + (i & 0x3FF);
-		offset += tr->count;
-	}
-	offset = offset / 1023 + 1;
 	if (where == scene_in_chm) {
 		char fname[PATH_MAX];
 
@@ -282,21 +272,21 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 											  1 ? "UCS " :
 											  conf_get_encodename
 											  (config.encode)),
-				  fname, offset, autopageinfo);
+				  fname, calc_gi(), autopageinfo);
 	} else if (scene_readbook_in_raw_mode == true) {
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename
 											  (config.encode)),
-				  g_titlename, offset, autopageinfo);
+				  g_titlename, calc_gi(), autopageinfo);
 	} else {
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename
 											  (config.encode)),
-				  filelist[selidx].compname->ptr, offset, autopageinfo);
+				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo);
 	}
 	int wordspace = (DISP_FONTSIZE == 10 ? 1 : 0);
 
@@ -1019,12 +1009,18 @@ static int scene_autopage(PBookViewData pView, dword * selidx)
 	return 0;
 }
 
+static int gi_search(const void *k1, const void *k2)
+{
+	const p_textrow t1 = (const p_textrow) k1;
+	const p_textrow t2 = (const p_textrow) k2;
+
+	return t1->GI - t2->GI;
+}
+
 static void jump_to_gi(dword gi)
 {
 	dword offset = 0;
 	dword i;
-
-	gi++;
 
 	for (i = 0; i < fs->row_count; ++i) {
 		p_textrow tr;

@@ -24,6 +24,19 @@
 extern t_conf config;
 extern int use_ttf;
 
+static void calc_gi(p_text txt)
+{
+	int offset, i;
+
+	for (i = 0, offset = 0; i < txt->row_count; ++i) {
+		p_textrow tr;
+
+		tr = txt->rows[i >> 10] + (i & 0x3FF);
+		offset += tr->count;
+		tr->GI = offset / 1023 + 1;
+	}
+}
+
 static void text_decode(p_text txt, t_conf_encode encode)
 {
 	if (txt->size < 2)
@@ -181,16 +194,8 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 
 #ifdef ENABLE_TTF
 		if (ttf_mode) {
-			dword count;
-
-			if (0)
-				count =
-					ttf_get_string_width_hard(cttf, ettf, (const byte *) pos,
-											  rowpixels, wordspace);
-			else
-				count = ttf_get_string_width(cttf, ettf, (const byte *) pos,
-											 rowpixels, wordspace);
-			pos += count;
+			pos += ttf_get_string_width(cttf, ettf, (const byte *) pos,
+										rowpixels, wordspace);
 		} else
 #endif
 		{
@@ -199,19 +204,6 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 			text_get_string_width(pos, posend, rowpixels, wordspace, &count);
 			pos += count;
 		}
-/*		if(pos + 1 < posend && ((*pos >= 'A' && *pos <= 'Z') || (*pos >= 'a' && *pos <= 'z')))
-		{
-			char * curp = pos - 1;
-			while(curp > startp)
-			{
-				if(*(byte *)(curp - 1) >= 0x80 || *curp == ' ' || * curp == '\t')
-				{
-					pos = curp + 1;
-					break;
-				}
-				curp --;
-			}
-		}*/
 		if (pos + 1 < posend && bytetable[*(byte *) pos] == 1) {
 			if (*pos == '\r' && *(pos + 1) == '\n')
 				pos += 2;
@@ -453,6 +445,8 @@ extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 		text_close(txt);
 		return NULL;
 	}
+
+	calc_gi(txt);
 	return txt;
 }
 
@@ -551,6 +545,7 @@ extern p_text text_open_binary(const char *filename, bool vert)
 		cbuf += 16;
 	}
 	free((void *) tmpbuf);
+	calc_gi(txt);
 	return txt;
 }
 
@@ -606,6 +601,8 @@ extern p_text text_open_in_gz(const char *gzfile, const char *filename,
 		text_close(txt);
 		return NULL;
 	}
+
+	calc_gi(txt);
 	return txt;
 }
 
@@ -719,6 +716,7 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 		cbuf += 16;
 	}
 	free((void *) tmpbuf);
+	calc_gi(txt);
 	return txt;
 }
 
@@ -757,6 +755,8 @@ extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
 		text_close(txt);
 		return NULL;
 	}
+
+	calc_gi(txt);
 	return txt;
 }
 
@@ -811,6 +811,7 @@ extern p_text text_open_in_zip(const char *zipfile, const char *filename,
 		text_close(txt);
 		return NULL;
 	}
+	calc_gi(txt);
 	return txt;
 }
 
@@ -949,6 +950,7 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 			free((void *) tmpbuf);
 
 			DBG_ASSERT(d, "txt != NULL", txt != NULL);
+			calc_gi(txt);
 			return txt;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
@@ -1007,6 +1009,7 @@ extern p_text text_open_in_rar(const char *rarfile, const char *filename,
 				text_close(txt);
 				return NULL;
 			}
+			calc_gi(txt);
 			return txt;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
@@ -1057,6 +1060,7 @@ extern p_text text_open_in_chm(const char *chmfile, const char *filename,
 		text_close(txt);
 		return NULL;
 	}
+	calc_gi(txt);
 	return txt;
 }
 

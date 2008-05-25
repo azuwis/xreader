@@ -10,6 +10,7 @@ typedef struct
 {
 	char *start;
 	dword count;
+	dword GI;
 } t_textrow, *p_textrow;
 
 typedef struct
