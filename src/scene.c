@@ -4766,7 +4766,7 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex,
 	disp_putstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *)
 				   _
-				   ("START 音乐播放控制   SELECT 选项   选项内按□进入按键设置"));
+				   ("START 音乐播放控制   SELECT 选项   选项内按○进入设置"));
 }
 
 void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,

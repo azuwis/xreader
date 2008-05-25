@@ -713,8 +713,8 @@ msgid " 调试版"
 msgstr " Debug Version"
 
 #: scene.c:4193
-msgid "START 音乐播放控制   SELECT 选项   选项内按□进入按键设置"
-msgstr "START Music play control   SELECT Settings   Press □ to enter button settings"
+msgid "START 音乐播放控制   SELECT 选项   选项内按○进入设置"
+msgstr "START Music play control   SELECT Settings   Press ○ to enter setting"
 
 #: scene.c:4216 scene.c:4257
 #, c-format
