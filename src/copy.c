@@ -15,7 +15,7 @@
 extern bool copy_file(const char *src, const char *dest, t_copy_cb cb,
 					  t_copy_overwritecb ocb, void *data)
 {
-	byte *buf = (byte *) malloc(1024 * 1024);
+	byte *buf = malloc(1024 * 1024);
 
 	if (buf == NULL)
 		return false;

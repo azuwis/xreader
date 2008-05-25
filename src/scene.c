@@ -558,7 +558,7 @@ dword scene_flkey(dword * selidx)
 	return 0;
 }
 
-static const char *GetFileExt(const char *filename)
+static const char *get_file_ext(const char *filename)
 {
 	const char *strExt = strrchr(filename, '.');
 
@@ -629,7 +629,7 @@ int scene_filelist_compare_ext(void *data1, void *data2)
 	}
 	const char *fn1 = ((p_win_menuitem) data1)->compname->ptr, *fn2 =
 		((p_win_menuitem) data2)->compname->ptr;
-	int cmp = stricmp(GetFileExt(fn1), GetFileExt(fn2));
+	int cmp = stricmp(get_file_ext(fn1), get_file_ext(fn2));
 
 	if (cmp)
 		return cmp;
@@ -4765,8 +4765,7 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex,
 	disp_fillrect(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, 479, 271, 0);
 	disp_putstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE,
 				   (const byte *)
-				   _
-				   ("START 音乐播放控制   SELECT 选项   选项内按○进入设置"));
+				   _("START 音乐播放控制   SELECT 选项   选项内按○进入设置"));
 }
 
 void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
@@ -5885,7 +5884,7 @@ extern const char *scene_appdir()
 	return appdir;
 }
 
-dword ColorLerp(dword color1, dword color2, float fWeight)
+dword lerp_color(dword color1, dword color2, float fWeight)
 {
 	fWeight = 1.0 - fWeight;
 	if (fWeight <= 0.01f)
@@ -5921,20 +5920,9 @@ static dword pspBGColorTable[12] = {
 	RGB(251, 26, 22)
 };
 
-static int s_month[] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-#define IsLeapYear(year)  (((year) % 4 == 0 && (year) % 100) || (year) % 400 == 0)
-
-int GetDaysOfMonth(int y, int m)
-{
-	return s_month[m - 1] + (m == 2) * IsLeapYear(y);
-}
-
 /* time in 24 hours */
-int GetDiffSecondOfTime(int srcHour, int srcMinute, int srcSeconds,
-						int dstHour, int dstMinute, int dstSeconds)
+int get_diff_second(int srcHour, int srcMinute, int srcSeconds,
+					int dstHour, int dstMinute, int dstSeconds)
 {
 	return (dstHour * 60 * 60 + dstMinute * 60 + dstSeconds -
 			(srcHour * 60 * 60 + srcMinute * 60 + srcSeconds));
@@ -5951,22 +5939,22 @@ dword GetBGColorByTime(void)
 	dword origColor;
 
 	origColor =
-		ColorLerp(pspBGColorTable[cur_month - 1],
-				  pspBGColorTable[next_month - 1],
-				  1.0 * tm.day / GetDaysOfMonth(tm.year, cur_month));
+		lerp_color(pspBGColorTable[cur_month - 1],
+				   pspBGColorTable[next_month - 1],
+				   1.0 * tm.day / sceRtcGetDaysInMonth(tm.year, cur_month));
 
 	if (tm.hour >= 12) {
-//      dbg_printf(d, "c1: %f", (1.0 * GetDiffSecondOfTime(tm.hour, tm.minutes, 24, 0) / (12.0 * 60)));
+//      dbg_printf(d, "c1: %f", (1.0 * get_diff_second(tm.hour, tm.minutes, 24, 0) / (12.0 * 60)));
 		origColor =
-			ColorLerp(origColor, RGB(0, 0, 0),
-					  1.0 * GetDiffSecondOfTime(tm.hour, tm.minutes, tm.seconds,
-												24, 0, 0) / (12 * 60 * 60));
+			lerp_color(origColor, RGB(0, 0, 0),
+					   1.0 * get_diff_second(tm.hour, tm.minutes, tm.seconds,
+											 24, 0, 0) / (12 * 60 * 60));
 	} else {
-//      dbg_printf(d, "c2: %f", (1.0 * GetDiffSecondOfTime(0, 0, tm.hour, tm.minutes) / (12.0 * 60.0)));
+//      dbg_printf(d, "c2: %f", (1.0 * get_diff_second(0, 0, tm.hour, tm.minutes) / (12.0 * 60.0)));
 		origColor =
-			ColorLerp(origColor, RGB(0, 0, 0),
-					  1.0 * GetDiffSecondOfTime(0, 0, 0, tm.hour, tm.minutes,
-												tm.seconds) / (12 * 60 * 60));
+			lerp_color(origColor, RGB(0, 0, 0),
+					   1.0 * get_diff_second(0, 0, 0, tm.hour, tm.minutes,
+											 tm.seconds) / (12 * 60 * 60));
 	}
 
 	return origColor;

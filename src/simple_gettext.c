@@ -60,7 +60,7 @@ char *simple_bindtextdomain(const char *domainname, const char *dirname)
 
 	PTextDomainEntry p = NULL;
 
-	p = (PTextDomainEntry) calloc(1, sizeof(TextDomainEntry));
+	p = calloc(1, sizeof(*p));
 	if (p == NULL)
 		return NULL;
 

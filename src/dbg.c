@@ -44,12 +44,9 @@ static int dbg_add_handle(DBG * d, void (*init) (void *), dbg_func writer,
 	if (!d)
 		return -1;
 	if (d->otsize) {
-		d->ot =
-			(dbg_handle *) realloc_free_when_fail(d->ot,
-												  sizeof(dbg_handle) *
-												  (d->otsize + 1));
+		d->ot = safe_realloc(d->ot, sizeof(*d->ot) * (d->otsize + 1));
 	} else {
-		d->ot = (dbg_handle *) malloc(sizeof(dbg_handle));
+		d->ot = malloc(sizeof(*d->ot));
 	}
 	dbg_set_handle(d->ot + d->otsize, init, writer, cleanup, arg);
 	d->otsize++;
@@ -61,7 +58,7 @@ static int dbg_add_handle(DBG * d, void (*init) (void *), dbg_func writer,
 
 DBG *dbg_init()
 {
-	DBG *d = (DBG *) malloc(sizeof(DBG));
+	DBG *d = malloc(sizeof(*d));
 
 	d->ot = 0;
 	d->otsize = 0;
@@ -107,7 +104,7 @@ int dbg_close_handle(DBG * d, size_t index)
 
 	if (!d || index >= d->otsize)
 		return -1;
-	newot = (dbg_handle *) malloc(sizeof(dbg_handle) * (d->otsize - 1));
+	newot = malloc(sizeof(*newot) * (d->otsize - 1));
 	if (!newot)
 		return -1;
 
@@ -216,7 +213,7 @@ void dbg_write_psp_logfile(void *arg, const char *str)
 {
 	SceUID fd = (SceUID) arg;
 	int l = strlen(str);
-	char *newstr = (char *) malloc(l + 2);
+	char *newstr = malloc(l + 2);
 
 	strcpy_s(newstr, l + 2, str);
 	if (newstr[l - 1] == '\n') {
@@ -353,14 +350,14 @@ int dbg_printf(DBG * d, const char *fmt, ...)
 	int timelen = strlen(timestr);
 
 	size = DBG_BUFSIZE;
-	buf = (char *) malloc(size + timelen + 2);
+	buf = malloc(size + timelen + 2);
 	strcpy_s(buf, size + timelen + 2, timestr);
 	strcat_s(buf, size + timelen + 2, ": ");
 	l = vsnprintf(buf + timelen + 2, size, fmt, ap);
 	buf[size + timelen + 2 - 1] = '\0';
 	while (strlen(buf) == size - 1) {
 		size *= 2 + 16;
-		buf = (char *) realloc_free_when_fail(buf, size + timelen + 2);
+		buf = safe_realloc(buf, size + timelen + 2);
 		if (!buf)
 			return 0;
 		strcpy_s(buf, size + timelen + 2, timestr);
@@ -391,12 +388,12 @@ int dbg_printf_raw(DBG * d, const char *fmt, ...)
 		return 0;
 	va_start(ap, fmt);
 	size = DBG_BUFSIZE;
-	buf = (char *) malloc(size);
+	buf = malloc(size);
 	l = vsnprintf(buf, size, fmt, ap);
 	buf[size - 1] = '\0';
 	while (strlen(buf) == size - 1) {
 		size *= 2 + 16;
-		buf = (char *) realloc_free_when_fail(buf, size);
+		buf = safe_realloc(buf, size);
 		l = vsnprintf(buf, size, fmt, ap);
 		buf[size - 1] = '\0';
 	}

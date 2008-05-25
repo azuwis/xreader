@@ -84,7 +84,7 @@ extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
 		w2 = width;
 	}
 	if (width != w2 || height != h2) {
-		imgshow = (pixel *) malloc(sizeof(pixel) * w2 * h2);
+		imgshow = malloc(sizeof(pixel) * w2 * h2);
 		if (imgshow == NULL) {
 			free((void *) imgdata);
 			return;

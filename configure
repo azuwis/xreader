@@ -1344,7 +1344,6 @@ Optional Features:
   --enable-debug   Enable debug option	default is disabled
   --enable-optimize   Enable compiler optimize option	default is enabled
   --enable-homebrew_2xx   Enable PSP firmware 2.0+ support	default is enabled
-  --enable-ge   Enable Graphics Engine option	default is enabled
   --enable-image   Enable image option	default is enabled
   --enable-bg   Enable background image option	default is enabled
   --enable-usb   Enable USB option	default is enabled
@@ -2591,13 +2590,6 @@ else
   homebrew_2xx=yes
 fi
 
-# Check whether --enable-ge was given.
-if test "${enable_ge+set}" = set; then
-  enableval=$enable_ge; ge="$enableval"
-else
-  ge=yes
-fi
-
 # Check whether --enable-image was given.
 if test "${enable_image+set}" = set; then
   enableval=$enable_image; image="$enableval"
@@ -2710,13 +2702,6 @@ if test $homebrew_2xx = "yes"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HOMEBREW_2XX 1
-_ACEOF
-
-fi
-if test $ge = "yes"; then
-
-cat >>confdefs.h <<\_ACEOF
-#define ENABLE_GE 1
 _ACEOF
 
 fi

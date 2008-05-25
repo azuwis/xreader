@@ -124,15 +124,15 @@ extern bool fat_init()
 
 static bool convert_table_fat12()
 {
-	u16 *otable = (u16 *) malloc(dbr.sec_per_fat * dbr.bytes_per_sec);
+	u16 *otable = malloc(dbr.sec_per_fat * dbr.bytes_per_sec);
 
 	if (otable == NULL)
 		return false;
 	memcpy(otable, fat_table, dbr.sec_per_fat * dbr.bytes_per_sec);
 	int i, j, entrycount =
 		dbr.sec_per_fat * dbr.bytes_per_sec / sizeof(u16) * 4 / 3;
-	free((void *) fat_table);
-	fat_table = (u32 *) malloc(sizeof(u32) * entrycount);
+	free(fat_table);
+	fat_table = malloc(sizeof(*fat_table) * entrycount);
 	if (fat_table == NULL) {
 		free((void *) otable);
 		return false;
@@ -151,15 +151,15 @@ static bool convert_table_fat12()
 
 static bool convert_table_fat16()
 {
-	u16 *otable = (u16 *) malloc(dbr.sec_per_fat * dbr.bytes_per_sec);
+	u16 *otable = malloc(dbr.sec_per_fat * dbr.bytes_per_sec);
 
 	if (otable == NULL)
 		return false;
 	memcpy(otable, fat_table, dbr.sec_per_fat * dbr.bytes_per_sec);
 	int i, entrycount = dbr.sec_per_fat * dbr.bytes_per_sec / sizeof(u16);
 
-	free((void *) fat_table);
-	fat_table = (u32 *) malloc(sizeof(u32) * entrycount);
+	free(fat_table);
+	fat_table = malloc(sizeof(*fat_table) * entrycount);
 	if (fat_table == NULL) {
 		free((void *) otable);
 		return false;
@@ -187,7 +187,7 @@ static bool fat_load_table()
 	if (sceIoLseek
 		(fatfd, dbr_pos + dbr.reserved_sec * dbr.bytes_per_sec,
 		 PSP_SEEK_SET) != dbr_pos + dbr.reserved_sec * dbr.bytes_per_sec
-		|| (fat_table = (u32 *) malloc(fat_table_size)) == NULL) {
+		|| (fat_table = malloc(fat_table_size)) == NULL) {
 		sceIoClose(fatfd);
 		fatfd = -1;
 		return false;
@@ -238,8 +238,7 @@ static bool fat_dir_list(u32 clus, u32 * count, p_fat_entry * entrys)
 		return false;
 	if (clus < 2) {
 		*count = dbr.root_entry;
-		if ((*entrys =
-			 (p_fat_entry) malloc(*count * sizeof(t_fat_entry))) == NULL)
+		if ((*entrys = malloc(*count * sizeof(**entrys))) == NULL)
 			return false;
 		if (sceIoLseek(fatfd, root_pos, PSP_SEEK_SET) != root_pos
 			|| sceIoRead(fatfd, *entrys,
@@ -262,8 +261,7 @@ static bool fat_dir_list(u32 clus, u32 * count, p_fat_entry * entrys)
 		u32 epc = (bytes_per_clus / sizeof(t_fat_entry)), ep = 0;
 
 		(*count) *= epc;
-		if ((*entrys =
-			 (p_fat_entry) malloc(*count * sizeof(t_fat_entry))) == NULL)
+		if ((*entrys = malloc(*count * sizeof(**entrys))) == NULL)
 			return false;
 		do {
 			u64 epos = data_pos + 1ull * (c2 - 2) * bytes_per_clus;
@@ -511,8 +509,7 @@ extern u32 fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 			continue;
 		count++;
 	}
-	if (count == 0
-		|| (*info = (p_fat_info) malloc(count * sizeof(t_fat_info))) == NULL) {
+	if (count == 0 || (*info = malloc(count * sizeof(**info))) == NULL) {
 		free(entrys);
 		fat_free_table();
 		sceIoDclose(dl);

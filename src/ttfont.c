@@ -43,7 +43,7 @@ extern p_ttf ttf_open(const char *filename, int size)
 	}
 	fileSize = sceIoLseek32(fd, 0, PSP_SEEK_END);
 	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	buf = (byte *) malloc(fileSize);
+	buf = malloc(fileSize);
 	if (buf == NULL) {
 		return NULL;
 	}
@@ -71,7 +71,7 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 	if (ttfBuf == NULL || ttfLength == 0 || ttfName == NULL)
 		return NULL;
 
-	if ((ttf = (p_ttf) calloc(1, sizeof(t_ttf))) == NULL) {
+	if ((ttf = calloc(1, sizeof(*ttf))) == NULL) {
 		return NULL;
 	}
 

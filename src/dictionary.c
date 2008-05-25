@@ -107,13 +107,13 @@ dictionary *dictionary_new(int size)
 	if (size < DICTMINSZ)
 		size = DICTMINSZ;
 
-	if (!(d = (dictionary *) calloc(1, sizeof(dictionary)))) {
+	if (!(d = calloc(1, sizeof(*d)))) {
 		return NULL;
 	}
 	d->size = size;
-	d->val = (char **) calloc(size, sizeof(char *));
-	d->key = (char **) calloc(size, sizeof(char *));
-	d->hash = (unsigned int *) calloc(size, sizeof(unsigned));
+	d->val = calloc(size, sizeof(char *));
+	d->key = calloc(size, sizeof(char *));
+	d->hash = calloc(size, sizeof(unsigned));
 	return d;
 }
 

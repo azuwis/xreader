@@ -186,7 +186,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 		if ((txt->row_count % 1024) == 0) {
 			curs = txt->row_count >> 10;
 			if ((txt->rows[curs] =
-				 (p_textrow) calloc(1024, sizeof(t_textrow))) == NULL)
+				 calloc(1024, sizeof(*txt->rows[curs]))) == NULL)
 				return false;
 		}
 		txt->rows[curs][txt->row_count & 0x3FF].start = pos;
@@ -311,7 +311,7 @@ static size_t text_paragraph_join_alloc_memory(char **txtbuf, size_t txtlen)
 
 	char *src = *txtbuf, *dst = NULL;
 
-	if ((dst = (char *) calloc(1, txtlen)) == NULL) {
+	if ((dst = calloc(1, txtlen)) == NULL) {
 		return text_paragraph_join_without_memory(txtbuf, txtlen);
 	}
 
@@ -332,7 +332,7 @@ static size_t text_paragraph_join_alloc_memory(char **txtbuf, size_t txtlen)
 				/*
 				   // ²åÈë¶ÎÂä¿ªÊ¼¡®¡¡¡¯×Ö·û
 				   size_t pos = p - dst;
-				   dst = realloc_free_when_fail(dst, txtlen+strlen("    "));
+				   dst = safe_realloc(dst, txtlen+strlen("    "));
 				   p = pos + dst;
 				   memcpy((char*)p, "    ", strlen("    "));
 				   p += strlen("    ");
@@ -415,7 +415,7 @@ extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 						dword wordspace, t_conf_encode encode, bool reorder)
 {
 	int fd;
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	if (txt == NULL)
 		return NULL;
@@ -425,7 +425,7 @@ extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 	}
 	STRCPY_S(txt->filename, filename);
 	txt->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	if ((txt->buf = (char *) calloc(1, txt->size + 1)) == NULL) {
+	if ((txt->buf = calloc(1, txt->size + 1)) == NULL) {
 		sceIoClose(fd);
 		text_close(txt);
 		return NULL;
@@ -453,7 +453,7 @@ extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 extern p_text text_open_binary(const char *filename, bool vert)
 {
 	int fd;
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	if (txt == NULL)
 		return NULL;
@@ -474,8 +474,8 @@ extern p_text text_open_binary(const char *filename, bool vert)
 	byte *tmpbuf;
 	dword bpr = (vert ? 43 : 66);
 
-	if ((txt->buf = (char *) calloc(1, (txt->size + 15) / 16 * bpr)) == NULL
-		|| (tmpbuf = (byte *) calloc(1, txt->size)) == NULL) {
+	if ((txt->buf = calloc(1, (txt->size + 15) / 16 * bpr)) == NULL
+		|| (tmpbuf = calloc(1, txt->size)) == NULL) {
 		sceIoClose(fd);
 		text_close(txt);
 		return NULL;
@@ -494,7 +494,7 @@ extern p_text text_open_binary(const char *filename, bool vert)
 		if ((i % 1024) == 0) {
 			curs = i >> 10;
 			if ((txt->rows[curs] =
-				 (p_textrow) calloc(1024, sizeof(t_textrow))) == NULL) {
+				 calloc(1024, sizeof(*txt->rows[curs]))) == NULL) {
 				free((void *) tmpbuf);
 				text_close(txt);
 				return NULL;
@@ -554,7 +554,7 @@ extern p_text text_open_in_gz(const char *gzfile, const char *filename,
 							  dword wordspace, t_conf_encode encode,
 							  bool reorder)
 {
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	if (txt == NULL)
 		return NULL;
@@ -611,7 +611,7 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 									  dword wordspace, t_conf_encode encode,
 									  bool reorder, bool vert)
 {
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	if (txt == NULL)
 		return NULL;
@@ -637,7 +637,7 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 		return NULL;
 	}
 	txt->size = info.uncompressed_size;
-	if ((txt->buf = (char *) calloc(1, txt->size)) == NULL) {
+	if ((txt->buf = calloc(1, txt->size)) == NULL) {
 		text_close(txt);
 		unzCloseCurrentFile(unzf);
 		unzClose(unzf);
@@ -650,7 +650,7 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 	byte *tmpbuf = (byte *) txt->buf;
 	dword bpr = (vert ? 43 : 66);
 
-	if ((txt->buf = (char *) calloc(1, (txt->size + 15) / 16 * bpr)) == NULL) {
+	if ((txt->buf = calloc(1, (txt->size + 15) / 16 * bpr)) == NULL) {
 		free(tmpbuf);
 		text_close(txt);
 		return NULL;
@@ -665,7 +665,7 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 		if ((i % 1024) == 0) {
 			curs = i >> 10;
 			if ((txt->rows[curs] =
-				 (p_textrow) calloc(1024, sizeof(t_textrow))) == NULL) {
+				 calloc(1024, sizeof(*txt->rows[curs]))) == NULL) {
 				free((void *) tmpbuf);
 				text_close(txt);
 				return NULL;
@@ -729,7 +729,7 @@ extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
 		return NULL;
 	}
 
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	if (txt == NULL)
 		return NULL;
@@ -737,7 +737,7 @@ extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
 	STRCPY_S(txt->filename, filename);
 	txt->size = size;
 
-	if ((txt->buf = (char *) calloc(1, txt->size)) == NULL) {
+	if ((txt->buf = calloc(1, txt->size)) == NULL) {
 		text_close(txt);
 		return NULL;
 	}
@@ -765,7 +765,7 @@ extern p_text text_open_in_zip(const char *zipfile, const char *filename,
 							   dword wordspace, t_conf_encode encode,
 							   bool reorder)
 {
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	if (txt == NULL)
 		return NULL;
@@ -791,7 +791,7 @@ extern p_text text_open_in_zip(const char *zipfile, const char *filename,
 		return NULL;
 	}
 	txt->size = info.uncompressed_size;
-	if ((txt->buf = (char *) calloc(1, txt->size)) == NULL) {
+	if ((txt->buf = calloc(1, txt->size)) == NULL) {
 		text_close(txt);
 		unzCloseCurrentFile(unzf);
 		unzClose(unzf);
@@ -838,7 +838,7 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 									  bool reorder, bool vert)
 {
 	byte *tmpbuf = 0;
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	DBG_ASSERT(d, "txt != null", txt != NULL);
 	if (txt == NULL)
@@ -865,7 +865,7 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 			curidx = 0;
 			STRCPY_S(txt->filename, filename);
 			txt->size = header.UnpSize;
-			if ((tmpbuf = (byte *) calloc(1, txt->size)) == NULL)
+			if ((tmpbuf = calloc(1, txt->size)) == NULL)
 				return NULL;
 			txt->buf = (char *) tmpbuf;
 			RARSetCallback(hrar, rarcbproc, (LONG) txt);
@@ -873,7 +873,7 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 
 			if (RARProcessFile(hrar, RAR_TEST, NULL, NULL) != 0
 				|| (txt->buf =
-					(char *) calloc(1, (txt->size + 15) / 16 * bpr)) == NULL) {
+					calloc(1, (txt->size + 15) / 16 * bpr)) == NULL) {
 				DBG_ASSERT(d, "RARProcessFile", 0);
 				free(tmpbuf);
 				text_close(txt);
@@ -891,7 +891,7 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 				if ((i % 1024) == 0) {
 					curs = i >> 10;
 					if ((txt->rows[curs] =
-						 (p_textrow) calloc(1024, sizeof(t_textrow))) == NULL) {
+						 calloc(1024, sizeof(*txt->rows[curs]))) == NULL) {
 						free((void *) tmpbuf);
 						text_close(txt);
 						return NULL;
@@ -964,7 +964,7 @@ extern p_text text_open_in_rar(const char *rarfile, const char *filename,
 							   dword wordspace, t_conf_encode encode,
 							   bool reorder)
 {
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	if (txt == NULL)
 		return NULL;
@@ -990,7 +990,7 @@ extern p_text text_open_in_rar(const char *rarfile, const char *filename,
 			curidx = 0;
 			STRCPY_S(txt->filename, filename);
 			txt->size = header.UnpSize;
-			if ((txt->buf = (char *) calloc(1, txt->size)) == NULL
+			if ((txt->buf = calloc(1, txt->size)) == NULL
 				|| RARProcessFile(hrar, RAR_TEST, NULL, NULL) != 0) {
 				text_close(txt);
 				RARCloseArchive(hrar);
@@ -1023,7 +1023,7 @@ extern p_text text_open_in_chm(const char *chmfile, const char *filename,
 							   dword wordspace, t_conf_encode encode,
 							   bool reorder)
 {
-	p_text txt = (p_text) calloc(1, sizeof(t_text));
+	p_text txt = calloc(1, sizeof(*txt));
 
 	if (txt == NULL)
 		return NULL;
@@ -1042,7 +1042,7 @@ extern p_text text_open_in_chm(const char *chmfile, const char *filename,
 	}
 	STRCPY_S(txt->filename, filename);
 	txt->size = ui.length;
-	if ((txt->buf = (char *) calloc(1, txt->size)) == NULL) {
+	if ((txt->buf = calloc(1, txt->size)) == NULL) {
 		text_close(txt);
 		chm_close(chm);
 		return NULL;

@@ -270,7 +270,7 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 		return false;
 	}
 	size = info.uncompressed_size;
-	if ((efont_buffer = (byte *) malloc(size)) == NULL) {
+	if ((efont_buffer = malloc(size)) == NULL) {
 		disp_free_font();
 		unzCloseCurrentFile(unzf);
 		unzClose(unzf);
@@ -291,7 +291,7 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 		return false;
 	}
 	size = info.uncompressed_size;
-	if ((cfont_buffer = (byte *) malloc(size)) == NULL) {
+	if ((cfont_buffer = malloc(size)) == NULL) {
 		disp_free_font();
 		unzCloseCurrentFile(unzf);
 		unzClose(unzf);
@@ -467,7 +467,7 @@ extern bool disp_load_font(const char *efont, const char *cfont)
 	if (fd < 0)
 		return false;
 	size = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	if ((efont_buffer = (byte *) calloc(1, size)) == NULL) {
+	if ((efont_buffer = calloc(1, size)) == NULL) {
 		sceIoClose(fd);
 		return false;
 	}
@@ -482,7 +482,7 @@ extern bool disp_load_font(const char *efont, const char *cfont)
 		return false;
 	}
 	size = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	if ((cfont_buffer = (byte *) calloc(1, size)) == NULL) {
+	if ((cfont_buffer = calloc(1, size)) == NULL) {
 		disp_free_font();
 		sceIoClose(fd);
 		return false;
@@ -531,7 +531,7 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 		return false;
 	}
 	size = info.uncompressed_size;
-	if ((book_efont_buffer = (byte *) calloc(1, size)) == NULL) {
+	if ((book_efont_buffer = calloc(1, size)) == NULL) {
 		disp_free_font();
 		unzCloseCurrentFile(unzf);
 		unzClose(unzf);
@@ -555,7 +555,7 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 		return false;
 	}
 	size = info.uncompressed_size;
-	if ((book_cfont_buffer = (byte *) calloc(1, size)) == NULL) {
+	if ((book_cfont_buffer = calloc(1, size)) == NULL) {
 		disp_free_font();
 		unzCloseCurrentFile(unzf);
 		unzClose(unzf);
@@ -591,7 +591,7 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 	if (fd < 0)
 		return false;
 	size = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	if ((book_efont_buffer = (byte *) calloc(1, size)) == NULL) {
+	if ((book_efont_buffer = calloc(1, size)) == NULL) {
 		sceIoClose(fd);
 		return false;
 	}
@@ -609,7 +609,7 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 		return false;
 	}
 	size = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	if ((book_cfont_buffer = (byte *) calloc(1, size)) == NULL) {
+	if ((book_cfont_buffer = calloc(1, size)) == NULL) {
 		disp_free_font();
 		sceIoClose(fd);
 		return false;

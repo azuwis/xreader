@@ -133,7 +133,7 @@ int buffer_prepare_append(buffer * b, size_t size)
 		/* always allocate a multiply of BUFFER_PIECE_SIZE */
 		b->size += BUFFER_PIECE_SIZE - (b->size % BUFFER_PIECE_SIZE);
 
-		char *ptr = realloc_free_when_fail(b->ptr, b->size);
+		char *ptr = safe_realloc(b->ptr, b->size);
 
 		if (ptr == NULL)
 			return -1;
@@ -341,7 +341,7 @@ buffer *buffer_array_append_get_buffer(buffer_array * b)
 		}
 	} else if (b->size == b->used) {
 		b->size += 16;
-		b->ptr = realloc_free_when_fail(b->ptr, sizeof(*b->ptr) * b->size);
+		b->ptr = safe_realloc(b->ptr, sizeof(*b->ptr) * b->size);
 		for (i = b->used; i < b->size; i++) {
 			b->ptr[i] = NULL;
 		}

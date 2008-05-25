@@ -487,8 +487,8 @@ void copy_book_view(PBookViewData dst, const PBookViewData src)
 
 PBookViewData new_book_view(PBookViewData p)
 {
-	if (!p) {
-		p = calloc(1, sizeof(BookViewData));
+	if (p == NULL) {
+		p = calloc(1, sizeof(*p));
 	}
 
 	p->rrow = INVALID;

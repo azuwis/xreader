@@ -12294,7 +12294,7 @@ extern void charsets_sjis_conv(const byte * jis, byte ** cjk, dword * newsize)
 	int i = 0, j = 0, p = 0;
 
 	istate = 0;
-	byte *cjks = (byte *) malloc(ilen + 1);
+	byte *cjks = malloc(ilen + 1);
 
 	if (cjks == NULL) {
 		*cjk = NULL;
@@ -12306,7 +12306,7 @@ extern void charsets_sjis_conv(const byte * jis, byte ** cjk, dword * newsize)
 		j += charsets_sjis2cjk(jis + i, cjks + j, &p);
 		i += p;
 		if (j >= jlen - 1) {
-			cjks = (byte *) realloc_free_when_fail(cjks, jlen + 256);
+			cjks = safe_realloc(cjks, jlen + 256);
 			if (cjks == NULL) {
 				*cjk = NULL;
 				*newsize = 0;

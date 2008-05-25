@@ -86,9 +86,9 @@ struct hash_control *hash_new()
 
 	size = DEFAULT_SIZE;
 
-	ret = (struct hash_control *) malloc(sizeof *ret);
+	ret = malloc(sizeof *ret);
 	alloc = size * sizeof(struct hash_entry *);
-	ret->table = (struct hash_entry **) malloc(alloc);
+	ret->table = malloc(alloc);
 	memset(ret->table, 0, alloc);
 	ret->size = size;
 
@@ -214,7 +214,7 @@ PTR value;
 	++table->insertions;
 #endif
 
-	p = (struct hash_entry *) malloc(sizeof(*p));
+	p = malloc(sizeof(*p));
 	p->string = key;
 	p->hash = hash;
 	p->data = value;
@@ -250,7 +250,7 @@ PTR value;
 		++table->insertions;
 #endif
 
-		p = (struct hash_entry *) malloc(sizeof(*p));
+		p = malloc(sizeof(*p));
 		p->string = key;
 		p->hash = hash;
 		p->data = value;

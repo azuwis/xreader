@@ -135,7 +135,7 @@ bool utils_is_file_exists(const char *filename)
 	return true;
 }
 
-void *realloc_free_when_fail(void *ptr, size_t size)
+void *safe_realloc(void *ptr, size_t size)
 {
 	void *p = realloc(ptr, size);
 

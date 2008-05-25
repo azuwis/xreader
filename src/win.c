@@ -349,8 +349,7 @@ extern void win_msg(const char *prompt, pixel fontcolor, pixel bordercolor,
 extern p_win_menuitem win_realloc_items(p_win_menuitem item, int orgsize,
 										int newsize)
 {
-	item = (p_win_menuitem) realloc_free_when_fail(item, sizeof(t_win_menuitem)
-												   * newsize);
+	item = safe_realloc(item, sizeof(*item) * newsize);
 	if (item == NULL)
 		return NULL;
 

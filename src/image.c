@@ -708,7 +708,7 @@ extern int image_readpng_in_rar(const char *rarfile, const char *filename,
 			rar.idx = 0;
 			int e;
 
-			if ((rar.buf = (byte *) calloc(1, rar.size)) == NULL
+			if ((rar.buf = calloc(1, rar.size)) == NULL
 				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
 				RARCloseArchive(hrar);
 				return -1;
@@ -769,9 +769,8 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 				*pwidth = GifFileIn->Image.Width;
 				*pheight = GifFileIn->Image.Height;
 				*bgcolor = gif_color(GifFileIn->SBackGroundColor);
-				if ((LineIn =
-					 (GifRowType) malloc(GifFileIn->Image.Width *
-										 sizeof(GifPixelType))) == NULL) {
+				if ((LineIn = malloc(GifFileIn->Image.Width *
+									 sizeof(*LineIn))) == NULL) {
 					DGifCloseFile(GifFileIn);
 					return 1;
 				}
@@ -938,7 +937,7 @@ extern int image_readgif_in_rar(const char *rarfile, const char *filename,
 			rar.idx = 0;
 			int e;
 
-			if ((rar.buf = (byte *) calloc(1, rar.size)) == NULL
+			if ((rar.buf = calloc(1, rar.size)) == NULL
 				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
 				RARCloseArchive(hrar);
 				return -1;
@@ -1003,8 +1002,7 @@ static int image_readjpg2(FILE * infile, dword * pwidth, dword * pheight,
 	*bgcolor = 0;
 	*pwidth = cinfo.output_width;
 	*pheight = cinfo.output_height;
-	if ((sline =
-		 (JSAMPROW) malloc(sizeof(JSAMPLE) * 3 * cinfo.output_width)) == NULL) {
+	if ((sline = malloc(sizeof(JSAMPLE) * 3 * cinfo.output_width)) == NULL) {
 		jpeg_abort_decompress(&cinfo);
 		jpeg_destroy_decompress(&cinfo);
 		return 4;
@@ -1216,7 +1214,7 @@ extern int exif_readjpg_in_rar(const char *rarfile, const char *filename,
 			rar.idx = 0;
 			int e;
 
-			if ((rar.buf = (byte *) calloc(1, rar.size)) == NULL
+			if ((rar.buf = calloc(1, rar.size)) == NULL
 				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
 				RARCloseArchive(hrar);
 				return -1;
@@ -1265,7 +1263,7 @@ extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
 			rar.idx = 0;
 			int e;
 
-			if ((rar.buf = (byte *) calloc(1, rar.size)) == NULL
+			if ((rar.buf = calloc(1, rar.size)) == NULL
 				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
 				RARCloseArchive(hrar);
 				return -1;
@@ -1498,7 +1496,7 @@ extern int image_readbmp_in_rar(const char *rarfile, const char *filename,
 			rar.idx = 0;
 			int e;
 
-			if ((rar.buf = (byte *) calloc(1, rar.size)) == NULL
+			if ((rar.buf = calloc(1, rar.size)) == NULL
 				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
 				RARCloseArchive(hrar);
 				return -1;
@@ -1535,7 +1533,7 @@ static int image_readtga2(void *handle, dword * pwidth, dword * pheight,
 	TGA *in;
 	TGAData *data;
 
-	if ((data = (TGAData *) calloc(1, sizeof(TGAData))) == NULL)
+	if ((data = calloc(1, sizeof(*data))) == NULL)
 		return 1;
 	in = TGAOpenFd(handle, nfread, nfseek, nftell);
 	if (in == NULL) {
@@ -1686,7 +1684,7 @@ extern int image_readtga_in_rar(const char *rarfile, const char *filename,
 			rar.idx = 0;
 			int e;
 
-			if ((rar.buf = (byte *) calloc(1, rar.size)) == NULL
+			if ((rar.buf = calloc(1, rar.size)) == NULL
 				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
 				RARCloseArchive(hrar);
 				return -1;

@@ -17,13 +17,9 @@ __inline bool lyric_add(p_lyric l, dword sec, dword fra, const char *line,
 						dword size)
 {
 	if (l->count == 0) {
-		l->lines = (p_lyricline) malloc(sizeof(t_lyricline) * 64);
+		l->lines = malloc(sizeof(*l->lines) * 64);
 	} else if (l->count % 64 == 0) {
-		l->lines =
-			(p_lyricline) realloc_free_when_fail(l->lines,
-												 sizeof(t_lyricline) * (64 +
-																		l->
-																		count));
+		l->lines = safe_realloc(l->lines, sizeof(*l->lines) * (64 + l->count));
 	}
 	if (l->lines == NULL) {
 		l->count = 0;
@@ -57,7 +53,7 @@ extern bool lyric_open(p_lyric l, const char *filename)
 	if (fd < 0)
 		return false;
 	l->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	if ((l->whole = (char *) malloc(l->size + 1)) == NULL) {
+	if ((l->whole = malloc(l->size + 1)) == NULL) {
 		sceIoClose(fd);
 		return false;
 	}
@@ -88,8 +84,8 @@ extern bool lyric_open(p_lyric l, const char *filename)
 								lyric_add(l, isec[j], iex[j], ts, strlen(ts));
 							if (tc > 0) {
 								tc = 0;
-								free((void *) isec);
-								free((void *) iex);
+								free(isec);
+								free(iex);
 							}
 						}
 					}
@@ -130,19 +126,13 @@ extern bool lyric_open(p_lyric l, const char *filename)
 							islyric = true;
 							sec = sec + 60.0 * minute + l->off / 1000;
 							if (tc == 0) {
-								isec = (dword *) malloc(sizeof(dword) * 16);
-								iex = (dword *) malloc(sizeof(dword) * 16);
+								isec = malloc(sizeof(*isec) * 16);
+								iex = malloc(sizeof(*iex) * 16);
 							} else if (tc % 16 == 0) {
-								isec =
-									(dword *) realloc_free_when_fail(isec,
-																	 sizeof
-																	 (dword) *
-																	 (tc + 16));
-								iex =
-									(dword *) realloc_free_when_fail(iex,
-																	 sizeof
-																	 (dword) *
-																	 (tc + 16));
+								isec = safe_realloc(isec,
+													sizeof(*isec) * (tc + 16));
+								iex = safe_realloc(iex,
+												   sizeof(*iex) * (tc + 16));
 							}
 							if (isec == NULL || iex == NULL) {
 								if (isec != NULL)

@@ -16,13 +16,13 @@
 
 Array *array_init(void)
 {
-	Array *pArr = (Array *) calloc(1, sizeof(Array));
+	Array *pArr = calloc(1, sizeof(*pArr));
 
 	assert(pArr);
 	if (pArr == NULL)
 		return NULL;
 
-	pArr->elem = (Element *) calloc(INITIAL_CAPABLE, sizeof(Element));
+	pArr->elem = calloc(INITIAL_CAPABLE, sizeof(*pArr->elem));
 	assert(pArr->elem);
 	pArr->size = 0;
 
@@ -67,9 +67,7 @@ size_t array_add_element(Array * arr, size_t pos, Element * elem)
 	if (arr->size + 1 > arr->capable) {
 		while (arr->capable <= arr->size)
 			arr->capable += INCREMENT_CAPABLE;
-		arr->elem =
-			(Element *) realloc_free_when_fail(arr->elem,
-											   arr->capable * sizeof(Element));
+		arr->elem = safe_realloc(arr->elem, arr->capable * sizeof(*arr->elem));
 		if (arr->elem == NULL)
 			return 0;
 	}
@@ -118,9 +116,7 @@ size_t array_del_element(Array * arr, size_t pos)
 	// ÊÕËõÊý×é
 	if (arr->size < arr->capable / 2 && arr->size >= INITIAL_CAPABLE) {
 		arr->capable = arr->size + INITIAL_CAPABLE;
-		arr->elem =
-			(Element *) realloc_free_when_fail(arr->elem,
-											   arr->capable * sizeof(Element));
+		arr->elem = safe_realloc(arr->elem, arr->capable * sizeof(*arr->elem));
 		if (arr->elem == NULL)
 			return 0;
 	}
@@ -177,7 +173,7 @@ Element *new_element(int i)
 {
 	Element *p;
 
-	p = (Element *) calloc(1, sizeof(Element));
+	p = calloc(1, sizeof(*p));
 	if (p == NULL)
 		return p;
 
