@@ -352,7 +352,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 	if (stricmp(dir, "ms0:/") == 0) {
 		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 		if (*mitem == NULL) {
-			free((void *) info);
+			free(info);
 			scene_power_save(true);
 			return 0;
 		}
@@ -381,7 +381,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 					win_realloc_items(*mitem, cur_count,
 									  cur_count + DIR_INC_SIZE);
 			if (*mitem == NULL) {
-				free((void *) info);
+				free(info);
 				scene_power_save(true);
 				return 0;
 			}
@@ -434,7 +434,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 		item[cur_count].data3 = info[i].filesize;
 		cur_count++;
 	}
-	free((void *) info);
+	free(info);
 	scene_power_save(true);
 	return cur_count;
 }

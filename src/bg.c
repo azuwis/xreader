@@ -86,7 +86,7 @@ extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
 	if (width != w2 || height != h2) {
 		imgshow = malloc(sizeof(pixel) * w2 * h2);
 		if (imgshow == NULL) {
-			free((void *) imgdata);
+			free(imgdata);
 			return;
 		}
 		image_zoom_bicubic(imgdata, width, height, imgshow, w2, h2);
@@ -111,10 +111,10 @@ extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
 	config.have_bg = true;
 
 	if (imgshow != imgdata)
-		free((void *) imgshow);
+		free(imgshow);
 	imgwidth = w2;
 	imgheight = h2;
-	free((void *) imgdata);
+	free(imgdata);
 }
 
 extern bool bg_display()
@@ -139,7 +139,7 @@ extern void bg_cache()
 	if (!config.have_bg)
 		return;
 	if (_cache != NULL)
-		free((void *) _cache);
+		free(_cache);
 	_cache = malloc(PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 	if (_cache == NULL)
 		return;
@@ -155,7 +155,7 @@ extern void bg_restore()
 		return;
 	memcpy(bg_start, _cache,
 		   PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
-	free((void *) _cache);
+	free(_cache);
 	_cache = NULL;
 }
 

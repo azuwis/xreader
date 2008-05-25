@@ -253,7 +253,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 					disp_flip();
 					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0,
 								  0, saveimage);
-					free((void *) saveimage);
+					free(saveimage);
 				}
 				return index;
 			case win_menu_op_cancel:
@@ -263,7 +263,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 					disp_flip();
 					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0,
 								  0, saveimage);
-					free((void *) saveimage);
+					free(saveimage);
 				}
 				return INVALID;
 			case win_menu_op_force_redraw:
@@ -280,7 +280,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 			needrp = true;
 		}
 	}
-	free((void *) saveimage);
+	free(saveimage);
 	return INVALID;
 }
 
@@ -314,7 +314,7 @@ extern bool win_msgbox(const char *prompt, const char *yesstr,
 		disp_flip();
 		disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0,
 					  saveimage);
-		free((void *) saveimage);
+		free(saveimage);
 	}
 	return result;
 }
@@ -342,7 +342,7 @@ extern void win_msg(const char *prompt, pixel fontcolor, pixel bordercolor,
 		disp_flip();
 		disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0,
 					  saveimage);
-		free((void *) saveimage);
+		free(saveimage);
 	}
 }
 

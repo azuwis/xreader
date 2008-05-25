@@ -48,8 +48,9 @@
 
 #ifdef ENABLE_IMAGE
 
-dword width, height, w2 = 0, h2 = 0, thumbw = 0, thumbh = 0, paintleft =
-	0, painttop = 0;
+dword width, height, width_rotated = 0;
+dword height_rotated = 0, thumb_width = 0, thumb_height = 0;
+dword paintleft = 0, painttop = 0;
 pixel *imgdata = NULL, *imgshow = NULL;
 pixel bgcolor = 0, thumbimg[128 * 128];
 dword oldangle = 0;
@@ -65,12 +66,11 @@ extern win_menu_predraw_data g_predraw;
 
 static volatile int secticks = 0;
 
-int open_image(dword selidx)
+static int open_image(dword selidx)
 {
 	if (exif_array) {
 		buffer_array_reset(exif_array);
 	}
-	// if imgshow share memory with imgdata, and loads image fail (imgdata = 0), we must reset imgshow.
 	bool shareimg = (imgshow == imgdata) ? true : false;
 	int result;
 
@@ -84,21 +84,21 @@ int open_image(dword selidx)
 	return result;
 }
 
-void reset_image_ptr(void)
+static void reset_image_ptr(void)
 {
 	if (imgshow != NULL && imgshow != imgdata) {
-		free((void *) imgshow);
+		free(imgshow);
 		imgshow = NULL;
 	}
 	if (imgdata != NULL) {
 		if (imgshow == imgdata)
 			imgshow = NULL;
-		free((void *) imgdata);
+		free(imgdata);
 		imgdata = NULL;
 	}
 }
 
-void report_image_error(int status)
+static void report_image_error(int status)
 {
 	char infomsg[80];
 	const char *errstr;
@@ -129,7 +129,7 @@ void report_image_error(int status)
 }
 
 // TODO: use GU to improve speed...
-void recalc_brightness()
+static void recalc_brightness()
 {
 	int i;
 
@@ -144,7 +144,7 @@ void recalc_brightness()
 	}
 }
 
-int scene_reloadimage(dword selidx)
+static int scene_reloadimage(dword selidx)
 {
 	scene_power_save(false);
 	reset_image_ptr();
@@ -169,7 +169,7 @@ int scene_reloadimage(dword selidx)
 	return 0;
 }
 
-dword scene_rotateimage()
+static dword scene_rotateimage()
 {
 	scene_power_save(false);
 	image_rotate(imgdata, &width, &height, oldangle,
@@ -178,11 +178,11 @@ dword scene_rotateimage()
 	if (config.fit > 0
 		&& (config.fit != conf_fit_custom || config.scale != 100)) {
 		if (imgshow != NULL && imgshow != imgdata)
-			free((void *) imgshow);
+			free(imgshow);
 		imgshow = NULL;
 		if (config.fit == conf_fit_custom) {
-			w2 = width * config.scale / 100;
-			h2 = height * config.scale / 100;
+			width_rotated = width * config.scale / 100;
+			height_rotated = height * config.scale / 100;
 		} else if (config.fit == conf_fit_width) {
 			config.scale = PSP_SCREEN_WIDTH / width;
 			if (config.scale > 200)
@@ -192,8 +192,8 @@ dword scene_rotateimage()
 				if (config.scale < 10)
 					config.scale = 10;
 			}
-			w2 = PSP_SCREEN_WIDTH;
-			h2 = height * PSP_SCREEN_WIDTH / width;
+			width_rotated = PSP_SCREEN_WIDTH;
+			height_rotated = height * PSP_SCREEN_WIDTH / width;
 		} else if (config.fit == conf_fit_dblwidth) {
 			config.scale = 960 / width;
 			if (config.scale > 200)
@@ -203,8 +203,8 @@ dword scene_rotateimage()
 				if (config.scale < 10)
 					config.scale = 10;
 			}
-			w2 = 960;
-			h2 = height * 960 / width;
+			width_rotated = 960;
+			height_rotated = height * 960 / width;
 		} else if (config.fit == conf_fit_dblheight) {
 			config.scale = imgh / height;
 			if (config.scale > 200)
@@ -214,8 +214,8 @@ dword scene_rotateimage()
 				if (config.scale < 10)
 					config.scale = 10;
 			}
-			h2 = imgh * 2;
-			w2 = width * imgh * 2 / height;
+			height_rotated = imgh * 2;
+			width_rotated = width * imgh * 2 / height;
 		} else {
 			config.scale = imgh / height;
 			if (config.scale > 200)
@@ -225,65 +225,70 @@ dword scene_rotateimage()
 				if (config.scale < 10)
 					config.scale = 10;
 			}
-			h2 = imgh;
-			w2 = width * imgh / height;
+			height_rotated = imgh;
+			width_rotated = width * imgh / height;
 		}
 		// sceGuCopyImage need the length to be block aligned...
-		imgshow = (pixel *) memalign(16, sizeof(pixel) * w2 * h2);
+		imgshow =
+			(pixel *) memalign(16,
+							   sizeof(pixel) * width_rotated * height_rotated);
 		if (imgshow != NULL) {
 			if (config.bicubic)
-				image_zoom_bicubic(imgdata, width, height, imgshow, w2, h2);
+				image_zoom_bicubic(imgdata, width, height, imgshow,
+								   width_rotated, height_rotated);
 			else
-				image_zoom_bilinear(imgdata, width, height, imgshow, w2, h2);
+				image_zoom_bilinear(imgdata, width, height, imgshow,
+									width_rotated, height_rotated);
 		} else {
 			imgshow = imgdata;
-			w2 = width;
-			h2 = height;
+			width_rotated = width;
+			height_rotated = height;
 		}
 	} else {
 		config.scale = 100;
 		imgshow = imgdata;
-		w2 = width;
-		h2 = height;
+		width_rotated = width;
+		height_rotated = height;
 	}
 	curleft = curtop = 0;
 	xpos = (int) config.viewpos % 3;
 	ypos = (int) config.viewpos / 3;
-	if (w2 < PSP_SCREEN_WIDTH)
-		paintleft = (PSP_SCREEN_WIDTH - w2) / 2;
+	if (width_rotated < PSP_SCREEN_WIDTH)
+		paintleft = (PSP_SCREEN_WIDTH - width_rotated) / 2;
 	else {
 		paintleft = 0;
 		switch (xpos) {
 			case 1:
-				curleft = (w2 - PSP_SCREEN_WIDTH) / 2;
+				curleft = (width_rotated - PSP_SCREEN_WIDTH) / 2;
 				break;
 			case 2:
-				curleft = w2 - PSP_SCREEN_WIDTH;
+				curleft = width_rotated - PSP_SCREEN_WIDTH;
 				break;
 		}
 	}
-	if (h2 < imgh)
-		painttop = (imgh - h2) / 2;
+	if (height_rotated < imgh)
+		painttop = (imgh - height_rotated) / 2;
 	else {
 		painttop = 0;
 		switch (ypos) {
 			case 1:
-				curtop = (h2 - imgh) / 2;
+				curtop = (height_rotated - imgh) / 2;
 				break;
 			case 2:
-				curtop = h2 - imgh;
+				curtop = height_rotated - imgh;
 				break;
 		}
 	}
 
 	if (width > height) {
-		thumbw = 128;
-		thumbh = height * 128 / width;
+		thumb_width = 128;
+		thumb_height = height * 128 / width;
 	} else {
-		thumbh = 128;
-		thumbw = width * 128 / height;
+		thumb_height = 128;
+		thumb_width = width * 128 / height;
 	}
-	image_zoom_bilinear(imgdata, width, height, thumbimg, thumbw, thumbh);
+	image_zoom_bilinear(imgdata, width, height, thumbimg, thumb_width,
+						thumb_height);
 
 	if (slideshow)
 		lasttime = time(NULL);
@@ -311,7 +316,7 @@ float get_text_len(const unsigned char *str)
 	return f;
 }
 
-float get_max_height(void)
+static float get_max_height(void)
 {
 	if (exif_array == NULL)
 		return 0;
@@ -331,21 +336,24 @@ float get_max_height(void)
 	return max_h;
 }
 
-int scene_printimage(int selidx)
+static int scene_printimage(int selidx)
 {
 	disp_waitv();
 	disp_fillvram(bgcolor);
-	disp_putimage(paintleft, painttop, w2, h2, curleft, curtop, imgshow);
+	disp_putimage(paintleft, painttop, width_rotated, height_rotated, curleft,
+				  curtop, imgshow);
 	if (config.imginfobar || showinfo) {
 		char infostr[64];
 
 		if (config.fit == conf_fit_custom)
-			SPRINTF_S(infostr, _("%dx%d  %d%%  旋转角度 %d  %s"), (int) w2,
-					  (int) h2, (int) config.scale, (int) oldangle,
+			SPRINTF_S(infostr, _("%dx%d  %d%%  旋转角度 %d  %s"),
+					  (int) width_rotated, (int) height_rotated,
+					  (int) config.scale, (int) oldangle,
 					  config.bicubic ? _("三次立方") : _("两次线性"));
 		else
-			SPRINTF_S(infostr, _("%dx%d  %s  旋转角度 %d  %s"), (int) w2,
-					  (int) h2, conf_get_fitname(config.fit), (int) oldangle,
+			SPRINTF_S(infostr, _("%dx%d  %s  旋转角度 %d  %s"),
+					  (int) width_rotated, (int) height_rotated,
+					  conf_get_fitname(config.fit), (int) oldangle,
 					  config.bicubic ? _("三次立方") : _("两次线性"));
 		int ilen = strlen(infostr);
 
@@ -405,26 +413,28 @@ int scene_printimage(int selidx)
 	if ((config.thumb == conf_thumb_always || thumb)) {
 		if (!config.imginfobar
 			|| !(config.load_exif && exif_array && exif_array->used > 0)) {
-			dword top = (PSP_SCREEN_HEIGHT - thumbh) / 2, bottom = top + thumbh;
+			dword top = (PSP_SCREEN_HEIGHT - thumb_height) / 2, bottom =
+				top + thumb_height;
 			dword thumbl = 0, thumbr = 0, thumbt = 0, thumbb = 0;
 
 			if (paintleft > 0) {
 				thumbl = 0;
-				thumbr = thumbw - 1;
+				thumbr = thumb_width - 1;
 			} else {
-				thumbl = curleft * thumbw / w2;
-				thumbr = (curleft + 479) * thumbw / w2;
+				thumbl = curleft * thumb_width / width_rotated;
+				thumbr = (curleft + 479) * thumb_width / width_rotated;
 			}
 			if (painttop > 0) {
 				thumbt = 0;
 				thumbb = thumbb - 1;
 			} else {
-				thumbt = curtop * thumbh / h2;
-				thumbb = (curtop + imgh - 1) * thumbh / h2;
+				thumbt = curtop * thumb_height / height_rotated;
+				thumbb = (curtop + imgh - 1) * thumb_height / height_rotated;
 			}
-			disp_putimage(32, top, thumbw, thumbh, 0, 0, thumbimg);
-			disp_line(34, bottom, 32 + thumbw, bottom, 0);
-			disp_line(32 + thumbw, top + 2, 32 + thumbw, bottom - 1, 0);
+			disp_putimage(32, top, thumb_width, thumb_height, 0, 0, thumbimg);
+			disp_line(34, bottom, 32 + thumb_width, bottom, 0);
+			disp_line(32 + thumb_width, top + 2, 32 + thumb_width, bottom - 1,
+					  0);
 			disp_rectangle(33 + thumbl, top + thumbt + 1, 33 + thumbr,
 						   top + thumbb + 1, 0);
 			short b =
@@ -438,7 +448,7 @@ int scene_printimage(int selidx)
 	return 0;
 }
 
-void image_up(void)
+static void image_up(void)
 {
 	if (curtop > 0) {
 		curtop -= (int) config.imgmvspd * 2;
@@ -448,17 +458,17 @@ void image_up(void)
 	}
 }
 
-void image_down(void)
+static void image_down(void)
 {
-	if (h2 > imgh && curtop < h2 - imgh) {
+	if (height_rotated > imgh && curtop < height_rotated - imgh) {
 		curtop += (int) config.imgmvspd * 2;
-		if (curtop > h2 - imgh)
-			curtop = h2 - imgh;
+		if (curtop > height_rotated - imgh)
+			curtop = height_rotated - imgh;
 		img_needrp = true;
 	}
 }
 
-void image_left(void)
+static void image_left(void)
 {
 	if (curleft > 0) {
 		curleft -= (int) config.imgmvspd * 2;
@@ -468,17 +478,18 @@ void image_left(void)
 	}
 }
 
-void image_right(void)
+static void image_right(void)
 {
-	if (w2 > PSP_SCREEN_WIDTH && curleft < w2 - PSP_SCREEN_WIDTH) {
+	if (width_rotated > PSP_SCREEN_WIDTH
+		&& curleft < width_rotated - PSP_SCREEN_WIDTH) {
 		curleft += (int) config.imgmvspd * 2;
-		if (curleft > w2 - PSP_SCREEN_WIDTH)
-			curleft = w2 - PSP_SCREEN_WIDTH;
+		if (curleft > width_rotated - PSP_SCREEN_WIDTH)
+			curleft = width_rotated - PSP_SCREEN_WIDTH;
 		img_needrp = true;
 	}
 }
 
-void image_move(dword key)
+static void image_move(dword key)
 {
 	if (key & PSP_CTRL_LEFT && !(key & PSP_CTRL_RIGHT)) {
 		image_left();
@@ -496,7 +507,7 @@ void image_move(dword key)
 	img_needrp = thumb | img_needrp;
 }
 
-int image_handle_input(dword * selidx, dword key)
+static int image_handle_input(dword * selidx, dword key)
 {
 	if (key == 0)
 		goto next;
@@ -511,11 +522,11 @@ int image_handle_input(dword * selidx, dword key)
 			imgreading = false;
 			scene_power_save(true);
 			if (imgshow != NULL && imgshow != imgdata) {
-				free((void *) imgshow);
+				free(imgshow);
 				imgshow = NULL;
 			}
 			if (imgdata != NULL) {
-				free((void *) imgdata);
+				free(imgdata);
 				imgdata = NULL;
 			}
 			disp_duptocachealpha(50);
@@ -539,10 +550,10 @@ int image_handle_input(dword * selidx, dword key)
 				switch (ypos) {
 					case 0:
 					case 1:
-						if (curtop + imgh < h2) {
+						if (curtop + imgh < height_rotated) {
 							curtop += imgh - config.imgpagereserve;
-							if (curtop + imgh > h2)
-								curtop = h2 - imgh;
+							if (curtop + imgh > height_rotated)
+								curtop = height_rotated - imgh;
 							img_needrp = true;
 							goto next;
 						}
@@ -558,15 +569,15 @@ int image_handle_input(dword * selidx, dword key)
 						break;
 				}
 				curtop = 0;
-				if (h2 > imgh && ypos == 2)
-					curtop = h2 - imgh;
+				if (height_rotated > imgh && ypos == 2)
+					curtop = height_rotated - imgh;
 				switch (xpos) {
 					case 0:
 					case 1:
-						if (curleft + PSP_SCREEN_WIDTH < w2) {
+						if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
 							curleft += PSP_SCREEN_WIDTH;
-							if (curleft + PSP_SCREEN_WIDTH > w2)
-								curleft = w2 - PSP_SCREEN_WIDTH;
+							if (curleft + PSP_SCREEN_WIDTH > width_rotated)
+								curleft = width_rotated - PSP_SCREEN_WIDTH;
 							img_needrp = true;
 							goto next;
 						}
@@ -586,10 +597,10 @@ int image_handle_input(dword * selidx, dword key)
 				switch (xpos) {
 					case 0:
 					case 1:
-						if (curleft + PSP_SCREEN_WIDTH < w2) {
+						if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
 							curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
-							if (curleft + PSP_SCREEN_WIDTH > w2)
-								curleft = w2 - PSP_SCREEN_WIDTH;
+							if (curleft + PSP_SCREEN_WIDTH > width_rotated)
+								curleft = width_rotated - PSP_SCREEN_WIDTH;
 							img_needrp = true;
 							goto next;
 						}
@@ -605,15 +616,15 @@ int image_handle_input(dword * selidx, dword key)
 						break;
 				}
 				curleft = 0;
-				if (w2 > PSP_SCREEN_WIDTH && xpos == 2)
-					curleft = w2 - PSP_SCREEN_WIDTH;
+				if (width_rotated > PSP_SCREEN_WIDTH && xpos == 2)
+					curleft = width_rotated - PSP_SCREEN_WIDTH;
 				switch (ypos) {
 					case 0:
 					case 1:
-						if (curtop + imgh < h2) {
+						if (curtop + imgh < height_rotated) {
 							curtop += imgh;
-							if (curtop + imgh > h2)
-								curtop = h2 - imgh;
+							if (curtop + imgh > height_rotated)
+								curtop = height_rotated - imgh;
 							img_needrp = true;
 							goto next;
 						}
@@ -664,18 +675,18 @@ int image_handle_input(dword * selidx, dword key)
 						}
 						break;
 					case 2:
-						if (curtop + imgh < h2) {
+						if (curtop + imgh < height_rotated) {
 							curtop += imgh - config.imgpagereserve;
-							if (curtop + imgh > h2)
-								curtop = h2 - imgh;
+							if (curtop + imgh > height_rotated)
+								curtop = height_rotated - imgh;
 							img_needrp = true;
 							goto next;
 						}
 						break;
 				}
 				curtop = 0;
-				if (h2 > imgh && ypos < 2)
-					curtop = h2 - imgh;
+				if (height_rotated > imgh && ypos < 2)
+					curtop = height_rotated - imgh;
 				switch (xpos) {
 					case 0:
 					case 1:
@@ -688,10 +699,10 @@ int image_handle_input(dword * selidx, dword key)
 						}
 						break;
 					case 2:
-						if (curleft + PSP_SCREEN_WIDTH < w2) {
+						if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
 							curleft += PSP_SCREEN_WIDTH;
-							if (curleft + PSP_SCREEN_WIDTH > w2)
-								curleft = w2 - PSP_SCREEN_WIDTH;
+							if (curleft + PSP_SCREEN_WIDTH > width_rotated)
+								curleft = width_rotated - PSP_SCREEN_WIDTH;
 							img_needrp = true;
 							goto next;
 						}
@@ -711,18 +722,18 @@ int image_handle_input(dword * selidx, dword key)
 						}
 						break;
 					case 2:
-						if (curleft + PSP_SCREEN_WIDTH < w2) {
+						if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
 							curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
-							if (curleft + PSP_SCREEN_WIDTH > w2)
-								curleft = w2 - PSP_SCREEN_WIDTH;
+							if (curleft + PSP_SCREEN_WIDTH > width_rotated)
+								curleft = width_rotated - PSP_SCREEN_WIDTH;
 							img_needrp = true;
 							goto next;
 						}
 						break;
 				}
 				curleft = 0;
-				if (w2 > PSP_SCREEN_WIDTH && xpos < 2)
-					curleft = w2 - PSP_SCREEN_WIDTH;
+				if (width_rotated > PSP_SCREEN_WIDTH && xpos < 2)
+					curleft = width_rotated - PSP_SCREEN_WIDTH;
 				switch (ypos) {
 					case 0:
 					case 1:
@@ -735,10 +746,10 @@ int image_handle_input(dword * selidx, dword key)
 						}
 						break;
 					case 2:
-						if (curtop + imgh < h2) {
+						if (curtop + imgh < height_rotated) {
 							curtop += imgh;
-							if (curtop + imgh > h2)
-								curtop = h2 - imgh;
+							if (curtop + imgh > height_rotated)
+								curtop = height_rotated - imgh;
 							img_needrp = true;
 							goto next;
 						}
@@ -766,13 +777,13 @@ int image_handle_input(dword * selidx, dword key)
 		x = x / 31 * (int) config.imgmvspd / 2;
 		y = y / 31 * (int) config.imgmvspd / 2;
 		curtop += y;
-		if (curtop + imgh > h2)
-			curtop = (int) h2 - imgh;
+		if (curtop + imgh > height_rotated)
+			curtop = (int) height_rotated - imgh;
 		if (curtop < 0)
 			curtop = 0;
 		curleft += x;
-		if (curleft + PSP_SCREEN_WIDTH > w2)
-			curleft = (int) w2 - PSP_SCREEN_WIDTH;
+		if (curleft + PSP_SCREEN_WIDTH > width_rotated)
+			curleft = (int) width_rotated - PSP_SCREEN_WIDTH;
 		if (curleft < 0)
 			curleft = 0;
 		thumb = (config.thumb == conf_thumb_scroll);
@@ -811,8 +822,8 @@ int image_handle_input(dword * selidx, dword key)
 			imgh = PSP_SCREEN_HEIGHT - DISP_FONTSIZE;
 		else
 			imgh = PSP_SCREEN_HEIGHT;
-		if (h2 > imgh && curtop > h2 - imgh)
-			curtop = h2 - imgh;
+		if (height_rotated > imgh && curtop > height_rotated - imgh)
+			curtop = height_rotated - imgh;
 		img_needrc = (config.fit == conf_fit_height);
 		img_needrp = true;
 		SceCtrlData ctl;
@@ -833,11 +844,11 @@ int image_handle_input(dword * selidx, dword key)
 			imgreading = false;
 			scene_power_save(true);
 			if (imgshow != NULL && imgshow != imgdata) {
-				free((void *) imgshow);
+				free(imgshow);
 				imgshow = NULL;
 			}
 			if (imgdata != NULL) {
-				free((void *) imgdata);
+				free(imgdata);
 				imgdata = NULL;
 			}
 			disp_duptocachealpha(50);
@@ -901,7 +912,8 @@ static void scene_image_delay_action()
 
 dword scene_readimage(dword selidx)
 {
-	w2 = 0, h2 = 0, thumbw = 0, thumbh = 0, paintleft = 0, painttop = 0;
+	width_rotated = 0, height_rotated = 0, thumb_width = 0, thumb_height =
+		0, paintleft = 0, painttop = 0;
 	imgdata = NULL, imgshow = NULL;
 	oldangle = 0;
 	curtop = 0, curleft = 0, xpos = 0, ypos = 0;
@@ -986,20 +998,20 @@ dword scene_readimage(dword selidx)
 	imgreading = false;
 	scene_power_save(false);
 	if (imgshow != NULL && imgshow != imgdata) {
-		free((void *) imgshow);
+		free(imgshow);
 		imgshow = NULL;
 	}
 	if (imgdata != NULL) {
-		free((void *) imgdata);
+		free(imgdata);
 		imgdata = NULL;
 	}
 	disp_duptocachealpha(50);
 	return selidx;
 }
 
-t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item, dword * count,
-								  dword max_height, dword * topindex,
-								  dword * index)
+static t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item,
+										 dword * count, dword max_height,
+										 dword * topindex, dword * index)
 {
 	switch (key) {
 		case (PSP_CTRL_SELECT | PSP_CTRL_START):
@@ -1062,8 +1074,8 @@ t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item, dword * count,
 	return win_menu_defcb(key, item, count, max_height, topindex, index);
 }
 
-void scene_imgkey_predraw(p_win_menuitem item, dword index, dword topindex,
-						  dword max_height)
+static void scene_imgkey_predraw(p_win_menuitem item, dword index,
+								 dword topindex, dword max_height)
 {
 	char keyname[256];
 	int left, right, upper, bottom, lines = 0;

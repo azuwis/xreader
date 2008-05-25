@@ -46,7 +46,9 @@
 #include "xrPrx/xrPrx.h"
 #include "osk.h"
 
-dword ctlkey[14], ctlkey2[14], ku, kd, kl, kr;
+#define MAX_TXT_KEY 14
+
+dword ctlkey[MAX_TXT_KEY], ctlkey2[MAX_TXT_KEY], ku, kd, kl, kr;
 static volatile int ticks = 0, secticks = 0;
 char g_titlename[256];
 bool scene_readbook_in_raw_mode = false;

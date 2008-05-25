@@ -55,7 +55,7 @@ extern bool copy_file(const char *src, const char *dest, t_copy_cb cb,
 			sceIoClose(fd2);
 			return true;
 		}
-	free((void *) buf);
+	free(buf);
 	if (cb != NULL)
 		cb(src, dest, true, data);
 	sceIoClose(fd1);

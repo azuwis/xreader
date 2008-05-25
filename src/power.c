@@ -41,10 +41,28 @@ extern void power_get_clock(dword * cpu, dword * bus)
 extern void power_get_battery(int *percent, int *lifetime, int *tempe,
 							  int *volt)
 {
-	*percent = scePowerGetBatteryLifePercent();
-	*lifetime = scePowerGetBatteryLifeTime();
-	*tempe = scePowerGetBatteryTemp();
-	*volt = scePowerGetBatteryVolt();
+	int t;
+
+	t = scePowerGetBatteryLifePercent();
+	if (t >= 0)
+		*percent = t;
+	else
+		*percent = 0;
+	t = scePowerGetBatteryLifeTime();
+	if (t >= 0)
+		*lifetime = t;
+	else
+		*lifetime = 0;
+	t = scePowerGetBatteryTemp();
+	if (t >= 0)
+		*tempe = t;
+	else
+		*tempe = 0;
+	t = scePowerGetBatteryVolt();
+	if (t >= 0)
+		*volt = scePowerGetBatteryVolt();
+	else
+		*volt = 0;
 }
 
 static int last_status = 0;

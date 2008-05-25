@@ -329,7 +329,7 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 			return;
 	}
 	memcpy(imgdata, newdata, sizeof(pixel) * *pwidth * *pheight);
-	free((void *) newdata);
+	free(newdata);
 }
 
 static unsigned image_zip_fread(void *buf, unsigned r, unsigned n, void *stream)
@@ -719,7 +719,7 @@ extern int image_readpng_in_rar(const char *rarfile, const char *filename,
 				image_readpng2((void *) &rar, pwidth, pheight, image_data,
 							   bgcolor, image_png_rar_read);
 
-			free((void *) rar.buf);
+			free(rar.buf);
 			return result;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
@@ -778,7 +778,7 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 					 (pixel *) memalign(16,
 										sizeof(pixel) * GifFileIn->Image.Width *
 										GifFileIn->Image.Height)) == NULL) {
-					free((void *) LineIn);
+					free(LineIn);
 					DGifCloseFile(GifFileIn);
 					return 1;
 				}
@@ -787,8 +787,8 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 				for (i = 0; i < GifFileIn->Image.Height; i++) {
 					if (DGifGetLine(GifFileIn, LineIn, GifFileIn->Image.Width)
 						== GIF_ERROR) {
-						free((void *) *image_data);
-						free((void *) LineIn);
+						free(*image_data);
+						free(LineIn);
 						DGifCloseFile(GifFileIn);
 						return 1;
 					}
@@ -800,9 +800,9 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 				if (DGifGetExtension(GifFileIn, &ExtCode, &Extension) ==
 					GIF_ERROR) {
 					if (*image_data != NULL)
-						free((void *) *image_data);
+						free(*image_data);
 					if (LineIn != NULL)
-						free((void *) LineIn);
+						free(LineIn);
 					DGifCloseFile(GifFileIn);
 					return 1;
 				}
@@ -810,9 +810,9 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 					if (DGifGetExtensionNext(GifFileIn, &Extension) ==
 						GIF_ERROR) {
 						if (*image_data != NULL)
-							free((void *) *image_data);
+							free(*image_data);
 						if (LineIn != NULL)
-							free((void *) LineIn);
+							free(LineIn);
 						DGifCloseFile(GifFileIn);
 						return 1;
 					}
@@ -827,7 +827,7 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 	while (RecordType != TERMINATE_RECORD_TYPE);
 
 	if (LineIn != NULL)
-		free((void *) LineIn);
+		free(LineIn);
 	DGifCloseFile(GifFileIn);
 
 	return 0;
@@ -948,7 +948,7 @@ extern int image_readgif_in_rar(const char *rarfile, const char *filename,
 				image_readgif2((void *) &rar, pwidth, pheight, image_data,
 							   bgcolor, image_gif_rar_read);
 
-			free((void *) rar.buf);
+			free(rar.buf);
 			return result;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
@@ -1011,7 +1011,7 @@ static int image_readjpg2(FILE * infile, dword * pwidth, dword * pheight,
 		 (pixel *) memalign(16,
 							sizeof(pixel) * cinfo.output_width *
 							cinfo.output_height)) == NULL) {
-		free((void *) sline);
+		free(sline);
 		jpeg_abort_decompress(&cinfo);
 		jpeg_destroy_decompress(&cinfo);
 		return 5;
@@ -1029,7 +1029,7 @@ static int image_readjpg2(FILE * infile, dword * pwidth, dword * pheight,
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "提取扫描线完成耗时:%.2f秒",
 			   pspDiffTime(&dbgnow, &dbglasttick));
-	free((void *) sline);
+	free(sline);
 	jpeg_finish_decompress(&cinfo);
 	jpeg_destroy_decompress(&cinfo);
 	return 0;
@@ -1226,7 +1226,7 @@ extern int exif_readjpg_in_rar(const char *rarfile, const char *filename,
 					   pspDiffTime(&dbgnow, &dbglasttick));
 			exif_data = exif_data_new_from_data(rar.buf, rar.size);
 			exif_viewer(exif_data);
-			free((void *) rar.buf);
+			free(rar.buf);
 			return 0;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
@@ -1281,7 +1281,7 @@ extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
 				exif_data = exif_data_new_from_data(rar.buf, rar.size);
 				exif_viewer(exif_data);
 			}
-			free((void *) rar.buf);
+			free(rar.buf);
 			return result;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
@@ -1409,7 +1409,7 @@ static int image_readbmp2(void *handle, dword * pwidth, dword * pheight,
 	*bgcolor = 0;
 	int result = image_bmp_to_32color(bmp, pwidth, pheight, image_data);
 
-	free((void *) bmp);
+	free(bmp);
 	return result;
 }
 
@@ -1507,7 +1507,7 @@ extern int image_readbmp_in_rar(const char *rarfile, const char *filename,
 				image_readbmp2((FILE *) & rar, pwidth, pheight, image_data,
 							   bgcolor, image_rar_fread);
 
-			free((void *) rar.buf);
+			free(rar.buf);
 			return result;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
@@ -1518,12 +1518,12 @@ extern int image_readbmp_in_rar(const char *rarfile, const char *filename,
 static void image_freetgadata(TGAData * data)
 {
 	if (data->img_id != NULL)
-		free((void *) data->img_id);
+		free(data->img_id);
 	if (data->cmap != NULL)
-		free((void *) data->cmap);
+		free(data->cmap);
 	if (data->img_data != NULL);
-	free((void *) data->img_data);
-	free((void *) data);
+	free(data->img_data);
+	free(data);
 }
 
 static int image_readtga2(void *handle, dword * pwidth, dword * pheight,
@@ -1696,7 +1696,7 @@ extern int image_readtga_in_rar(const char *rarfile, const char *filename,
 							   bgcolor, image_rar_fread, image_rar_fseek,
 							   image_rar_ftell);
 
-			free((void *) rar.buf);
+			free(rar.buf);
 			return result;
 		}
 	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);

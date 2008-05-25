@@ -134,7 +134,7 @@ static bool convert_table_fat12()
 	free(fat_table);
 	fat_table = malloc(sizeof(*fat_table) * entrycount);
 	if (fat_table == NULL) {
-		free((void *) otable);
+		free(otable);
 		return false;
 	}
 	for (i = 0, j = 0; i < entrycount; i += 4, j += 3) {
@@ -145,7 +145,7 @@ static bool convert_table_fat12()
 			((otable[j + 1] >> 8) & 0x00FF) | ((otable[j + 2] & 0x000F) << 8);
 		fat_table[i + 3] = otable[j + 2] >> 4;
 	}
-	free((void *) otable);
+	free(otable);
 	return true;
 }
 
@@ -161,12 +161,12 @@ static bool convert_table_fat16()
 	free(fat_table);
 	fat_table = malloc(sizeof(*fat_table) * entrycount);
 	if (fat_table == NULL) {
-		free((void *) otable);
+		free(otable);
 		return false;
 	}
 	for (i = 0; i < entrycount; i++)
 		fat_table[i] = otable[i];
-	free((void *) otable);
+	free(otable);
 	return true;
 }
 
@@ -199,7 +199,7 @@ static bool fat_load_table()
 															 ())) {
 		sceIoClose(fatfd);
 		fatfd = -1;
-		free((void *) fat_table);
+		free(fat_table);
 		fat_table = NULL;
 		return false;
 	}
@@ -214,7 +214,7 @@ static void fat_free_table()
 		if (loadcount > 0)
 			return;
 		if (fat_table != NULL) {
-			free((void *) fat_table);
+			free(fat_table);
 			fat_table = NULL;
 		}
 		sceIoClose(fatfd);
@@ -244,7 +244,7 @@ static bool fat_dir_list(u32 clus, u32 * count, p_fat_entry * entrys)
 			|| sceIoRead(fatfd, *entrys,
 						 *count * sizeof(t_fat_entry)) !=
 			*count * sizeof(t_fat_entry)) {
-			free((void *) *entrys);
+			free(*entrys);
 			return false;
 		}
 	} else {
@@ -269,7 +269,7 @@ static bool fat_dir_list(u32 clus, u32 * count, p_fat_entry * entrys)
 			if (sceIoLseek(fatfd, epos, PSP_SEEK_SET) != epos
 				|| sceIoRead(fatfd, &(*entrys)[ep],
 							 bytes_per_clus) != bytes_per_clus) {
-				free((void *) *entrys);
+				free(*entrys);
 				return false;
 			}
 			ep += epc;
@@ -408,7 +408,7 @@ extern bool fat_locate(const char *name, char *sname, u32 clus,
 				if ((u8) entrys[i].norm.filename[0] == 0xE5)
 					entrys[i].norm.filename[0] = 0x05;
 				memcpy(info, &entrys[i], sizeof(t_fat_entry));
-				free((void *) entrys);
+				free(entrys);
 				strcat_s(sname, 256, sid.d_name);
 				if ((entrys[i].norm.attr & FAT_FILEATTR_DIRECTORY) > 0)
 					strcat_s(sname, 256, "/");
@@ -423,7 +423,7 @@ extern bool fat_locate(const char *name, char *sname, u32 clus,
 				continue;
 			if (stricmp(name, longnames) == 0) {
 				memcpy(info, &entrys[i], sizeof(t_fat_entry));
-				free((void *) entrys);
+				free(entrys);
 				strcat_s(sname, 256, sid.d_name);
 				if ((entrys[i].norm.attr & FAT_FILEATTR_DIRECTORY) > 0)
 					strcat_s(sname, 256, "/");
@@ -432,7 +432,7 @@ extern bool fat_locate(const char *name, char *sname, u32 clus,
 			}
 		}
 	}
-	free((void *) entrys);
+	free(entrys);
 	sceIoDclose(dl);
 	return false;
 }

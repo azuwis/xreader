@@ -762,7 +762,9 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 					img_needrf = img_needrc = img_needrp = true;
 					break;
 				case 8:
+#ifdef ENABLE_ANALOG
 					config.img_enable_analog = !config.img_enable_analog;
+#endif
 					break;
 				case 9:
 					config.load_exif = !config.load_exif;
@@ -817,7 +819,9 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 					img_needrf = img_needrc = img_needrp = true;
 					break;
 				case 8:
+#ifdef ENABLE_ANALOG
 					config.img_enable_analog = !config.img_enable_analog;
+#endif
 					break;
 				case 9:
 					config.load_exif = !config.load_exif;
@@ -941,6 +945,7 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) infomsg);
 	lines++;
+#ifdef ENABLE_ANALOG
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
@@ -948,6 +953,12 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   config.
 				   img_enable_analog ? (const byte *) _("是") : (const byte *)
 				   _("否"));
+#else
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE, (const byte *) _("已关闭"));
+#endif
 	lines++;
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
@@ -1522,7 +1533,9 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 						config.autolinedelay = 0;
 					break;
 				case 11:
+#ifdef ENABLE_ANALOG
 					config.enable_analog = !config.enable_analog;
+#endif
 					break;
 			}
 			return win_menu_op_redraw;
@@ -1578,7 +1591,9 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 						config.autolinedelay = 1000;
 					break;
 				case 11:
+#ifdef ENABLE_ANALOG
 					config.enable_analog = !config.enable_analog;
+#endif
 					break;
 			}
 			return win_menu_op_redraw;
@@ -1702,6 +1717,7 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 					   COLOR_WHITE, (const byte *) _("已关闭"));
 		lines++;
 	}
+#ifdef ENABLE_ANALOG
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
@@ -1709,6 +1725,12 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   config.
 				   enable_analog ? (const byte *) _("是") : (const byte *)
 				   _("否"));
+#else
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE, (const byte *) _("已关闭"));
+#endif
 	lines++;
 }
 
@@ -3410,7 +3432,7 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item,
 					disp_flip();
 					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0,
 								  0, saveimage);
-					free((void *) saveimage);
+					free(saveimage);
 				}
 
 				return win_menu_op_cancel;
@@ -3634,7 +3656,7 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 								preview.rows[0][i].count,
 								config.fontsize <= 10 ? 1 : 0, 0, DISP_FONTSIZE,
 								0);
-			free((void *) preview.rows[0]);
+			free(preview.rows[0]);
 		}
 		DISP_BOOK_FONTSIZE = old_book_fontsize;
 	}
@@ -4039,6 +4061,616 @@ int scene_single_file_ops_draw(p_win_menuitem item, dword selidx)
 	return 0;
 }
 
+static void scene_fileops_menu_draw(int selcount, p_win_menuitem item,
+									dword selidx, int mp3count, int dircount,
+									int bmcount)
+{
+	disp_duptocachealpha(50);
+	int left, right;
+
+	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0) {
+		left = 240 - DISP_FONTSIZE * 3 - 1;
+		right = 240 + DISP_FONTSIZE * 3 + 1;
+	} else {
+		left = 240 - DISP_FONTSIZE * 3 - 1;
+		right = 240 + DISP_FONTSIZE * 12 + 1;
+	}
+
+	disp_rectangle(left, 136 - DISP_FONTSIZE * 3 - 1,
+				   right, 136 + DISP_FONTSIZE * 5, COLOR_WHITE);
+	disp_fillrect(left + 1, 136 - DISP_FONTSIZE * 3,
+				  right - 1, 136 + DISP_FONTSIZE * 5 - 1, config.msgbcolor);
+	disp_putstring(left + 1, 136 - DISP_FONTSIZE * 3,
+				   COLOR_WHITE, (const byte *) _("△  退出操作"));
+	if (selcount <= 1 && strcmp(item[selidx].compname->ptr, "..") != 0) {
+		scene_single_file_ops_draw(item, selidx);
+	} else {
+		if (mp3count + dircount > 0 && bmcount > 0) {
+			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
+						   COLOR_WHITE, (const byte *) _("○  添加音乐"));
+			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
+						   COLOR_WHITE, (const byte *) _("□  导入书签"));
+		} else if (mp3count + dircount > 0) {
+			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
+						   COLOR_WHITE, (const byte *) _("○  添加音乐"));
+			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
+						   COLOR_WHITE, (const byte *) _("□  添加音乐"));
+		} else if (bmcount > 0) {
+			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
+						   COLOR_WHITE, (const byte *) _("○  导入书签"));
+			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
+						   COLOR_WHITE, (const byte *) _("□  导入书签"));
+		}
+	}
+	if (where == scene_in_dir) {
+		if (selcount > 1 || strcmp(item[selidx].compname->ptr, "..") != 0) {
+			if (strnicmp(config.path, "ms0:/", 5) == 0) {
+				if (config.allowdelete)
+					disp_putstring(240 - DISP_FONTSIZE * 3, 136,
+								   COLOR_WHITE, (const byte *) _("×    删除"));
+				disp_putstring(240 - DISP_FONTSIZE * 3,
+							   136 + DISP_FONTSIZE * 2, COLOR_WHITE,
+							   (const byte *) _(" R    剪切"));
+			}
+			if (config.path[0] != 0)
+				disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
+							   COLOR_WHITE, (const byte *) _(" L    复制"));
+		}
+		if (strnicmp(config.path, "ms0:/", 5) == 0
+			&& ((copycount > 0 && stricmp(copydir, config.shortpath) != 0)
+				|| (cutcount > 0 && stricmp(cutdir, config.shortpath) != 0)))
+			disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE * 3,
+						   COLOR_WHITE, (const byte *) _("START 粘贴"));
+	}
+	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
+		if (selcount > 1 || strcmp(item[selidx].compname->ptr, "..") != 0) {
+			if (config.path[0] != 0)
+				disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
+							   COLOR_WHITE, (const byte *) _(" L    复制"));
+		}
+	}
+}
+
+static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
+												t_win_menu_op * retop,
+												p_win_menuitem item,
+												dword selidx, dword * index,
+												dword mp3count, dword dircount,
+												dword bmcount, dword selcount)
+{
+	switch (key) {
+		case PSP_CTRL_TRIANGLE:
+			*inop = false;
+			*retop = win_menu_op_continue;
+			break;
+		case PSP_CTRL_CROSS:
+			if (!config.allowdelete || where != scene_in_dir
+				|| strnicmp(config.path, "ms0:/", 5) != 0)
+				break;
+			if (win_msgbox
+				(_("删除所选文件？"), _("是"), _("否"),
+				 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
+				char fn[PATH_MAX];
+
+				config.lastfile[0] = 0;
+				dword sidx;
+
+				for (sidx = 0; sidx < filecount; sidx++)
+					if (item[sidx].selected) {
+						STRCPY_S(fn, config.shortpath);
+						STRCAT_S(fn, item[sidx].shortname->ptr);
+						if ((t_fs_filetype) item[sidx].data == fs_filetype_dir) {
+							if (!utils_del_dir(fn)) {
+								win_msg(_("删除目录失败!"), COLOR_WHITE,
+										COLOR_WHITE, config.msgbcolor);
+								return win_menu_op_redraw;
+							}
+						} else {
+							if (!utils_del_file(fn)) {
+								win_msg(_("删除文件失败!"), COLOR_WHITE,
+										COLOR_WHITE, config.msgbcolor);
+								return win_menu_op_redraw;
+							}
+						}
+						if (config.lastfile[0] == 0) {
+							int idx = sidx + 1;
+
+							while (idx < filecount && item[idx].selected)
+								idx++;
+							if (idx < filecount)
+								STRCPY_S(config.lastfile,
+										 item[idx].compname->ptr);
+							else if (sidx > 0)
+								STRCPY_S(config.lastfile,
+										 item[idx - 1].compname->ptr);
+						}
+					}
+				*retop = win_menu_op_cancel;
+			}
+			*inop = false;
+			break;
+		case PSP_CTRL_SQUARE:
+			if (selcount <= 1) {
+				dword sidx = selidx;
+
+				switch ((t_fs_filetype) item[sidx].data) {
+#ifdef ENABLE_MUSIC
+					case fs_filetype_dir:
+						if (win_msgbox
+							(_("添加目录内所有歌曲到播放列表？"),
+							 _("是"), _("否"),
+							 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
+							char cfn[PATH_MAX];
+
+							SPRINTF_S(cfn, "%s%s/", config.path,
+									  item[sidx].compname->ptr);
+							mp3_list_add_dir(cfn);
+							win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
+									COLOR_WHITE, config.msgbcolor);
+						}
+						break;
+					case fs_filetype_mp3:
+					case fs_filetype_aa3:
+#ifdef ENABLE_WMA
+					case fs_filetype_wma:
+#endif
+						if (win_msgbox
+							(_("添加歌曲到播放列表？"), _("是"),
+							 _("否"), COLOR_WHITE, COLOR_WHITE,
+							 config.msgbcolor)) {
+							char mp3name[PATH_MAX], mp3longname[PATH_MAX];
+
+							STRCPY_S(mp3name, config.shortpath);
+							STRCAT_S(mp3name, filelist[sidx].shortname->ptr);
+							STRCPY_S(mp3longname, config.path);
+							STRCAT_S(mp3longname, filelist[sidx].compname->ptr);
+							mp3_list_add(mp3name, mp3longname);
+							win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
+									COLOR_WHITE, config.msgbcolor);
+						}
+						break;
+#endif
+#ifdef ENABLE_PMPAVC
+					case fs_filetype_pmp:
+						if (where == scene_in_dir) {
+							pmp_restart = true;
+							*retop = win_menu_op_ok;
+						}
+						break;
+#endif
+#ifdef ENABLE_BG
+					case fs_filetype_png:
+					case fs_filetype_gif:
+					case fs_filetype_jpg:
+					case fs_filetype_tga:
+					case fs_filetype_bmp:
+						{
+							set_background_image(item, index);
+						}
+						break;
+#endif
+					default:
+						g_force_text_view_mode = true;
+						*retop = win_menu_op_ok;
+						break;
+				}
+			} else if (mp3count + dircount == 0 && bmcount == 0)
+				break;
+			else {
+				if (where != scene_in_dir)
+					break;
+				if (bmcount > 0) {
+					if (!win_msgbox
+						(_("是否要导入书签？"), _("是"),
+						 _("否"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor))
+						break;
+				} else {
+					if (!win_msgbox
+						(_("添加歌曲到播放列表？"), _("是"),
+						 _("否"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor))
+						break;
+				}
+				dword sidx;
+
+				for (sidx = 0; sidx < filecount; sidx++)
+					if (item[sidx].selected) {
+						switch ((t_fs_filetype) item[sidx].data) {
+#ifdef ENABLE_MUSIC
+							case fs_filetype_dir:
+								if (bmcount == 0) {
+									char cfn[PATH_MAX];
+
+									SPRINTF_S(cfn, "%s%s/", config.path,
+											  item[sidx].compname->ptr);
+									mp3_list_add_dir(cfn);
+								}
+								break;
+#endif
+							case fs_filetype_ebm:
+								if (bmcount > 0) {
+									char bmfn[PATH_MAX];
+
+									STRCPY_S(bmfn, config.path);
+									STRCAT_S(bmfn, item[sidx].shortname->ptr);
+									bookmark_import(bmfn);
+								}
+								break;
+#ifdef ENABLE_MUSIC
+							case fs_filetype_mp3:
+							case fs_filetype_aa3:
+#ifdef ENABLE_WMA
+							case fs_filetype_wma:
+#endif
+								if (bmcount == 0) {
+									char mp3name[PATH_MAX],
+										mp3longname[PATH_MAX];
+
+									STRCPY_S(mp3name, config.shortpath);
+									STRCAT_S(mp3name,
+											 filelist[sidx].shortname->ptr);
+									STRCPY_S(mp3longname, config.path);
+									STRCAT_S(mp3longname,
+											 filelist[sidx].compname->ptr);
+									mp3_list_add(mp3name, mp3longname);
+								}
+								break;
+#endif
+							default:
+								break;
+						}
+					}
+				if (mp3count + dircount == 0 && bmcount > 0)
+					win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE,
+							config.msgbcolor);
+#ifdef ENABLE_MUSIC
+				else if (mp3count + dircount > 0)
+					win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
+							COLOR_WHITE, config.msgbcolor);
+#endif
+			}
+			*inop = false;
+			break;
+		case PSP_CTRL_CIRCLE:
+			if (selcount <= 1)
+				*retop = win_menu_op_ok;
+			else if (mp3count + dircount == 0 && bmcount == 0)
+				break;
+			else {
+				if (where != scene_in_dir)
+					break;
+				if (mp3count + dircount == 0) {
+					if (!win_msgbox
+						(_("是否要导入书签？"), _("是"),
+						 _("否"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor))
+						break;
+				}
+#ifdef ENABLE_MUSIC
+				else {
+					if (!win_msgbox
+						(_("添加歌曲到播放列表？"), _("是"),
+						 _("否"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor))
+						break;
+				}
+#endif
+				dword sidx;
+
+				for (sidx = 0; sidx < filecount; sidx++)
+					if (item[sidx].selected) {
+						switch ((t_fs_filetype) item[sidx].data) {
+#ifdef ENABLE_MUSIC
+							case fs_filetype_dir:
+								if (dircount > 0) {
+									char cfn[PATH_MAX];
+
+									SPRINTF_S(cfn, "%s%s/", config.path,
+											  item[sidx].compname->ptr);
+									mp3_list_add_dir(cfn);
+								}
+								break;
+#endif
+							case fs_filetype_ebm:
+								if (mp3count + dircount == 0) {
+									char bmfn[PATH_MAX];
+
+									STRCPY_S(bmfn, config.path);
+									STRCAT_S(bmfn, item[sidx].shortname->ptr);
+									bookmark_import(bmfn);
+								}
+								break;
+#ifdef ENABLE_MUSIC
+							case fs_filetype_mp3:
+							case fs_filetype_aa3:
+#ifdef ENABLE_WMA
+							case fs_filetype_wma:
+#endif
+								if (mp3count > 0) {
+									char mp3name[PATH_MAX],
+										mp3longname[PATH_MAX];
+
+									STRCPY_S(mp3name, config.shortpath);
+									STRCAT_S(mp3name,
+											 filelist[sidx].shortname->ptr);
+									STRCPY_S(mp3longname, config.path);
+									STRCAT_S(mp3longname,
+											 filelist[sidx].compname->ptr);
+									mp3_list_add(mp3name, mp3longname);
+								}
+								break;
+#endif
+							default:
+								break;
+						}
+					}
+				if (mp3count + dircount == 0 && bmcount > 0)
+					win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE,
+							config.msgbcolor);
+#ifdef ENABLE_MUSIC
+				else if (mp3count + dircount > 0)
+					win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
+							COLOR_WHITE, config.msgbcolor);
+#endif
+			}
+			*inop = false;
+			break;
+		case PSP_CTRL_LTRIGGER:
+			if (copycount > 0 && copylist != NULL) {
+				win_item_destroy(&copylist, &copycount);
+			}
+			if (cutcount > 0 && cutlist != NULL) {
+				win_item_destroy(&cutlist, &cutcount);
+			}
+			if (where == scene_in_dir) {
+				copy_archmode = false;
+				STRCPY_S(copydir, config.shortpath);
+			} else {
+				copy_archmode = true;
+				copy_where = where;
+				STRCPY_S(copydir, config.shortpath);
+			}
+			copylist =
+				win_realloc_items(NULL, 0, (selcount > 0 ? selcount : 1));
+			if (selcount < 1) {
+				copycount = 1;
+				win_copy_item(&copylist[0], &filelist[selidx]);
+			} else {
+				copycount = selcount;
+				dword sidx = 0;
+
+				for (selidx = 0; selidx < filecount; selidx++)
+					if (item[selidx].selected)
+						win_copy_item(&copylist[sidx++], &filelist[selidx]);
+			}
+			*inop = false;
+			break;
+		case PSP_CTRL_RTRIGGER:
+			if (where != scene_in_dir || strnicmp(config.path, "ms0:/", 5) != 0)
+				break;
+			if (copycount > 0 && copylist != NULL) {
+				copycount = 0;
+				free(copylist);
+				copylist = NULL;
+			}
+			if (cutcount > 0 && cutlist != NULL) {
+				cutcount = 0;
+				free(cutlist);
+				cutlist = NULL;
+			}
+			STRCPY_S(cutdir, config.shortpath);
+			cutlist = win_realloc_items(NULL, 0, (selcount > 0 ? selcount : 1));
+			if (selcount < 1) {
+				cutcount = 1;
+				win_copy_item(&cutlist[0], &filelist[selidx]);
+			} else {
+				cutcount = selcount;
+				dword sidx = 0;
+
+				for (selidx = 0; selidx < filecount; selidx++)
+					if (item[selidx].selected)
+						win_copy_item(&cutlist[sidx++], &filelist[selidx]);
+			}
+			*inop = false;
+			break;
+		case PSP_CTRL_START:
+			if (strnicmp(config.path, "ms0:/", 5) != 0)
+				break;
+//                  if (where != scene_in_dir
+//                      || strnicmp(config.path, "ms0:/", 5) != 0)
+//                      break;
+			if (copycount > 0) {
+				dword sidx;
+
+				for (sidx = 0; sidx < copycount; sidx++) {
+					scene_copy_files(sidx);
+				}
+				STRCPY_S(config.lastfile, item[*index].compname->ptr);
+				*retop = win_menu_op_cancel;
+				*inop = false;
+			} else if (cutcount > 0) {
+				dword sidx;
+
+				for (sidx = 0; sidx < cutcount; sidx++) {
+					char cutsrc[PATH_MAX], cutdest[PATH_MAX];
+
+					STRCPY_S(cutsrc, cutdir);
+					STRCAT_S(cutsrc, cutlist[sidx].shortname->ptr);
+					STRCPY_S(cutdest, config.shortpath);
+					STRCAT_S(cutdest, cutlist[sidx].shortname->ptr);
+					dword result;
+
+					if ((t_fs_filetype) cutlist[sidx].data == fs_filetype_dir)
+						result = (dword) move_dir(cutsrc, cutdest, NULL,
+												  confirm_overwrite, NULL);
+					else
+						result = move_file(cutsrc, cutdest, NULL,
+										   confirm_overwrite, NULL);
+					if (result == (dword) false) {
+						win_msg(_("文件/目录移动失败!"), COLOR_WHITE,
+								COLOR_WHITE, config.msgbcolor);
+					}
+				}
+				STRCPY_S(config.lastfile, item[*index].compname->ptr);
+				*retop = win_menu_op_cancel;
+				*inop = false;
+				cutcount = 0;
+				free(cutlist);
+				cutlist = NULL;
+			}
+			break;
+		case PSP_CTRL_SELECT:
+			{
+				if (((t_fs_filetype) filelist[selidx].data) != fs_filetype_jpg)
+					break;
+				int result;
+				dword width, height;
+				pixel *imgdata = NULL;
+				pixel bgcolor = 0;
+				char filename[PATH_MAX];
+
+				if (where == scene_in_zip || where == scene_in_chm
+					|| where == scene_in_rar)
+					STRCPY_S(filename, filelist[selidx].compname->ptr);
+				else {
+					STRCPY_S(filename, config.shortpath);
+					STRCAT_S(filename, filelist[selidx].shortname->ptr);
+				}
+
+				switch (where) {
+					case scene_in_zip:
+						result =
+							exif_readjpg_in_zip(config.shortpath,
+												filename, &width,
+												&height, &imgdata, &bgcolor);
+						break;
+					case scene_in_chm:
+						result =
+							exif_readjpg_in_chm(config.shortpath,
+												filename, &width,
+												&height, &imgdata, &bgcolor);
+						break;
+					case scene_in_rar:
+						result =
+							exif_readjpg_in_rar(config.shortpath,
+												filename, &width,
+												&height, &imgdata, &bgcolor);
+						break;
+					default:
+						{
+							result =
+								exif_readjpg(filename, &width, &height,
+											 &imgdata, &bgcolor);
+						}
+						break;
+				}
+
+				free(imgdata);
+
+				*inop = false;
+				if (exif_array && exif_array->used) {
+					char infotitle[256];
+
+					if (strrchr(filename, '/') != NULL) {
+						SPRINTF_S(infotitle, _("%s的EXIF信息"),
+								  strrchr(filename, '/') + 1);
+					} else
+						SPRINTF_S(infotitle, _("%s的EXIF信息"), filename);
+					infotitle[255] = '\0';
+					buffer *b = buffer_init();
+					int i;
+
+					for (i = 0; i < exif_array->used - 1; ++i) {
+						buffer_append_string(b, exif_array->ptr[i]->ptr);
+						buffer_append_string(b, "\r\n");
+					}
+					buffer_append_string(b, exif_array->ptr[i]->ptr);
+
+					scene_readbook_raw(infotitle,
+									   (const unsigned char *) b->ptr,
+									   b->used, fs_filetype_txt);
+					g_force_text_view_mode = false;
+					buffer_free(b);
+				} else
+					win_msg(_("无EXIF信息"), COLOR_WHITE, COLOR_WHITE,
+							config.msgbcolor);
+			}
+			break;
+	}
+
+	return win_menu_op_continue;
+}
+
+static t_win_menu_op scene_fileops(p_win_menuitem item, dword * index)
+{
+	int sel, selcount = 0, selidx = 0, bmcount = 0, dircount = 0, mp3count = 0;
+
+	for (sel = 0; sel < filecount; sel++)
+		if (item[sel].selected) {
+			selidx = sel;
+			selcount++;
+			switch ((t_fs_filetype) item[selidx].data) {
+				case fs_filetype_dir:
+					dircount++;
+					break;
+#ifdef ENABLE_MUSIC
+				case fs_filetype_mp3:
+				case fs_filetype_aa3:
+#ifdef ENABLE_WMA
+				case fs_filetype_wma:
+#endif
+					mp3count++;
+					break;
+#endif
+				case fs_filetype_ebm:
+					bmcount++;
+					break;
+				default:
+					break;
+			}
+		}
+	if (selcount == 0)
+		selidx = *index;
+	if (selcount <= 1 && strcmp(item[selidx].compname->ptr, "..") == 0
+		&& cutcount + copycount <= 0)
+		return win_menu_op_continue;
+	if (selcount == 0)
+		item[selidx].selected = true;
+	pixel *saveimage = (pixel *) memalign(16,
+										  PSP_SCREEN_WIDTH *
+										  PSP_SCREEN_HEIGHT * sizeof(pixel));
+	if (saveimage)
+		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
+
+	scene_fileops_menu_draw(selcount, item, selidx, mp3count, dircount,
+							bmcount);
+	disp_flip();
+	bool inop = true;
+	t_win_menu_op retop = win_menu_op_continue;
+
+	while (inop) {
+		dword key = ctrl_waitany();
+
+		t_win_menu_op op =
+			scene_fileops_handle_input(key, &inop, &retop, item, selidx, index,
+									   mp3count, dircount,
+									   bmcount, selcount);
+
+		if (op != win_menu_op_continue) {
+			return op;
+		}
+	}
+	if (selcount == 0)
+		item[selidx].selected = false;
+	if (saveimage) {
+		disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0,
+					  saveimage);
+		disp_flip();
+		disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0,
+					  saveimage);
+		free(saveimage);
+		saveimage = NULL;
+	}
+	return retop;
+}
+
 t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 									dword * count, dword max_height,
 									dword * topindex, dword * index)
@@ -4062,606 +4694,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 			++ * index;
 		return win_menu_op_redraw;
 	} else if (key == config.flkey[5] || key == config.flkey2[5]) {
-		int sel, selcount = 0, selidx = 0, sidx, bmcount = 0, dircount =
-			0, mp3count = 0;
-		for (sel = 0; sel < filecount; sel++)
-			if (item[sel].selected) {
-				selidx = sel;
-				selcount++;
-				switch ((t_fs_filetype) item[selidx].data) {
-					case fs_filetype_dir:
-						dircount++;
-						break;
-#ifdef ENABLE_MUSIC
-					case fs_filetype_mp3:
-					case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-					case fs_filetype_wma:
-#endif
-						mp3count++;
-						break;
-#endif
-					case fs_filetype_ebm:
-						bmcount++;
-						break;
-					default:
-						break;
-				}
-			}
-		if (selcount == 0)
-			selidx = *index;
-		if (selcount <= 1 && strcmp(item[selidx].compname->ptr, "..") == 0
-			&& cutcount + copycount <= 0)
-			return win_menu_op_continue;
-		if (selcount == 0)
-			item[selidx].selected = true;
-		pixel *saveimage = (pixel *) memalign(16,
-											  PSP_SCREEN_WIDTH *
-											  PSP_SCREEN_HEIGHT *
-											  sizeof(pixel));
-		if (saveimage)
-			disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
-		disp_duptocachealpha(50);
-		int left, right;
-
-		if (strcmp(simple_textdomain(NULL), "zh_CN") == 0) {
-			left = 240 - DISP_FONTSIZE * 3 - 1;
-			right = 240 + DISP_FONTSIZE * 3 + 1;
-		} else {
-			left = 240 - DISP_FONTSIZE * 3 - 1;
-			right = 240 + DISP_FONTSIZE * 12 + 1;
-		}
-
-		disp_rectangle(left, 136 - DISP_FONTSIZE * 3 - 1,
-					   right, 136 + DISP_FONTSIZE * 5, COLOR_WHITE);
-		disp_fillrect(left + 1, 136 - DISP_FONTSIZE * 3,
-					  right - 1, 136 + DISP_FONTSIZE * 5 - 1, config.msgbcolor);
-		disp_putstring(left + 1, 136 - DISP_FONTSIZE * 3,
-					   COLOR_WHITE, (const byte *) _("△  退出操作"));
-		if (selcount <= 1 && strcmp(item[selidx].compname->ptr, "..") != 0) {
-			scene_single_file_ops_draw(item, selidx);
-		} else {
-			if (mp3count + dircount > 0 && bmcount > 0) {
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
-							   COLOR_WHITE, (const byte *) _("○  添加音乐"));
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
-							   COLOR_WHITE, (const byte *) _("□  导入书签"));
-			} else if (mp3count + dircount > 0) {
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
-							   COLOR_WHITE, (const byte *) _("○  添加音乐"));
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
-							   COLOR_WHITE, (const byte *) _("□  添加音乐"));
-			} else if (bmcount > 0) {
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
-							   COLOR_WHITE, (const byte *) _("○  导入书签"));
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
-							   COLOR_WHITE, (const byte *) _("□  导入书签"));
-			}
-		}
-		if (where == scene_in_dir) {
-			if (selcount > 1 || strcmp(item[selidx].compname->ptr, "..") != 0) {
-				if (strnicmp(config.path, "ms0:/", 5) == 0) {
-					if (config.allowdelete)
-						disp_putstring(240 - DISP_FONTSIZE * 3, 136,
-									   COLOR_WHITE,
-									   (const byte *) _("×    删除"));
-					disp_putstring(240 - DISP_FONTSIZE * 3,
-								   136 + DISP_FONTSIZE * 2, COLOR_WHITE,
-								   (const byte *) _(" R    剪切"));
-				}
-				if (config.path[0] != 0)
-					disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
-								   COLOR_WHITE, (const byte *) _(" L    复制"));
-			}
-			if (strnicmp(config.path, "ms0:/", 5) == 0
-				&& ((copycount > 0 && stricmp(copydir, config.shortpath) != 0)
-					|| (cutcount > 0
-						&& stricmp(cutdir, config.shortpath) != 0)))
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE * 3,
-							   COLOR_WHITE, (const byte *) _("START 粘贴"));
-		}
-		if (where == scene_in_zip || where == scene_in_chm
-			|| where == scene_in_rar) {
-			if (selcount > 1 || strcmp(item[selidx].compname->ptr, "..") != 0) {
-				if (config.path[0] != 0)
-					disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
-								   COLOR_WHITE, (const byte *) _(" L    复制"));
-			}
-		}
-		disp_flip();
-		bool inop = true;
-		t_win_menu_op retop = win_menu_op_continue;
-
-		while (inop) {
-			dword key = ctrl_waitany();
-
-			switch (key) {
-				case PSP_CTRL_TRIANGLE:
-					inop = false;
-					retop = win_menu_op_continue;
-					break;
-				case PSP_CTRL_CROSS:
-					if (!config.allowdelete || where != scene_in_dir
-						|| strnicmp(config.path, "ms0:/", 5) != 0)
-						break;
-					if (win_msgbox
-						(_("删除所选文件？"), _("是"), _("否"),
-						 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
-						char fn[PATH_MAX];
-
-						config.lastfile[0] = 0;
-						for (sidx = 0; sidx < filecount; sidx++)
-							if (item[sidx].selected) {
-								STRCPY_S(fn, config.shortpath);
-								STRCAT_S(fn, item[sidx].shortname->ptr);
-								if ((t_fs_filetype) item[sidx].data ==
-									fs_filetype_dir) {
-									if (!utils_del_dir(fn)) {
-										win_msg(_("删除目录失败!"), COLOR_WHITE,
-												COLOR_WHITE, config.msgbcolor);
-										return win_menu_op_redraw;
-									}
-								} else {
-									if (!utils_del_file(fn)) {
-										win_msg(_("删除文件失败!"), COLOR_WHITE,
-												COLOR_WHITE, config.msgbcolor);
-										return win_menu_op_redraw;
-									}
-								}
-								if (config.lastfile[0] == 0) {
-									int idx = sidx + 1;
-
-									while (idx < filecount
-										   && item[idx].selected)
-										idx++;
-									if (idx < filecount)
-										STRCPY_S(config.lastfile,
-												 item[idx].compname->ptr);
-									else if (sidx > 0)
-										STRCPY_S(config.lastfile,
-												 item[idx - 1].compname->ptr);
-								}
-							}
-						retop = win_menu_op_cancel;
-					}
-					inop = false;
-					break;
-				case PSP_CTRL_SQUARE:
-					if (selcount <= 1) {
-						sidx = selidx;
-						switch ((t_fs_filetype) item[sidx].data) {
-#ifdef ENABLE_MUSIC
-							case fs_filetype_dir:
-								if (win_msgbox
-									(_("添加目录内所有歌曲到播放列表？"),
-									 _("是"), _("否"),
-									 COLOR_WHITE, COLOR_WHITE,
-									 config.msgbcolor)) {
-									char cfn[PATH_MAX];
-
-									SPRINTF_S(cfn, "%s%s/", config.path,
-											  item[sidx].compname->ptr);
-									mp3_list_add_dir(cfn);
-									win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
-											COLOR_WHITE, config.msgbcolor);
-								}
-								break;
-							case fs_filetype_mp3:
-							case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-							case fs_filetype_wma:
-#endif
-								if (win_msgbox
-									(_("添加歌曲到播放列表？"), _("是"),
-									 _("否"), COLOR_WHITE, COLOR_WHITE,
-									 config.msgbcolor)) {
-									char mp3name[PATH_MAX],
-										mp3longname[PATH_MAX];
-
-									STRCPY_S(mp3name, config.shortpath);
-									STRCAT_S(mp3name,
-											 filelist[sidx].shortname->ptr);
-									STRCPY_S(mp3longname, config.path);
-									STRCAT_S(mp3longname,
-											 filelist[sidx].compname->ptr);
-									mp3_list_add(mp3name, mp3longname);
-									win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
-											COLOR_WHITE, config.msgbcolor);
-								}
-								break;
-#endif
-#ifdef ENABLE_PMPAVC
-							case fs_filetype_pmp:
-								if (where == scene_in_dir) {
-									pmp_restart = true;
-									retop = win_menu_op_ok;
-								}
-								break;
-#endif
-#ifdef ENABLE_BG
-							case fs_filetype_png:
-							case fs_filetype_gif:
-							case fs_filetype_jpg:
-							case fs_filetype_tga:
-							case fs_filetype_bmp:
-								{
-									set_background_image(item, index);
-								}
-								break;
-#endif
-							default:
-								g_force_text_view_mode = true;
-								retop = win_menu_op_ok;
-								break;
-						}
-					} else if (mp3count + dircount == 0 && bmcount == 0)
-						break;
-					else {
-						if (where != scene_in_dir)
-							break;
-						if (bmcount > 0) {
-							if (!win_msgbox
-								(_("是否要导入书签？"), _("是"),
-								 _("否"), COLOR_WHITE, COLOR_WHITE,
-								 config.msgbcolor))
-								break;
-						} else {
-							if (!win_msgbox
-								(_("添加歌曲到播放列表？"), _("是"),
-								 _("否"), COLOR_WHITE, COLOR_WHITE,
-								 config.msgbcolor))
-								break;
-						}
-						for (sidx = 0; sidx < filecount; sidx++)
-							if (item[sidx].selected) {
-								switch ((t_fs_filetype) item[sidx].data) {
-#ifdef ENABLE_MUSIC
-									case fs_filetype_dir:
-										if (bmcount == 0) {
-											char cfn[PATH_MAX];
-
-											SPRINTF_S(cfn, "%s%s/", config.path,
-													  item[sidx].compname->ptr);
-											mp3_list_add_dir(cfn);
-										}
-										break;
-#endif
-									case fs_filetype_ebm:
-										if (bmcount > 0) {
-											char bmfn[PATH_MAX];
-
-											STRCPY_S(bmfn, config.path);
-											STRCAT_S(bmfn,
-													 item[sidx].shortname->ptr);
-											bookmark_import(bmfn);
-										}
-										break;
-#ifdef ENABLE_MUSIC
-									case fs_filetype_mp3:
-									case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-									case fs_filetype_wma:
-#endif
-										if (bmcount == 0) {
-											char mp3name[PATH_MAX],
-												mp3longname[PATH_MAX];
-
-											STRCPY_S(mp3name, config.shortpath);
-											STRCAT_S(mp3name,
-													 filelist[sidx].shortname->
-													 ptr);
-											STRCPY_S(mp3longname, config.path);
-											STRCAT_S(mp3longname,
-													 filelist[sidx].compname->
-													 ptr);
-											mp3_list_add(mp3name, mp3longname);
-										}
-										break;
-#endif
-									default:
-										break;
-								}
-							}
-						if (mp3count + dircount == 0 && bmcount > 0)
-							win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE,
-									config.msgbcolor);
-#ifdef ENABLE_MUSIC
-						else if (mp3count + dircount > 0)
-							win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
-									COLOR_WHITE, config.msgbcolor);
-#endif
-					}
-					inop = false;
-					break;
-				case PSP_CTRL_CIRCLE:
-					if (selcount <= 1)
-						retop = win_menu_op_ok;
-					else if (mp3count + dircount == 0 && bmcount == 0)
-						break;
-					else {
-						if (where != scene_in_dir)
-							break;
-						if (mp3count + dircount == 0) {
-							if (!win_msgbox
-								(_("是否要导入书签？"), _("是"),
-								 _("否"), COLOR_WHITE, COLOR_WHITE,
-								 config.msgbcolor))
-								break;
-						}
-#ifdef ENABLE_MUSIC
-						else {
-							if (!win_msgbox
-								(_("添加歌曲到播放列表？"), _("是"),
-								 _("否"), COLOR_WHITE, COLOR_WHITE,
-								 config.msgbcolor))
-								break;
-						}
-#endif
-						for (sidx = 0; sidx < filecount; sidx++)
-							if (item[sidx].selected) {
-								switch ((t_fs_filetype) item[sidx].data) {
-#ifdef ENABLE_MUSIC
-									case fs_filetype_dir:
-										if (dircount > 0) {
-											char cfn[PATH_MAX];
-
-											SPRINTF_S(cfn, "%s%s/", config.path,
-													  item[sidx].compname->ptr);
-											mp3_list_add_dir(cfn);
-										}
-										break;
-#endif
-									case fs_filetype_ebm:
-										if (mp3count + dircount == 0) {
-											char bmfn[PATH_MAX];
-
-											STRCPY_S(bmfn, config.path);
-											STRCAT_S(bmfn,
-													 item[sidx].shortname->ptr);
-											bookmark_import(bmfn);
-										}
-										break;
-#ifdef ENABLE_MUSIC
-									case fs_filetype_mp3:
-									case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-									case fs_filetype_wma:
-#endif
-										if (mp3count > 0) {
-											char mp3name[PATH_MAX],
-												mp3longname[PATH_MAX];
-
-											STRCPY_S(mp3name, config.shortpath);
-											STRCAT_S(mp3name,
-													 filelist[sidx].shortname->
-													 ptr);
-											STRCPY_S(mp3longname, config.path);
-											STRCAT_S(mp3longname,
-													 filelist[sidx].compname->
-													 ptr);
-											mp3_list_add(mp3name, mp3longname);
-										}
-										break;
-#endif
-									default:
-										break;
-								}
-							}
-						if (mp3count + dircount == 0 && bmcount > 0)
-							win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE,
-									config.msgbcolor);
-#ifdef ENABLE_MUSIC
-						else if (mp3count + dircount > 0)
-							win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
-									COLOR_WHITE, config.msgbcolor);
-#endif
-					}
-					inop = false;
-					break;
-				case PSP_CTRL_LTRIGGER:
-//                  if (where != scene_in_dir)
-//                      break;
-					if (copycount > 0 && copylist != NULL) {
-						win_item_destroy(&copylist, &copycount);
-					}
-					if (cutcount > 0 && cutlist != NULL) {
-						win_item_destroy(&cutlist, &cutcount);
-					}
-					if (where == scene_in_dir) {
-						copy_archmode = false;
-						STRCPY_S(copydir, config.shortpath);
-					} else {
-						copy_archmode = true;
-						copy_where = where;
-						STRCPY_S(copydir, config.shortpath);
-					}
-					copylist =
-						win_realloc_items(NULL, 0,
-										  (selcount > 0 ? selcount : 1));
-					if (selcount < 1) {
-						copycount = 1;
-						win_copy_item(&copylist[0], &filelist[selidx]);
-					} else {
-						copycount = selcount;
-						sidx = 0;
-						for (selidx = 0; selidx < filecount; selidx++)
-							if (item[selidx].selected)
-								win_copy_item(&copylist[sidx++],
-											  &filelist[selidx]);
-					}
-					inop = false;
-					break;
-				case PSP_CTRL_RTRIGGER:
-					if (where != scene_in_dir
-						|| strnicmp(config.path, "ms0:/", 5) != 0)
-						break;
-					if (copycount > 0 && copylist != NULL) {
-						copycount = 0;
-						free((void *) copylist);
-						copylist = NULL;
-					}
-					if (cutcount > 0 && cutlist != NULL) {
-						cutcount = 0;
-						free((void *) cutlist);
-						cutlist = NULL;
-					}
-					STRCPY_S(cutdir, config.shortpath);
-					cutlist =
-						win_realloc_items(NULL, 0,
-										  (selcount > 0 ? selcount : 1));
-					if (selcount < 1) {
-						cutcount = 1;
-						win_copy_item(&cutlist[0], &filelist[selidx]);
-					} else {
-						cutcount = selcount;
-						sidx = 0;
-						for (selidx = 0; selidx < filecount; selidx++)
-							if (item[selidx].selected)
-								win_copy_item(&cutlist[sidx++],
-											  &filelist[selidx]);
-					}
-					inop = false;
-					break;
-				case PSP_CTRL_START:
-					if (strnicmp(config.path, "ms0:/", 5) != 0)
-						break;
-//                  if (where != scene_in_dir
-//                      || strnicmp(config.path, "ms0:/", 5) != 0)
-//                      break;
-					if (copycount > 0) {
-						for (sidx = 0; sidx < copycount; sidx++) {
-							scene_copy_files(sidx);
-						}
-						STRCPY_S(config.lastfile, item[*index].compname->ptr);
-						retop = win_menu_op_cancel;
-						inop = false;
-					} else if (cutcount > 0) {
-						for (sidx = 0; sidx < cutcount; sidx++) {
-							char cutsrc[PATH_MAX], cutdest[PATH_MAX];
-
-							STRCPY_S(cutsrc, cutdir);
-							STRCAT_S(cutsrc, cutlist[sidx].shortname->ptr);
-							STRCPY_S(cutdest, config.shortpath);
-							STRCAT_S(cutdest, cutlist[sidx].shortname->ptr);
-							dword result;
-
-							if ((t_fs_filetype) cutlist[sidx].data ==
-								fs_filetype_dir)
-								result = (dword) move_dir(cutsrc, cutdest, NULL,
-														  confirm_overwrite,
-														  NULL);
-							else
-								result = move_file(cutsrc, cutdest, NULL,
-												   confirm_overwrite, NULL);
-							if (result == (dword) false) {
-								win_msg(_("文件/目录移动失败!"), COLOR_WHITE,
-										COLOR_WHITE, config.msgbcolor);
-							}
-						}
-						STRCPY_S(config.lastfile, item[*index].compname->ptr);
-						retop = win_menu_op_cancel;
-						inop = false;
-						cutcount = 0;
-						free((void *) cutlist);
-						cutlist = NULL;
-					}
-					break;
-				case PSP_CTRL_SELECT:
-					{
-						if (((t_fs_filetype) filelist[selidx].data) !=
-							fs_filetype_jpg)
-							break;
-						int result;
-						dword width, height;
-						pixel *imgdata = NULL;
-						pixel bgcolor = 0;
-						char filename[PATH_MAX];
-
-						if (where == scene_in_zip || where == scene_in_chm
-							|| where == scene_in_rar)
-							STRCPY_S(filename, filelist[selidx].compname->ptr);
-						else {
-							STRCPY_S(filename, config.shortpath);
-							STRCAT_S(filename, filelist[selidx].shortname->ptr);
-						}
-
-						switch (where) {
-							case scene_in_zip:
-								result =
-									exif_readjpg_in_zip(config.shortpath,
-														filename, &width,
-														&height, &imgdata,
-														&bgcolor);
-								break;
-							case scene_in_chm:
-								result =
-									exif_readjpg_in_chm(config.shortpath,
-														filename, &width,
-														&height, &imgdata,
-														&bgcolor);
-								break;
-							case scene_in_rar:
-								result =
-									exif_readjpg_in_rar(config.shortpath,
-														filename, &width,
-														&height, &imgdata,
-														&bgcolor);
-								break;
-							default:
-								{
-									result =
-										exif_readjpg(filename, &width, &height,
-													 &imgdata, &bgcolor);
-								}
-								break;
-						}
-
-						free((void *) imgdata);
-
-						inop = false;
-						if (exif_array && exif_array->used) {
-							char infotitle[256];
-
-							if (strrchr(filename, '/') != NULL) {
-								SPRINTF_S(infotitle, _("%s的EXIF信息"),
-										  strrchr(filename, '/') + 1);
-							} else
-								SPRINTF_S(infotitle, _("%s的EXIF信息"),
-										  filename);
-							infotitle[255] = '\0';
-							buffer *b = buffer_init();
-							int i;
-
-							for (i = 0; i < exif_array->used - 1; ++i) {
-								buffer_append_string(b,
-													 exif_array->ptr[i]->ptr);
-								buffer_append_string(b, "\r\n");
-							}
-							buffer_append_string(b, exif_array->ptr[i]->ptr);
-
-							scene_readbook_raw(infotitle,
-											   (const unsigned char *) b->ptr,
-											   b->used, fs_filetype_txt);
-							g_force_text_view_mode = false;
-							buffer_free(b);
-						} else
-							win_msg(_("无EXIF信息"), COLOR_WHITE, COLOR_WHITE,
-									config.msgbcolor);
-					}
-					break;
-			}
-		}
-		if (selcount == 0)
-			item[selidx].selected = false;
-		if (saveimage) {
-			disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0,
-						  saveimage);
-			disp_flip();
-			disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0, 0,
-						  saveimage);
-			free((void *) saveimage);
-		}
-		return retop;
+		return scene_fileops(item, index);
 	} else if (key == config.flkey[4] || key == config.flkey2[4])
 		return win_menu_op_cancel;
 	else if (key == PSP_CTRL_SELECT) {
@@ -4895,7 +4928,7 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 	}
 }
 
-char *strtoupper(char *d, const char *s)
+static char *strtoupper(char *d, const char *s)
 {
 	char *origd = d;
 
@@ -4905,7 +4938,7 @@ char *strtoupper(char *d, const char *s)
 	return origd;
 }
 
-void exec_homebrew(int method, char *path)
+static void exec_homebrew(int method, char *path)
 {
 	int err;
 	struct SceKernelLoadExecVSHParam param;
@@ -4930,6 +4963,262 @@ void exec_homebrew(int method, char *path)
 	} else
 		sceKernelExitDeleteThread(0);
 }
+
+static void scene_exec_prog(dword * idx)
+{
+	char infomsg[80];
+
+	SPRINTF_S(infomsg, _("是否以%s方式执行该程序?"),
+			  config.launchtype == 2 ? _("普通程序") : _("PS游戏"));
+	if (win_msgbox
+		(infomsg, _("是"), _("否"), COLOR_WHITE, COLOR_WHITE,
+		 config.msgbcolor)) {
+		char path[PATH_MAX], upper[PATH_MAX];
+
+		conf_save(&config);
+		STRCPY_S(path, config.path);
+		strtoupper(upper, filelist[*idx].compname->ptr);
+		STRCAT_S(path, upper);
+		exec_homebrew(config.launchtype, path);
+	}
+}
+
+static void scene_enter_dir(dword * idx)
+{
+	char pdir[PATH_MAX];
+	bool isup = false;
+
+	pdir[0] = 0;
+	if (strcmp(filelist[*idx].compname->ptr, "..") == 0) {
+		if (where == scene_in_dir) {
+			int ll;
+
+			if ((ll = strlen(config.path) - 1) >= 0)
+				while (config.path[ll] == '/' && ll >= 0) {
+					config.path[ll] = 0;
+					ll--;
+				}
+		}
+		char *lps;
+
+		isup = true;
+		if ((lps = strrchr(config.path, '/')) != NULL) {
+			lps++;
+			STRCPY_S(pdir, lps);
+			*lps = 0;
+		} else
+			config.path[0] = 0;
+	} else if (where == scene_in_dir) {
+		STRCAT_S(config.path, filelist[*idx].compname->ptr);
+		STRCAT_S(config.path, "/");
+	}
+	if (config.path[0] == 0) {
+		fat_inited = false;
+		fat_free();
+		filecount =
+			fs_list_device(config.path, config.shortpath,
+						   &filelist, config.menutextcolor,
+						   config.selicolor,
+						   config.
+						   usedyncolor ? GetBGColorByTime() :
+						   config.menubcolor, config.selbcolor);
+	} else if (strnicmp(config.path, "ms0:/", 5) == 0) {
+		if (fat_inited == false) {
+			fat_init();
+			fat_inited = true;
+		}
+		filecount =
+			fs_dir_to_menu(config.path, config.shortpath,
+						   &filelist, config.menutextcolor,
+						   config.selicolor,
+						   config.
+						   usedyncolor ? GetBGColorByTime() :
+						   config.menubcolor, config.selbcolor,
+						   config.showhidden, config.showunknown);
+	} else
+		filecount =
+			fs_flashdir_to_menu(config.path, config.shortpath,
+								&filelist, config.menutextcolor,
+								config.selicolor,
+								config.usedyncolor ? GetBGColorByTime()
+								: config.menubcolor, config.selbcolor);
+	quicksort(filelist,
+			  (filecount > 0
+			   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
+			  filecount - 1, sizeof(t_win_menuitem),
+			  compare_func[(int) config.arrange]);
+	if (isup) {
+		for (*idx = 0; *idx < filecount; (*idx)++)
+			if (stricmp(filelist[*idx].compname->ptr, pdir) == 0)
+				break;
+		if (*idx == filecount)
+			*idx = 0;
+	} else
+		*idx = 0;
+	where = scene_in_dir;
+}
+
+enum ArchiveType
+{ ZIP, RAR, CHM };
+
+static void scene_enter_archive(dword * idx, enum ArchiveType type)
+{
+	switch (type) {
+		case ZIP:
+			where = scene_in_zip;
+			break;
+		case RAR:
+			where = scene_in_rar;
+			break;
+		case CHM:
+			where = scene_in_chm;
+			break;
+	}
+	STRCAT_S(config.path, filelist[*idx].compname->ptr);
+	STRCAT_S(config.shortpath, filelist[*idx].shortname->ptr);
+	*idx = 0;
+	switch (type) {
+		case ZIP:
+			filecount =
+				fs_zip_to_menu(config.shortpath, &filelist,
+							   config.menutextcolor, config.selicolor,
+							   config.
+							   usedyncolor ? GetBGColorByTime() : config.
+							   menubcolor, config.selbcolor);
+			break;
+		case RAR:
+			filecount =
+				fs_rar_to_menu(config.shortpath, &filelist,
+							   config.menutextcolor, config.selicolor,
+							   config.
+							   usedyncolor ? GetBGColorByTime() : config.
+							   menubcolor, config.selbcolor);
+			break;
+		case CHM:
+			filecount =
+				fs_chm_to_menu(config.shortpath, &filelist,
+							   config.menutextcolor, config.selicolor,
+							   config.
+							   usedyncolor ? GetBGColorByTime() : config.
+							   menubcolor, config.selbcolor);
+			break;
+	}
+	quicksort(filelist,
+			  (filecount > 0
+			   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
+			  filecount - 1, sizeof(t_win_menuitem),
+			  compare_func[(int) config.arrange]);
+}
+
+#ifdef ENABLE_IMAGE
+static void scene_open_image(dword * idx)
+{
+#ifdef ENABLE_USB
+	usb_deactivate();
+#endif
+	config.isreading = true;
+	*idx = scene_readimage(*idx);
+	config.isreading = false;
+#ifdef ENABLE_USB
+	if (config.enableusb)
+		usb_activate();
+	else
+		usb_deactivate();
+#endif
+}
+#endif
+
+#ifdef ENABLE_PMPAVC
+static void scene_open_pmp(dword * idx)
+{
+	char pmpname[PATH_MAX];
+
+	STRCPY_S(pmpname, config.shortpath);
+	STRCAT_S(pmpname, filelist[*idx].shortname->ptr);
+	avc_start();
+	pmp_play(pmpname, !pmp_restart);
+	avc_end();
+}
+#endif
+
+#ifdef ENABLE_MUSIC
+static void scene_open_music(dword * idx)
+{
+	char fn[PATH_MAX], lfn[PATH_MAX];
+
+	STRCPY_S(fn, config.shortpath);
+	STRCAT_S(fn, filelist[*idx].shortname->ptr);
+	STRCPY_S(lfn, config.path);
+	STRCAT_S(lfn, filelist[*idx].compname->ptr);
+	mp3_directplay(fn, lfn);
+}
+#endif
+
+static void scene_open_text(dword * idx)
+{
+#ifdef ENABLE_USB
+	usb_deactivate();
+#endif
+	config.isreading = true;
+	*idx = scene_readbook(*idx);
+	g_force_text_view_mode = false;
+	config.isreading = false;
+#ifdef ENABLE_USB
+	if (config.enableusb)
+		usb_activate();
+	else
+		usb_deactivate();
+#endif
+}
+
+static void scene_open_ebm(dword * idx)
+{
+	if (win_msgbox
+		(_("是否要导入书签？"), _("是"), _("否"),
+		 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
+		char bmfn[PATH_MAX];
+
+		STRCPY_S(bmfn, config.shortpath);
+		STRCAT_S(bmfn, filelist[*idx].shortname->ptr);
+		bookmark_import(bmfn);
+		win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
+	}
+}
+
+#ifdef ENABLE_TTF
+static void scene_open_font(dword * idx)
+{
+	char fn[PATH_MAX];
+
+	if (where == scene_in_dir) {
+		STRCPY_S(fn, config.shortpath);
+		STRCAT_S(fn, filelist[*idx].shortname->ptr);
+	} else {
+		STRCPY_S(fn, filelist[*idx].compname->ptr);
+	}
+
+	if (win_msgbox
+		(_("是否为中文字体？"), _("是"), _("否"),
+		 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
+		STRCPY_S(config.cttfpath, fn);
+		if (where == scene_in_dir)
+			STRCPY_S(config.cttfarch, "");
+		else
+			STRCPY_S(config.cttfarch, config.shortpath);
+	} else {
+		STRCPY_S(config.ettfpath, fn);
+		if (where == scene_in_dir)
+			STRCPY_S(config.ettfarch, "");
+		else
+			STRCPY_S(config.ettfarch, config.shortpath);
+	}
+	dbg_printf(d, "ettf: %s %s cttf: %s %s", config.ettfarch,
+			   config.ettfpath, config.cttfarch, config.cttfpath);
+	if (config.usettf) {
+		scene_load_book_font();
+	}
+}
+#endif
 
 void scene_filelist()
 {
@@ -5144,354 +5433,61 @@ void scene_filelist()
 		}
 		switch ((t_fs_filetype) filelist[idx].data) {
 			case fs_filetype_prog:
-				{
-					char infomsg[80];
-
-					SPRINTF_S(infomsg, _("是否以%s方式执行该程序?"),
-							  config.launchtype ==
-							  2 ? _("普通程序") : _("PS游戏"));
-					if (win_msgbox
-						(infomsg, _("是"), _("否"), COLOR_WHITE, COLOR_WHITE,
-						 config.msgbcolor)) {
-						char path[PATH_MAX], upper[PATH_MAX];
-
-						conf_save(&config);
-						STRCPY_S(path, config.path);
-						strtoupper(upper, filelist[idx].compname->ptr);
-						STRCAT_S(path, upper);
-						exec_homebrew(config.launchtype, path);
-					}
-				}
+				scene_exec_prog(&idx);
 				break;
 			case fs_filetype_dir:
-				{
-					char pdir[PATH_MAX];
-					bool isup = false;
-
-					pdir[0] = 0;
-					if (strcmp(filelist[idx].compname->ptr, "..") == 0) {
-						if (where == scene_in_dir) {
-							int ll;
-
-							if ((ll = strlen(config.path) - 1) >= 0)
-								while (config.path[ll] == '/' && ll >= 0) {
-									config.path[ll] = 0;
-									ll--;
-								}
-						}
-						char *lps;
-
-						isup = true;
-						if ((lps = strrchr(config.path, '/')) != NULL) {
-							lps++;
-							STRCPY_S(pdir, lps);
-							*lps = 0;
-						} else
-							config.path[0] = 0;
-					} else if (where == scene_in_dir) {
-						STRCAT_S(config.path, filelist[idx].compname->ptr);
-						STRCAT_S(config.path, "/");
-					}
-					if (config.path[0] == 0) {
-						fat_inited = false;
-						fat_free();
-						filecount =
-							fs_list_device(config.path, config.shortpath,
-										   &filelist, config.menutextcolor,
-										   config.selicolor,
-										   config.
-										   usedyncolor ? GetBGColorByTime() :
-										   config.menubcolor, config.selbcolor);
-					} else if (strnicmp(config.path, "ms0:/", 5) == 0) {
-						if (fat_inited == false) {
-							fat_init();
-							fat_inited = true;
-						}
-						filecount =
-							fs_dir_to_menu(config.path, config.shortpath,
-										   &filelist, config.menutextcolor,
-										   config.selicolor,
-										   config.
-										   usedyncolor ? GetBGColorByTime() :
-										   config.menubcolor, config.selbcolor,
-										   config.showhidden,
-										   config.showunknown);
-					} else
-						filecount =
-							fs_flashdir_to_menu(config.path, config.shortpath,
-												&filelist, config.menutextcolor,
-												config.selicolor,
-												config.
-												usedyncolor ? GetBGColorByTime()
-												: config.menubcolor,
-												config.selbcolor);
-					quicksort(filelist,
-							  (filecount > 0
-							   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
-							  filecount - 1, sizeof(t_win_menuitem),
-							  compare_func[(int) config.arrange]);
-					if (isup) {
-						for (idx = 0; idx < filecount; idx++)
-							if (stricmp(filelist[idx].compname->ptr, pdir) == 0)
-								break;
-						if (idx == filecount)
-							idx = 0;
-					} else
-						idx = 0;
-					where = scene_in_dir;
-					break;
-				}
-			case fs_filetype_gz:
-#if 0
-				if (strlen(filelist[idx].compname->ptr) >= 7) {
-					int len = strlen(filelist[idx].compname->ptr) - 7;
-
-					if (stricmp(filelist[idx].compname->ptr + len, ".tar.gz") ==
-						0) {
-						win_msg("TODO: SUPPORT Tar ", COLOR_WHITE, COLOR_WHITE,
-								config.msgbcolor);
-						break;
-					}
-				}
-#endif
-#ifdef ENABLE_USB
-				usb_deactivate();
-#endif
-				config.isreading = true;
-				idx = scene_readbook(idx);
-				g_force_text_view_mode = false;
-				config.isreading = false;
-#ifdef ENABLE_USB
-				if (config.enableusb)
-					usb_activate();
-				else
-					usb_deactivate();
-#endif
+				scene_enter_dir(&idx);
 				break;
 			case fs_filetype_zip:
-				where = scene_in_zip;
-				STRCAT_S(config.path, filelist[idx].compname->ptr);
-				STRCAT_S(config.shortpath, filelist[idx].shortname->ptr);
-				idx = 0;
-				filecount =
-					fs_zip_to_menu(config.shortpath, &filelist,
-								   config.menutextcolor, config.selicolor,
-								   config.
-								   usedyncolor ? GetBGColorByTime() : config.
-								   menubcolor, config.selbcolor);
-				quicksort(filelist,
-						  (filecount > 0
-						   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
-						  filecount - 1, sizeof(t_win_menuitem),
-						  compare_func[(int) config.arrange]);
+				scene_enter_archive(&idx, ZIP);
 				break;
 			case fs_filetype_chm:
-				where = scene_in_chm;
-				STRCAT_S(config.path, filelist[idx].compname->ptr);
-				STRCAT_S(config.shortpath, filelist[idx].shortname->ptr);
-				idx = 0;
-				filecount =
-					fs_chm_to_menu(config.shortpath, &filelist,
-								   config.menutextcolor, config.selicolor,
-								   config.
-								   usedyncolor ? GetBGColorByTime() : config.
-								   menubcolor, config.selbcolor);
-				quicksort(filelist,
-						  (filecount > 0
-						   && (filelist[0].compname->ptr)[0] == '.') ? 1 : 0,
-						  filecount - 1, sizeof(t_win_menuitem),
-						  compare_func[(int) config.arrange]);
+				scene_enter_archive(&idx, CHM);
 				break;
 			case fs_filetype_rar:
-				where = scene_in_rar;
-				STRCAT_S(config.path, filelist[idx].compname->ptr);
-				STRCAT_S(config.shortpath, filelist[idx].shortname->ptr);
-				idx = 0;
-				filecount =
-					fs_rar_to_menu(config.shortpath, &filelist,
-								   config.menutextcolor, config.selicolor,
-								   config.
-								   usedyncolor ? GetBGColorByTime() : config.
-								   menubcolor, config.selbcolor);
-				quicksort(filelist,
-						  (filecount > 0
-						   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
-						  filecount - 1, sizeof(t_win_menuitem),
-						  compare_func[(int) config.arrange]);
+				scene_enter_archive(&idx, RAR);
 				break;
 #ifdef ENABLE_PMPAVC
 			case fs_filetype_pmp:
-				{
-					char pmpname[PATH_MAX];
-
-					STRCPY_S(pmpname, config.shortpath);
-					STRCAT_S(pmpname, filelist[idx].shortname->ptr);
-					avc_start();
-					pmp_play(pmpname, !pmp_restart);
-					avc_end();
-					break;
-				}
+				scene_open_pmp(&idx);
+				break;
 #endif
 #ifdef ENABLE_IMAGE
 			case fs_filetype_png:
-#ifdef ENABLE_USB
-				usb_deactivate();
-#endif
-				config.isreading = true;
-				idx = scene_readimage(idx);
-				config.isreading = false;
-#ifdef ENABLE_USB
-				if (config.enableusb)
-					usb_activate();
-				else
-					usb_deactivate();
-#endif
-				break;
 			case fs_filetype_gif:
-#ifdef ENABLE_USB
-				usb_deactivate();
-#endif
-				config.isreading = true;
-				idx = scene_readimage(idx);
-				config.isreading = false;
-#ifdef ENABLE_USB
-				if (config.enableusb)
-					usb_activate();
-				else
-					usb_deactivate();
-#endif
-				break;
 			case fs_filetype_jpg:
-#ifdef ENABLE_USB
-				usb_deactivate();
-#endif
-				config.isreading = true;
-				idx = scene_readimage(idx);
-				config.isreading = false;
-#ifdef ENABLE_USB
-				if (config.enableusb)
-					usb_activate();
-				else
-					usb_deactivate();
-#endif
-				break;
 			case fs_filetype_bmp:
-#ifdef ENABLE_USB
-				usb_deactivate();
-#endif
-				config.isreading = true;
-				idx = scene_readimage(idx);
-				config.isreading = false;
-#ifdef ENABLE_USB
-				if (config.enableusb)
-					usb_activate();
-				else
-					usb_deactivate();
-				break;
-#endif
 			case fs_filetype_tga:
-#ifdef ENABLE_USB
-				usb_deactivate();
-#endif
-				config.isreading = true;
-				idx = scene_readimage(idx);
-				config.isreading = false;
-#ifdef ENABLE_USB
-				if (config.enableusb)
-					usb_activate();
-				else
-					usb_deactivate();
-#endif
+				scene_open_image(&idx);
 				break;
 #endif
 			case fs_filetype_ebm:
-				if (win_msgbox
-					(_("是否要导入书签？"), _("是"), _("否"),
-					 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
-					char bmfn[PATH_MAX];
-
-					STRCPY_S(bmfn, config.shortpath);
-					STRCAT_S(bmfn, filelist[idx].shortname->ptr);
-					bookmark_import(bmfn);
-					win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE,
-							config.msgbcolor);
-				}
+				scene_open_ebm(&idx);
+				break;
 #ifdef ENABLE_MUSIC
 			case fs_filetype_mp3:
 			case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 			case fs_filetype_wma:
 #endif
-				{
-					char fn[PATH_MAX], lfn[PATH_MAX];
-
-					STRCPY_S(fn, config.shortpath);
-					STRCAT_S(fn, filelist[idx].shortname->ptr);
-					STRCPY_S(lfn, config.path);
-					STRCAT_S(lfn, filelist[idx].compname->ptr);
-					mp3_directplay(fn, lfn);
-				}
+				scene_open_music(&idx);
 				break;
 #endif
 #ifdef ENABLE_TTF
 			case fs_filetype_font:
-				{
-					char fn[PATH_MAX];
-
-					if (where == scene_in_dir) {
-						STRCPY_S(fn, config.shortpath);
-						STRCAT_S(fn, filelist[idx].shortname->ptr);
-					} else {
-						STRCPY_S(fn, filelist[idx].compname->ptr);
-					}
-
-					if (win_msgbox
-						(_("是否为中文字体？"), _("是"), _("否"),
-						 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
-						STRCPY_S(config.cttfpath, fn);
-						if (where == scene_in_dir)
-							STRCPY_S(config.cttfarch, "");
-						else
-							STRCPY_S(config.cttfarch, config.shortpath);
-					} else {
-						STRCPY_S(config.ettfpath, fn);
-						if (where == scene_in_dir)
-							STRCPY_S(config.ettfarch, "");
-						else
-							STRCPY_S(config.ettfarch, config.shortpath);
-					}
-					dbg_printf(d, "ettf: %s %s cttf: %s %s", config.ettfarch,
-							   config.ettfpath, config.cttfarch,
-							   config.cttfpath);
-					if (config.usettf) {
-						scene_load_book_font();
-					}
-				}
+				scene_open_font(&idx);
 				break;
 #endif
+			case fs_filetype_gz:
 			default:
-#ifdef ENABLE_USB
-				usb_deactivate();
-#endif
-				config.isreading = true;
-				idx = scene_readbook(idx);
-				g_force_text_view_mode = false;
-				config.isreading = false;
-#ifdef ENABLE_USB
-				if (config.enableusb)
-					usb_activate();
-				else
-					usb_deactivate();
-#endif
+				scene_open_text(&idx);
 				break;
 		}
 		if (config.dis_scrsave)
 			scePowerTick(0);
 	}
 	if (filelist != NULL) {
-		free((void *) filelist);
-		filelist = NULL;
-		filecount = 0;
+		win_item_destroy(&filelist, &filecount);
 	}
 #ifdef ENABLE_USB
 	usb_deactivate();

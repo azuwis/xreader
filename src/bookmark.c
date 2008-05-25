@@ -199,7 +199,7 @@ extern void bookmark_delete(p_bookmark bm)
 extern void bookmark_close(p_bookmark bm)
 {
 	if (bm != NULL)
-		free((void *) bm);
+		free(bm);
 }
 
 extern dword bookmark_autoload(const char *filename)

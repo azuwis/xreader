@@ -281,7 +281,7 @@ extern bool mp3info_read(p_mp3info info, int fd)
 extern void mp3info_free(p_mp3info info)
 {
 	if (info->frameoff != NULL) {
-		free((void *) info->frameoff);
+		free(info->frameoff);
 		info->frameoff = NULL;
 	}
 	memset(info, 0, sizeof(t_mp3info));

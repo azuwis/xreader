@@ -71,7 +71,7 @@ static void text_decode(p_text txt, t_conf_encode encode)
 									   &txt->size);
 					txt->buf = (char *) newbuf;
 					if (txt->buf != NULL)
-						free((void *) orgbuf);
+						free(orgbuf);
 					else
 						txt->buf = orgbuf;
 				}
@@ -178,7 +178,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 	txt->row_count = 0;
 	for (curs = 0; curs < 1024; ++curs)
 		if (txt->rows[curs] != NULL) {
-			free((void *) txt->rows[curs]);
+			free(txt->rows[curs]);
 			txt->rows[curs] = NULL;
 		}
 	curs = 0;
@@ -495,7 +495,7 @@ extern p_text text_open_binary(const char *filename, bool vert)
 			curs = i >> 10;
 			if ((txt->rows[curs] =
 				 calloc(1024, sizeof(*txt->rows[curs]))) == NULL) {
-				free((void *) tmpbuf);
+				free(tmpbuf);
 				text_close(txt);
 				return NULL;
 			}
@@ -544,7 +544,7 @@ extern p_text text_open_binary(const char *filename, bool vert)
 		}
 		cbuf += 16;
 	}
-	free((void *) tmpbuf);
+	free(tmpbuf);
 	calc_gi(txt);
 	return txt;
 }
@@ -666,7 +666,7 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 			curs = i >> 10;
 			if ((txt->rows[curs] =
 				 calloc(1024, sizeof(*txt->rows[curs]))) == NULL) {
-				free((void *) tmpbuf);
+				free(tmpbuf);
 				text_close(txt);
 				return NULL;
 			}
@@ -715,7 +715,7 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 		}
 		cbuf += 16;
 	}
-	free((void *) tmpbuf);
+	free(tmpbuf);
 	calc_gi(txt);
 	return txt;
 }
@@ -892,7 +892,7 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 					curs = i >> 10;
 					if ((txt->rows[curs] =
 						 calloc(1024, sizeof(*txt->rows[curs]))) == NULL) {
-						free((void *) tmpbuf);
+						free(tmpbuf);
 						text_close(txt);
 						return NULL;
 					}
@@ -947,7 +947,7 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 				}
 				cbuf += 16;
 			}
-			free((void *) tmpbuf);
+			free(tmpbuf);
 
 			DBG_ASSERT(d, "txt != NULL", txt != NULL);
 			calc_gi(txt);
@@ -1070,10 +1070,10 @@ extern void text_close(p_text fstext)
 		dword i;
 
 		if (fstext->buf != NULL)
-			free((void *) fstext->buf);
+			free(fstext->buf);
 		for (i = 0; i < 1024; ++i)
 			if (fstext->rows[i] != NULL)
-				free((void *) fstext->rows[i]);
+				free(fstext->rows[i]);
 	}
 }
 

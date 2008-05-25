@@ -136,9 +136,9 @@ extern bool lyric_open(p_lyric l, const char *filename)
 							}
 							if (isec == NULL || iex == NULL) {
 								if (isec != NULL)
-									free((void *) isec);
+									free(isec);
 								if (iex != NULL)
-									free((void *) iex);
+									free(iex);
 								tc = 0;
 							} else {
 								isec[tc] = (dword) sec;
@@ -151,8 +151,8 @@ extern bool lyric_open(p_lyric l, const char *filename)
 						if (!islyric) {
 							if (tc > 0) {
 								tc = 0;
-								free((void *) isec);
-								free((void *) iex);
+								free(isec);
+								free(iex);
 							}
 						}
 					}
@@ -176,8 +176,8 @@ extern bool lyric_open(p_lyric l, const char *filename)
 	}
 	if (tc > 0) {
 		tc = 0;
-		free((void *) isec);
-		free((void *) iex);
+		free(isec);
+		free(iex);
 	}
 	l->idx = -1;
 	l->changed = true;
@@ -201,9 +201,9 @@ extern void lyric_close(p_lyric l)
 	sceKernelWaitSema(l->sema, 1, NULL);
 	l->succ = false;
 	if (l->whole != NULL)
-		free((void *) l->whole);
+		free(l->whole);
 	if (l->count > 0 && l->lines != NULL)
-		free((void *) l->lines);
+		free(l->lines);
 	sceKernelSignalSema(l->sema, 1);
 }
 

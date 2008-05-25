@@ -300,7 +300,7 @@ static bool mp3_load()
 			mp3_nfiles--;
 			if (mp3_nfiles == 0) {
 				mp3_tag_encode[0] = 0;
-				free((void *) mp3_files);
+				free(mp3_files);
 				mp3_files = NULL;
 			}
 		}
@@ -792,7 +792,7 @@ static void mp3_freetune()
 	mad_synth_finish(&Synth);
 	mad_frame_finish(&Frame);
 	mad_stream_finish(&Stream);
-	free((void *) Resampled);
+	free(Resampled);
 }
 
 extern void mp3_start()
@@ -956,13 +956,13 @@ extern void mp3_list_add_dir(const char *comppath)
 			continue;
 		mp3_nfiles++;
 	}
-	free((void *) info);
+	free(info);
 }
 
 extern void mp3_list_free()
 {
 	if (mp3_files != NULL) {
-		free((void *) mp3_files);
+		free(mp3_files);
 		mp3_files = NULL;
 	}
 	mp3_nfiles = 0;
@@ -1086,7 +1086,7 @@ extern void mp3_list_delete(dword index)
 	if (mp3_nfiles == 0) {
 		mp3_index = 0;
 		mp3_tag_encode[0] = 0;
-		free((void *) mp3_files);
+		free(mp3_files);
 		mp3_files = NULL;
 		mp3_end();
 		mp3_init();

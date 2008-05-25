@@ -227,11 +227,11 @@ extern void disp_assign_book_font()
 {
 	use_ttf = 0;
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
-		free((void *) book_efont_buffer);
+		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
 	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
-		free((void *) book_cfont_buffer);
+		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
 #ifdef ENABLE_TTF
@@ -327,11 +327,11 @@ extern bool disp_load_truetype_book_font(const char *ettffile,
 	use_ttf = 0;
 	memset(disp_ewidth, size / 2, 0x80);
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
-		free((void *) book_efont_buffer);
+		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
 	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
-		free((void *) book_cfont_buffer);
+		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
 	if (ettf == NULL) {
@@ -401,11 +401,11 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 	use_ttf = 0;
 	memset(disp_ewidth, size / 2, 0x80);
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
-		free((void *) book_efont_buffer);
+		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
 	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
-		free((void *) book_cfont_buffer);
+		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
 	if (ettf != NULL && strcmp(prev_ettfarch, config.ettfarch) == 0
@@ -510,7 +510,7 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 	}
 #endif
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
-		free((void *) book_efont_buffer);
+		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
 	unzFile unzf = unzOpen(zipfile);
@@ -541,7 +541,7 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 	unzCloseCurrentFile(unzf);
 
 	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
-		free((void *) book_cfont_buffer);
+		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
 	if (unzLocateFile(unzf, cfont, 0) != UNZ_OK
@@ -582,7 +582,7 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 	}
 #endif
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
-		free((void *) book_efont_buffer);
+		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
 	int size;
@@ -600,7 +600,7 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 	sceIoClose(fd);
 
 	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
-		free((void *) book_cfont_buffer);
+		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
 	fd = sceIoOpen(cfont, PSP_O_RDONLY, 0777);
@@ -624,19 +624,19 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 extern void disp_free_font()
 {
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
-		free((void *) book_efont_buffer);
+		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
 	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
-		free((void *) book_cfont_buffer);
+		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
 	if (efont_buffer != NULL) {
-		free((void *) efont_buffer);
+		free(efont_buffer);
 		efont_buffer = NULL;
 	}
 	if (cfont_buffer != NULL) {
-		free((void *) cfont_buffer);
+		free(cfont_buffer);
 		cfont_buffer = NULL;
 	}
 	use_ttf = 0;
