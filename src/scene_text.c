@@ -53,13 +53,7 @@ bool scene_readbook_in_raw_mode = false;
 
 BookViewData cur_book_view, prev_book_view;
 
-#ifdef _DEBUG
-static void WriteByte(int fd, unsigned char b)
-{
-	sceIoWrite(fd, &b, 1);
-}
-
-static inline int calc_gi()
+static inline int calc_gi(void)
 {
 	int i = min(fs->crow, fs->row_count);
 	p_textrow tr = fs->rows[i >> 10] + (i & 0x3FF);
@@ -67,7 +61,13 @@ static inline int calc_gi()
 	return tr->GI;
 }
 
-void ScreenShot()
+#ifdef _DEBUG
+static void write_byte(int fd, unsigned char b)
+{
+	sceIoWrite(fd, &b, 1);
+}
+
+void get_screen_shot()
 {
 	const char tgaHeader[] = { 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	const int width = PSP_SCREEN_WIDTH;
@@ -80,19 +80,19 @@ void ScreenShot()
 	int i = 0;
 
 	do {
-		SPRINTF_S(filename, "ms0:/screenshot%02d.tga", i++);
+		SPRINTF_S(filename, "ms0:/get_screen_shot%02d.tga", i++);
 	} while (utils_is_file_exists(filename));
 	int fd =
 		sceIoOpen(filename, PSP_O_CREAT | PSP_O_TRUNC | PSP_O_WRONLY, 0777);
 	if (!fd)
 		return;
 	sceIoWrite(fd, tgaHeader, sizeof(tgaHeader));
-	WriteByte(fd, width & 0xff);
-	WriteByte(fd, width >> 8);
-	WriteByte(fd, height & 0xff);
-	WriteByte(fd, height >> 8);
-	WriteByte(fd, 24);
-	WriteByte(fd, 0);
+	write_byte(fd, width & 0xff);
+	write_byte(fd, width >> 8);
+	write_byte(fd, height & 0xff);
+	write_byte(fd, height >> 8);
+	write_byte(fd, 24);
+	write_byte(fd, 0);
 	for (y = height - 1; y >= 0; y--) {
 		for (x = 0; x < width; x++) {
 			u32 color = vram[y * lineWidth + x];
@@ -1330,11 +1330,10 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			cur_book_view.text_needrp = false;
 		}
 
-		int delay = 20000;
 		dword key;
 
 		while ((key = ctrl_read()) == 0) {
-			sceKernelDelayThread(delay);
+			sceKernelDelayThread(20000);
 			sceRtcGetCurrentTick(&timer_end);
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
 				sceRtcGetCurrentTick(&timer_start);
@@ -1398,18 +1397,17 @@ dword scene_readbook(dword selidx)
 			scene_printbook(&cur_book_view, selidx);
 #ifdef _DEBUG
 //          disp_flip();
-//          ScreenShot();
+//          get_screen_shot();
 //          dbg_printf(d, "Screen Captured");
 //          disp_flip();
 #endif
 			cur_book_view.text_needrp = false;
 		}
 
-		int delay = 20000;
 		dword key;
 
 		while ((key = ctrl_read()) == 0) {
-			sceKernelDelayThread(delay);
+			sceKernelDelayThread(20000);
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if (config.infobar == conf_infobar_lyric
 				&& lyric_check_changed(mp3_get_lyric())) {
