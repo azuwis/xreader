@@ -1097,3 +1097,6 @@ msgstr "Brightness"
 msgid "        ”Ô—‘"
 msgstr "Language"
 
+#: scene.c:378
+msgid " ‰»ÎGI÷µ"
+msgstr "Enter GI"

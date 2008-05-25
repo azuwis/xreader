@@ -1028,3 +1028,7 @@ msgstr ""
 #: scene.c:2631
 msgid "        ”Ô—‘"
 msgstr ""
+
+#: scene.c:378
+msgid " ‰»ÎGI÷µ"
+msgstr ""
