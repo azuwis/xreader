@@ -11409,7 +11409,8 @@ static int big5_mbtowc(ucs4_t * pwc, const byte * s, int n)
 		if (n >= 2) {
 			byte c2 = s[1];
 
-			if ((c2 >= 0x40 && c2 < 0x7f) || (c2 >= 0xa1 && c2 < 0xff)) {
+			if ((c2 >= 0x40 && c2 < 0x7f)
+				|| (c2 >= 0xa1 && c2 < 0xff)) {
 				dword i = 157 * (c1 - 0xa1) + (c2 - (c2 >= 0xa1 ? 0x62 : 0x40));
 				word wc = 0xfffd;
 
@@ -11443,27 +11444,38 @@ static int hkscs_mbtowc(ucs4_t * pwc, const byte * s, int n)
 		if (n >= 2) {
 			byte c2 = s[1];
 
-			if ((c2 >= 0x40 && c2 < 0x7f) || (c2 >= 0xa1 && c2 < 0xff)) {
+			if ((c2 >= 0x40 && c2 < 0x7f)
+				|| (c2 >= 0xa1 && c2 < 0xff)) {
 				dword i = 157 * (c1 - 0x80) + (c2 - (c2 >= 0xa1 ? 0x62 : 0x40));
 				ucs4_t wc = 0xfffd;
 				word swc;
 
 				if (i < 2041) {
 					if (i < 1883)
-						swc = hkscs_2uni_page88[i - 1256],
-							wc = hkscs_2uni_upages[swc >> 6] | (swc & 0x3f);
+						swc =
+							hkscs_2uni_page88[i - 1256],
+							wc = hkscs_2uni_upages[swc >> 6]
+							| (swc & 0x3f);
 				} else if (i < 10990) {
 					if (i < 5181)
-						swc = hkscs_2uni_page8d[i - 2041],
-							wc = hkscs_2uni_upages[swc >> 6] | (swc & 0x3f);
+						swc =
+							hkscs_2uni_page8d[i - 2041],
+							wc = hkscs_2uni_upages[swc >> 6]
+							| (swc & 0x3f);
 				} else if (i < 18997) {
 					if (i < 11461)
-						swc = hkscs_2uni_pagec6[i - 10990],
-							wc = hkscs_2uni_upages[swc >> 6] | (swc & 0x3f);
+						swc =
+							hkscs_2uni_pagec6[i -
+											  10990],
+							wc = hkscs_2uni_upages[swc >> 6]
+							| (swc & 0x3f);
 				} else {
 					if (i < 19939)
-						swc = hkscs_2uni_pagef9[i - 18997],
-							wc = hkscs_2uni_upages[swc >> 6] | (swc & 0x3f);
+						swc =
+							hkscs_2uni_pagef9[i -
+											  18997],
+							wc = hkscs_2uni_upages[swc >> 6]
+							| (swc & 0x3f);
 				}
 				if (wc != 0xfffd) {
 					*pwc = wc;
@@ -11493,7 +11505,8 @@ static int big5hkscs_mbtowc(ucs4_t * pwc, const byte * s, int n)
 		{
 			byte c2 = s[1];
 
-			if ((c2 >= 0x40 && c2 < 0x7f) || (c2 >= 0xa1 && c2 < 0xff)) {
+			if ((c2 >= 0x40 && c2 < 0x7f)
+				|| (c2 >= 0xa1 && c2 < 0xff)) {
 				if (!((c == 0xc6 && c2 >= 0xa1) || c == 0xc7)) {
 					int ret = big5_mbtowc(pwc, s, 2);
 
@@ -11561,7 +11574,8 @@ static int shift_jisx0213_mbtowc(ucs4_t * pwc, const byte * s, int n)
 			*pwc = c + 0xfec0;
 			return 1;
 		} else {
-			if ((c >= 0x81 && c <= 0x9f) || (c >= 0xe0 && c <= 0xfc)) {
+			if ((c >= 0x81 && c <= 0x9f)
+				|| (c >= 0xe0 && c <= 0xfc)) {
 				/* Two byte character. */
 				if (n >= 2) {
 					byte c2 = s[1];
@@ -11760,7 +11774,8 @@ int gbkext1_mbtowc(ucs4_t * pwc, const byte * s, int n)
 		if (n >= 2) {
 			byte c2 = s[1];
 
-			if ((c2 >= 0x40 && c2 < 0x7f) || (c2 >= 0x80 && c2 < 0xff)) {
+			if ((c2 >= 0x40 && c2 < 0x7f)
+				|| (c2 >= 0x80 && c2 < 0xff)) {
 				dword i = 190 * (c1 - 0x81) + (c2 - (c2 >= 0x80 ? 0x41 : 0x40));
 				word wc = 0xfffd;
 
@@ -11788,7 +11803,8 @@ int gbkext2_mbtowc(ucs4_t * pwc, const byte * s, int n)
 		if (n >= 2) {
 			byte c2 = s[1];
 
-			if ((c2 >= 0x40 && c2 < 0x7f) || (c2 >= 0x80 && c2 < 0xa1)) {
+			if ((c2 >= 0x40 && c2 < 0x7f)
+				|| (c2 >= 0x80 && c2 < 0xa1)) {
 				dword i = 96 * (c1 - 0x81) + (c2 - (c2 >= 0x80 ? 0x41 : 0x40));
 				word wc = 0xfffd;
 
@@ -11862,7 +11878,8 @@ int cp936ext_mbtowc(ucs4_t * pwc, const byte * s, int n)
 		if (n >= 2) {
 			byte c2 = s[1];
 
-			if ((c2 >= 0x40 && c2 < 0x7f) || (c2 >= 0x80 && c2 < 0xff)) {
+			if ((c2 >= 0x40 && c2 < 0x7f)
+				|| (c2 >= 0x80 && c2 < 0xff)) {
 				dword i = 190 * (c1 - 0x81) + (c2 - (c2 >= 0x80 ? 0x41 : 0x40));
 				word wc = 0xfffd;
 

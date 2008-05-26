@@ -65,8 +65,8 @@ static void text_decode(p_text txt, t_conf_encode encode)
 					char *orgbuf = txt->buf;
 					byte *newbuf;
 
-					charsets_sjis_conv((const byte *) orgbuf, &newbuf,
-									   &txt->size);
+					charsets_sjis_conv((const byte *) orgbuf,
+									   &newbuf, &txt->size);
 					txt->buf = (char *) newbuf;
 					if (txt->buf != NULL)
 						free(orgbuf);
@@ -192,8 +192,9 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 
 #ifdef ENABLE_TTF
 		if (ttf_mode) {
-			pos += ttf_get_string_width(cttf, ettf, (const byte *) pos,
-										rowpixels, wordspace);
+			pos +=
+				ttf_get_string_width(cttf, ettf, (const byte *) pos,
+									 rowpixels, wordspace);
 		} else
 #endif
 		{
@@ -503,41 +504,45 @@ extern p_text text_open_binary(const char *filename, bool vert)
 		if (vert) {
 			sprintf(&txt->buf[bpr * i],
 					"%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X",
-					(unsigned int) i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3],
-					cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9],
-					cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
+					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
+					cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11],
+					cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
 			if ((i + 1) * 16 > txt->size) {
 				dword padding = (i + 1) * 16 - txt->size;
 
 				if (padding < 9)
-					memset(&txt->buf[bpr * i + bpr - padding * 2], 0x20,
-						   padding * 2);
+					memset(&txt->
+						   buf[bpr * i + bpr - padding * 2], 0x20, padding * 2);
 				else
-					memset(&txt->buf[bpr * i + bpr - 1 - padding * 2], 0x20,
-						   padding * 2 + 1);
+					memset(&txt->
+						   buf[bpr * i + bpr - 1 -
+							   padding * 2], 0x20, padding * 2 + 1);
 			}
 		} else {
 			sprintf(&txt->buf[bpr * i],
 					"%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ",
-					(unsigned int) i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3],
-					cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9],
-					cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
+					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
+					cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11],
+					cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
 			dword j;
 
 			for (j = 0; j < 16; j++)
-				txt->buf[bpr * i + 40 + 10 + j] = (cbuf[j] > 0x1F
-												   && cbuf[j] <
-												   0x7F) ? cbuf[j] : '.';
+				txt->buf[bpr * i + 40 + 10 + j] =
+					(cbuf[j] > 0x1F && cbuf[j] < 0x7F) ? cbuf[j] : '.';
 			if ((i + 1) * 16 > txt->size) {
 				dword padding = (i + 1) * 16 - txt->size;
 
 				memset(&txt->buf[bpr * i + bpr - padding], 0x20, padding);
 				if ((padding & 1) > 0)
-					memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5 - 3],
-						   0x20, padding / 2 * 5 + 3);
+					memset(&txt->
+						   buf[bpr * i + 40 + 10 -
+							   padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
 				else
-					memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5], 0x20,
-						   padding / 2 * 5);
+					memset(&txt->
+						   buf[bpr * i + 40 + 10 -
+							   padding / 2 * 5], 0x20, padding / 2 * 5);
 			}
 		}
 		cbuf += 16;
@@ -674,41 +679,45 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 		if (vert) {
 			sprintf(&txt->buf[bpr * i],
 					"%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X",
-					(unsigned int) i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3],
-					cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9],
-					cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
+					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
+					cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11],
+					cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
 			if ((i + 1) * 16 > txt->size) {
 				dword padding = (i + 1) * 16 - txt->size;
 
 				if (padding < 9)
-					memset(&txt->buf[bpr * i + bpr - padding * 2], 0x20,
-						   padding * 2);
+					memset(&txt->
+						   buf[bpr * i + bpr - padding * 2], 0x20, padding * 2);
 				else
-					memset(&txt->buf[bpr * i + bpr - 1 - padding * 2], 0x20,
-						   padding * 2 + 1);
+					memset(&txt->
+						   buf[bpr * i + bpr - 1 -
+							   padding * 2], 0x20, padding * 2 + 1);
 			}
 		} else {
 			sprintf(&txt->buf[bpr * i],
 					"%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ",
-					(unsigned int) i * 0x10, cbuf[0], cbuf[1], cbuf[2], cbuf[3],
-					cbuf[4], cbuf[5], cbuf[6], cbuf[7], cbuf[8], cbuf[9],
-					cbuf[10], cbuf[11], cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
+					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
+					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
+					cbuf[7], cbuf[8], cbuf[9], cbuf[10], cbuf[11],
+					cbuf[12], cbuf[13], cbuf[14], cbuf[15]);
 			dword j;
 
 			for (j = 0; j < 16; j++)
-				txt->buf[bpr * i + 40 + 10 + j] = (cbuf[j] > 0x1F
-												   && cbuf[j] <
-												   0x7F) ? cbuf[j] : '.';
+				txt->buf[bpr * i + 40 + 10 + j] =
+					(cbuf[j] > 0x1F && cbuf[j] < 0x7F) ? cbuf[j] : '.';
 			if ((i + 1) * 16 > txt->size) {
 				dword padding = (i + 1) * 16 - txt->size;
 
 				memset(&txt->buf[bpr * i + bpr - padding], 0x20, padding);
 				if ((padding & 1) > 0)
-					memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5 - 3],
-						   0x20, padding / 2 * 5 + 3);
+					memset(&txt->
+						   buf[bpr * i + 40 + 10 -
+							   padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
 				else
-					memset(&txt->buf[bpr * i + 40 + 10 - padding / 2 * 5], 0x20,
-						   padding / 2 * 5);
+					memset(&txt->
+						   buf[bpr * i + 40 + 10 -
+							   padding / 2 * 5], 0x20, padding / 2 * 5);
 			}
 		}
 		cbuf += 16;
@@ -900,47 +909,56 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 				if (vert) {
 					sprintf(&txt->buf[bpr * i],
 							"%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X",
-							(unsigned int) i * 0x10, cbuf[0], cbuf[1], cbuf[2],
-							cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7],
-							cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12],
+							(unsigned int) i * 0x10, cbuf[0],
+							cbuf[1], cbuf[2], cbuf[3],
+							cbuf[4], cbuf[5], cbuf[6],
+							cbuf[7], cbuf[8], cbuf[9],
+							cbuf[10], cbuf[11], cbuf[12],
 							cbuf[13], cbuf[14], cbuf[15]);
 					if ((i + 1) * 16 > txt->size) {
 						dword padding = (i + 1) * 16 - txt->size;
 
 						if (padding < 9)
-							memset(&txt->buf[bpr * i + bpr - padding * 2], 0x20,
-								   padding * 2);
+							memset(&txt->
+								   buf[bpr * i +
+									   bpr - padding * 2], 0x20, padding * 2);
 						else
-							memset(&txt->buf[bpr * i + bpr - 1 - padding * 2],
-								   0x20, padding * 2 + 1);
+							memset(&txt->
+								   buf[bpr * i +
+									   bpr - 1 -
+									   padding * 2], 0x20, padding * 2 + 1);
 					}
 				} else {
 					sprintf(&txt->buf[bpr * i],
 							"%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ",
-							(unsigned int) i * 0x10, cbuf[0], cbuf[1], cbuf[2],
-							cbuf[3], cbuf[4], cbuf[5], cbuf[6], cbuf[7],
-							cbuf[8], cbuf[9], cbuf[10], cbuf[11], cbuf[12],
+							(unsigned int) i * 0x10, cbuf[0],
+							cbuf[1], cbuf[2], cbuf[3],
+							cbuf[4], cbuf[5], cbuf[6],
+							cbuf[7], cbuf[8], cbuf[9],
+							cbuf[10], cbuf[11], cbuf[12],
 							cbuf[13], cbuf[14], cbuf[15]);
 					dword j;
 
 					for (j = 0; j < 16; j++)
-						txt->buf[bpr * i + 40 + 10 + j] = (cbuf[j] > 0x1F
-														   && cbuf[j] <
-														   0x7F) ? cbuf[j] :
-							'.';
+						txt->buf[bpr * i + 40 + 10 +
+								 j] = (cbuf[j] > 0x1F
+									   && cbuf[j] < 0x7F) ? cbuf[j] : '.';
 					if ((i + 1) * 16 > txt->size) {
 						dword padding = (i + 1) * 16 - txt->size;
 
-						memset(&txt->buf[bpr * i + bpr - padding], 0x20,
-							   padding);
+						memset(&txt->
+							   buf[bpr * i + bpr - padding], 0x20, padding);
 						if ((padding & 1) > 0)
 							memset(&txt->
-								   buf[bpr * i + 40 + 10 - padding / 2 * 5 - 3],
-								   0x20, padding / 2 * 5 + 3);
+								   buf[bpr * i +
+									   40 + 10 -
+									   padding / 2 *
+									   5 - 3], 0x20, padding / 2 * 5 + 3);
 						else
 							memset(&txt->
-								   buf[bpr * i + 40 + 10 - padding / 2 * 5],
-								   0x20, padding / 2 * 5);
+								   buf[bpr * i +
+									   40 + 10 -
+									   padding / 2 * 5], 0x20, padding / 2 * 5);
 					}
 				}
 				cbuf += 16;
@@ -1139,7 +1157,8 @@ extern p_text text_open_archive(const char *filename,
 												filetype, rowpixels,
 												wordspace, encode,
 												reorder,
-												(vertread == conf_vertread_lvert
+												(vertread ==
+												 conf_vertread_lvert
 												 || vertread ==
 												 conf_vertread_rvert));
 			break;
@@ -1150,9 +1169,11 @@ extern p_text text_open_archive(const char *filename,
 										 wordspace, encode, reorder);
 			else
 				pText = text_open_binary_in_rar(archname, filename,
-												filetype, rowpixels, wordspace,
-												encode, reorder,
-												(vertread == conf_vertread_lvert
+												filetype, rowpixels,
+												wordspace, encode,
+												reorder,
+												(vertread ==
+												 conf_vertread_lvert
 												 || vertread ==
 												 conf_vertread_rvert)
 					);

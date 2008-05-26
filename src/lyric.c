@@ -124,13 +124,15 @@ extern bool lyric_open(p_lyric l, const char *filename)
 							islyric = true;
 							sec = sec + 60.0 * minute + l->off / 1000;
 							if (tc == 0) {
-								isec = malloc(sizeof(*isec) * 16);
-								iex = malloc(sizeof(*iex) * 16);
+								isec = malloc(sizeof(*isec)
+											  * 16);
+								iex = malloc(sizeof(*iex)
+											 * 16);
 							} else if (tc % 16 == 0) {
-								isec = safe_realloc(isec,
-													sizeof(*isec) * (tc + 16));
-								iex = safe_realloc(iex,
-												   sizeof(*iex) * (tc + 16));
+								isec = safe_realloc(isec, sizeof(*isec)
+													* (tc + 16));
+								iex = safe_realloc(iex, sizeof(*iex)
+												   * (tc + 16));
 							}
 							if (isec == NULL || iex == NULL) {
 								if (isec != NULL)
@@ -140,9 +142,8 @@ extern bool lyric_open(p_lyric l, const char *filename)
 								tc = 0;
 							} else {
 								isec[tc] = (dword) sec;
-								iex[tc] =
-									(dword) ((sec -
-											  isec[tc]) * MAD_TIMER_RESOLUTION);
+								iex[tc] = (dword) ((sec - isec[tc])
+												   * MAD_TIMER_RESOLUTION);
 								++tc;
 							}
 						}
@@ -281,8 +282,8 @@ void lyric_decode(const char *lrcsrc, char *lrcdst, dword * size)
 				int i = 0;
 
 				while (i < ilen)
-					i += charsets_bg5hk2cjk((const byte *) lrcsrc + i,
-											(byte *) lrcdst + i);
+					i += charsets_bg5hk2cjk((const byte *) lrcsrc +
+											i, (byte *) lrcdst + i);
 				lrcdst[i] = 0;
 			}
 			break;
@@ -290,8 +291,8 @@ void lyric_decode(const char *lrcsrc, char *lrcdst, dword * size)
 			{
 				byte *targ = NULL;
 
-				charsets_sjis_conv((const byte *) lrcsrc, (byte **) & targ,
-								   (dword *) size);
+				charsets_sjis_conv((const byte *) lrcsrc,
+								   (byte **) & targ, (dword *) size);
 				strncpy(lrcdst, (const char *) targ, *size);
 				free(targ);
 			}
@@ -302,7 +303,8 @@ void lyric_decode(const char *lrcsrc, char *lrcdst, dword * size)
 
 				while (i < l) {
 					ucs4_t u = 0x1FFF;
-					int p = utf8_mbtowc(&u, (const byte *) lrcsrc + i, l - i);
+					int p = utf8_mbtowc(&u, (const byte *) lrcsrc + i,
+										l - i);
 
 					if (p < 0)
 						break;

@@ -176,20 +176,25 @@ extern void image_zoom_bicubic(pixel * src, int srcwidth, int srcheight,
 					y4 = srcwidth - 1;
 
 				u = ((float) y / destwidth) - y2;
-				u1[j] = sinc_2(u + 1.0f), u2[j] = sinc_1(u), u3[j] =
+				u1[j] = sinc_2(u + 1.0f), u2[j] =
+					sinc_1(u), u3[j] =
 					sinc_n1(u - 1.0f), u4[j] = sinc_n2(u - 2.0f);
 				tempdst[j] =
 					bicubic(bicubic
-							(temp1[y1], temp1[y2], temp1[y3], temp1[y4], u1[j],
-							 u2[j], u3[j], u4[j]), bicubic(temp2[y1], temp2[y2],
-														   temp2[y3], temp2[y4],
-														   u1[j], u2[j], u3[j],
-														   u4[j]),
-							bicubic(temp3[y1], temp3[y2], temp3[y3], temp3[y4],
-									u1[j], u2[j], u3[j], u4[j]),
-							bicubic(temp4[y1], temp4[y2], temp4[y3], temp4[y4],
-									u1[j], u2[j], u3[j], u4[j]), v1, v2, v3,
-							v4);
+							(temp1[y1], temp1[y2], temp1[y3],
+							 temp1[y4], u1[j], u2[j], u3[j],
+							 u4[j]), bicubic(temp2[y1],
+											 temp2[y2],
+											 temp2[y3],
+											 temp2[y4], u1[j],
+											 u2[j], u3[j],
+											 u4[j]),
+							bicubic(temp3[y1], temp3[y2],
+									temp3[y3], temp3[y4], u1[j],
+									u2[j], u3[j], u4[j]),
+							bicubic(temp4[y1], temp4[y2],
+									temp4[y3], temp4[y4], u1[j],
+									u2[j], u3[j], u4[j]), v1, v2, v3, v4);
 				y += srcwidth;
 			}
 		} else {
@@ -207,16 +212,20 @@ extern void image_zoom_bicubic(pixel * src, int srcwidth, int srcheight,
 
 				tempdst[j] =
 					bicubic(bicubic
-							(temp1[y1], temp1[y2], temp1[y3], temp1[y4], u1[j],
-							 u2[j], u3[j], u4[j]), bicubic(temp2[y1], temp2[y2],
-														   temp2[y3], temp2[y4],
-														   u1[j], u2[j], u3[j],
-														   u4[j]),
-							bicubic(temp3[y1], temp3[y2], temp3[y3], temp3[y4],
-									u1[j], u2[j], u3[j], u4[j]),
-							bicubic(temp4[y1], temp4[y2], temp4[y3], temp4[y4],
-									u1[j], u2[j], u3[j], u4[j]), v1, v2, v3,
-							v4);
+							(temp1[y1], temp1[y2], temp1[y3],
+							 temp1[y4], u1[j], u2[j], u3[j],
+							 u4[j]), bicubic(temp2[y1],
+											 temp2[y2],
+											 temp2[y3],
+											 temp2[y4], u1[j],
+											 u2[j], u3[j],
+											 u4[j]),
+							bicubic(temp3[y1], temp3[y2],
+									temp3[y3], temp3[y4], u1[j],
+									u2[j], u3[j], u4[j]),
+							bicubic(temp4[y1], temp4[y2],
+									temp4[y3], temp4[y4], u1[j],
+									u2[j], u3[j], u4[j]), v1, v2, v3, v4);
 				y += srcwidth;
 			}
 		}
@@ -267,9 +276,10 @@ extern void image_zoom_bilinear(pixel * src, int srcwidth, int srcheight,
 
 			u = y - y1 * destwidth;
 			tempdst[j] =
-				bilinear(bilinear(temp1[y1], temp1[y2], u, destwidth),
-						 bilinear(temp2[y1], temp2[y2], u, destwidth), v,
-						 destheight);
+				bilinear(bilinear
+						 (temp1[y1], temp1[y2], u, destwidth),
+						 bilinear(temp2[y1], temp2[y2], u,
+								  destwidth), v, destheight);
 			y += srcwidth;
 		}
 		dest += destwidth;
@@ -311,8 +321,8 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 		case 180:
 			for (j = 0; j < *pheight; j++)
 				for (i = 0; i < *pwidth; i++)
-					newdata[(*pheight - j - 1) * *pwidth + (*pwidth - i - 1)] =
-						imgdata[j * *pwidth + i];
+					newdata[(*pheight - j - 1) * *pwidth +
+							(*pwidth - i - 1)] = imgdata[j * *pwidth + i];
 			break;
 		case 270:
 			for (j = 0; j < *pheight; j++)
@@ -369,7 +379,8 @@ typedef struct
 static unsigned image_chm_fread(void *buf, unsigned r, unsigned n, void *stream)
 {
 	LONGINT64 readsize = chm_retrieve_object(((p_image_chm) stream)->chm,
-											 &((p_image_chm) stream)->ui, buf,
+											 &((p_image_chm) stream)->ui,
+											 buf,
 											 ((p_image_chm) stream)->readpos,
 											 r * n);
 
@@ -499,7 +510,8 @@ static int image_readpng2(void *infile, dword * pwidth, dword * pheight,
 
 	if (info_ptr->bit_depth == 16) {
 		*bgcolor =
-			RGB(info_ptr->background.red >> 8, info_ptr->background.green >> 8,
+			RGB(info_ptr->background.red >> 8,
+				info_ptr->background.green >> 8,
 				info_ptr->background.blue >> 8);
 	} else if (info_ptr->color_type == PNG_COLOR_TYPE_GRAY
 			   && info_ptr->bit_depth < 8) {
@@ -713,9 +725,9 @@ extern int image_readpng_in_rar(const char *rarfile, const char *filename,
 			}
 			RARCloseArchive(hrar);
 			rar.idx = 0;
-			int result =
-				image_readpng2((void *) &rar, pwidth, pheight, image_data,
-							   bgcolor, image_png_rar_read);
+			int result = image_readpng2((void *) &rar, pwidth, pheight,
+										image_data,
+										bgcolor, image_png_rar_read);
 
 			free(rar.buf);
 			return result;
@@ -774,7 +786,8 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 				}
 				if ((*image_data =
 					 (pixel *) memalign(16,
-										sizeof(pixel) * GifFileIn->Image.Width *
+										sizeof(pixel) *
+										GifFileIn->Image.Width *
 										GifFileIn->Image.Height)) == NULL) {
 					free(LineIn);
 					DGifCloseFile(GifFileIn);
@@ -805,8 +818,8 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 					return 1;
 				}
 				while (Extension != NULL) {
-					if (DGifGetExtensionNext(GifFileIn, &Extension) ==
-						GIF_ERROR) {
+					if (DGifGetExtensionNext(GifFileIn, &Extension)
+						== GIF_ERROR) {
 						if (*image_data != NULL)
 							free(*image_data);
 						if (LineIn != NULL)
@@ -942,9 +955,9 @@ extern int image_readgif_in_rar(const char *rarfile, const char *filename,
 			}
 			RARCloseArchive(hrar);
 			rar.idx = 0;
-			int result =
-				image_readgif2((void *) &rar, pwidth, pheight, image_data,
-							   bgcolor, image_gif_rar_read);
+			int result = image_readgif2((void *) &rar, pwidth, pheight,
+										image_data,
+										bgcolor, image_gif_rar_read);
 
 			free(rar.buf);
 			return result;
@@ -1271,9 +1284,9 @@ extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
 			sceRtcGetCurrentTick(&dbgnow);
 			dbg_printf(d, "找到RAR中JPG文件耗时%.2f秒",
 					   pspDiffTime(&dbgnow, &dbglasttick));
-			int result =
-				image_readjpg2((FILE *) & rar, pwidth, pheight, image_data,
-							   bgcolor, image_rar_fread);
+			int result = image_readjpg2((FILE *) & rar, pwidth, pheight,
+										image_data,
+										bgcolor, image_rar_fread);
 
 			if (config.load_exif) {
 				exif_data = exif_data_new_from_data(rar.buf, rar.size);
@@ -1335,8 +1348,8 @@ static int image_bmp_to_32color(DIB dib, dword * width, dword * height,
 					if ((i % 8) == 7)
 						src++;
 					*dest++ =
-						RGB(palette[pos].rgbRed, palette[pos].rgbGreen,
-							palette[pos].rgbBlue);
+						RGB(palette[pos].rgbRed,
+							palette[pos].rgbGreen, palette[pos].rgbBlue);
 				}
 				break;
 			case 4:
@@ -1349,16 +1362,16 @@ static int image_bmp_to_32color(DIB dib, dword * width, dword * height,
 						src++;
 					}
 					*dest++ =
-						RGB(palette[pos].rgbRed, palette[pos].rgbGreen,
-							palette[pos].rgbBlue);
+						RGB(palette[pos].rgbRed,
+							palette[pos].rgbGreen, palette[pos].rgbBlue);
 				}
 				break;
 			case 8:
 				for (j = 0; j < bi->biWidth; j++) {
 					pos = *src++;
 					*dest++ =
-						RGB(palette[pos].rgbRed, palette[pos].rgbGreen,
-							palette[pos].rgbBlue);
+						RGB(palette[pos].rgbRed,
+							palette[pos].rgbGreen, palette[pos].rgbBlue);
 				}
 				break;
 			case 15:
@@ -1501,9 +1514,9 @@ extern int image_readbmp_in_rar(const char *rarfile, const char *filename,
 			}
 			RARCloseArchive(hrar);
 			rar.idx = 0;
-			int result =
-				image_readbmp2((FILE *) & rar, pwidth, pheight, image_data,
-							   bgcolor, image_rar_fread);
+			int result = image_readbmp2((FILE *) & rar, pwidth, pheight,
+										image_data,
+										bgcolor, image_rar_fread);
 
 			free(rar.buf);
 			return result;
@@ -1577,7 +1590,8 @@ static int image_readtga2(void *handle, dword * pwidth, dword * pheight,
 					break;
 				default:
 					*imgdata =
-						RGB(*srcdata * 255 / 31, *(srcdata + 1) * 255 / 31,
+						RGB(*srcdata * 255 / 31,
+							*(srcdata + 1) * 255 / 31,
 							*(srcdata + 2) * 255 / 31);
 					srcdata += 3;
 			}
@@ -1689,10 +1703,11 @@ extern int image_readtga_in_rar(const char *rarfile, const char *filename,
 			}
 			RARCloseArchive(hrar);
 			rar.idx = 0;
-			int result =
-				image_readtga2((FILE *) & rar, pwidth, pheight, image_data,
-							   bgcolor, image_rar_fread, image_rar_fseek,
-							   image_rar_ftell);
+			int result = image_readtga2((FILE *) & rar, pwidth, pheight,
+										image_data,
+										bgcolor, image_rar_fread,
+										image_rar_fseek,
+										image_rar_ftell);
 
 			free(rar.buf);
 			return result;
@@ -1834,8 +1849,8 @@ int image_open_archive(const char *filename, const char *archname,
 	*ppImageData = NULL;
 
 	if (where == scene_in_dir) {
-		return image_open_normal(filename, ft, pWidth, pHeight, ppImageData,
-								 pBgColor);
+		return image_open_normal(filename, ft, pWidth, pHeight,
+								 ppImageData, pBgColor);
 	}
 
 	switch (ft) {

@@ -157,8 +157,8 @@ extern bool extract_archive_file(const char *archname, const char *archpath,
 		}
 	}
 
-	dbg_printf(d, "extract_archive_file: %s %s %s, ft = %d", archname, archpath,
-			   dest, ft);
+	dbg_printf(d, "extract_archive_file: %s %s %s, ft = %d", archname,
+			   archpath, dest, ft);
 
 	SceUID fd;
 

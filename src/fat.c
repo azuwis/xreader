@@ -22,8 +22,7 @@ static enum
 	fat12,
 	fat16,
 	fat32
-}
-fat_type = fat16;
+} fat_type = fat16;
 static SceUID fat_sema = -1;
 
 void fat_powerdown()
@@ -140,7 +139,8 @@ static bool convert_table_fat12()
 		fat_table[i + 1] =
 			((otable[j] >> 12) & 0x000F) | ((otable[j + 1] & 0x00FF) << 4);
 		fat_table[i + 2] =
-			((otable[j + 1] >> 8) & 0x00FF) | ((otable[j + 2] & 0x000F) << 8);
+			((otable[j + 1] >> 8) & 0x00FF) | ((otable[j + 2] & 0x000F)
+											   << 8);
 		fat_table[i + 3] = otable[j + 2] >> 4;
 	}
 	free(otable);
@@ -191,10 +191,8 @@ static bool fat_load_table()
 		return false;
 	}
 	if ((sceIoRead(fatfd, fat_table, fat_table_size) != fat_table_size)
-		|| (fat_type == fat12 && !convert_table_fat12()) || (fat_type == fat16
-															 &&
-															 !convert_table_fat16
-															 ())) {
+		|| (fat_type == fat12 && !convert_table_fat12())
+		|| (fat_type == fat16 && !convert_table_fat16())) {
 		sceIoClose(fatfd);
 		fatfd = -1;
 		free(fat_table);
@@ -286,7 +284,8 @@ static bool fat_get_longname(p_fat_entry entrys, u32 cur, char *longnamestr)
 	memset(longname, 0, 260 * sizeof(u16));
 	while (j > 0) {
 		j--;
-		if (entrys[j].norm.attr != 0x0F || entrys[j].longfile.checksum != chksum
+		if (entrys[j].norm.attr != 0x0F
+			|| entrys[j].longfile.checksum != chksum
 			|| entrys[j].norm.filename[0] == 0
 			|| (u8) entrys[j].norm.filename[0] == 0xE5)
 			return false;
@@ -342,8 +341,8 @@ static void fat_get_shortname(p_fat_entry entry, char *shortnamestr)
 	while (i < 8 && entry->norm.filename[i] != 0x20) {
 		*shortnamestr++ =
 			entry->norm.
-			filename[i] | ((chartable[(u8) entry->norm.filename[i]]) ? abit :
-						   0);
+			filename[i] | ((chartable[(u8) entry->norm.filename[i]]) ?
+						   abit : 0);
 		i++;
 	}
 	if (entry->norm.fileext[0] != 0x20) {

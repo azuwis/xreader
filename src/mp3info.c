@@ -14,7 +14,8 @@
 #include "dbg.h"
 
 static int _bitrate[9][16] = {
-	{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0},
+	{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448,
+	 0},
 	{0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 0},
 	{0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0},
 	{0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256, 0},
@@ -220,8 +221,9 @@ extern bool mp3info_read(p_mp3info info, int fd)
 
 			if (buf[off] == 0xFF && (buf[off + 1] & 0xE0) == 0xE0
 				&& (size =
-					calc_framesize(buf[off + 1], buf[off + 2], &info->level,
-								   &brate, &info->samplerate)) > 0) {
+					calc_framesize(buf[off + 1], buf[off + 2],
+								   &info->level, &brate,
+								   &info->samplerate)) > 0) {
 				br += brate;
 				if (info->framecount >= 0) {
 					if (info->framecount == 0)
@@ -234,8 +236,8 @@ extern bool mp3info_read(p_mp3info info, int fd)
 					if (info->frameoff == NULL)
 						info->framecount = -1;
 					else
-						info->frameoff[info->framecount++] =
-							dcount * 65536 + off;
+						info->frameoff[info->
+									   framecount++] = dcount * 65536 + off;
 				}
 				off += size;
 			} else

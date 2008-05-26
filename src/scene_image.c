@@ -232,11 +232,11 @@ static dword scene_rotateimage()
 							   sizeof(pixel) * width_rotated * height_rotated);
 		if (imgshow != NULL) {
 			if (config.bicubic)
-				image_zoom_bicubic(imgdata, width, height, imgshow,
-								   width_rotated, height_rotated);
+				image_zoom_bicubic(imgdata, width, height,
+								   imgshow, width_rotated, height_rotated);
 			else
-				image_zoom_bilinear(imgdata, width, height, imgshow,
-									width_rotated, height_rotated);
+				image_zoom_bilinear(imgdata, width, height,
+									imgshow, width_rotated, height_rotated);
 		} else {
 			imgshow = imgdata;
 			width_rotated = width;
@@ -338,8 +338,8 @@ static int scene_printimage(int selidx)
 {
 	disp_waitv();
 	disp_fillvram(bgcolor);
-	disp_putimage(paintleft, painttop, width_rotated, height_rotated, curleft,
-				  curtop, imgshow);
+	disp_putimage(paintleft, painttop, width_rotated, height_rotated,
+				  curleft, curtop, imgshow);
 	if (config.imginfobar || showinfo) {
 		char infostr[64];
 
@@ -366,7 +366,8 @@ static int scene_printimage(int selidx)
 				int line_num =
 					exif_array->used <= height ? exif_array->used : height;
 				int top =
-					(PSP_SCREEN_HEIGHT - (1 + height) * DISP_FONTSIZE) / 2 >
+					(PSP_SCREEN_HEIGHT -
+					 (1 + height) * DISP_FONTSIZE) / 2 >
 					1 ? (PSP_SCREEN_HEIGHT -
 						 (1 + height) * DISP_FONTSIZE) / 2 : 1;
 				int left =
@@ -376,8 +377,8 @@ static int scene_printimage(int selidx)
 					(PSP_SCREEN_WIDTH + 3 * width) / 4 >=
 					PSP_SCREEN_WIDTH - 1 ? PSP_SCREEN_WIDTH -
 					2 : (PSP_SCREEN_WIDTH + 3 * width) / 4;
-				disp_fillrect(left, top, right, top + DISP_FONTSIZE * line_num,
-							  0);
+				disp_fillrect(left, top, right,
+							  top + DISP_FONTSIZE * line_num, 0);
 				disp_rectangle(left - 1, top - 1, right + 1,
 							   top + DISP_FONTSIZE * line_num + 1, COLOR_WHITE);
 				int i;
@@ -385,33 +386,39 @@ static int scene_printimage(int selidx)
 				for (i = 0; i < line_num; ++i) {
 					const char *teststr = exif_array->ptr[i]->ptr;
 
-					disp_putnstring((PSP_SCREEN_WIDTH - width) / 4,
-									top + i * DISP_FONTSIZE, COLOR_WHITE,
-									(const byte *) teststr, strlen(teststr), 0,
-									0, DISP_FONTSIZE, 0);
+					disp_putnstring((PSP_SCREEN_WIDTH -
+									 width) / 4,
+									top + i * DISP_FONTSIZE,
+									COLOR_WHITE,
+									(const byte *) teststr,
+									strlen(teststr), 0, 0, DISP_FONTSIZE, 0);
 				}
 			}
 
 			disp_fillrect(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, 479, 271, 0);
-			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE,
+			disp_putnstring(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE,
+							COLOR_WHITE,
 							(const byte *) filelist[selidx].name,
-							960 / DISP_FONTSIZE - ilen - 1, 0, 0, DISP_FONTSIZE,
-							0);
-			disp_putnstring(PSP_SCREEN_WIDTH - DISP_FONTSIZE / 2 * ilen,
-							PSP_SCREEN_HEIGHT - DISP_FONTSIZE, COLOR_WHITE,
-							(const byte *) infostr, ilen, 0, 0, DISP_FONTSIZE,
-							0);
+							960 / DISP_FONTSIZE - ilen - 1, 0, 0,
+							DISP_FONTSIZE, 0);
+			disp_putnstring(PSP_SCREEN_WIDTH -
+							DISP_FONTSIZE / 2 * ilen,
+							PSP_SCREEN_HEIGHT - DISP_FONTSIZE,
+							COLOR_WHITE, (const byte *) infostr,
+							ilen, 0, 0, DISP_FONTSIZE, 0);
 		} else {
 			disp_fillrect(11, 11, 10 + DISP_FONTSIZE / 2 * ilen,
 						  10 + DISP_FONTSIZE, 0);
-			disp_putnstring(11, 11, COLOR_WHITE, (const byte *) infostr, ilen,
-							0, 0, DISP_FONTSIZE, 0);
+			disp_putnstring(11, 11, COLOR_WHITE,
+							(const byte *) infostr, ilen, 0, 0,
+							DISP_FONTSIZE, 0);
 		}
 	}
 	if ((config.thumb == conf_thumb_always || thumb)) {
 		if (!config.imginfobar
 			|| !(config.load_exif && exif_array && exif_array->used > 0)) {
-			dword top = (PSP_SCREEN_HEIGHT - thumb_height) / 2, bottom =
+			dword top =
+				(PSP_SCREEN_HEIGHT - thumb_height) / 2, bottom =
 				top + thumb_height;
 			dword thumbl = 0, thumbr = 0, thumbt = 0, thumbb = 0;
 
@@ -431,15 +438,16 @@ static int scene_printimage(int selidx)
 			}
 			disp_putimage(32, top, thumb_width, thumb_height, 0, 0, thumbimg);
 			disp_line(34, bottom, 32 + thumb_width, bottom, 0);
-			disp_line(32 + thumb_width, top + 2, 32 + thumb_width, bottom - 1,
-					  0);
-			disp_rectangle(33 + thumbl, top + thumbt + 1, 33 + thumbr,
-						   top + thumbb + 1, 0);
+			disp_line(32 + thumb_width, top + 2, 32 + thumb_width,
+					  bottom - 1, 0);
+			disp_rectangle(33 + thumbl, top + thumbt + 1,
+						   33 + thumbr, top + thumbb + 1, 0);
 			short b =
 				75 - config.imgbrightness > 0 ? 75 - config.imgbrightness : 0;
 
-			disp_rectangle(32 + thumbl, top + thumbt, 32 + thumbr, top + thumbb,
-						   disp_grayscale(COLOR_WHITE, 0, 0, 0, b));
+			disp_rectangle(32 + thumbl, top + thumbt, 32 + thumbr,
+						   top + thumbb, disp_grayscale(COLOR_WHITE,
+														0, 0, 0, b));
 		}
 	}
 	disp_flip();
@@ -811,8 +819,8 @@ static int image_handle_input(dword * selidx, dword key)
 			ctrl_waitrelease();
 		} else {
 			slideshow = false;
-			win_msg(_("ª√µ∆∆¨≤•∑≈“—æ≠Õ£÷π£°"), COLOR_WHITE, COLOR_WHITE,
-					config.msgbcolor);
+			win_msg(_("ª√µ∆∆¨≤•∑≈“—æ≠Õ£÷π£°"), COLOR_WHITE,
+					COLOR_WHITE, config.msgbcolor);
 		}
 	} else if (key == config.imgkey[7] || key == config.imgkey2[7]) {
 		config.imginfobar = !config.imginfobar;
@@ -836,8 +844,8 @@ static int image_handle_input(dword * selidx, dword key)
 			   || key == CTRL_PLAYPAUSE) {
 		if (slideshow) {
 			slideshow = false;
-			win_msg(_("ª√µ∆∆¨≤•∑≈“—æ≠Õ£÷π£°"), COLOR_WHITE, COLOR_WHITE,
-					config.msgbcolor);
+			win_msg(_("ª√µ∆∆¨≤•∑≈“—æ≠Õ£÷π£°"), COLOR_WHITE,
+					COLOR_WHITE, config.msgbcolor);
 		} else {
 			imgreading = false;
 			scene_power_save(true);
@@ -1092,8 +1100,9 @@ static void scene_imgkey_predraw(p_win_menuitem item, dword index,
 			STRCAT_S(keyname, keyname2);
 		}
 		disp_putstring(left + (right - left) / 2,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) keyname);
 		lines++;
 	}

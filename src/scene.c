@@ -119,8 +119,8 @@ int default_predraw(const win_menu_predraw_data * pData, const char *str,
 				  *right - 1, *bottom - 1,
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  menubcolor);
-	disp_putstring(get_center_pos(*left, *right, str), *upper + 1, COLOR_WHITE,
-				   (const byte *) str);
+	disp_putstring(get_center_pos(*left, *right, str), *upper + 1,
+				   COLOR_WHITE, (const byte *) str);
 	disp_line(*left, *upper + 1 + DISP_FONTSIZE, *right,
 			  *upper + 1 + DISP_FONTSIZE, COLOR_WHITE);
 
@@ -155,14 +155,14 @@ bool scene_load_font()
 	if (fontindex >= fontcount)
 		fontindex = 0;
 	config.fontsize = fonts[fontindex].size;
-	STRCPY_S(fontzipfile, appdir);
+	STRCPY_S(fontzipfile, scene_appdir());
 	STRCAT_S(fontzipfile, "fonts.zip");
 	SPRINTF_S(efontfile, "ASC%d", config.fontsize);
 	SPRINTF_S(cfontfile, "GBK%d", config.fontsize);
 	scene_power_save(false);
 	if (!disp_load_zipped_font(fontzipfile, efontfile, cfontfile)) {
-		SPRINTF_S(efontfile, "%sfonts/ASC%d", appdir, config.fontsize);
-		SPRINTF_S(cfontfile, "%sfonts/GBK%d", appdir, config.fontsize);
+		SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(), config.fontsize);
+		SPRINTF_S(cfontfile, "%sfonts/GBK%d", scene_appdir(), config.fontsize);
 		if (!disp_load_font(efontfile, cfontfile)) {
 			scene_power_save(true);
 			return false;
@@ -212,14 +212,16 @@ bool scene_load_book_font()
 #endif
 	if (!loaded) {
 		config.usettf = false;
-		STRCPY_S(fontzipfile, appdir);
+		STRCPY_S(fontzipfile, scene_appdir());
 		STRCAT_S(fontzipfile, "fonts.zip");
 		SPRINTF_S(efontfile, "ASC%d", config.bookfontsize);
 		SPRINTF_S(cfontfile, "GBK%d", config.bookfontsize);
 		scene_power_save(false);
 		if (!disp_load_zipped_book_font(fontzipfile, efontfile, cfontfile)) {
-			SPRINTF_S(efontfile, "%sfonts/ASC%d", appdir, config.bookfontsize);
-			SPRINTF_S(cfontfile, "%sfonts/GBK%d", appdir, config.bookfontsize);
+			SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(),
+					  config.bookfontsize);
+			SPRINTF_S(cfontfile, "%sfonts/GBK%d", scene_appdir(),
+					  config.bookfontsize);
 			if (!disp_load_book_font(efontfile, cfontfile)) {
 				scene_power_save(true);
 				return false;
@@ -248,165 +250,6 @@ extern int prompt_press_any_key(void)
 	disp_putstring(center,
 				   136 - DISP_FONTSIZE / 2, COLOR_WHITE,
 				   (const byte *) _("请按对应按键"));
-
-	return 0;
-}
-
-t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
-								  dword max_height, dword * topindex,
-								  dword * index)
-{
-	switch (key) {
-		case (PSP_CTRL_SELECT | PSP_CTRL_START):
-			if (win_msgbox
-				(_("是否退出软件?"), _("是"), _("否"),
-				 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
-				scene_exit();
-				return win_menu_op_continue;
-			}
-			return win_menu_op_force_redraw;
-		case PSP_CTRL_CIRCLE:
-			disp_duptocache();
-			disp_waitv();
-			prompt_press_any_key();
-			disp_flip();
-			dword key, key2;
-			SceCtrlData ctl;
-
-			do {
-				sceCtrlReadBufferPositive(&ctl, 1);
-			} while (ctl.Buttons != 0);
-			do {
-				sceCtrlReadBufferPositive(&ctl, 1);
-				key = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
-			} while ((key &
-					  ~(PSP_CTRL_UP | PSP_CTRL_DOWN | PSP_CTRL_LEFT |
-						PSP_CTRL_RIGHT)) == 0);
-			key2 = key;
-			while ((key2 & key) == key) {
-				key = key2;
-				sceCtrlReadBufferPositive(&ctl, 1);
-				key2 = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
-			}
-			if (config.txtkey[*index] == key || config.txtkey2[*index] == key)
-				return win_menu_op_force_redraw;
-			int i;
-
-			for (i = 0; i < 12; i++) {
-				if (i == *index)
-					continue;
-				if (config.txtkey[i] == key) {
-					config.txtkey[i] = config.txtkey2[*index];
-					if (config.txtkey[i] == 0) {
-						config.txtkey[i] = config.txtkey2[i];
-						config.txtkey2[i] = 0;
-					}
-					break;
-				}
-				if (config.txtkey2[i] == key) {
-					config.txtkey2[i] = config.txtkey2[*index];
-					break;
-				}
-			}
-			config.txtkey2[*index] = config.txtkey[*index];
-			config.txtkey[*index] = key;
-			do {
-				sceCtrlReadBufferPositive(&ctl, 1);
-			} while (ctl.Buttons != 0);
-			return win_menu_op_force_redraw;
-		case PSP_CTRL_TRIANGLE:
-			config.txtkey[*index] = config.txtkey2[*index];
-			config.txtkey2[*index] = 0;
-			return win_menu_op_redraw;
-		case PSP_CTRL_SQUARE:
-			return win_menu_op_cancel;
-		default:;
-	}
-	return win_menu_defcb(key, item, count, max_height, topindex, index);
-}
-
-void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex,
-						  dword max_height)
-{
-	char keyname[256];
-
-	int left, right, upper, bottom, lines = 0;
-
-	default_predraw(&g_predraw, _("按键设置   △ 删除"), max_height, &left,
-					&right, &upper, &bottom, 8 * DISP_FONTSIZE + 4);
-
-	dword i;
-
-	for (i = topindex; i < topindex + max_height; i++) {
-		conf_get_keyname(config.txtkey[i], keyname);
-		if (config.txtkey2[i] != 0) {
-			char keyname2[256];
-
-			conf_get_keyname(config.txtkey2[i], keyname2);
-			STRCAT_S(keyname, _(" | "));
-			STRCAT_S(keyname, keyname2);
-		}
-		disp_putstring(left + (right - left) / 2,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
-					   COLOR_WHITE, (const byte *) keyname);
-		lines++;
-	}
-}
-
-dword scene_txtkey(dword * selidx)
-{
-	win_menu_predraw_data prev;
-
-	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
-	t_win_menuitem item[14];
-
-	STRCPY_S(item[0].name, _("书签菜单"));
-	STRCPY_S(item[1].name, _("  上一页"));
-	STRCPY_S(item[2].name, _("  下一页"));
-	STRCPY_S(item[3].name, _(" 前100行"));
-	STRCPY_S(item[4].name, _(" 后100行"));
-	STRCPY_S(item[5].name, _(" 前500行"));
-	STRCPY_S(item[6].name, _(" 后500行"));
-	STRCPY_S(item[7].name, _("  第一页"));
-	STRCPY_S(item[8].name, _("最后一页"));
-	STRCPY_S(item[9].name, _("上一文件"));
-	STRCPY_S(item[10].name, _("下一文件"));
-	STRCPY_S(item[11].name, _("退出阅读"));
-	STRCPY_S(item[12].name, _("切换翻页"));
-	STRCPY_S(item[13].name, _("输入GI值"));
-	dword i, index;
-
-	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
-
-	for (i = 0; i < NELEMS(item); i++) {
-		item[i].width = g_predraw.max_item_len;
-		item[i].selected = false;
-		item[i].icolor = config.menutextcolor;
-		item[i].selicolor = config.selicolor;
-		item[i].selrcolor =
-			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
-		item[i].selbcolor = config.selbcolor;
-		item[i].data = NULL;
-	}
-
-	g_predraw.item_count = NELEMS(item);
-	g_predraw.x = 240;
-	g_predraw.y = 123;
-	g_predraw.left = g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2;
-	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
-	g_predraw.linespace = 0;
-
-	while ((index =
-			win_menu(g_predraw.left,
-					 g_predraw.upper, g_predraw.max_item_len,
-					 g_predraw.item_count, item, NELEMS(item), 0,
-					 g_predraw.linespace,
-					 config.usedyncolor ? get_bgcolor_by_time() : config.
-					 menubcolor, true, scene_txtkey_predraw, NULL,
-					 scene_txtkey_menucb)) != INVALID);
-
-	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 
 	return 0;
 }
@@ -500,8 +343,9 @@ void scene_flkey_predraw(p_win_menuitem item, dword index, dword topindex,
 			STRCAT_S(keyname, keyname2);
 		}
 		disp_putstring(left + (right - left) / 2,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) keyname);
 		lines++;
 	}
@@ -642,7 +486,8 @@ int scene_filelist_compare_name(void *data1, void *data2)
 		dbg_printf(d, "%s: !!!!", __func__);
 		return 0;
 	}
-	t_fs_filetype ft1 = (t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
+	t_fs_filetype ft1 =
+		(t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
 		(t_fs_filetype) ((p_win_menuitem) data2)->data;
 	if (ft1 == fs_filetype_dir) {
 		if (ft2 != fs_filetype_dir)
@@ -655,7 +500,8 @@ int scene_filelist_compare_name(void *data1, void *data2)
 
 int scene_filelist_compare_size(void *data1, void *data2)
 {
-	t_fs_filetype ft1 = (t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
+	t_fs_filetype ft1 =
+		(t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
 		(t_fs_filetype) ((p_win_menuitem) data2)->data;
 	if (ft1 == fs_filetype_dir) {
 		if (ft2 != fs_filetype_dir)
@@ -668,7 +514,8 @@ int scene_filelist_compare_size(void *data1, void *data2)
 
 int scene_filelist_compare_ctime(void *data1, void *data2)
 {
-	t_fs_filetype ft1 = (t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
+	t_fs_filetype ft1 =
+		(t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
 		(t_fs_filetype) ((p_win_menuitem) data2)->data;
 	if (ft1 == fs_filetype_dir) {
 		if (ft2 != fs_filetype_dir)
@@ -683,7 +530,8 @@ int scene_filelist_compare_ctime(void *data1, void *data2)
 
 int scene_filelist_compare_mtime(void *data1, void *data2)
 {
-	t_fs_filetype ft1 = (t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
+	t_fs_filetype ft1 =
+		(t_fs_filetype) ((p_win_menuitem) data1)->data, ft2 =
 		(t_fs_filetype) ((p_win_menuitem) data2)->data;
 	if (ft1 == fs_filetype_dir) {
 		if (ft2 != fs_filetype_dir)
@@ -885,11 +733,11 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 	int left, right, upper, bottom, lines = 0;
 
 	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0)
-		default_predraw(&g_predraw, _("看图选项"), max_height, &left, &right,
-						&upper, &bottom, 4 * DISP_FONTSIZE + 4);
+		default_predraw(&g_predraw, _("看图选项"), max_height, &left,
+						&right, &upper, &bottom, 4 * DISP_FONTSIZE + 4);
 	else
-		default_predraw(&g_predraw, _("看图选项"), max_height, &left, &right,
-						&upper, &bottom, 6 * DISP_FONTSIZE + 4);
+		default_predraw(&g_predraw, _("看图选项"), max_height, &left,
+						&right, &upper, &bottom, 6 * DISP_FONTSIZE + 4);
 	char number[20];
 
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
@@ -1132,8 +980,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.forecolor = RGB2(r, g, b);
 					break;
 				case 3:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (r == COLOR_MAX)
 						r = 0;
 					else
@@ -1141,8 +989,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.bgcolor = RGB2(r, g, b);
 					break;
 				case 4:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (g == COLOR_MAX)
 						g = 0;
 					else
@@ -1150,8 +998,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.bgcolor = RGB2(r, g, b);
 					break;
 				case 5:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (b == COLOR_MAX)
 						b = 0;
 					else
@@ -1199,8 +1047,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.forecolor = RGB2(r, g, b);
 					break;
 				case 3:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (r > (COLOR_MAX * 25 / 255))
 						r -= (COLOR_MAX * 25 / 255);
 					else
@@ -1208,8 +1056,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.bgcolor = RGB2(r, g, b);
 					break;
 				case 4:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (g > (COLOR_MAX * 25 / 255))
 						g -= (COLOR_MAX * 25 / 255);
 					else
@@ -1217,8 +1065,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.bgcolor = RGB2(r, g, b);
 					break;
 				case 5:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (b > (COLOR_MAX * 25 / 255))
 						b -= (COLOR_MAX * 25 / 255);
 					else
@@ -1263,8 +1111,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.forecolor = RGB2(r, g, b);
 					break;
 				case 3:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (r < COLOR_MAX - (COLOR_MAX * 25 / 255))
 						r += (COLOR_MAX * 25 / 255);
 					else
@@ -1272,8 +1120,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.bgcolor = RGB2(r, g, b);
 					break;
 				case 4:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (g < COLOR_MAX - (COLOR_MAX * 25 / 255))
 						g += (COLOR_MAX * 25 / 255);
 					else
@@ -1281,8 +1129,8 @@ t_win_menu_op scene_color_menucb(dword key, p_win_menuitem item, dword * count,
 					config.bgcolor = RGB2(r, g, b);
 					break;
 				case 5:
-					r = RGB_R(config.bgcolor), g = RGB_G(config.bgcolor), b =
-						RGB_B(config.bgcolor);
+					r = RGB_R(config.bgcolor), g =
+						RGB_G(config.bgcolor), b = RGB_B(config.bgcolor);
 					if (b < COLOR_MAX - (COLOR_MAX * 25 / 255))
 						b += (COLOR_MAX * 25 / 255);
 					else
@@ -1323,15 +1171,16 @@ void scene_color_predraw(p_win_menuitem item, dword index, dword topindex,
 	default_predraw(&g_predraw, _("颜色选项"), max_height, &left, &right,
 					&upper, &bottom, pad + npad);
 
-	disp_fillrect(g_predraw.x + 40, upper + 3 + DISP_FONTSIZE, g_predraw.x + 70,
-				  upper + 3 + DISP_FONTSIZE + 30, config.forecolor);
+	disp_fillrect(g_predraw.x + 40, upper + 3 + DISP_FONTSIZE,
+				  g_predraw.x + 70, upper + 3 + DISP_FONTSIZE + 30,
+				  config.forecolor);
 	disp_fillrect(g_predraw.x + 40,
 				  upper + 2 + (3 + 1 + g_predraw.linespace) * (1 +
 															   DISP_FONTSIZE),
 				  g_predraw.x + 70,
 				  upper + 2 + (3 + 1 + g_predraw.linespace) * (1 +
-															   DISP_FONTSIZE) +
-				  30, config.bgcolor);
+															   DISP_FONTSIZE)
+				  + 30, config.bgcolor);
 
 	memset(number, ' ', 4);
 	utils_dword2string(RGB_R(config.forecolor), number, 4);
@@ -1458,8 +1307,8 @@ dword scene_color(dword * selidx)
 
 #ifdef ENABLE_BG
 	if (orgbgcolor != config.bgcolor || orggrayscale != config.grayscale) {
-		dbg_printf(d, "更换背景: %s %s gray: %d", config.bgarch, config.bgfile,
-				   config.grayscale);
+		dbg_printf(d, "更换背景: %s %s gray: %d", config.bgarch,
+				   config.bgfile, config.grayscale);
 		bg_load(config.bgfile, config.bgarch, config.bgcolor,
 				fs_file_get_type(config.bgfile), config.grayscale,
 				config.bgwhere);
@@ -1668,20 +1517,23 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 	lines++;
 	if (config.autopagetype == 2) {
 		disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) _("无"));
 		lines++;
 	} else if (config.autopagetype == 1) {
 		disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) _("自动滚屏"));
 		lines++;
 	} else {
 		disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) _("自动翻页"));
 		lines++;
 	}
@@ -1690,14 +1542,16 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 
 		SPRINTF_S(infomsg, "%2d", config.autopage);
 		disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) infomsg);
 		lines++;
 	} else {
 		disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) _("已关闭"));
 		lines++;
 	}
@@ -1705,14 +1559,16 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 		memset(number, ' ', 4);
 		utils_dword2string(config.autolinedelay, number, 2);
 		disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) number);
 		lines++;
 	} else {
 		disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-					   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																		DISP_FONTSIZE),
+					   upper + 2 + (lines + 1 +
+									g_predraw.linespace) * (1 +
+															DISP_FONTSIZE),
 					   COLOR_WHITE, (const byte *) _("已关闭"));
 		lines++;
 	}
@@ -2105,8 +1961,8 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex,
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
 	memset(number, ' ', 4);
-	utils_dword2string(config.usettf ? ttfsize : bookfonts[bookfontindex].size,
-					   number, 4);
+	utils_dword2string(config.usettf ? ttfsize : bookfonts[bookfontindex].
+					   size, number, 4);
 	disp_putstring(g_predraw.x + 2,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
@@ -2394,7 +2250,7 @@ static void set_language()
 {
 	char msgpath[PATH_MAX];
 
-	SPRINTF_S(msgpath, "%smsg", appdir);
+	SPRINTF_S(msgpath, "%smsg", scene_appdir());
 	simple_bindtextdomain(config.language, msgpath);
 	if (simple_textdomain(config.language) == NULL) {
 		STRCPY_S(config.language, "zh_CN");
@@ -2815,22 +2671,24 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item,
 					(*index, config.path, config.shortpath,
 					 filelist[(dword) item[1].data].compname->ptr,
 					 config.isreading)) {
-					dbg_printf(d, "location_set: %s %s %s %d", config.path,
-							   config.shortpath,
-							   filelist[(dword) item[1].data].compname->ptr,
-							   config.isreading);
+					dbg_printf(d, "location_set: %s %s %s %d",
+							   config.path, config.shortpath,
+							   filelist[(dword) item[1].data].
+							   compname->ptr, config.isreading);
 					locaval[*index] = true;
 					char t[128];
 
 					STRCPY_S(t, config.path);
 					if (config.path[strlen(config.path) - 1] != '/'
-						&& filelist[(dword) item[1].data].compname->ptr[0] !=
-						'/')
+						&& filelist[(dword) item[1].data].compname->
+						ptr[0] != '/')
 						STRCAT_S(t, "/");
 					STRCAT_S(t, filelist[(dword) item[1].data].compname->ptr);
 					scene_locname_to_itemname(item[*index].name,
-											  NELEMS(item[*index].name), t,
-											  (config.filelistwidth /
+											  NELEMS(item[*index].
+													 name), t,
+											  (config.
+											   filelistwidth /
 											   config.fontsize * 4),
 											  config.isreading);
 					item[*index].width = strlen(item[*index].name);
@@ -2847,15 +2705,15 @@ void scene_locsave_predraw(p_win_menuitem item, dword index, dword topindex,
 {
 	int left, right, upper, bottom;
 
-	default_predraw(&g_predraw, _("保存文件位置"), max_height, &left, &right,
-					&upper, &bottom, 4);
+	default_predraw(&g_predraw, _("保存文件位置"), max_height, &left,
+					&right, &upper, &bottom, 4);
 }
 
 void scene_loc_enum(dword index, char *comppath, char *shortpath,
 					char *compname, bool isreading, void *data)
 {
-	dbg_printf(d, "scene_loc_enum: %s %s %s %d", comppath, shortpath, compname,
-			   isreading);
+	dbg_printf(d, "scene_loc_enum: %s %s %s %d", comppath, shortpath,
+			   compname, isreading);
 	p_win_menuitem item = (p_win_menuitem) data;
 
 	if (index < 10) {
@@ -2866,9 +2724,10 @@ void scene_loc_enum(dword index, char *comppath, char *shortpath,
 			STRCAT_S(t, "/");
 		}
 		STRCAT_S(t, compname);
-		scene_locname_to_itemname(item[index].name, NELEMS(item[index].name), t,
-								  (config.filelistwidth / config.fontsize * 4),
-								  isreading);
+		scene_locname_to_itemname(item[index].name,
+								  NELEMS(item[index].name), t,
+								  (config.filelistwidth /
+								   config.fontsize * 4), isreading);
 		item[index].width = strlen(item[index].name);
 	}
 }
@@ -2927,12 +2786,13 @@ static void scene_open_dir_or_archive(dword * idx)
 	if (plen > 0 && config.path[plen - 1] == '/')
 		if (strnicmp(config.path, "ms0:/", 5) == 0)
 			filecount =
-				fs_dir_to_menu(config.path, config.shortpath, &filelist,
-							   config.menutextcolor, config.selicolor,
+				fs_dir_to_menu(config.path, config.shortpath,
+							   &filelist, config.menutextcolor,
+							   config.selicolor,
 							   config.
-							   usedyncolor ? get_bgcolor_by_time() : config.
-							   menubcolor, config.selbcolor, config.showhidden,
-							   config.showunknown);
+							   usedyncolor ? get_bgcolor_by_time() :
+							   config.menubcolor, config.selbcolor,
+							   config.showhidden, config.showunknown);
 		else
 			filecount =
 				fs_flashdir_to_menu(config.path,
@@ -2949,7 +2809,8 @@ static void scene_open_dir_or_archive(dword * idx)
 				where = scene_in_zip;
 				filecount =
 					fs_zip_to_menu(config.shortpath, &filelist,
-								   config.menutextcolor, config.selicolor,
+								   config.menutextcolor,
+								   config.selicolor,
 								   config.
 								   usedyncolor ? get_bgcolor_by_time() :
 								   config.menubcolor, config.selbcolor);
@@ -2958,7 +2819,8 @@ static void scene_open_dir_or_archive(dword * idx)
 				where = scene_in_chm;
 				filecount =
 					fs_chm_to_menu(config.shortpath, &filelist,
-								   config.menutextcolor, config.selicolor,
+								   config.menutextcolor,
+								   config.selicolor,
 								   config.
 								   usedyncolor ? get_bgcolor_by_time() :
 								   config.menubcolor, config.selbcolor);
@@ -2967,7 +2829,8 @@ static void scene_open_dir_or_archive(dword * idx)
 				where = scene_in_rar;
 				filecount =
 					fs_rar_to_menu(config.shortpath, &filelist,
-								   config.menutextcolor, config.selicolor,
+								   config.menutextcolor,
+								   config.selicolor,
 								   config.
 								   usedyncolor ? get_bgcolor_by_time() :
 								   config.menubcolor, config.selbcolor);
@@ -2983,14 +2846,16 @@ static void scene_open_dir_or_archive(dword * idx)
 		filecount =
 			fs_dir_to_menu(config.path, config.shortpath, &filelist,
 						   config.menutextcolor, config.selicolor,
-						   config.usedyncolor ? get_bgcolor_by_time() : config.
-						   menubcolor, config.selbcolor, config.showhidden,
-						   config.showunknown);
+						   config.
+						   usedyncolor ? get_bgcolor_by_time() : config.
+						   menubcolor, config.selbcolor,
+						   config.showhidden, config.showunknown);
 	}
 	quicksort(filelist,
 			  (filecount > 0
-			   && filelist[0].compname->ptr[0] == '.') ? 1 : 0, filecount - 1,
-			  sizeof(t_win_menuitem), compare_func[(int) config.arrange]);
+			   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
+			  filecount - 1, sizeof(t_win_menuitem),
+			  compare_func[(int) config.arrange]);
 	*idx = 0;
 	while (*idx < filecount
 		   && stricmp(filelist[*idx].compname->ptr, config.lastfile) != 0)
@@ -3016,14 +2881,15 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item,
 					(*index, comppath, shortpath, compname, &locreading)
 					&& comppath[0] != 0 && shortpath[0] != 0
 					&& compname[0] != 0) {
-					dbg_printf(d, "location_get %s %s %s %d", comppath,
-							   shortpath, compname, locreading);
+					dbg_printf(d, "location_get %s %s %s %d",
+							   comppath, shortpath, compname, locreading);
 					where = scene_in_dir;
 					STRCPY_S(config.path, comppath);
 					STRCPY_S(config.shortpath, shortpath);
 					STRCPY_S(config.lastfile, compname);
 					config.isreading = locreading;
 					dword idx = 0;
+
 					scene_open_dir_or_archive(&idx);
 					if (idx >= filecount) {
 						idx = 0;
@@ -3043,8 +2909,8 @@ void scene_locload_predraw(p_win_menuitem item, dword index, dword topindex,
 {
 	int left, right, upper, bottom;
 
-	default_predraw(&g_predraw, _("读取文件位置"), max_height, &left, &right,
-					&upper, &bottom, 4);
+	default_predraw(&g_predraw, _("读取文件位置"), max_height, &left,
+					&right, &upper, &bottom, 4);
 }
 
 dword scene_locload(dword * selidx)
@@ -3107,15 +2973,10 @@ void scene_setting_mgr_predraw(p_win_menuitem item, dword index, dword topindex,
 	char infomsg[80];
 
 	SPRINTF_S(infomsg, _("%d号设置"), config_num);
-	char conffile[PATH_MAX], appdir[PATH_MAX];
+	char conffile[PATH_MAX];
 
-	getcwd(appdir, PATH_MAX);
-	STRCAT_S(appdir, "/");
-	STRCPY_S(conffile, appdir);
-	char conffilename[80];
-
-	SPRINTF_S(conffilename, "%s%d%s", "config", config_num, ".ini");
-	STRCAT_S(conffile, conffilename);
+	SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", config_num,
+			  ".ini");
 	if (utils_is_file_exists(conffile)) {
 		STRCAT_S(infomsg, "*");
 	}
@@ -3237,15 +3098,10 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 		case PSP_CTRL_CIRCLE:
 			{
 				disp_waitv();
-				char conffile[PATH_MAX], appdir[PATH_MAX];
+				char conffile[PATH_MAX];
 
-				getcwd(appdir, PATH_MAX);
-				STRCAT_S(appdir, "/");
-				STRCPY_S(conffile, appdir);
-				char conffilename[80];
-
-				SPRINTF_S(conffilename, "%s%d%s", "config", config_num, ".ini");
-				STRCAT_S(conffile, conffilename);
+				SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config",
+						  config_num, ".ini");
 				conf_set_file(conffile);
 				if (*index == 0) {
 					t_conf prev_config;
@@ -3253,8 +3109,8 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 					memcpy(&prev_config, &config, sizeof(t_conf));
 					// load
 					if (!conf_load(&config)) {
-						win_msg(_("读取设置失败!"), COLOR_WHITE, COLOR_WHITE,
-								config.msgbcolor);
+						win_msg(_("读取设置失败!"), COLOR_WHITE,
+								COLOR_WHITE, config.msgbcolor);
 						return win_menu_op_redraw;
 					}
 					detect_config_change(&prev_config, &config);
@@ -3262,15 +3118,15 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 					// save
 					load_fontsize_to_config();
 					if (!conf_save(&config)) {
-						win_msg(_("保存设置失败!"), COLOR_WHITE, COLOR_WHITE,
-								config.msgbcolor);
+						win_msg(_("保存设置失败!"), COLOR_WHITE,
+								COLOR_WHITE, config.msgbcolor);
 						return win_menu_op_redraw;
 					}
 				} else {
 					// delete
 					if (!utils_del_file(conffile)) {
-						win_msg(_("删除设置失败!"), COLOR_WHITE, COLOR_WHITE,
-								config.msgbcolor);
+						win_msg(_("删除设置失败!"), COLOR_WHITE,
+								COLOR_WHITE, config.msgbcolor);
 						return win_menu_op_redraw;
 					}
 				}
@@ -3324,8 +3180,8 @@ dword scene_setting_mgr(dword * selidx)
 		win_menu(g_predraw.left, g_predraw.upper, g_predraw.max_item_len,
 				 g_predraw.item_count, item, NELEMS(item), 0,
 				 g_predraw.linespace,
-				 config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor,
-				 true, scene_setting_mgr_predraw, NULL,
+				 config.usedyncolor ? get_bgcolor_by_time() : config.
+				 menubcolor, true, scene_setting_mgr_predraw, NULL,
 				 scene_setting_mgr_menucb);
 
 	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
@@ -3376,30 +3232,29 @@ t_win_menu_op scene_options_menucb(dword key, p_win_menuitem item,
 				return exit_confirm();
 			if (*index == 14) {
 				if (dbg_memory_buffer == NULL) {
-					win_msg(_("无法打开调试信息!"), COLOR_WHITE, COLOR_WHITE,
-							config.msgbcolor);
+					win_msg(_("无法打开调试信息!"), COLOR_WHITE,
+							COLOR_WHITE, config.msgbcolor);
 					return win_menu_op_cancel;
 				}
 				pixel *saveimage = (pixel *) memalign(16,
 													  PSP_SCREEN_WIDTH *
-													  PSP_SCREEN_HEIGHT *
-													  sizeof(pixel));
+													  PSP_SCREEN_HEIGHT
+													  * sizeof(pixel));
 				if (saveimage)
-					disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT,
-								  saveimage);
-				scene_readbook_raw(_("调试信息"),
-								   (const unsigned char *) dbg_memory_buffer->
-								   ptr, dbg_memory_buffer->used,
-								   fs_filetype_txt);
+					disp_getimage(0, 0, PSP_SCREEN_WIDTH,
+								  PSP_SCREEN_HEIGHT, saveimage);
+				scene_readbook_raw(_("调试信息"), (const unsigned char *)
+								   dbg_memory_buffer->ptr,
+								   dbg_memory_buffer->used, fs_filetype_txt);
 				g_force_text_view_mode = false;
 				ctrl_waitrelease();
 
 				if (saveimage) {
-					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0,
-								  0, saveimage);
+					disp_putimage(0, 0, PSP_SCREEN_WIDTH,
+								  PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 					disp_flip();
-					disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0,
-								  0, saveimage);
+					disp_putimage(0, 0, PSP_SCREEN_WIDTH,
+								  PSP_SCREEN_HEIGHT, 0, 0, saveimage);
 					free(saveimage);
 				}
 
@@ -3441,8 +3296,8 @@ void scene_options_predraw(p_win_menuitem item, dword index, dword topindex,
 				  menubcolor);
 	disp_putstring(get_center_pos(left, right, _("设置选项")), upper + 1,
 				   COLOR_WHITE, (const byte *) _("设置选项"));
-	disp_line(left, upper + 1 + DISP_FONTSIZE, right, upper + 1 + DISP_FONTSIZE,
-			  COLOR_WHITE);
+	disp_line(left, upper + 1 + DISP_FONTSIZE, right,
+			  upper + 1 + DISP_FONTSIZE, COLOR_WHITE);
 }
 
 dword scene_options(dword * selidx)
@@ -3508,8 +3363,8 @@ dword scene_options(dword * selidx)
 	while ((index =
 			win_menu(g_predraw.left,
 					 g_predraw.upper,
-					 g_predraw.max_item_len, NELEMS(item), item, NELEMS(item),
-					 index, g_predraw.linespace,
+					 g_predraw.max_item_len, NELEMS(item), item,
+					 NELEMS(item), index, g_predraw.linespace,
 					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_options_predraw, NULL,
 					 scene_options_menucb)) != INVALID);
@@ -3574,8 +3429,8 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 							dword max_height)
 {
-	disp_rectangle(63, 60 - DISP_FONTSIZE, 416, 64 + (1 + DISP_FONTSIZE) * 10,
-				   COLOR_WHITE);
+	disp_rectangle(63, 60 - DISP_FONTSIZE, 416,
+				   64 + (1 + DISP_FONTSIZE) * 10, COLOR_WHITE);
 	disp_fillrect(64, 61 - DISP_FONTSIZE, 415, 60, config.titlecolor);
 	disp_putstring(75, 61 - DISP_FONTSIZE, COLOR_WHITE, (const byte *)
 				   _("书签      ○读取  ×取消  □保存  △删除"));
@@ -3584,13 +3439,14 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 	disp_line(64, 61, 415, 61, COLOR_WHITE);
 	disp_line(64, 64 + (1 + DISP_FONTSIZE) * 9, 415,
 			  64 + (1 + DISP_FONTSIZE) * 9, COLOR_WHITE);
-	disp_fillrect(64, 65 + (1 + DISP_FONTSIZE) * 9, 67 + 7 * DISP_FONTSIZE / 2,
-				  63 + (1 + DISP_FONTSIZE) * 10, config.titlecolor);
+	disp_fillrect(64, 65 + (1 + DISP_FONTSIZE) * 9,
+				  67 + 7 * DISP_FONTSIZE / 2, 63 + (1 + DISP_FONTSIZE) * 10,
+				  config.titlecolor);
 	disp_line(67 + 7 * DISP_FONTSIZE / 2, 62, 67 + 7 * DISP_FONTSIZE / 2,
 			  63 + (1 + DISP_FONTSIZE) * 9, COLOR_WHITE);
 	++index;
-	disp_putstring(64, 65 + (1 + DISP_FONTSIZE) * 9, COLOR_WHITE,
-				   (const byte *) _("SELECT 删除全部书签    START 导出书签"));
+	disp_putstring(64, 65 + (1 + DISP_FONTSIZE) * 9, COLOR_WHITE, (const byte *)
+				   _("SELECT 删除全部书签    START 导出书签"));
 	if (bm->row[index] < fs->size
 		&& fs_file_get_type(fs->filename) != fs_filetype_unknown) {
 		t_text preview;
@@ -3620,11 +3476,13 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 				preview.row_count = 8;
 			for (i = 0; i < preview.row_count; i++)
 				disp_putnstring(70 + 7 * DISP_FONTSIZE / 2,
-								66 + (2 + DISP_FONTSIZE) * i, COLOR_WHITE,
-								(const byte *) preview.rows[0][i].start,
+								66 + (2 + DISP_FONTSIZE) * i,
+								COLOR_WHITE,
+								(const byte *) preview.
+								rows[0][i].start,
 								preview.rows[0][i].count,
-								config.fontsize <= 10 ? 1 : 0, 0, DISP_FONTSIZE,
-								0);
+								config.fontsize <= 10 ? 1 : 0,
+								0, DISP_FONTSIZE, 0);
 			free(preview.rows[0]);
 		}
 		DISP_BOOK_FONTSIZE = old_book_fontsize;
@@ -3901,9 +3759,9 @@ static void scene_copy_files(int sidx)
 			dword result;
 
 			result = extract_archive_file(archname,
-										  copylist[sidx].compname->ptr,
-										  copydest, NULL, confirm_overwrite,
-										  NULL);
+										  copylist[sidx].compname->
+										  ptr, copydest, NULL,
+										  confirm_overwrite, NULL);
 			if (result == (dword) false) {
 				win_msg(_("文件解压失败!"), COLOR_WHITE,
 						COLOR_WHITE, config.msgbcolor);
@@ -3921,8 +3779,8 @@ static void scene_copy_files(int sidx)
 			result = copy_dir(copysrc, copydest, NULL, confirm_overwrite, NULL);
 		else
 			result =
-				(dword) copy_file(copysrc, copydest, NULL, confirm_overwrite,
-								  NULL);
+				(dword) copy_file(copysrc, copydest, NULL,
+								  confirm_overwrite, NULL);
 		if (result == (dword) false) {
 			win_msg(_("文件/目录复制失败!"), COLOR_WHITE,
 					COLOR_WHITE, config.msgbcolor);
@@ -4055,47 +3913,57 @@ static void scene_fileops_menu_draw(int selcount, p_win_menuitem item,
 		scene_single_file_ops_draw(item, selidx);
 	} else {
 		if (mp3count + dircount > 0 && bmcount > 0) {
-			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
-						   COLOR_WHITE, (const byte *) _("○  添加音乐"));
-			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
-						   COLOR_WHITE, (const byte *) _("□  导入书签"));
+			disp_putstring(240 - DISP_FONTSIZE * 3,
+						   136 - DISP_FONTSIZE * 2, COLOR_WHITE,
+						   (const byte *) _("○  添加音乐"));
+			disp_putstring(240 - DISP_FONTSIZE * 3,
+						   136 - DISP_FONTSIZE, COLOR_WHITE,
+						   (const byte *) _("□  导入书签"));
 		} else if (mp3count + dircount > 0) {
-			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
-						   COLOR_WHITE, (const byte *) _("○  添加音乐"));
-			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
-						   COLOR_WHITE, (const byte *) _("□  添加音乐"));
+			disp_putstring(240 - DISP_FONTSIZE * 3,
+						   136 - DISP_FONTSIZE * 2, COLOR_WHITE,
+						   (const byte *) _("○  添加音乐"));
+			disp_putstring(240 - DISP_FONTSIZE * 3,
+						   136 - DISP_FONTSIZE, COLOR_WHITE,
+						   (const byte *) _("□  添加音乐"));
 		} else if (bmcount > 0) {
-			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE * 2,
-						   COLOR_WHITE, (const byte *) _("○  导入书签"));
-			disp_putstring(240 - DISP_FONTSIZE * 3, 136 - DISP_FONTSIZE,
-						   COLOR_WHITE, (const byte *) _("□  导入书签"));
+			disp_putstring(240 - DISP_FONTSIZE * 3,
+						   136 - DISP_FONTSIZE * 2, COLOR_WHITE,
+						   (const byte *) _("○  导入书签"));
+			disp_putstring(240 - DISP_FONTSIZE * 3,
+						   136 - DISP_FONTSIZE, COLOR_WHITE,
+						   (const byte *) _("□  导入书签"));
 		}
 	}
 	if (where == scene_in_dir) {
 		if (selcount > 1 || strcmp(item[selidx].compname->ptr, "..") != 0) {
 			if (strnicmp(config.path, "ms0:/", 5) == 0) {
 				if (config.allowdelete)
-					disp_putstring(240 - DISP_FONTSIZE * 3, 136,
-								   COLOR_WHITE, (const byte *) _("×    删除"));
+					disp_putstring(240 - DISP_FONTSIZE * 3,
+								   136, COLOR_WHITE, (const byte *)
+								   _("×    删除"));
 				disp_putstring(240 - DISP_FONTSIZE * 3,
-							   136 + DISP_FONTSIZE * 2, COLOR_WHITE,
-							   (const byte *) _(" R    剪切"));
+							   136 + DISP_FONTSIZE * 2,
+							   COLOR_WHITE, (const byte *) _(" R    剪切"));
 			}
 			if (config.path[0] != 0)
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
-							   COLOR_WHITE, (const byte *) _(" L    复制"));
+				disp_putstring(240 - DISP_FONTSIZE * 3,
+							   136 + DISP_FONTSIZE, COLOR_WHITE,
+							   (const byte *) _(" L    复制"));
 		}
 		if (strnicmp(config.path, "ms0:/", 5) == 0
 			&& ((copycount > 0 && stricmp(copydir, config.shortpath) != 0)
 				|| (cutcount > 0 && stricmp(cutdir, config.shortpath) != 0)))
-			disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE * 3,
-						   COLOR_WHITE, (const byte *) _("START 粘贴"));
+			disp_putstring(240 - DISP_FONTSIZE * 3,
+						   136 + DISP_FONTSIZE * 3, COLOR_WHITE,
+						   (const byte *) _("START 粘贴"));
 	}
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
 		if (selcount > 1 || strcmp(item[selidx].compname->ptr, "..") != 0) {
 			if (config.path[0] != 0)
-				disp_putstring(240 - DISP_FONTSIZE * 3, 136 + DISP_FONTSIZE,
-							   COLOR_WHITE, (const byte *) _(" L    复制"));
+				disp_putstring(240 - DISP_FONTSIZE * 3,
+							   136 + DISP_FONTSIZE, COLOR_WHITE,
+							   (const byte *) _(" L    复制"));
 		}
 	}
 }
@@ -4130,13 +3998,17 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 						STRCAT_S(fn, item[sidx].shortname->ptr);
 						if ((t_fs_filetype) item[sidx].data == fs_filetype_dir) {
 							if (!utils_del_dir(fn)) {
-								win_msg(_("删除目录失败!"), COLOR_WHITE,
+								win_msg(_
+										("删除目录失败!"),
+										COLOR_WHITE,
 										COLOR_WHITE, config.msgbcolor);
 								return win_menu_op_redraw;
 							}
 						} else {
 							if (!utils_del_file(fn)) {
-								win_msg(_("删除文件失败!"), COLOR_WHITE,
+								win_msg(_
+										("删除文件失败!"),
+										COLOR_WHITE,
 										COLOR_WHITE, config.msgbcolor);
 								return win_menu_op_redraw;
 							}
@@ -4147,11 +4019,11 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							while (idx < filecount && item[idx].selected)
 								idx++;
 							if (idx < filecount)
-								STRCPY_S(config.lastfile,
-										 item[idx].compname->ptr);
+								STRCPY_S(config.
+										 lastfile, item[idx].compname->ptr);
 							else if (sidx > 0)
-								STRCPY_S(config.lastfile,
-										 item[idx - 1].compname->ptr);
+								STRCPY_S(config.
+										 lastfile, item[idx - 1].compname->ptr);
 						}
 					}
 				*retop = win_menu_op_cancel;
@@ -4174,8 +4046,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							SPRINTF_S(cfn, "%s%s/", config.path,
 									  item[sidx].compname->ptr);
 							mp3_list_add_dir(cfn);
-							win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
-									COLOR_WHITE, config.msgbcolor);
+							win_msg(_("已添加歌曲到列表!"),
+									COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 						}
 						break;
 					case fs_filetype_mp3:
@@ -4194,8 +4066,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							STRCPY_S(mp3longname, config.path);
 							STRCAT_S(mp3longname, filelist[sidx].compname->ptr);
 							mp3_list_add(mp3name, mp3longname);
-							win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
-									COLOR_WHITE, config.msgbcolor);
+							win_msg(_("已添加歌曲到列表!"),
+									COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 						}
 						break;
 #endif
@@ -4249,7 +4121,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 								if (bmcount == 0) {
 									char cfn[PATH_MAX];
 
-									SPRINTF_S(cfn, "%s%s/", config.path,
+									SPRINTF_S(cfn, "%s%s/",
+											  config.path,
 											  item[sidx].compname->ptr);
 									mp3_list_add_dir(cfn);
 								}
@@ -4289,8 +4162,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 						}
 					}
 				if (mp3count + dircount == 0 && bmcount > 0)
-					win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE,
-							config.msgbcolor);
+					win_msg(_("已导入书签!"), COLOR_WHITE,
+							COLOR_WHITE, config.msgbcolor);
 #ifdef ENABLE_MUSIC
 				else if (mp3count + dircount > 0)
 					win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
@@ -4331,7 +4204,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 								if (dircount > 0) {
 									char cfn[PATH_MAX];
 
-									SPRINTF_S(cfn, "%s%s/", config.path,
+									SPRINTF_S(cfn, "%s%s/",
+											  config.path,
 											  item[sidx].compname->ptr);
 									mp3_list_add_dir(cfn);
 								}
@@ -4371,8 +4245,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 						}
 					}
 				if (mp3count + dircount == 0 && bmcount > 0)
-					win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE,
-							config.msgbcolor);
+					win_msg(_("已导入书签!"), COLOR_WHITE,
+							COLOR_WHITE, config.msgbcolor);
 #ifdef ENABLE_MUSIC
 				else if (mp3count + dircount > 0)
 					win_msg(_("已添加歌曲到列表!"), COLOR_WHITE,
@@ -4467,14 +4341,16 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 					dword result;
 
 					if ((t_fs_filetype) cutlist[sidx].data == fs_filetype_dir)
-						result = (dword) move_dir(cutsrc, cutdest, NULL,
-												  confirm_overwrite, NULL);
+						result =
+							(dword) move_dir(cutsrc, cutdest,
+											 NULL, confirm_overwrite, NULL);
 					else
-						result = move_file(cutsrc, cutdest, NULL,
-										   confirm_overwrite, NULL);
+						result =
+							move_file(cutsrc, cutdest, NULL,
+									  confirm_overwrite, NULL);
 					if (result == (dword) false) {
-						win_msg(_("文件/目录移动失败!"), COLOR_WHITE,
-								COLOR_WHITE, config.msgbcolor);
+						win_msg(_("文件/目录移动失败!"),
+								COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 					}
 				}
 				STRCPY_S(config.lastfile, item[*index].compname->ptr);
@@ -4525,8 +4401,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 					default:
 						{
 							result =
-								exif_readjpg(filename, &width, &height,
-											 &imgdata, &bgcolor);
+								exif_readjpg(filename, &width,
+											 &height, &imgdata, &bgcolor);
 						}
 						break;
 				}
@@ -4553,13 +4429,13 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 					buffer_append_string(b, exif_array->ptr[i]->ptr);
 
 					scene_readbook_raw(infotitle,
-									   (const unsigned char *) b->ptr,
-									   b->used, fs_filetype_txt);
+									   (const unsigned char *) b->
+									   ptr, b->used, fs_filetype_txt);
 					g_force_text_view_mode = false;
 					buffer_free(b);
 				} else
-					win_msg(_("无EXIF信息"), COLOR_WHITE, COLOR_WHITE,
-							config.msgbcolor);
+					win_msg(_("无EXIF信息"), COLOR_WHITE,
+							COLOR_WHITE, config.msgbcolor);
 			}
 			break;
 	}
@@ -4618,7 +4494,8 @@ static t_win_menu_op scene_fileops(p_win_menuitem item, dword * index)
 		dword key = ctrl_waitany();
 
 		t_win_menu_op op =
-			scene_fileops_handle_input(key, &inop, &retop, item, selidx, index,
+			scene_fileops_handle_input(key, &inop, &retop, item, selidx,
+									   index,
 									   mp3count, dircount,
 									   bmcount, selcount);
 
@@ -4749,12 +4626,12 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex,
 	disp_line(0, DISP_FONTSIZE, 479, DISP_FONTSIZE, COLOR_WHITE);
 	disp_rectangle(239 - WRR * DISP_FONTSIZE,
 				   138 - (HRR + 1) * (DISP_FONTSIZE + 1),
-				   243 + WRR * DISP_FONTSIZE, 141 + HRR * (DISP_FONTSIZE + 1),
-				   COLOR_WHITE);
+				   243 + WRR * DISP_FONTSIZE,
+				   141 + HRR * (DISP_FONTSIZE + 1), COLOR_WHITE);
 	disp_fillrect(240 - WRR * DISP_FONTSIZE,
 				  139 - (HRR + 1) * (DISP_FONTSIZE + 1),
-				  242 + WRR * DISP_FONTSIZE, 137 - HRR * (DISP_FONTSIZE + 1),
-				  config.titlecolor);
+				  242 + WRR * DISP_FONTSIZE,
+				  137 - HRR * (DISP_FONTSIZE + 1), config.titlecolor);
 	disp_putnstring(240 - WRR * DISP_FONTSIZE,
 					139 - (HRR + 1) * (DISP_FONTSIZE + 1), COLOR_WHITE,
 					(const byte *) config.path,
@@ -4780,23 +4657,27 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 		if (where == scene_in_dir) {
 			if (index - topindex < HRR) {
 				disp_rectangle(239 - (WRR - 2) * DISP_FONTSIZE,
-							   135 + (HRR - 3) * (DISP_FONTSIZE + 1),
+							   135 + (HRR -
+									  3) * (DISP_FONTSIZE + 1),
 							   243 + (WRR - 2) * DISP_FONTSIZE,
 							   136 + HRR * (DISP_FONTSIZE + 1), COLOR_WHITE);
 				disp_fillrect(240 - (WRR - 2) * DISP_FONTSIZE,
-							  136 + (HRR - 3) * (DISP_FONTSIZE + 1),
+							  136 + (HRR - 3) * (DISP_FONTSIZE +
+												 1),
 							  242 + (WRR - 2) * DISP_FONTSIZE,
-							  135 + HRR * (DISP_FONTSIZE + 1), RGB(0x20, 0x20,
-																   0x20));
+							  135 + HRR * (DISP_FONTSIZE + 1),
+							  RGB(0x20, 0x20, 0x20));
 				char outstr[256];
 
 				SPRINTF_S(outstr, _("文件大小: %u 字节\n"),
 						  (unsigned int) item[index].data3);
 				disp_putstring(242 - (WRR - 2) * DISP_FONTSIZE,
-							   136 + (HRR - 3) * (DISP_FONTSIZE + 1),
+							   136 + (HRR -
+									  3) * (DISP_FONTSIZE + 1),
 							   COLOR_WHITE, (const byte *) outstr);
 				SPRINTF_S(outstr,
-						  _("创建时间: %04d-%02d-%02d %02d:%02d:%02d\n"),
+						  _
+						  ("创建时间: %04d-%02d-%02d %02d:%02d:%02d\n"),
 						  (item[index].data2[0] >> 9) + 1980,
 						  (item[index].data2[0] & 0x01FF) >> 5,
 						  item[index].data2[0] & 0x01F,
@@ -4804,10 +4685,12 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 						  (item[index].data2[1] & 0x07FF) >> 5,
 						  (item[index].data2[1] & 0x01F) * 2);
 				disp_putstring(242 - (WRR - 2) * DISP_FONTSIZE,
-							   136 + (HRR - 2) * (DISP_FONTSIZE + 1),
+							   136 + (HRR -
+									  2) * (DISP_FONTSIZE + 1),
 							   COLOR_WHITE, (const byte *) outstr);
 				SPRINTF_S(outstr,
-						  _("最后修改: %04d-%02d-%02d %02d:%02d:%02d\n"),
+						  _
+						  ("最后修改: %04d-%02d-%02d %02d:%02d:%02d\n"),
 						  (item[index].data2[2] >> 9) + 1980,
 						  (item[index].data2[2] & 0x01FF) >> 5,
 						  item[index].data2[2] & 0x01F,
@@ -4815,29 +4698,30 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 						  (item[index].data2[3] & 0x07FF) >> 5,
 						  (item[index].data2[3] & 0x01F) * 2);
 				disp_putstring(242 - (WRR - 2) * DISP_FONTSIZE,
-							   136 + (HRR - 1) * (DISP_FONTSIZE + 1),
+							   136 + (HRR -
+									  1) * (DISP_FONTSIZE + 1),
 							   COLOR_WHITE, (const byte *) outstr);
 			} else {
 				disp_rectangle(239 - (WRR - 2) * DISP_FONTSIZE,
 							   141 - HRR * (DISP_FONTSIZE + 1),
 							   243 + (WRR - 2) * DISP_FONTSIZE,
-							   142 - (HRR - 3) * (DISP_FONTSIZE + 1),
-							   COLOR_WHITE);
+							   142 - (HRR -
+									  3) * (DISP_FONTSIZE + 1), COLOR_WHITE);
 				disp_fillrect(240 - (WRR - 2) * DISP_FONTSIZE,
 							  142 - HRR * (DISP_FONTSIZE + 1),
 							  242 + (WRR - 2) * DISP_FONTSIZE,
-							  141 - (HRR - 3) * (DISP_FONTSIZE + 1), RGB(0x20,
-																		 0x20,
-																		 0x20));
+							  141 - (HRR - 3) * (DISP_FONTSIZE +
+												 1), RGB(0x20, 0x20, 0x20));
 				char outstr[256];
 
 				SPRINTF_S(outstr, _("文件大小: %u 字节\n"),
 						  (unsigned int) item[index].data3);
 				disp_putstring(242 - (WRR - 2) * DISP_FONTSIZE,
-							   142 - HRR * (DISP_FONTSIZE + 1), COLOR_WHITE,
-							   (const byte *) outstr);
+							   142 - HRR * (DISP_FONTSIZE + 1),
+							   COLOR_WHITE, (const byte *) outstr);
 				SPRINTF_S(outstr,
-						  _("创建时间: %04d-%02d-%02d %02d:%02d:%02d\n"),
+						  _
+						  ("创建时间: %04d-%02d-%02d %02d:%02d:%02d\n"),
 						  (item[index].data2[0] >> 9) + 1980,
 						  (item[index].data2[0] & 0x01FF) >> 5,
 						  item[index].data2[0] & 0x01F,
@@ -4845,10 +4729,12 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 						  (item[index].data2[1] & 0x07FF) >> 5,
 						  (item[index].data2[1] & 0x01F) * 2);
 				disp_putstring(242 - (WRR - 2) * DISP_FONTSIZE,
-							   142 - (HRR - 1) * (DISP_FONTSIZE + 1),
+							   142 - (HRR -
+									  1) * (DISP_FONTSIZE + 1),
 							   COLOR_WHITE, (const byte *) outstr);
 				SPRINTF_S(outstr,
-						  _("最后修改: %04d-%02d-%02d %02d:%02d:%02d\n"),
+						  _
+						  ("最后修改: %04d-%02d-%02d %02d:%02d:%02d\n"),
 						  (item[index].data2[2] >> 9) + 1980,
 						  (item[index].data2[2] & 0x01FF) >> 5,
 						  item[index].data2[2] & 0x01F,
@@ -4856,7 +4742,8 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 						  (item[index].data2[3] & 0x07FF) >> 5,
 						  (item[index].data2[3] & 0x01F) * 2);
 				disp_putstring(242 - (WRR - 2) * DISP_FONTSIZE,
-							   142 - (HRR - 2) * (DISP_FONTSIZE + 1),
+							   142 - (HRR -
+									  2) * (DISP_FONTSIZE + 1),
 							   COLOR_WHITE, (const byte *) outstr);
 			}
 		} else {
@@ -4866,32 +4753,34 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 					  item[index].shortname->ptr);
 			if (index - topindex < HRR) {
 				disp_rectangle(239 - (WRR - 2) * DISP_FONTSIZE,
-							   135 + (HRR - 1) * (DISP_FONTSIZE + 1),
+							   135 + (HRR -
+									  1) * (DISP_FONTSIZE + 1),
 							   243 + (WRR - 2) * DISP_FONTSIZE,
 							   136 + HRR * (DISP_FONTSIZE + 1), COLOR_WHITE);
 				disp_fillrect(240 - (WRR - 2) * DISP_FONTSIZE,
-							  136 + (HRR - 1) * (DISP_FONTSIZE + 1),
+							  136 + (HRR - 1) * (DISP_FONTSIZE +
+												 1),
 							  242 + (WRR - 2) * DISP_FONTSIZE,
-							  135 + HRR * (DISP_FONTSIZE + 1), RGB(0x20, 0x20,
-																   0x20));
+							  135 + HRR * (DISP_FONTSIZE + 1),
+							  RGB(0x20, 0x20, 0x20));
 				disp_putstring(242 - (WRR - 2) * DISP_FONTSIZE,
-							   136 + (HRR - 1) * (DISP_FONTSIZE + 1),
+							   136 + (HRR -
+									  1) * (DISP_FONTSIZE + 1),
 							   COLOR_WHITE, (const byte *) outstr);
 			} else {
 				disp_rectangle(239 - (WRR - 2) * DISP_FONTSIZE,
 							   141 - HRR * (DISP_FONTSIZE + 1),
 							   243 + (WRR - 2) * DISP_FONTSIZE,
-							   142 - (HRR - 1) * (DISP_FONTSIZE + 1),
-							   COLOR_WHITE);
+							   142 - (HRR -
+									  1) * (DISP_FONTSIZE + 1), COLOR_WHITE);
 				disp_fillrect(240 - (WRR - 2) * DISP_FONTSIZE,
 							  142 - HRR * (DISP_FONTSIZE + 1),
 							  242 + (WRR - 2) * DISP_FONTSIZE,
-							  141 - (HRR - 1) * (DISP_FONTSIZE + 1), RGB(0x20,
-																		 0x20,
-																		 0x20));
+							  141 - (HRR - 1) * (DISP_FONTSIZE +
+												 1), RGB(0x20, 0x20, 0x20));
 				disp_putstring(242 - (WRR - 2) * DISP_FONTSIZE,
-							   142 - HRR * (DISP_FONTSIZE + 1), COLOR_WHITE,
-							   (const byte *) outstr);
+							   142 - HRR * (DISP_FONTSIZE + 1),
+							   COLOR_WHITE, (const byte *) outstr);
 			}
 		}
 	}
@@ -4925,8 +4814,8 @@ static void exec_homebrew(int method, char *path)
 	if ((err = xrKernelLoadExecVSHMsX(method, path, &param)) < 0) {
 		char infomsg[256];
 
-		SPRINTF_S(infomsg, _("%s: 方法%d启动错误, 返回错误代码: %08x"), path,
-				  method, err);
+		SPRINTF_S(infomsg, _("%s: 方法%d启动错误, 返回错误代码: %08x"),
+				  path, method, err);
 		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		dbg_printf(d, infomsg);
 	} else
@@ -5212,27 +5101,33 @@ void scene_filelist()
 				// empty directory ?
 				if (where == scene_in_dir) {
 					filelist =
-						fs_empty_dir(&filecount, config.menutextcolor,
+						fs_empty_dir(&filecount,
+									 config.menutextcolor,
 									 config.selicolor,
 									 config.
-									 usedyncolor ? get_bgcolor_by_time() :
+									 usedyncolor ?
+									 get_bgcolor_by_time() :
 									 config.menubcolor, config.selbcolor);
 					idx = 0;
 					idx =
 						win_menu(240 - WRR * DISP_FONTSIZE,
-								 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4,
-								 HRR * 2, filelist, filecount, idx, 0,
+								 139 -
+								 HRR * (DISP_FONTSIZE + 1),
+								 WRR * 4, HRR * 2, filelist,
+								 filecount, idx, 0,
 								 config.
-								 usedyncolor ? get_bgcolor_by_time() : config.
-								 menubcolor, false, scene_filelist_predraw,
+								 usedyncolor ?
+								 get_bgcolor_by_time() :
+								 config.menubcolor, false,
+								 scene_filelist_predraw,
 								 scene_filelist_postdraw,
 								 scene_filelist_menucb);
 				} else {
 					char infomsg[80];
 
 					SPRINTF_S(infomsg, _("%s压缩包格式损坏"), config.path);
-					win_msg(infomsg, COLOR_WHITE, COLOR_WHITE,
-							config.msgbcolor);
+					win_msg(infomsg, COLOR_WHITE,
+							COLOR_WHITE, config.msgbcolor);
 					int ll;
 
 					if ((ll = strlen(config.path) - 1) >= 0)
@@ -5254,11 +5149,12 @@ void scene_filelist()
 			} else
 				idx =
 					win_menu(240 - WRR * DISP_FONTSIZE,
-							 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2,
-							 filelist, filecount, idx, 0,
-							 config.
-							 usedyncolor ? get_bgcolor_by_time() : config.
-							 menubcolor, false, scene_filelist_predraw,
+							 139 - HRR * (DISP_FONTSIZE + 1),
+							 WRR * 4, HRR * 2, filelist,
+							 filecount, idx, 0,
+							 config.usedyncolor ? get_bgcolor_by_time()
+							 : config.menubcolor, false,
+							 scene_filelist_predraw,
 							 scene_filelist_postdraw, scene_filelist_menucb);
 		} else {
 			config.isreading = false;
@@ -5269,51 +5165,66 @@ void scene_filelist()
 				case scene_in_zip:
 					filecount =
 						fs_zip_to_menu(config.shortpath, &filelist,
-									   config.menutextcolor, config.selicolor,
+									   config.menutextcolor,
+									   config.selicolor,
 									   config.
-									   usedyncolor ? get_bgcolor_by_time() :
+									   usedyncolor ?
+									   get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
 				case scene_in_chm:
 					filecount =
 						fs_chm_to_menu(config.shortpath, &filelist,
-									   config.menutextcolor, config.selicolor,
+									   config.menutextcolor,
+									   config.selicolor,
 									   config.
-									   usedyncolor ? get_bgcolor_by_time() :
+									   usedyncolor ?
+									   get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
 				case scene_in_rar:
 					filecount =
 						fs_rar_to_menu(config.shortpath, &filelist,
-									   config.menutextcolor, config.selicolor,
+									   config.menutextcolor,
+									   config.selicolor,
 									   config.
-									   usedyncolor ? get_bgcolor_by_time() :
+									   usedyncolor ?
+									   get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
 				default:
 					filecount =
-						fs_dir_to_menu(config.path, config.shortpath, &filelist,
-									   config.menutextcolor, config.selicolor,
+						fs_dir_to_menu(config.path,
+									   config.shortpath, &filelist,
+									   config.menutextcolor,
+									   config.selicolor,
 									   config.
-									   usedyncolor ? get_bgcolor_by_time() :
-									   config.menubcolor, config.selbcolor,
+									   usedyncolor ?
+									   get_bgcolor_by_time() :
+									   config.menubcolor,
+									   config.selbcolor,
 									   config.showhidden, config.showunknown);
 			}
 			if (filelist == 0) {
 				STRCPY_S(config.path, "ms0:/");
 				STRCPY_S(config.shortpath, "ms0:/");
 				filecount =
-					fs_dir_to_menu(config.path, config.shortpath, &filelist,
-								   config.menutextcolor, config.selicolor,
+					fs_dir_to_menu(config.path,
+								   config.shortpath, &filelist,
+								   config.menutextcolor,
+								   config.selicolor,
 								   config.
-								   usedyncolor ? get_bgcolor_by_time() : config.
-								   menubcolor, config.selbcolor,
+								   usedyncolor ?
+								   get_bgcolor_by_time() :
+								   config.menubcolor,
+								   config.selbcolor,
 								   config.showhidden, config.showunknown);
 			}
 			quicksort(filelist,
 					  (filecount > 0
-					   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
-					  filecount - 1, sizeof(t_win_menuitem),
+					   && filelist[0].compname->ptr[0] ==
+					   '.') ? 1 : 0, filecount - 1,
+					  sizeof(t_win_menuitem),
 					  compare_func[(int) config.arrange]);
 			idx = 0;
 			while (idx < filecount
@@ -5412,7 +5323,7 @@ extern void scene_init()
 
 	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
-	STRCPY_S(logfile, appdir);
+	STRCPY_S(logfile, scene_appdir());
 	STRCAT_S(logfile, "log.txt");
 	bool printDebugInfo = false;
 
@@ -5460,29 +5371,14 @@ extern void scene_init()
 #endif
 	;
 
-#ifdef HOMEBREW_2XX
-	{
-		int i = 0, l = strlen(appdir);
-
-		for (i = 0; i < l; i++)
-			if (appdir[i] == '%') {
-				memmove(&appdir[i], &appdir[i + 1], l - i);
-				i--;
-				l--;
-			}
-	}
-#endif
 	STRCPY_S(config.path, "ms0:/");
 	STRCPY_S(config.shortpath, "ms0:/");
 
-	STRCPY_S(conffile, appdir);
-	char conffilename[80];
-
-	SPRINTF_S(conffilename, "%s%d%s", "config", config_num, ".ini");
-	STRCAT_S(conffile, conffilename);
+	SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", config_num,
+			  ".ini");
 	conf_set_file(conffile);
 #ifdef ENABLE_MUSIC
-	STRCPY_S(mp3conf, appdir);
+	STRCPY_S(mp3conf, scene_appdir());
 	STRCAT_S(mp3conf, "music.lst");
 #endif
 
@@ -5508,7 +5404,7 @@ extern void scene_init()
 	dbg_printf(d, "bg_load(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 #endif
 
-	STRCPY_S(fontzipfile, appdir);
+	STRCPY_S(fontzipfile, scene_appdir());
 	STRCAT_S(fontzipfile, "fonts.zip");
 	int _fsize;
 
@@ -5531,8 +5427,8 @@ extern void scene_init()
 			ttfsize = config.bookfontsize;
 			bookfontcount++;
 		} else {
-			SPRINTF_S(efontfile, "%sfonts/ASC%d", appdir, _fsize);
-			SPRINTF_S(cfontfile, "%sfonts/GBK%d", appdir, _fsize);
+			SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(), _fsize);
+			SPRINTF_S(cfontfile, "%sfonts/GBK%d", scene_appdir(), _fsize);
 			if (disp_has_font(efontfile, cfontfile)) {
 				if (_fsize <= 16) {
 					fonts[fontcount].size = _fsize;
@@ -5573,10 +5469,10 @@ extern void scene_init()
 	if (fat_init())
 		fat_inited = true;
 
-	STRCPY_S(bmfile, appdir);
+	STRCPY_S(bmfile, scene_appdir());
 	STRCAT_S(bmfile, "bookmark.conf");
 	bookmark_init(bmfile);
-	STRCPY_S(locconf, appdir);
+	STRCPY_S(locconf, scene_appdir());
 	STRCAT_S(locconf, "location.conf");
 	location_init(locconf, locaval);
 
@@ -5614,7 +5510,7 @@ extern void scene_init()
 	if (sceKernelDevkitVersion() >= 0x03070100) {
 		char prxfn[PATH_MAX];
 
-		SPRINTF_S(prxfn, "%sxrPrx.prx", appdir);
+		SPRINTF_S(prxfn, "%sxrPrx.prx", scene_appdir());
 		SceUID uid = pspSdkLoadStartModule(prxfn, PSP_MEMORY_PARTITION_KERNEL);
 
 		if (uid >= 0) {
@@ -5665,6 +5561,28 @@ extern void scene_init()
 	scene_filelist();
 }
 
+static int scene_bookmark_autosave(void)
+{
+	if (!config.autobm) {
+		return 0;
+	}
+
+	char archname[PATH_MAX];
+
+	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
+		STRCPY_S(archname, config.shortpath);
+		if (archname[strlen(archname) - 1] != '/' && fs->filename[0] != '/')
+			STRCAT_S(archname, "/");
+		STRCAT_S(archname, fs->filename);
+	} else
+		STRCPY_S(archname, fs->filename);
+	bookmark_autosave(archname,
+					  (fs->rows[fs->crow >> 10] +
+					   (fs->crow & 0x3FF))->start - fs->buf);
+
+	return 1;
+}
+
 extern void scene_exit()
 {
 	power_set_clock(222, 111);
@@ -5673,32 +5591,12 @@ extern void scene_exit()
 		bm = NULL;
 	}
 	if (fs != NULL) {
-		char archname[PATH_MAX];
-
-		if (where == scene_in_zip || where == scene_in_chm
-			|| where == scene_in_rar) {
-			STRCPY_S(archname, config.shortpath);
-			if (archname[strlen(archname) - 1] != '/' && fs->filename[0] != '/')
-				STRCAT_S(archname, "/");
-			STRCAT_S(archname, fs->filename);
-		} else
-			STRCPY_S(archname, fs->filename);
-		if (config.autobm) {
-			bookmark_autosave(archname,
-							  (fs->rows[fs->crow >> 10] +
-							   (fs->crow & 0x3FF))->start - fs->buf);
-		}
+		scene_bookmark_autosave();
 	}
 	// always save to config0.ini
-	char conffile[PATH_MAX], appdir[PATH_MAX];
+	char conffile[PATH_MAX];
 
-	getcwd(appdir, PATH_MAX);
-	STRCAT_S(appdir, "/");
-	STRCPY_S(conffile, appdir);
-	char conffilename[80];
-
-	SPRINTF_S(conffilename, "%s%d%s", "config", 0, ".ini");
-	STRCAT_S(conffile, conffilename);
+	SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", 0, ".ini");
 	conf_set_file(conffile);
 	load_fontsize_to_config();
 	conf_save(&config);
@@ -5713,7 +5611,7 @@ extern void scene_exit()
 #endif
 	char mp3conf[PATH_MAX];
 
-	STRCPY_S(mp3conf, appdir);
+	STRCPY_S(mp3conf, scene_appdir());
 	STRCAT_S(mp3conf, "music.lst");
 	mp3_list_save(mp3conf);
 	mp3_list_free();
@@ -5734,7 +5632,7 @@ extern void scene_exit()
 	if ((ctrl_read() == PSP_CTRL_LTRIGGER)) {
 		char path[PATH_MAX];
 
-		STRCPY_S(path, appdir);
+		STRCPY_S(path, scene_appdir());
 		STRCAT_S(path, "EBOOT.PBP");
 		ctrl_destroy();
 		exec_homebrew(2, path);
@@ -5797,8 +5695,8 @@ dword lerp_color(dword color1, dword color2, float fWeight)
 }
 
 /* time in 24 hours */
-int get_diff_second(int srcHour, int srcMinute, int srcSeconds,
-					int dstHour, int dstMinute, int dstSeconds)
+static inline int get_diff_second(int srcHour, int srcMinute, int srcSeconds,
+								  int dstHour, int dstMinute, int dstSeconds)
 {
 	return (dstHour * 60 * 60 + dstMinute * 60 + dstSeconds -
 			(srcHour * 60 * 60 + srcMinute * 60 + srcSeconds));
@@ -5806,7 +5704,7 @@ int get_diff_second(int srcHour, int srcMinute, int srcSeconds,
 
 dword get_bgcolor_by_time(void)
 {
-	static dword pspBGColorTable[12] = {
+	static dword colortbl[12] = {
 		RGB(182, 182, 182),
 		RGB(232, 195, 44),
 		RGB(141, 213, 15),
@@ -5830,21 +5728,23 @@ dword get_bgcolor_by_time(void)
 	dword origColor;
 
 	origColor =
-		lerp_color(pspBGColorTable[cur_month - 1],
-				   pspBGColorTable[next_month - 1],
+		lerp_color(colortbl[cur_month - 1],
+				   colortbl[next_month - 1],
 				   1.0 * tm.day / sceRtcGetDaysInMonth(tm.year, cur_month));
 
 	if (tm.hour >= 12) {
 //      dbg_printf(d, "c1: %f", (1.0 * get_diff_second(tm.hour, tm.minutes, 24, 0) / (12.0 * 60)));
 		origColor =
 			lerp_color(origColor, RGB(0, 0, 0),
-					   1.0 * get_diff_second(tm.hour, tm.minutes, tm.seconds,
-											 24, 0, 0) / (12 * 60 * 60));
+					   1.0 * get_diff_second(tm.hour, tm.minutes,
+											 tm.seconds, 24, 0,
+											 0) / (12 * 60 * 60));
 	} else {
 //      dbg_printf(d, "c2: %f", (1.0 * get_diff_second(0, 0, tm.hour, tm.minutes) / (12.0 * 60.0)));
 		origColor =
 			lerp_color(origColor, RGB(0, 0, 0),
-					   1.0 * get_diff_second(0, 0, 0, tm.hour, tm.minutes,
+					   1.0 * get_diff_second(0, 0, 0, tm.hour,
+											 tm.minutes,
 											 tm.seconds) / (12 * 60 * 60));
 	}
 

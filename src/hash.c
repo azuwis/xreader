@@ -445,8 +445,9 @@ int main()
 				break;
 			case '?':
 				for (pp = hashtable; pp < hashtable + TABLES; pp++) {
-					printf("address of hash table #%d control block is %xx\n",
-						   pp - hashtable, *pp);
+					printf
+						("address of hash table #%d control block is %xx\n",
+						 pp - hashtable, *pp);
 				}
 				break;
 			case 'a':
@@ -480,15 +481,17 @@ int main()
 				p = hash_insert(h, name = what("symbol"), value =
 								what("value"));
 				if (p) {
-					printf("symbol=\"%s\"  value=\"%s\"  error=%s\n", name,
-						   value, p);
+					printf
+						("symbol=\"%s\"  value=\"%s\"  error=%s\n",
+						 name, value, p);
 				}
 				break;
 			case 'j':
 				p = hash_jam(h, name = what("symbol"), value = what("value"));
 				if (p) {
-					printf("symbol=\"%s\"  value=\"%s\"  error=%s\n", name,
-						   value, p);
+					printf
+						("symbol=\"%s\"  value=\"%s\"  error=%s\n",
+						 name, value, p);
 				}
 				break;
 			case 'n':
@@ -554,8 +557,9 @@ void whattable()
 		if (number >= 0 && number < TABLES) {
 			h = hashtable[number];
 			if (!h) {
-				printf("warning: current hash-table-#%d. has no hash-control\n",
-					   number);
+				printf
+					("warning: current hash-table-#%d. has no hash-control\n",
+					 number);
 			}
 			return;
 		} else {

@@ -100,16 +100,12 @@ extern void conf_get_keyname(dword key, char *res)
 
 static void conf_default(p_conf conf)
 {
-	char appdir[PATH_MAX];
-
-	getcwd(appdir, PATH_MAX);
-	STRCAT_S(appdir, "/");
 	memset(conf, 0, sizeof(t_conf));
 	STRCPY_S(conf->path, "ms0:/");
 	STRCPY_S(conf->shortpath, "ms0:/");
 	STRCPY_S(conf->lastfile, "");
 	STRCPY_S(conf->bgarch, "");
-	STRCPY_S(conf->bgfile, appdir);
+	STRCPY_S(conf->bgfile, scene_appdir());
 	STRCAT_S(conf->bgfile, "bg.png");
 	conf->bgwhere = scene_in_zip;
 	conf->confver = XREADER_VERSION_NUM;
@@ -222,9 +218,9 @@ static void conf_default(p_conf conf)
 	conf->msgbcolor = RGB(0x18, 0x28, 0x50);
 	conf->usedyncolor = false;
 
-	STRCPY_S(conf->cttfpath, appdir);
+	STRCPY_S(conf->cttfpath, scene_appdir());
 	STRCAT_S(conf->cttfpath, "fonts/gbk.ttf");
-	STRCPY_S(conf->ettfpath, appdir);
+	STRCPY_S(conf->ettfpath, scene_appdir());
 	STRCAT_S(conf->ettfpath, "fonts/asc.ttf");
 	conf->infobar_use_ttf_mode = true;
 

@@ -171,8 +171,8 @@ void scene_mp3_list_predraw(p_win_menuitem item, dword index, dword topindex,
 
 	disp_rectangle(pos - 2, upper - 1, posend + 1, bottom + 1, COLOR_WHITE);
 	disp_fillrect(pos - 1, upper, posend, bottom, RGB(0x20, 0x40, 0x30));
-	disp_putstring(pos, upper, COLOR_WHITE,
-				   (const byte *) _("要添加乐曲请到文件列表选取音乐文件按○"));
+	disp_putstring(pos, upper, COLOR_WHITE, (const byte *)
+				   _("要添加乐曲请到文件列表选取音乐文件按○"));
 }
 
 void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex,
@@ -190,8 +190,8 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex,
 	if (strlen(fname) <= 36)
 		STRCPY_S(outstr, fname);
 	else {
-		mbcsncpy_s((unsigned char *) outstr, 34, (const unsigned char *) fname,
-				   -1);
+		mbcsncpy_s((unsigned char *) outstr, 34,
+				   (const unsigned char *) fname, -1);
 		if (strlen(outstr) < 33) {
 			mbcsncpy_s(((unsigned char *) outstr), 36,
 					   ((const unsigned char *) fname), -1);
@@ -273,10 +273,10 @@ void scene_mp3_list()
 	dword index = 0;
 
 	while ((index =
-			win_menu(g_predraw.left, g_predraw.upper, g_predraw.max_item_len,
-					 g_predraw.item_count, item, mp3_list_count(), index, 0,
-					 RGB(0x40, 0x40, 0x28), true, scene_mp3_list_predraw,
-					 scene_mp3_list_postdraw,
+			win_menu(g_predraw.left, g_predraw.upper,
+					 g_predraw.max_item_len, g_predraw.item_count, item,
+					 mp3_list_count(), index, 0, RGB(0x40, 0x40, 0x28),
+					 true, scene_mp3_list_predraw, scene_mp3_list_postdraw,
 					 scene_mp3_list_menucb)) != INVALID)
 		if (mp3_list_count() == 0)
 			break;
@@ -321,7 +321,7 @@ static void draw_lyric_string(const char **ly, dword lidx, dword * ss,
 {
 	char t[BUFSIZ];
 
-	if (ly[lidx] != NULL)
+	if (ly[lidx] == NULL)
 		return;
 	if (ss[lidx] > cpl)
 		ss[lidx] = cpl;
@@ -370,7 +370,8 @@ static void scene_draw_mp3bar_music_staff(void)
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  msgbcolor);
 	if (mp3_get_info(&bitrate, &sample, &len, &tlen))
-		SPRINTF_S(infostr, "%s   %d kbps   %d Hz   %02d:%02d / %02d:%02d",
+		SPRINTF_S(infostr,
+				  "%s   %d kbps   %d Hz   %02d:%02d / %02d:%02d",
 				  conf_get_cyclename(config.mp3cycle), bitrate, sample,
 				  len / 60, len % 60, tlen / 60, tlen % 60);
 	else
@@ -435,13 +436,15 @@ static void scene_draw_mp3bar(bool * firstdup)
 			SPRINTF_S(infostr,
 					  _
 					  ("%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃   剩余内存: %dKB"),
-					  power_get_battery_charging(), percent, lifetime / 60,
-					  lifetime % 60, tempe, get_free_mem() / 1024);
+					  power_get_battery_charging(), percent,
+					  lifetime / 60, lifetime % 60, tempe,
+					  get_free_mem() / 1024);
 		} else {
 			SPRINTF_S(infostr,
-					  _("%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃"),
-					  power_get_battery_charging(), percent, lifetime / 60,
-					  lifetime % 60, tempe);
+					  _
+					  ("%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃"),
+					  power_get_battery_charging(), percent,
+					  lifetime / 60, lifetime % 60, tempe);
 		}
 	} else
 		SPRINTF_S(infostr, _("[电源供电]   剩余内存: %dKB"),
@@ -450,8 +453,8 @@ static void scene_draw_mp3bar(bool * firstdup)
 		disp_putstring(6, 7 + DISP_FONTSIZE, COLOR_WHITE,
 					   (const byte *) infostr);
 	else
-		disp_putstring(6 + DISP_FONTSIZE, 7 + DISP_FONTSIZE, COLOR_WHITE,
-					   (const byte *) infostr);
+		disp_putstring(6 + DISP_FONTSIZE, 7 + DISP_FONTSIZE,
+					   COLOR_WHITE, (const byte *) infostr);
 
 	scene_draw_lyric();
 
@@ -539,11 +542,11 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 		case PSP_CTRL_START:
 			ctrl_waitrelease();
 			if (*saveimage != NULL) {
-				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0,
-							  0, *saveimage);
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT,
+							  0, 0, *saveimage);
 				disp_flip();
-				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, 0,
-							  0, *saveimage);
+				disp_putimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT,
+							  0, 0, *saveimage);
 				free(*saveimage);
 				*saveimage = NULL;
 			} else {
@@ -565,8 +568,8 @@ void scene_mp3bar()
 {
 	bool firstdup = true;
 	pixel *saveimage = (pixel *) memalign(16,
-										  PSP_SCREEN_WIDTH * PSP_SCREEN_HEIGHT *
-										  sizeof(pixel));
+										  PSP_SCREEN_WIDTH *
+										  PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if (saveimage != NULL)
 		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 	u64 timer_start, timer_end;

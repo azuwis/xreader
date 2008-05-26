@@ -173,8 +173,8 @@ extern void disp_set_book_fontsize(int fontsize)
 		auto_inc_wordspace_on_small_font = true;
 	}
 	// if previous have auto increased wordspace on small font, restore config.wordspace to 0
-	if (use_ttf == false && fontsize >= 12 && auto_inc_wordspace_on_small_font
-		&& config.wordspace == 1) {
+	if (use_ttf == false && fontsize >= 12
+		&& auto_inc_wordspace_on_small_font && config.wordspace == 1) {
 		config.wordspace = 0;
 		auto_inc_wordspace_on_small_font = false;
 	}
@@ -1032,8 +1032,8 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 
 			{
 				ccur =
-					efont_buffer + ((dword) * str) * DISP_EFONTSIZE +
-					top * DISP_EROWSIZE;
+					efont_buffer +
+					((dword) * str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
 				for (cend = ccur + height * DISP_EROWSIZE; ccur < cend; ccur++) {
 					int b;
 					pixel *vpoint = vaddr;
@@ -1081,8 +1081,8 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 
 #ifdef ENABLE_TTF
 	if (use_ttf) {
-		disp_putnstring_reversal_truetype(cttf, ettf, x, y, color, str, count,
-										  wordspace, top, height, bot);
+		disp_putnstring_reversal_truetype(cttf, ettf, x, y, color, str,
+										  count, wordspace, top, height, bot);
 		return;
 	}
 #endif
@@ -1153,10 +1153,11 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 
 			{
 				ccur =
-					book_efont_buffer + ((dword) * str) * DISP_BOOK_EFONTSIZE +
+					book_efont_buffer +
+					((dword) * str) * DISP_BOOK_EFONTSIZE +
 					top * DISP_BOOK_EROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_EROWSIZE; ccur < cend;
-					 ccur++) {
+				for (cend = ccur + height * DISP_BOOK_EROWSIZE;
+					 ccur < cend; ccur++) {
 					int b;
 					pixel *vpoint = vaddr;
 					int bitsleft = DISP_BOOK_FONTSIZE / 2 - 8;
@@ -1263,8 +1264,8 @@ extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
 
 			{
 				ccur =
-					efont_buffer + ((dword) * str) * DISP_EFONTSIZE +
-					top * DISP_EROWSIZE;
+					efont_buffer +
+					((dword) * str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
 				for (cend = ccur + height * DISP_EROWSIZE; ccur < cend; ccur++) {
 					int b;
 					pixel *vpoint = vaddr;
@@ -1312,8 +1313,8 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 
 #ifdef ENABLE_TTF
 	if (use_ttf) {
-		disp_putnstring_horz_truetype(cttf, ettf, x, y, color, str, count,
-									  wordspace, top, height, bot);
+		disp_putnstring_horz_truetype(cttf, ettf, x, y, color, str,
+									  count, wordspace, top, height, bot);
 		return;
 	}
 #endif
@@ -1379,10 +1380,11 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 
 			{
 				ccur =
-					book_efont_buffer + ((dword) * str) * DISP_BOOK_EFONTSIZE +
+					book_efont_buffer +
+					((dword) * str) * DISP_BOOK_EFONTSIZE +
 					top * DISP_BOOK_EROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_EROWSIZE; ccur < cend;
-					 ccur++) {
+				for (cend = ccur + height * DISP_BOOK_EROWSIZE;
+					 ccur < cend; ccur++) {
 					int b;
 					pixel *vpoint = vaddr;
 					int bitsleft = DISP_BOOK_FONTSIZE / 2 - 8;
@@ -1490,8 +1492,8 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 
 			{
 				ccur =
-					efont_buffer + ((dword) * str) * DISP_EFONTSIZE +
-					top * DISP_EROWSIZE;
+					efont_buffer +
+					((dword) * str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
 				for (cend = ccur + height * DISP_EROWSIZE; ccur < cend; ccur++) {
 					int b;
 					pixel *vpoint = vaddr;
@@ -1539,8 +1541,8 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 
 #ifdef ENABLE_TTF
 	if (use_ttf) {
-		disp_putnstring_lvert_truetype(cttf, ettf, x, y, color, str, count,
-									   wordspace, top, height, bot);
+		disp_putnstring_lvert_truetype(cttf, ettf, x, y, color, str,
+									   count, wordspace, top, height, bot);
 		return;
 	}
 #endif
@@ -1606,10 +1608,11 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 
 			{
 				ccur =
-					book_efont_buffer + ((dword) * str) * DISP_BOOK_EFONTSIZE +
+					book_efont_buffer +
+					((dword) * str) * DISP_BOOK_EFONTSIZE +
 					top * DISP_BOOK_EROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_EROWSIZE; ccur < cend;
-					 ccur++) {
+				for (cend = ccur + height * DISP_BOOK_EROWSIZE;
+					 ccur < cend; ccur++) {
 					int b;
 					pixel *vpoint = vaddr;
 					int bitsleft = DISP_BOOK_FONTSIZE / 2 - 8;
@@ -1716,8 +1719,8 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 
 			{
 				ccur =
-					efont_buffer + ((dword) * str) * DISP_EFONTSIZE +
-					top * DISP_EROWSIZE;
+					efont_buffer +
+					((dword) * str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
 				for (cend = ccur + height * DISP_EROWSIZE; ccur < cend; ccur++) {
 					int b;
 					pixel *vpoint = vaddr;
@@ -1765,8 +1768,8 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 
 #ifdef ENABLE_TTF
 	if (use_ttf) {
-		disp_putnstring_rvert_truetype(cttf, ettf, x, y, color, str, count,
-									   wordspace, top, height, bot);
+		disp_putnstring_rvert_truetype(cttf, ettf, x, y, color, str,
+									   count, wordspace, top, height, bot);
 		return;
 	}
 #endif
@@ -1831,10 +1834,11 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 
 			{
 				ccur =
-					book_efont_buffer + ((dword) * str) * DISP_BOOK_EFONTSIZE +
+					book_efont_buffer +
+					((dword) * str) * DISP_BOOK_EFONTSIZE +
 					top * DISP_BOOK_EROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_EROWSIZE; ccur < cend;
-					 ccur++) {
+				for (cend = ccur + height * DISP_BOOK_EROWSIZE;
+					 ccur < cend; ccur++) {
 					int b;
 					pixel *vpoint = vaddr;
 					int bitsleft = DISP_BOOK_FONTSIZE / 2 - 8;
@@ -1932,8 +1936,9 @@ extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 	setVertex(&vertices[1], x2, y2, 0, color);
 
 	sceGuDisable(GU_TEXTURE_2D);
-	sceGuDrawArray(GU_LINES, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D,
-				   2, 0, vertices);
+	sceGuDrawArray(GU_LINES,
+				   GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0,
+				   vertices);
 	sceGuEnable(GU_TEXTURE_2D);
 
 	sceGuFinish();

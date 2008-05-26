@@ -38,11 +38,11 @@ static void exception_handler(PspDebugRegBlock * regs)
 		("Please contact aeolusc @ pspchina.com or post comments at www.pspsp.org\n\n");
 	pspDebugScreenPrintf("Exception Details:\n");
 	pspDebugDumpException(regs);
-	pspDebugScreenPrintf("\nThe offending routine may be identified with:\n\n"
-						 "\tpsp-addr2line -e target.elf -f -C 0x%x 0x%x 0x%x\n",
-						 (unsigned int) regs->epc,
-						 (unsigned int) regs->badvaddr,
-						 (unsigned int) regs->r[31]);
+	pspDebugScreenPrintf
+		("\nThe offending routine may be identified with:\n\n"
+		 "\tpsp-addr2line -e target.elf -f -C 0x%x 0x%x 0x%x\n",
+		 (unsigned int) regs->epc, (unsigned int) regs->badvaddr,
+		 (unsigned int) regs->r[31]);
 	pspDebugScreenPrintf("\nThanks for support!\n");
 }
 
@@ -110,9 +110,9 @@ static int CallbackThread(unsigned int args, void *argp)
 /* Sets up the callback thread and returns its thread id */
 static int SetupCallbacks(void)
 {
-	int thid =
-		sceKernelCreateThread("Callback Thread", CallbackThread, 0x11, 0x3F40,
-							  PSP_THREAD_ATTR_USER, 0);
+	int thid = sceKernelCreateThread("Callback Thread", CallbackThread, 0x11,
+									 0x3F40,
+									 PSP_THREAD_ATTR_USER, 0);
 
 	if (thid >= 0) {
 		sceKernelStartThread(thid, 0, 0);

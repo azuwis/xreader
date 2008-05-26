@@ -138,12 +138,12 @@ void filename_to_itemname(p_win_menuitem item, int cur_count,
 {
 	if ((item[cur_count].width = strlen(filename)) > MAX_ITEM_NAME_LEN) {
 		mbcsncpy_s(((unsigned char *) item[cur_count].name),
-				   MAX_ITEM_NAME_LEN - 2, ((const unsigned char *) filename),
-				   -1);
+				   MAX_ITEM_NAME_LEN - 2,
+				   ((const unsigned char *) filename), -1);
 		if (strlen(item[cur_count].name) < MAX_ITEM_NAME_LEN - 3) {
 			mbcsncpy_s(((unsigned char *) item[cur_count].name),
-					   MAX_ITEM_NAME_LEN, ((const unsigned char *) filename),
-					   -1);
+					   MAX_ITEM_NAME_LEN,
+					   ((const unsigned char *) filename), -1);
 			STRCAT_S(item[cur_count].name, "..");
 		} else
 			STRCAT_S(item[cur_count].name, "...");
@@ -265,14 +265,14 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 			item[cur_count].name[0] = '<';
 			if ((item[cur_count].width =
 				 strlen(info.d_name) + 2) > MAX_ITEM_NAME_LEN) {
-				mbcsncpy_s((unsigned char *) &item[cur_count].name[1],
-						   MAX_ITEM_NAME_LEN - 4,
+				mbcsncpy_s((unsigned char *) &item[cur_count].
+						   name[1], MAX_ITEM_NAME_LEN - 4,
 						   (const unsigned char *) info.d_name, -1);
 				STRCAT_S(item[cur_count].name, "...>");
 				item[cur_count].width = MAX_ITEM_NAME_LEN;
 			} else {
-				mbcsncpy_s((unsigned char *) &item[cur_count].name[1],
-						   MAX_ITEM_NAME_LEN - 1,
+				mbcsncpy_s((unsigned char *) &item[cur_count].
+						   name[1], MAX_ITEM_NAME_LEN - 1,
 						   (const unsigned char *) info.d_name, -1);
 				STRCAT_S(item[cur_count].name, ">");
 			}
@@ -393,18 +393,19 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 			if ((item[cur_count].width =
 				 strlen(info[i].longname) + 2) > MAX_ITEM_NAME_LEN) {
 				strncpy_s(&item[cur_count].name[1],
-						  NELEMS(item[cur_count].name) - 1, info[i].longname,
-						  MAX_ITEM_NAME_LEN - 5);
+						  NELEMS(item[cur_count].name) - 1,
+						  info[i].longname, MAX_ITEM_NAME_LEN - 5);
 				item[cur_count].name[MAX_ITEM_NAME_LEN - 4] =
-					item[cur_count].name[MAX_ITEM_NAME_LEN - 3] =
+					item[cur_count].name[MAX_ITEM_NAME_LEN -
+										 3] =
 					item[cur_count].name[MAX_ITEM_NAME_LEN - 2] = '.';
 				item[cur_count].name[MAX_ITEM_NAME_LEN - 1] = '>';
 				item[cur_count].name[MAX_ITEM_NAME_LEN] = 0;
 				item[cur_count].width = MAX_ITEM_NAME_LEN;
 			} else {
 				strncpy_s(&item[cur_count].name[1],
-						  NELEMS(item[cur_count].name) - 1, info[i].longname,
-						  MAX_ITEM_NAME_LEN);
+						  NELEMS(item[cur_count].name) - 1,
+						  info[i].longname, MAX_ITEM_NAME_LEN);
 				item[cur_count].name[item[cur_count].width - 1] = '>';
 				item[cur_count].name[item[cur_count].width] = 0;
 			}
@@ -603,12 +604,12 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 			const byte *uni = (byte *) header.FileNameW;
 
 			charsets_utf32_conv(uni, (byte *) str);
-			buffer_copy_string_len(item[cur_count].compname, header.FileName,
-								   256);
+			buffer_copy_string_len(item[cur_count].compname,
+								   header.FileName, 256);
 			filename_to_itemname(item, cur_count, str);
 		} else {
-			buffer_copy_string_len(item[cur_count].compname, header.FileName,
-								   256);
+			buffer_copy_string_len(item[cur_count].compname,
+								   header.FileName, 256);
 			filename_to_itemname(item, cur_count, header.FileName);
 		}
 		char t[20];

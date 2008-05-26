@@ -216,15 +216,16 @@ static void apply_filter(struct mad_frame *Frame)
 		for (Channel = 0; Channel < 2; Channel++)
 			for (Sample = 0; Sample < Samples; Sample++)
 				for (SubBand = 0; SubBand < 32; SubBand++)
-					Frame->sbsample[Channel][Sample][SubBand] =
-						mad_f_mul(Frame->sbsample[Channel][Sample][SubBand],
-								  Filter[SubBand]);
+					Frame->
+						sbsample[Channel][Sample][SubBand] =
+						mad_f_mul(Frame->sbsample[Channel][Sample]
+								  [SubBand], Filter[SubBand]);
 	else
 		for (Sample = 0; Sample < Samples; Sample++)
 			for (SubBand = 0; SubBand < 32; SubBand++)
 				Frame->sbsample[0][Sample][SubBand] =
-					mad_f_mul(Frame->sbsample[0][Sample][SubBand],
-							  Filter[SubBand]);
+					mad_f_mul(Frame->
+							  sbsample[0][Sample][SubBand], Filter[SubBand]);
 }
 
 static signed short MadFixedToSshort(mad_fixed_t Fixed)
@@ -293,7 +294,8 @@ static bool mp3_load()
 				   sceIoOpen(mp3_files[mp3_index][0], PSP_O_RDONLY,
 							 0777)) < 0) {
 			if (mp3_index < mp3_nfiles - 1)
-				memmove(mp3_files[mp3_index][0], mp3_files[mp3_index + 1][0],
+				memmove(mp3_files[mp3_index][0],
+						mp3_files[mp3_index + 1][0],
 						PATH_MAX * 2 * (mp3_nfiles - 1 - mp3_index));
 			mp3_nfiles--;
 			if (mp3_nfiles == 0) {
@@ -351,8 +353,8 @@ static bool mp3_load()
 			strncpy_s(mp3_tag, 128, mp3_tag2, 128);
 		}
 		mp3_handle =
-			sceAudioChReserve(PSP_AUDIO_NEXT_CHANNEL, OUTPUT_BUFFER_SIZE / 4,
-							  0);
+			sceAudioChReserve(PSP_AUDIO_NEXT_CHANNEL,
+							  OUTPUT_BUFFER_SIZE / 4, 0);
 #ifdef ENABLE_WMA
 	} else {
 		sceIoClose(fd);
@@ -367,7 +369,8 @@ static bool mp3_load()
 //      dbg_hexdump_ascii(d, (const unsigned char*)wma->author, 512);
 		if (wma->title[0] != 0) {
 			if (wma->author[0] != 0)
-				SPRINTF_S(mp3_tag, "%s - %s", (const char *) wma->author,
+				SPRINTF_S(mp3_tag, "%s - %s",
+						  (const char *) wma->author,
 						  (const char *) wma->title);
 			else
 				SPRINTF_S(mp3_tag, "? - %s", (const char *) wma->title);
@@ -522,18 +525,17 @@ static int mp3_thread(unsigned int args, void *argp)
 						mp3_pause();
 					} else if (mp3_jump == -1) {
 						if (Timer.seconds > 5) {
-							pos =
-								(int) ((double) (Timer.seconds - 5) /
-									   mp3info.framelen);
+							pos = (int) ((double)
+										 (Timer.
+										  seconds - 5) / mp3info.framelen);
 							if (pos >= mp3info.framecount)
 								pos = mp3info.framecount - 1;
 						} else {
 							pos = 0;
 						}
 					} else {
-						pos =
-							(int) ((double) (Timer.seconds + 5) /
-								   mp3info.framelen);
+						pos = (int) ((double)
+									 (Timer.seconds + 5) / mp3info.framelen);
 						if (pos >= mp3info.framecount) {
 							eos = true;
 							pos = mp3info.framecount - 1;
@@ -543,7 +545,8 @@ static int mp3_thread(unsigned int args, void *argp)
 					Timer.seconds = (long) (mp3info.framelen * (double) pos);
 					Timer.fraction =
 						(unsigned
-						 long) ((mp3info.framelen * (double) pos -
+						 long) ((mp3info.framelen *
+								 (double) pos -
 								 (double) Timer.seconds) *
 								MAD_TIMER_RESOLUTION);
 					mad_synth_finish(&Synth);
@@ -578,7 +581,8 @@ static int mp3_thread(unsigned int args, void *argp)
 					continue;
 				OutputPCM.nsamples =
 					resample_block(&Resample, Synth.pcm.length,
-								   Synth.pcm.samples[0], Synth.pcm.samples[1],
+								   Synth.pcm.samples[0],
+								   Synth.pcm.samples[1],
 								   (*Resampled)[0], (*Resampled)[1]);
 
 				OutputPCM.samples[0] = (*Resampled)[0];
@@ -593,22 +597,24 @@ static int mp3_thread(unsigned int args, void *argp)
 						signed short Sample;
 
 						/* Left channel */
-						Sample = MadFixedToSshort(OutputPCM.samples[0][i]);
+						Sample = MadFixedToSshort(OutputPCM.samples[0]
+												  [i]);
 						*(OutputPtr++) = Sample & 0xff;
 						*(OutputPtr++) = (Sample >> 8);
-						Sample = MadFixedToSshort(OutputPCM.samples[1][i]);
+						Sample = MadFixedToSshort(OutputPCM.samples[1]
+												  [i]);
 						*(OutputPtr++) = Sample & 0xff;
 						*(OutputPtr++) = (Sample >> 8);
 
 						if (OutputPtr == OutputBufferEnd) {
-							sceAudioOutputPannedBlocking(mp3_handle, MAXVOLUME,
-														 MAXVOLUME, (char *)
-														 OutputBuffer
-														 [OutputBuffer_Index]);
+							sceAudioOutputPannedBlocking
+								(mp3_handle, MAXVOLUME, MAXVOLUME, (char *)
+								 OutputBuffer[OutputBuffer_Index]);
 							OutputBuffer_Index =
 								(OutputBuffer_Index + 1) & 0x03;
 							OutputPtr =
-								(byte *) & OutputBuffer[OutputBuffer_Index][0];
+								(byte *) & OutputBuffer[OutputBuffer_Index]
+								[0];
 							OutputBufferEnd = OutputPtr + OUTPUT_BUFFER_SIZE;
 						}
 				} else
@@ -616,21 +622,22 @@ static int mp3_thread(unsigned int args, void *argp)
 						signed short Sample;
 
 						/* Left channel */
-						Sample = MadFixedToSshort(OutputPCM.samples[0][i]);
+						Sample = MadFixedToSshort(OutputPCM.samples[0]
+												  [i]);
 						*(OutputPtr++) = Sample & 0xff;
 						*(OutputPtr++) = (Sample >> 8);
 						*(OutputPtr++) = Sample & 0xff;
 						*(OutputPtr++) = (Sample >> 8);
 
 						if (OutputPtr >= OutputBufferEnd) {
-							sceAudioOutputPannedBlocking(mp3_handle, MAXVOLUME,
-														 MAXVOLUME, (char *)
-														 OutputBuffer
-														 [OutputBuffer_Index]);
+							sceAudioOutputPannedBlocking
+								(mp3_handle, MAXVOLUME, MAXVOLUME, (char *)
+								 OutputBuffer[OutputBuffer_Index]);
 							OutputBuffer_Index =
 								(OutputBuffer_Index + 1) & 0x03;
 							OutputPtr =
-								(byte *) & OutputBuffer[OutputBuffer_Index][0];
+								(byte *) & OutputBuffer[OutputBuffer_Index]
+								[0];
 							OutputBufferEnd = OutputPtr + OUTPUT_BUFFER_SIZE;
 						}
 					}
@@ -712,7 +719,8 @@ static int mp3_thread(unsigned int args, void *argp)
 					memcpy(&OutputBuffer[OutputBuffer_Index]
 						   [OutputBuffer_Pos / 2], &buf[p],
 						   WMA_MAX_BUF_SIZE - OutputBuffer_Pos);
-					sceAudioOutputPannedBlocking(mp3_handle, MAXVOLUME,
+					sceAudioOutputPannedBlocking(mp3_handle,
+												 MAXVOLUME,
 												 MAXVOLUME,
 												 OutputBuffer
 												 [OutputBuffer_Index]);
@@ -721,8 +729,8 @@ static int mp3_thread(unsigned int args, void *argp)
 					lyric_update_pos(&lyric, (void *) &Timer);
 #endif
 					OutputBuffer_Index = (OutputBuffer_Index + 1) & 3;
-					memset(&OutputBuffer[OutputBuffer_Index][0], 0,
-						   WMA_MAX_BUF_SIZE);
+					memset(&OutputBuffer[OutputBuffer_Index]
+						   [0], 0, WMA_MAX_BUF_SIZE);
 					p += WMA_MAX_BUF_SIZE - OutputBuffer_Pos;
 					size -= WMA_MAX_BUF_SIZE - OutputBuffer_Pos;
 					OutputBuffer_Pos = 0;
@@ -778,8 +786,8 @@ extern bool mp3_init()
 	Resampled = malloc(sizeof(*Resampled));
 	if (mp3_thid <= 0)
 		mp3_thid =
-			sceKernelCreateThread("mp3 thread", mp3_thread, 0x08, 0x10000,
-								  PSP_THREAD_ATTR_USER, NULL);
+			sceKernelCreateThread("mp3 thread", mp3_thread, 0x08,
+								  0x10000, PSP_THREAD_ATTR_USER, NULL);
 	if (mp3_thid < 0)
 		return false;
 	return true;
@@ -948,7 +956,8 @@ extern void mp3_list_add_dir(const char *comppath)
 		dword j;
 
 		for (j = 0; j < mp3_nfiles; j++)
-			if (stricmp(mp3_files[j][0], mp3_files[mp3_nfiles][0]) == 0)
+			if (stricmp(mp3_files[j][0], mp3_files[mp3_nfiles][0])
+				== 0)
 				break;
 		if (j < mp3_nfiles)
 			continue;
@@ -1292,8 +1301,8 @@ extern void mp3_set_encode(t_conf_encode encode)
 				byte *targ = NULL;
 				dword size = strlen(mp3_tag);
 
-				charsets_sjis_conv((const byte *) mp3_tag, (byte **) & targ,
-								   &size);
+				charsets_sjis_conv((const byte *) mp3_tag,
+								   (byte **) & targ, &size);
 				if (targ != NULL) {
 					STRCPY_S(mp3_tag_encode, (char *) targ);
 					free(targ);

@@ -65,29 +65,33 @@ static int convert_c_style_string(char *dest, int destsize, char *src)
 						break;
 					default:
 						if (src[n + 1] == 'x') {
-							const char *endp = search_digit(&src[n + 2], 100);
+							const char *endp = search_digit(&src[n + 2],
+															100);
 
 							if (endp != NULL) {
 								char number[80];
 
-								strncpy(number, &src[n + 2],
-										endp - &src[n + 2]);
+								strncpy(number,
+										&src[n + 2], endp - &src[n + 2]);
 								number[endp - &src[n + 2]] = '\0';
-								int digit = strtol(number, NULL, 16);
+								int digit = strtol(number, NULL,
+												   16);
 
 								*p++ = digit;
 								n += endp - &src[n + 2] + 1;
 							}
 						} else if (isdigit(src[n + 1])) {
-							const char *endp = search_digit(&src[n + 1], 100);
+							const char *endp = search_digit(&src[n + 1],
+															100);
 
 							if (endp != NULL) {
 								char number[80];
 
-								strncpy(number, &src[n + 1],
-										endp - &src[n + 1]);
+								strncpy(number,
+										&src[n + 1], endp - &src[n + 1]);
 								number[endp - &src[n + 1]] = '\0';
-								int digit = strtol(number, NULL, 8);
+								int digit = strtol(number, NULL,
+												   8);
 
 								*p++ = digit;
 								n += endp - &src[n + 1];

@@ -457,9 +457,11 @@ int buffer_caseless_compare(const char *a, size_t a_len, const char *b,
 		char a1 = *a++, b1 = *b++;
 
 		if (a1 != b1) {
-			if ((a1 >= 'A' && a1 <= 'Z') && (b1 >= 'a' && b1 <= 'z'))
+			if ((a1 >= 'A' && a1 <= 'Z')
+				&& (b1 >= 'a' && b1 <= 'z'))
 				a1 |= 32;
-			else if ((a1 >= 'a' && a1 <= 'z') && (b1 >= 'A' && b1 <= 'Z'))
+			else if ((a1 >= 'a' && a1 <= 'z')
+					 && (b1 >= 'A' && b1 <= 'Z'))
 				b1 |= 32;
 			if ((a1 - b1) != 0)
 				return (a1 - b1);

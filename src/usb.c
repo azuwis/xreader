@@ -17,16 +17,16 @@ static bool is_usb_inited = false;
 
 extern bool usb_open()
 {
-	sceKernelStartModule(kuKernelLoadModule("flash0:/kd/chkreg.prx", 0, NULL),
+	sceKernelStartModule(kuKernelLoadModule
+						 ("flash0:/kd/chkreg.prx", 0, NULL), 0, NULL, 0, NULL);
+	sceKernelStartModule(kuKernelLoadModule("flash0:/kd/mgr.prx", 0, NULL),
 						 0, NULL, 0, NULL);
-	sceKernelStartModule(kuKernelLoadModule("flash0:/kd/mgr.prx", 0, NULL), 0,
-						 NULL, 0, NULL);
-	sceKernelStartModule(kuKernelLoadModule("flash0:/kd/npdrm.prx", 0, NULL), 0,
-						 NULL, 0, NULL);
-	sceKernelStartModule(kuKernelLoadModule("flash0:/kd/semawm.prx", 0, NULL),
-						 0, NULL, 0, NULL);
-	sceKernelStartModule(kuKernelLoadModule("flash0:/kd/usbstor.prx", 0, NULL),
-						 0, NULL, 0, NULL);
+	sceKernelStartModule(kuKernelLoadModule
+						 ("flash0:/kd/npdrm.prx", 0, NULL), 0, NULL, 0, NULL);
+	sceKernelStartModule(kuKernelLoadModule
+						 ("flash0:/kd/semawm.prx", 0, NULL), 0, NULL, 0, NULL);
+	sceKernelStartModule(kuKernelLoadModule
+						 ("flash0:/kd/usbstor.prx", 0, NULL), 0, NULL, 0, NULL);
 	sceKernelStartModule(kuKernelLoadModule
 						 ("flash0:/kd/usbstormgr.prx", 0, NULL), 0, NULL, 0,
 						 NULL);
@@ -34,8 +34,8 @@ extern bool usb_open()
 						 ("flash0:/kd/usbstorms.prx", 0, NULL), 0, NULL, 0,
 						 NULL);
 	sceKernelStartModule(kuKernelLoadModule
-						 ("flash0:/kd/usbstorboot.prx", 0, NULL), 0, NULL, 0,
-						 NULL);
+						 ("flash0:/kd/usbstorboot.prx", 0, NULL), 0, NULL,
+						 0, NULL);
 
 	if (sceUsbStart(PSP_USBBUS_DRIVERNAME, 0, 0) != 0)
 		return false;

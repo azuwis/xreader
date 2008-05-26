@@ -621,7 +621,8 @@ dictionary *iniparser_load(const char *ininame)
 			return NULL;
 		}
 		/* Get rid of \n and spaces at end of line */
-		while ((len >= 0) && ((line[len] == '\n') || (isspace(line[len])))) {
+		while ((len >= 0)
+			   && ((line[len] == '\n') || (isspace(line[len])))) {
 			line[len] = 0;
 			len--;
 		}
@@ -687,4 +688,3 @@ void iniparser_freedict(dictionary * d)
 {
 	dictionary_del(d);
 }
-

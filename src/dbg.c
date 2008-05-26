@@ -203,8 +203,8 @@ int dbg_open_psp_logfile(DBG * d, const char *logfile)
 	if (fd < 0) {
 		return -1;
 	}
-	return dbg_add_handle(d, 0, dbg_write_psp_logfile, dbg_close_psp_logfile,
-						  (void *) fd);
+	return dbg_add_handle(d, 0, dbg_write_psp_logfile,
+						  dbg_close_psp_logfile, (void *) fd);
 }
 
 void dbg_write_psp_logfile(void *arg, const char *str)
@@ -433,7 +433,8 @@ hex_and_ascii_print_with_offset(DBG * d, register const char *ident,
 		if (i >= HEXDUMP_SHORTS_PER_LINE) {
 			*hsp = *asp = '\0';
 			(void) dbg_printf_raw(d, "%s0x%04x: %-*s  %s",
-								  ident, oset, HEXDUMP_HEXSTUFF_PER_LINE,
+								  ident, oset,
+								  HEXDUMP_HEXSTUFF_PER_LINE,
 								  hexstuff, asciistuff);
 			i = 0;
 			hsp = hexstuff;
@@ -487,8 +488,8 @@ hex_print_with_offset(DBG * d, register const char *ident,
 		if (i >= HEXDUMP_SHORTS_PER_LINE) {
 			*hsp = '\0';
 			(void) dbg_printf_raw(d, "%s0x%04x: %-*s",
-								  ident, oset, HEXDUMP_HEXSTUFF_PER_LINE,
-								  hexstuff);
+								  ident, oset,
+								  HEXDUMP_HEXSTUFF_PER_LINE, hexstuff);
 			i = 0;
 			hsp = hexstuff;
 			oset += HEXDUMP_BYTES_PER_LINE;

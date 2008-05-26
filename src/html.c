@@ -47,8 +47,8 @@ static char *html_find_next_tag(char *string, char **tag, char **property,
 					inquote = false;
 				res++;
 			} else if (!inquote
-					   && (*res == ' ' || *res == '\t' || *res == '\r'
-						   || *res == '\n')) {
+					   && (*res == ' ' || *res == '\t'
+						   || *res == '\r' || *res == '\n')) {
 				*res = 0;
 				res++;
 				res = html_skip_spaces(res);
@@ -130,8 +130,8 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 			cstr += len;
 		}
 		if (istag) {
-			if (stricmp(ntag, "head") == 0 || stricmp(ntag, "style") == 0
-				|| stricmp(ntag, "title") == 0) {
+			if (stricmp(ntag, "head") == 0
+				|| stricmp(ntag, "style") == 0 || stricmp(ntag, "title") == 0) {
 				char *pstr = html_skip_close_tag(nstr, ntag);
 
 				if (pstr != NULL)
@@ -173,9 +173,12 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 				}
 				str = pstr;
 			} else {
-				if (stricmp(ntag, "br") == 0 || stricmp(ntag, "li") == 0
-					|| stricmp(ntag, "p") == 0 || stricmp(ntag, "/p") == 0
-					|| stricmp(ntag, "tr") == 0 || stricmp(ntag, "/table") == 0
+				if (stricmp(ntag, "br") == 0
+					|| stricmp(ntag, "li") == 0
+					|| stricmp(ntag, "p") == 0
+					|| stricmp(ntag, "/p") == 0
+					|| stricmp(ntag, "tr") == 0
+					|| stricmp(ntag, "/table") == 0
 					|| stricmp(ntag, "div") == 0
 					|| stricmp(ntag, "/div") == 0) {
 					if (prop != NULL) {
@@ -188,15 +191,17 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 
 							*v = 0;
 							while (t > prop
-								   && (*t == ' ' || *t == '\t' || *t == '\r'
-									   || *t == '\n'))
+								   && (*t == ' '
+									   || *t == '\t'
+									   || *t == '\r' || *t == '\n'))
 								t--;
 							*(t + 1) = 0;
 							if (stricmp(prop, "style") == 0) {
 								v++;
 								v = html_skip_spaces(v);
 								if (*v == '"' || *v == '\'') {
-									char *rq = strchr(v + 1, *v);
+									char *rq = strchr(v + 1,
+													  *v);
 
 									if (rq == NULL) {
 										*cstr++ = '\n';
