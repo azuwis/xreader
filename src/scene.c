@@ -119,11 +119,12 @@ int default_predraw(const win_menu_predraw_data * pData, const char *str,
 	disp_rectangle(*left, *upper, *right, *bottom, COLOR_WHITE);
 	disp_fillrect(*left + 1, *upper + 1,
 				  *right - 1, *bottom - 1,
-				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-	disp_putstring(get_center_pos(*left, *right, str), *upper + 1,
-				   COLOR_WHITE, (const byte *) str);
-	disp_line(*left, *upper + 1 + DISP_FONTSIZE,
-			  *right, *upper + 1 + DISP_FONTSIZE, COLOR_WHITE);
+				  config.usedyncolor ? get_bgcolor_by_time() : config.
+				  menubcolor);
+	disp_putstring(get_center_pos(*left, *right, str), *upper + 1, COLOR_WHITE,
+				   (const byte *) str);
+	disp_line(*left, *upper + 1 + DISP_FONTSIZE, *right,
+			  *upper + 1 + DISP_FONTSIZE, COLOR_WHITE);
 
 	return 0;
 }
@@ -386,7 +387,7 @@ dword scene_txtkey(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -403,7 +404,7 @@ dword scene_txtkey(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_txtkey_predraw, NULL,
 					 scene_txtkey_menucb)) != INVALID);
 
@@ -533,7 +534,7 @@ dword scene_flkey(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -549,7 +550,7 @@ dword scene_flkey(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_flkey_predraw, NULL,
 					 scene_flkey_menucb)) != INVALID);
 
@@ -997,7 +998,7 @@ dword scene_ioptions(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1014,7 +1015,7 @@ dword scene_ioptions(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_ioptions_predraw, NULL,
 					 scene_ioptions_menucb)) != INVALID);
 
@@ -1430,7 +1431,7 @@ dword scene_color(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1453,7 +1454,7 @@ dword scene_color(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_color_predraw, NULL,
 					 scene_color_menucb)) != INVALID);
 
@@ -1788,7 +1789,7 @@ dword scene_boptions(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1814,7 +1815,7 @@ dword scene_boptions(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_boptions_predraw, NULL,
 					 scene_boptions_menucb)) != INVALID);
 
@@ -1926,7 +1927,7 @@ dword scene_ctrlset(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -1940,7 +1941,7 @@ dword scene_ctrlset(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_ctrlset_predraw, NULL,
 					 scene_ctrlset_menucb)) != INVALID);
 #ifdef ENABLE_HPRM
@@ -2174,7 +2175,7 @@ dword scene_fontsel(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -2203,7 +2204,7 @@ dword scene_fontsel(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_fontsel_predraw, NULL,
 					 scene_fontsel_menucb)) != INVALID);
 	if (orgfontindex != fontindex || orgusettf != config.usettf
@@ -2364,7 +2365,7 @@ dword scene_musicopt(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -2383,7 +2384,7 @@ dword scene_musicopt(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_musicopt_predraw, NULL,
 					 scene_musicopt_menucb)) != INVALID);
 
@@ -2707,7 +2708,7 @@ dword scene_moptions(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -2735,7 +2736,7 @@ dword scene_moptions(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_moptions_predraw, NULL,
 					 scene_moptions_menucb)) != INVALID);
 
@@ -2890,7 +2891,7 @@ dword scene_locsave(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -2913,12 +2914,93 @@ dword scene_locsave(dword * selidx)
 				 g_predraw.upper, g_predraw.max_item_len,
 				 g_predraw.item_count, item, NELEMS(item), 0,
 				 g_predraw.linespace,
-				 config.usedyncolor ? GetBGColorByTime() : config.
+				 config.usedyncolor ? get_bgcolor_by_time() : config.
 				 menubcolor, true, scene_locsave_predraw, NULL,
 				 scene_locsave_menucb);
 
 	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 	return 0;
+}
+
+static void scene_open_dir_or_archive(dword * idx)
+{
+	dword plen = strlen(config.path);
+
+	if (plen > 0 && config.path[plen - 1] == '/')
+		if (strnicmp(config.path, "ms0:/", 5) == 0)
+			filecount =
+				fs_dir_to_menu(config.path, config.shortpath, &filelist,
+							   config.menutextcolor, config.selicolor,
+							   config.
+							   usedyncolor ? get_bgcolor_by_time() : config.
+							   menubcolor, config.selbcolor, config.showhidden,
+							   config.showunknown);
+		else
+			filecount =
+				fs_flashdir_to_menu(config.path,
+									config.shortpath, &filelist,
+									config.menutextcolor,
+									config.selicolor,
+									config.
+									usedyncolor ?
+									get_bgcolor_by_time() :
+									config.menubcolor, config.selbcolor);
+	else
+		switch (fs_file_get_type(config.path)) {
+			case fs_filetype_zip:
+				where = scene_in_zip;
+				filecount =
+					fs_zip_to_menu(config.shortpath, &filelist,
+								   config.menutextcolor, config.selicolor,
+								   config.
+								   usedyncolor ? get_bgcolor_by_time() :
+								   config.menubcolor, config.selbcolor);
+				break;
+			case fs_filetype_chm:
+				where = scene_in_chm;
+				filecount =
+					fs_chm_to_menu(config.shortpath, &filelist,
+								   config.menutextcolor, config.selicolor,
+								   config.
+								   usedyncolor ? get_bgcolor_by_time() :
+								   config.menubcolor, config.selbcolor);
+				break;
+			case fs_filetype_rar:
+				where = scene_in_rar;
+				filecount =
+					fs_rar_to_menu(config.shortpath, &filelist,
+								   config.menutextcolor, config.selicolor,
+								   config.
+								   usedyncolor ? get_bgcolor_by_time() :
+								   config.menubcolor, config.selbcolor);
+				break;
+			default:
+				filelist = NULL;
+				filecount = 0;
+				break;
+		}
+	if (filecount == 0) {
+		STRCPY_S(config.path, "ms0:/");
+		STRCPY_S(config.shortpath, "ms0:/");
+		filecount =
+			fs_dir_to_menu(config.path, config.shortpath, &filelist,
+						   config.menutextcolor, config.selicolor,
+						   config.usedyncolor ? get_bgcolor_by_time() : config.
+						   menubcolor, config.selbcolor, config.showhidden,
+						   config.showunknown);
+	}
+	quicksort(filelist,
+			  (filecount > 0
+			   && filelist[0].compname->ptr[0] == '.') ? 1 : 0, filecount - 1,
+			  sizeof(t_win_menuitem), compare_func[(int) config.arrange]);
+	*idx = 0;
+	while (*idx < filecount
+		   && stricmp(filelist[*idx].compname->ptr, config.lastfile) != 0)
+		(*idx)++;
+	if (*idx >= filecount) {
+		config.isreading = false;
+		*idx = 0;
+	}
 }
 
 t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item,
@@ -2943,120 +3025,8 @@ t_win_menu_op scene_locload_menucb(dword key, p_win_menuitem item,
 					STRCPY_S(config.shortpath, shortpath);
 					STRCPY_S(config.lastfile, compname);
 					config.isreading = locreading;
-					dword plen = strlen(config.path);
-
-					if (plen > 0 && config.path[plen - 1] == '/') {
-						if (strnicmp(config.path, "ms0:/", 5) == 0)
-							filecount =
-								fs_dir_to_menu(config.path, config.shortpath,
-											   &filelist, config.menutextcolor,
-											   config.selicolor,
-											   config.
-											   usedyncolor ? GetBGColorByTime()
-											   : config.menubcolor,
-											   config.selbcolor,
-											   config.showhidden,
-											   config.showunknown);
-						else
-							filecount =
-								fs_flashdir_to_menu(config.path,
-													config.shortpath, &filelist,
-													config.menutextcolor,
-													config.selicolor,
-													config.
-													usedyncolor ?
-													GetBGColorByTime() : config.
-													menubcolor,
-													config.selbcolor);
-					} else
-						switch (fs_file_get_type(config.path)) {
-							case fs_filetype_zip:
-								{
-									where = scene_in_zip;
-									filecount =
-										fs_zip_to_menu(config.shortpath,
-													   &filelist,
-													   config.menutextcolor,
-													   config.selicolor,
-													   config.
-													   usedyncolor ?
-													   GetBGColorByTime() :
-													   config.menubcolor,
-													   config.selbcolor);
-									break;
-								}
-							case fs_filetype_chm:
-								{
-									where = scene_in_chm;
-									filecount =
-										fs_chm_to_menu(config.shortpath,
-													   &filelist,
-													   config.menutextcolor,
-													   config.selicolor,
-													   config.
-													   usedyncolor ?
-													   GetBGColorByTime() :
-													   config.menubcolor,
-													   config.selbcolor);
-									break;
-								}
-							case fs_filetype_rar:
-								{
-									where = scene_in_rar;
-									filecount =
-										fs_rar_to_menu(config.shortpath,
-													   &filelist,
-													   config.menutextcolor,
-													   config.selicolor,
-													   config.
-													   usedyncolor ?
-													   GetBGColorByTime() :
-													   config.menubcolor,
-													   config.selbcolor);
-									break;
-								}
-							default:
-								STRCPY_S(config.path, "ms0:/");
-								STRCPY_S(config.shortpath, "ms0:/");
-								filecount =
-									fs_dir_to_menu(config.path,
-												   config.shortpath, &filelist,
-												   config.menutextcolor,
-												   config.selicolor,
-												   config.
-												   usedyncolor ?
-												   GetBGColorByTime() : config.
-												   menubcolor, config.selbcolor,
-												   config.showhidden,
-												   config.showunknown);
-								break;
-						}
-					if (filelist == 0) {
-						where = scene_in_dir;
-						STRCPY_S(config.path, "ms0:/");
-						STRCPY_S(config.shortpath, "ms0:/");
-						STRCPY_S(config.lastfile, "");
-						filecount =
-							fs_dir_to_menu(config.path, config.shortpath,
-										   &filelist, config.menutextcolor,
-										   config.selicolor,
-										   config.
-										   usedyncolor ? GetBGColorByTime() :
-										   config.menubcolor, config.selbcolor,
-										   config.showhidden,
-										   config.showunknown);
-					}
-					quicksort(filelist,
-							  (filecount > 0
-							   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
-							  filecount - 1, sizeof(t_win_menuitem),
-							  compare_func[(int) config.arrange]);
 					dword idx = 0;
-
-					while (idx < filecount
-						   && stricmp(filelist[idx].compname->ptr,
-									  config.lastfile) != 0)
-						idx++;
+					scene_open_dir_or_archive(&idx);
 					if (idx >= filecount) {
 						idx = 0;
 						config.isreading = locreading = false;
@@ -3095,7 +3065,7 @@ dword scene_locload(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -3118,7 +3088,7 @@ dword scene_locload(dword * selidx)
 				 g_predraw.upper, g_predraw.max_item_len,
 				 g_predraw.item_count, item, NELEMS(item), 0,
 				 g_predraw.linespace,
-				 config.usedyncolor ? GetBGColorByTime() : config.
+				 config.usedyncolor ? get_bgcolor_by_time() : config.
 				 menubcolor, true, scene_locload_predraw, NULL,
 				 scene_locload_menucb);
 
@@ -3335,7 +3305,7 @@ dword scene_setting_mgr(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -3356,7 +3326,7 @@ dword scene_setting_mgr(dword * selidx)
 		win_menu(g_predraw.left, g_predraw.upper, g_predraw.max_item_len,
 				 g_predraw.item_count, item, NELEMS(item), 0,
 				 g_predraw.linespace,
-				 config.usedyncolor ? GetBGColorByTime() : config.menubcolor,
+				 config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor,
 				 true, scene_setting_mgr_predraw, NULL,
 				 scene_setting_mgr_menucb);
 
@@ -3469,9 +3439,10 @@ void scene_options_predraw(p_win_menuitem item, dword index, dword topindex,
 	disp_rectangle(left, upper, right, bottom, COLOR_WHITE);
 
 	disp_fillrect(left + 1, upper + 1, right - 1, upper + DISP_FONTSIZE,
-				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor);
-	disp_putstring(get_center_pos(left, right, _("设置选项")),
-				   upper + 1, COLOR_WHITE, (const byte *) _("设置选项"));
+				  config.usedyncolor ? get_bgcolor_by_time() : config.
+				  menubcolor);
+	disp_putstring(get_center_pos(left, right, _("设置选项")), upper + 1,
+				   COLOR_WHITE, (const byte *) _("设置选项"));
 	disp_line(left, upper + 1 + DISP_FONTSIZE, right, upper + 1 + DISP_FONTSIZE,
 			  COLOR_WHITE);
 }
@@ -3519,7 +3490,7 @@ dword scene_options(dword * selidx)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 		item[i].data = NULL;
 	}
@@ -3541,7 +3512,7 @@ dword scene_options(dword * selidx)
 					 g_predraw.upper,
 					 g_predraw.max_item_len, NELEMS(item), item, NELEMS(item),
 					 index, g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_options_predraw, NULL,
 					 scene_options_menucb)) != INVALID);
 
@@ -3690,7 +3661,7 @@ bool scene_bookmark(dword * orgp)
 		item[i].icolor = config.menutextcolor;
 		item[i].selicolor = config.selicolor;
 		item[i].selrcolor =
-			config.usedyncolor ? GetBGColorByTime() : config.menubcolor;
+			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 	}
 	item[0].data = (void *) orgp;
@@ -3699,8 +3670,8 @@ bool scene_bookmark(dword * orgp)
 
 	if ((index =
 		 win_menu(64, 62, 7, 9, item, 9, 0, 0,
-				  config.usedyncolor ? GetBGColorByTime() : config.menubcolor,
-				  true, scene_bookmark_predraw, NULL,
+				  config.usedyncolor ? get_bgcolor_by_time() : config.
+				  menubcolor, true, scene_bookmark_predraw, NULL,
 				  scene_bookmark_menucb)) != INVALID);
 	bookmark_close(bm);
 	bm = NULL;
@@ -5020,7 +4991,7 @@ static void scene_enter_dir(dword * idx)
 						   &filelist, config.menutextcolor,
 						   config.selicolor,
 						   config.
-						   usedyncolor ? GetBGColorByTime() :
+						   usedyncolor ? get_bgcolor_by_time() :
 						   config.menubcolor, config.selbcolor);
 	} else if (strnicmp(config.path, "ms0:/", 5) == 0) {
 		if (fat_inited == false) {
@@ -5032,7 +5003,7 @@ static void scene_enter_dir(dword * idx)
 						   &filelist, config.menutextcolor,
 						   config.selicolor,
 						   config.
-						   usedyncolor ? GetBGColorByTime() :
+						   usedyncolor ? get_bgcolor_by_time() :
 						   config.menubcolor, config.selbcolor,
 						   config.showhidden, config.showunknown);
 	} else
@@ -5040,7 +5011,7 @@ static void scene_enter_dir(dword * idx)
 			fs_flashdir_to_menu(config.path, config.shortpath,
 								&filelist, config.menutextcolor,
 								config.selicolor,
-								config.usedyncolor ? GetBGColorByTime()
+								config.usedyncolor ? get_bgcolor_by_time()
 								: config.menubcolor, config.selbcolor);
 	quicksort(filelist,
 			  (filecount > 0
@@ -5083,7 +5054,7 @@ static void scene_enter_archive(dword * idx, enum ArchiveType type)
 				fs_zip_to_menu(config.shortpath, &filelist,
 							   config.menutextcolor, config.selicolor,
 							   config.
-							   usedyncolor ? GetBGColorByTime() : config.
+							   usedyncolor ? get_bgcolor_by_time() : config.
 							   menubcolor, config.selbcolor);
 			break;
 		case RAR:
@@ -5091,7 +5062,7 @@ static void scene_enter_archive(dword * idx, enum ArchiveType type)
 				fs_rar_to_menu(config.shortpath, &filelist,
 							   config.menutextcolor, config.selicolor,
 							   config.
-							   usedyncolor ? GetBGColorByTime() : config.
+							   usedyncolor ? get_bgcolor_by_time() : config.
 							   menubcolor, config.selbcolor);
 			break;
 		case CHM:
@@ -5099,7 +5070,7 @@ static void scene_enter_archive(dword * idx, enum ArchiveType type)
 				fs_chm_to_menu(config.shortpath, &filelist,
 							   config.menutextcolor, config.selicolor,
 							   config.
-							   usedyncolor ? GetBGColorByTime() : config.
+							   usedyncolor ? get_bgcolor_by_time() : config.
 							   menubcolor, config.selbcolor);
 			break;
 	}
@@ -5229,83 +5200,8 @@ void scene_filelist()
 		STRCPY_S(config.path, "ms0:/");
 		STRCPY_S(config.shortpath, "ms0:/");
 	}
-	dword plen = strlen(config.path);
 
-	if (plen > 0 && config.path[plen - 1] == '/')
-		filecount =
-			fs_dir_to_menu(config.path, config.shortpath, &filelist,
-						   config.menutextcolor, config.selicolor,
-						   config.usedyncolor ? GetBGColorByTime() : config.
-						   menubcolor, config.selbcolor, config.showhidden,
-						   config.showunknown);
-	else
-		switch (fs_file_get_type(config.path)) {
-			case fs_filetype_zip:
-				{
-					where = scene_in_zip;
-					filecount =
-						fs_zip_to_menu(config.shortpath, &filelist,
-									   config.menutextcolor, config.selicolor,
-									   config.
-									   usedyncolor ? GetBGColorByTime() :
-									   config.menubcolor, config.selbcolor);
-					break;
-				}
-			case fs_filetype_chm:
-				{
-					where = scene_in_chm;
-					filecount =
-						fs_chm_to_menu(config.shortpath, &filelist,
-									   config.menutextcolor, config.selicolor,
-									   config.
-									   usedyncolor ? GetBGColorByTime() :
-									   config.menubcolor, config.selbcolor);
-					break;
-				}
-			case fs_filetype_rar:
-				{
-					where = scene_in_rar;
-					filecount =
-						fs_rar_to_menu(config.shortpath, &filelist,
-									   config.menutextcolor, config.selicolor,
-									   config.
-									   usedyncolor ? GetBGColorByTime() :
-									   config.menubcolor, config.selbcolor);
-					break;
-				}
-			default:
-				STRCPY_S(config.path, "ms0:/");
-				STRCPY_S(config.shortpath, "ms0:/");
-				filecount =
-					fs_dir_to_menu(config.path, config.shortpath, &filelist,
-								   config.menutextcolor, config.selicolor,
-								   config.
-								   usedyncolor ? GetBGColorByTime() : config.
-								   menubcolor, config.selbcolor,
-								   config.showhidden, config.showunknown);
-				break;
-		}
-	if (filecount == 0) {
-		STRCPY_S(config.path, "ms0:/");
-		STRCPY_S(config.shortpath, "ms0:/");
-		filecount =
-			fs_dir_to_menu(config.path, config.shortpath, &filelist,
-						   config.menutextcolor, config.selicolor,
-						   config.usedyncolor ? GetBGColorByTime() : config.
-						   menubcolor, config.selbcolor, config.showhidden,
-						   config.showunknown);
-	}
-	quicksort(filelist,
-			  (filecount > 0
-			   && filelist[0].compname->ptr[0] == '.') ? 1 : 0, filecount - 1,
-			  sizeof(t_win_menuitem), compare_func[(int) config.arrange]);
-	while (idx < filecount
-		   && stricmp(filelist[idx].compname->ptr, config.lastfile) != 0)
-		idx++;
-	if (idx >= filecount) {
-		config.isreading = false;
-		idx = 0;
-	}
+	scene_open_dir_or_archive(&idx);
 #ifdef ENABLE_USB
 	if (config.enableusb)
 		usb_activate();
@@ -5321,7 +5217,7 @@ void scene_filelist()
 						fs_empty_dir(&filecount, config.menutextcolor,
 									 config.selicolor,
 									 config.
-									 usedyncolor ? GetBGColorByTime() :
+									 usedyncolor ? get_bgcolor_by_time() :
 									 config.menubcolor, config.selbcolor);
 					idx = 0;
 					idx =
@@ -5329,7 +5225,7 @@ void scene_filelist()
 								 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4,
 								 HRR * 2, filelist, filecount, idx, 0,
 								 config.
-								 usedyncolor ? GetBGColorByTime() : config.
+								 usedyncolor ? get_bgcolor_by_time() : config.
 								 menubcolor, false, scene_filelist_predraw,
 								 scene_filelist_postdraw,
 								 scene_filelist_menucb);
@@ -5362,7 +5258,8 @@ void scene_filelist()
 					win_menu(240 - WRR * DISP_FONTSIZE,
 							 139 - HRR * (DISP_FONTSIZE + 1), WRR * 4, HRR * 2,
 							 filelist, filecount, idx, 0,
-							 config.usedyncolor ? GetBGColorByTime() : config.
+							 config.
+							 usedyncolor ? get_bgcolor_by_time() : config.
 							 menubcolor, false, scene_filelist_predraw,
 							 scene_filelist_postdraw, scene_filelist_menucb);
 		} else {
@@ -5376,7 +5273,7 @@ void scene_filelist()
 						fs_zip_to_menu(config.shortpath, &filelist,
 									   config.menutextcolor, config.selicolor,
 									   config.
-									   usedyncolor ? GetBGColorByTime() :
+									   usedyncolor ? get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
 				case scene_in_chm:
@@ -5384,7 +5281,7 @@ void scene_filelist()
 						fs_chm_to_menu(config.shortpath, &filelist,
 									   config.menutextcolor, config.selicolor,
 									   config.
-									   usedyncolor ? GetBGColorByTime() :
+									   usedyncolor ? get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
 				case scene_in_rar:
@@ -5392,7 +5289,7 @@ void scene_filelist()
 						fs_rar_to_menu(config.shortpath, &filelist,
 									   config.menutextcolor, config.selicolor,
 									   config.
-									   usedyncolor ? GetBGColorByTime() :
+									   usedyncolor ? get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
 				default:
@@ -5400,7 +5297,7 @@ void scene_filelist()
 						fs_dir_to_menu(config.path, config.shortpath, &filelist,
 									   config.menutextcolor, config.selicolor,
 									   config.
-									   usedyncolor ? GetBGColorByTime() :
+									   usedyncolor ? get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor,
 									   config.showhidden, config.showunknown);
 			}
@@ -5411,7 +5308,7 @@ void scene_filelist()
 					fs_dir_to_menu(config.path, config.shortpath, &filelist,
 								   config.menutextcolor, config.selicolor,
 								   config.
-								   usedyncolor ? GetBGColorByTime() : config.
+								   usedyncolor ? get_bgcolor_by_time() : config.
 								   menubcolor, config.selbcolor,
 								   config.showhidden, config.showunknown);
 			}
@@ -5760,10 +5657,10 @@ extern void scene_init()
 		xrSetBrightness(config.brightness);
 	}
 
-	dword c = GetBGColorByTime();
+	dword c = get_bgcolor_by_time();
 
-	dbg_printf(d, "GetBGColorByTime() return %lu/%lu/%lu", RGB_R(c), RGB_G(c),
-			   RGB_B(c));
+	dbg_printf(d, "get_bgcolor_by_time() return %lu/%lu/%lu", RGB_R(c),
+			   RGB_G(c), RGB_B(c));
 
 	xreader_scene_inited = true;
 
@@ -5901,21 +5798,6 @@ dword lerp_color(dword color1, dword color2, float fWeight)
 	}
 }
 
-static dword pspBGColorTable[12] = {
-	RGB(182, 182, 182),
-	RGB(232, 195, 44),
-	RGB(141, 213, 15),
-	RGB(241, 141, 167),
-	RGB(10, 184, 9),
-	RGB(174, 115, 233),
-	RGB(3, 204, 194),
-	RGB(11, 103, 186),
-	RGB(180, 66, 190),
-	RGB(236, 175, 22),
-	RGB(133, 91, 31),
-	RGB(251, 26, 22)
-};
-
 /* time in 24 hours */
 int get_diff_second(int srcHour, int srcMinute, int srcSeconds,
 					int dstHour, int dstMinute, int dstSeconds)
@@ -5924,8 +5806,23 @@ int get_diff_second(int srcHour, int srcMinute, int srcSeconds,
 			(srcHour * 60 * 60 + srcMinute * 60 + srcSeconds));
 }
 
-dword GetBGColorByTime(void)
+dword get_bgcolor_by_time(void)
 {
+	static dword pspBGColorTable[12] = {
+		RGB(182, 182, 182),
+		RGB(232, 195, 44),
+		RGB(141, 213, 15),
+		RGB(241, 141, 167),
+		RGB(10, 184, 9),
+		RGB(174, 115, 233),
+		RGB(3, 204, 194),
+		RGB(11, 103, 186),
+		RGB(180, 66, 190),
+		RGB(236, 175, 22),
+		RGB(133, 91, 31),
+		RGB(251, 26, 22)
+	};
+
 	pspTime tm;
 
 	sceRtcGetCurrentClockLocalTime(&tm);

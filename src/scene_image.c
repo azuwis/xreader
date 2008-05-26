@@ -1146,7 +1146,7 @@ dword scene_imgkey(dword * selidx)
 					 g_predraw.upper, g_predraw.max_item_len,
 					 g_predraw.item_count, item, NELEMS(item), 0,
 					 g_predraw.linespace,
-					 config.usedyncolor ? GetBGColorByTime() : config.
+					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_imgkey_predraw, NULL,
 					 scene_imgkey_menucb)) != INVALID);
 

@@ -345,7 +345,8 @@ static void scene_draw_lyric(void)
 				   136 + (DISP_FONTSIZE + 1) * config.lyricex, COLOR_WHITE);
 	disp_fillrect(6, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex) + 1,
 				  473, 136 + (DISP_FONTSIZE + 1) * config.lyricex - 1,
-				  config.usedyncolor ? GetBGColorByTime() : config.msgbcolor);
+				  config.usedyncolor ? get_bgcolor_by_time() : config.
+				  msgbcolor);
 	const char *ly[config.lyricex * 2 + 1];
 	dword ss[config.lyricex * 2 + 1];
 
@@ -368,7 +369,8 @@ static void scene_draw_mp3bar_music_staff(void)
 
 	disp_rectangle(5, 262 - DISP_FONTSIZE * 4, 474, 267, COLOR_WHITE);
 	disp_fillrect(6, 263 - DISP_FONTSIZE * 4, 473, 266,
-				  config.usedyncolor ? GetBGColorByTime() : config.msgbcolor);
+				  config.usedyncolor ? get_bgcolor_by_time() : config.
+				  msgbcolor);
 	if (mp3_get_info(&bitrate, &sample, &len, &tlen))
 		SPRINTF_S(infostr, "%s   %d kbps   %d Hz   %02d:%02d / %02d:%02d",
 				  conf_get_cyclename(config.mp3cycle), bitrate, sample,
@@ -415,7 +417,8 @@ static void scene_draw_mp3bar(bool * firstdup)
 
 	disp_rectangle(5, 5, 474, 8 + DISP_FONTSIZE * 2, COLOR_WHITE);
 	disp_fillrect(6, 6, 473, 7 + DISP_FONTSIZE * 2,
-				  config.usedyncolor ? GetBGColorByTime() : config.msgbcolor);
+				  config.usedyncolor ? get_bgcolor_by_time() : config.
+				  msgbcolor);
 
 	sceRtcGetCurrentClockLocalTime(&tm);
 	pos = sceRtcGetDayOfWeek(tm.year, tm.month, tm.day);
