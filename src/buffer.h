@@ -1,5 +1,3 @@
-/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
-
 #ifndef _BUFFER_H_
 #define _BUFFER_H_
 

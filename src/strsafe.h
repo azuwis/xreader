@@ -20,8 +20,6 @@
 //    $Id$
 //
 
-/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
-
 #pragma once
 
 size_t strncpy_s(char *strDest, size_t numberOfElements, const char *strSource,

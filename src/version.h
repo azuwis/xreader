@@ -1,5 +1,3 @@
-/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
-
 #ifndef _VERSION_H_
 #define _VERSION_H_
 

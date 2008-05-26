@@ -1,5 +1,3 @@
-/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
-
 #ifndef _BOOKMARK_H_
 #define _BOOKMARK_H_
 

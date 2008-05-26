@@ -1,5 +1,3 @@
-/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
-// a c-style varible size array
 
 #pragma once
 

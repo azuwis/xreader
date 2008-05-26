@@ -1,5 +1,3 @@
-/* vim:set ts=4 sw=4 cindent ignorecase enc=gbk: */
-
 #ifndef _FAT_H_
 #define _FAT_H_
 
