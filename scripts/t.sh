@@ -16,6 +16,6 @@ echo "OK, PSP Connected"
 #done
 
 touch $DEST/
-('cp' -f $SRC/EBOOT.* $DEST/ 2>&1 > /dev/null && sudo umount /media/disk) || ('cp' -f ./EBOOT.* $DEST/ && sudo umount /media/disk)
+('cp' -f $SRC/EBOOT.* $SRC/*.prx $DEST/ 2>&1 > /dev/null && sudo umount /media/disk) || ('cp' -f ./EBOOT.* *.prx $DEST/ && sudo umount /media/disk)
 
 #echo "Have fun with xReader"
