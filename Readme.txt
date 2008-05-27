@@ -115,3 +115,11 @@ ui:usedyncolor
 
 music::apetagorder
 APETagV2是否优先于ID3TagV2读取
+
+重启xReader
+退出xReader时按着左耳朵键，xReader将重新启动。
+
+手动输入GI
+在阅读按键中设置手动输入GI翻页键，可以用它手动输入GI页码进行翻页。
+GI页码是由GenIndex程序生成的目录页码数字。
+
