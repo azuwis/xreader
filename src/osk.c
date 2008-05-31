@@ -70,7 +70,7 @@ int get_osk_input(char *buf, int size)
 	osk.base.accessThread = 49;	// unknown thread pri (?)
 	osk.base.fontThread = 38;
 	osk.base.soundThread = 36;
-	osk.unk_48 = 1;
+	osk.datacount = 1;
 	osk.data = &data;
 
 	int rc = sceUtilityOskInitStart(&osk);
