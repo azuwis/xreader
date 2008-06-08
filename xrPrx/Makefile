@@ -1,5 +1,5 @@
 TARGET = xrPrx
-OBJS = main.o 
+OBJS = main.o exception_asm.o
 
 PSP_FW_VERSION=390
 BUILD_PRX=1

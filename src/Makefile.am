@@ -29,7 +29,8 @@ common/datatype.h common/psp_utils.c common/psp_utils.h \
 common/qsort.c common/qsort.h common/utils.c common/utils.h \
 apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
-$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h
+$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h \
+exception.c exception.h
 
 if NLS
 xReader_elf_SOURCES += simple_gettext.c sofile.c sofile.h hash.c hash.h

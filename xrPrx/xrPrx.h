@@ -6,6 +6,7 @@
 unsigned long FindProc(const char *szMod, const char *szLib, unsigned long nid);
 void xrPlayerSetSpeed(int cpu, int bus);
 int xrGetBrightness(void);
+int xrKernelGetModel(void);
 void xrSetBrightness(int bright);
 int xrKernelLoadExecVSHMsX(int method, const char *exec,
 						   struct SceKernelLoadExecVSHParam *param);

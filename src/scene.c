@@ -46,6 +46,7 @@
 #include "pspscreen.h"
 #include "dbg.h"
 #include "simple_gettext.h"
+#include "exception.h"
 
 #ifdef ENABLE_PMPAVC
 bool pmp_restart = false;
@@ -5508,20 +5509,23 @@ extern void scene_init()
 
 	sceRtcGetCurrentTick(&dbglasttick);
 	if (sceKernelDevkitVersion() >= 0x03070100) {
-		char prxfn[PATH_MAX];
+		char path[PATH_MAX];
 
-		SPRINTF_S(prxfn, "%sxrPrx.prx", scene_appdir());
-		SceUID uid = pspSdkLoadStartModule(prxfn, PSP_MEMORY_PARTITION_KERNEL);
+		SPRINTF_S(path, "%sxrPrx.prx", scene_appdir());
+		int ret = initExceptionHandler(path);
 
-		if (uid >= 0) {
+		if (ret == 0) {
 			if (sceKernelDevkitVersion() < 0x03080000)
 				use_prx_power_save = true;
 			prx_loaded = true;
+		} else {
+			dbg_printf(d, "xrPrx.prx load failed, return value %08X",
+					   (unsigned int) ret);
 		}
 	}
 	scene_power_save(true);
 	sceRtcGetCurrentTick(&dbgnow);
-	dbg_printf(d, "pspSdkLoadStartModule(): %.2fs",
+	dbg_printf(d, "initExceptionHandler(): %.2fs",
 			   pspDiffTime(&dbgnow, &dbglasttick));
 
 	sceRtcGetCurrentTick(&end);

@@ -61,7 +61,8 @@ am__xReader_elf_SOURCES_DIST = array.c array.h avc.c avc.h bg.c bg.h \
 	apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 	apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
 	$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h \
-	simple_gettext.c sofile.c sofile.h hash.c hash.h
+	exception.c exception.h simple_gettext.c sofile.c sofile.h \
+	hash.c hash.h
 @NLS_TRUE@am__objects_1 = simple_gettext.$(OBJEXT) sofile.$(OBJEXT) \
 @NLS_TRUE@	hash.$(OBJEXT)
 am_xReader_elf_OBJECTS = array.$(OBJEXT) avc.$(OBJEXT) bg.$(OBJEXT) \
@@ -76,7 +77,8 @@ am_xReader_elf_OBJECTS = array.$(OBJEXT) avc.$(OBJEXT) bg.$(OBJEXT) \
 	ttfont.$(OBJEXT) usb.$(OBJEXT) win.$(OBJEXT) \
 	psp_utils.$(OBJEXT) qsort.$(OBJEXT) utils.$(OBJEXT) \
 	APETag.$(OBJEXT) TagError.$(OBJEXT) TagItem.$(OBJEXT) \
-	xrPrx.$(OBJEXT) osk.$(OBJEXT) $(am__objects_1)
+	xrPrx.$(OBJEXT) osk.$(OBJEXT) exception.$(OBJEXT) \
+	$(am__objects_1)
 xReader_elf_OBJECTS = $(am_xReader_elf_OBJECTS)
 xReader_elf_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
@@ -249,7 +251,7 @@ xReader_elf_SOURCES = array.c array.h avc.c avc.h bg.c bg.h bookmark.c \
 	apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 	apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
 	$(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h \
-	$(am__append_1)
+	exception.c exception.h $(am__append_1)
 PSP_FW_VERSION = 390
 BUILD_PRX = 1
 PSP_LARGE_MEMORY = 1
@@ -339,6 +341,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dictionary.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/display.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exception.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Po@am__quote@

@@ -1,8 +1,10 @@
 #include <pspkernel.h>
+#include <pspdebug.h>
 #include <pspsdk.h>
 #include <psputilsforkernel.h>
 #include <pspdisplay_kernel.h>
 #include <psploadexec_kernel.h>
+#include <pspsysmem_kernel.h>
 #include <string.h>
 #include "xrPrx.h"
 
@@ -14,8 +16,15 @@ enum
 	true
 };
 
-PSP_MODULE_INFO("xrPrx", PSP_MODULE_KERNEL, 1, 1);
+PSP_MODULE_INFO("xrPrx", 0x1007, 1, 1);
 PSP_MAIN_THREAD_ATTR(0);
+
+PspDebugErrorHandler curr_handler;
+PspDebugRegBlock *exception_regs;
+
+void _pspDebugExceptionHandler(void);
+int sceKernelRegisterDefaultExceptionHandler(void *func);
+int sceKernelRegisterDefaultExceptionHandler371(void *func);
 
 unsigned long FindProc(const char *szMod, const char *szLib, unsigned long nid)
 {
@@ -164,6 +173,19 @@ void xrSetBrightness(int bright)
 	pspSdkSetK1(k);
 }
 
+int xrKernelGetModel()
+{
+	unsigned int k = pspSdkSetK1(0);
+
+	int ret;
+
+	ret = sceKernelGetModel();
+
+	pspSdkSetK1(k);
+
+	return ret;
+}
+
 int xrKernelLoadExecVSHMsX(int method, const char *exec,
 						   struct SceKernelLoadExecVSHParam *param)
 {
@@ -200,10 +222,17 @@ int xrKernelLoadExecVSHMsX(int method, const char *exec,
 /* Entry point */
 int module_start(SceSize args, void *argp)
 {
-	return 0;
+	if(args != 8) return -1;
+	curr_handler = (PspDebugErrorHandler)((int *)argp)[0];
+	exception_regs = (PspDebugRegBlock *)((int *)argp)[1];
+	if(!curr_handler || !exception_regs) return -1;
+
+	if(sceKernelDevkitVersion() < 0x03070110)
+		return sceKernelRegisterDefaultExceptionHandler((void *)_pspDebugExceptionHandler);
+	else
+		return sceKernelRegisterDefaultExceptionHandler371((void *)_pspDebugExceptionHandler);
 }
 
-/* Module stop entry */
 int module_stop(SceSize args, void *argp)
 {
 	return 0;
