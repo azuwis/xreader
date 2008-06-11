@@ -16,6 +16,8 @@
 #include "pspscreen.h"
 #include "conf.h"
 #include "dbg.h"
+#include "scene.h"
+#include "power.h"
 
 extern t_conf config;
 
@@ -830,9 +832,16 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 
 	cprevious = eprevious = 0;
 
+	dword cpu, bus;
+
+	power_get_clock(&cpu, &bus);
+	if (cpu < 222)
+		power_set_clock(222, 111);
 	while (*str != 0 && count > 0) {
-		if (!check_range(x, y))
+		if (!check_range(x, y)) {
+			scene_power_save(true);
 			return;
+		}
 		if (*str > 0x80) {
 			ttf_disp_putnstring_horz(cttf, &x, &y, color, &str,
 									 &count, wordspace, top, height,
@@ -857,6 +866,7 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			count--;
 		}
 	}
+	scene_power_save(true);
 }
 
 /**
@@ -1171,9 +1181,16 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 
 	cprevious = eprevious = 0;
 
+	dword cpu, bus;
+
+	power_get_clock(&cpu, &bus);
+	if (cpu < 222)
+		power_set_clock(222, 111);
 	while (*str != 0 && count > 0) {
-		if (!check_range(x, y))
+		if (!check_range(x, y)) {
+			scene_power_save(true);
 			return;
+		}
 		if (x < 0)
 			break;
 		if (*str > 0x80) {
@@ -1200,6 +1217,7 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 			count--;
 		}
 	}
+	scene_power_save(true);
 }
 
 /** 
@@ -1296,8 +1314,9 @@ static void _drawBitmap_lvert(byte * buffer, int format, int width, int height,
  * @param color 颜色
  * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
-static void drawCachedBitmap_lvert(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
-								   int width, int height, pixel color)
+static inline void drawCachedBitmap_lvert(Cache_Bitmap * sbt, FT_Int x,
+										  FT_Int y, int width, int height,
+										  pixel color)
 {
 	_drawBitmap_lvert(sbt->buffer, sbt->format, sbt->width, sbt->height,
 					  sbt->pitch, x, y, width, height, color);
@@ -1313,12 +1332,9 @@ static void drawCachedBitmap_lvert(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
  * @param color 颜色
  * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
-static void drawBitmap_lvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
-							 int width, int height, pixel color)
+static inline void drawBitmap_lvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
+									int width, int height, pixel color)
 {
-	if (!bitmap->buffer)
-		return;
-
 	_drawBitmap_lvert(bitmap->buffer, bitmap->pixel_mode, bitmap->width,
 					  bitmap->rows, bitmap->pitch, x, y, width, height, color);
 }
@@ -1451,9 +1467,16 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 
 	cprevious = eprevious = 0;
 
+	dword cpu, bus;
+
+	power_get_clock(&cpu, &bus);
+	if (cpu < 222)
+		power_set_clock(222, 111);
 	while (*str != 0 && count > 0) {
-		if (!check_range(x, y))
+		if (!check_range(x, y)) {
+			scene_power_save(true);
 			return;
+		}
 		if (*str > 0x80) {
 			if (y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1)
 				break;
@@ -1478,6 +1501,7 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			count--;
 		}
 	}
+	scene_power_save(true);
 }
 
 /** 
@@ -1577,8 +1601,9 @@ static void _drawBitmap_rvert(byte * buffer, int format, int width, int height,
  * @param color 颜色
  * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
-static void drawCachedBitmap_rvert(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
-								   int width, int height, pixel color)
+static inline void drawCachedBitmap_rvert(Cache_Bitmap * sbt, FT_Int x,
+										  FT_Int y, int width, int height,
+										  pixel color)
 {
 	_drawBitmap_rvert(sbt->buffer, sbt->format, sbt->width, sbt->height,
 					  sbt->pitch, x, y, width, height, color);
@@ -1594,12 +1619,10 @@ static void drawCachedBitmap_rvert(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
  * @param color 颜色
  * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
-static void drawBitmap_rvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
-							 int width, int height, pixel color, int space)
+static inline void drawBitmap_rvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
+									int width, int height, pixel color,
+									int space)
 {
-	if (!bitmap->buffer)
-		return;
-
 	_drawBitmap_rvert(bitmap->buffer, bitmap->pixel_mode, bitmap->width,
 					  bitmap->rows, bitmap->pitch, x, y, width, height, color);
 }
@@ -1731,9 +1754,16 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 
 	cprevious = eprevious = 0;
 
+	dword cpu, bus;
+
+	power_get_clock(&cpu, &bus);
+	if (cpu < 222)
+		power_set_clock(222, 111);
 	while (*str != 0 && count > 0) {
-		if (!check_range(x, y))
+		if (!check_range(x, y)) {
+			scene_power_save(true);
 			return;
+		}
 		if (*str > 0x80) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE)
 				break;
@@ -1758,6 +1788,7 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			count--;
 		}
 	}
+	scene_power_save(true);
 }
 
 #endif
