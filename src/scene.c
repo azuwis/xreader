@@ -1590,7 +1590,7 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 	lines++;
 }
 
-static void recalcSize(dword * drperpage, dword * rowsperpage,
+static void recalc_size(dword * drperpage, dword * rowsperpage,
 					   dword * pixelsperrow)
 {
 	int t = config.vertread;
@@ -1683,7 +1683,7 @@ dword scene_boptions(dword * selidx)
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
 
-		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 		cur_book_view.text_needrf = true;
 		if (orgpixelsperrow != pixelsperrow)
 			result = 4;
@@ -2068,7 +2068,7 @@ dword scene_fontsel(dword * selidx)
 		if (orgfontindex != fontindex)
 			scene_load_font();
 		scene_load_book_font();
-		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 
 		memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 		return win_menu_op_ok;
@@ -2077,7 +2077,7 @@ dword scene_fontsel(dword * selidx)
 	dword result = win_menu_op_continue;
 
 	if (orgrowspace != config.rowspace || orgborderspace != config.borderspace) {
-		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 		cur_book_view.text_needrf = true;
 	}
 	if (orgibar != config.infobar || orgvert != config.vertread
@@ -2086,7 +2086,7 @@ dword scene_fontsel(dword * selidx)
 		dword orgpixelsperrow = pixelsperrow;
 
 		cur_book_view.text_needrf = true;
-		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 		if (orgpixelsperrow != pixelsperrow)
 			result = win_menu_op_force_redraw;
 	}
@@ -2617,7 +2617,7 @@ dword scene_moptions(dword * selidx)
 	if (orgfontindex != fontindex || orgbookfontindex != bookfontindex) {
 		scene_load_font();
 		scene_load_book_font();
-		recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 
 		memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 		return 2;
@@ -3048,7 +3048,7 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 		scene_load_book_font();
 	}
 
-	recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+	recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 
 #ifdef ENABLE_BG
 	bg_load(curr->bgfile, curr->bgarch, curr->bgcolor,
@@ -5458,7 +5458,7 @@ extern void scene_init()
 		ctrl_waitany();
 		sceKernelExitGame();
 	}
-	recalcSize(&drperpage, &rowsperpage, &pixelsperrow);
+	recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "scene_load_font() & scene_load_book_font(): %.2f second",
 			   pspDiffTime(&dbgnow, &dbglasttick));
