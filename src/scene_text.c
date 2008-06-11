@@ -1514,7 +1514,7 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 				return win_menu_op_force_redraw;
 			int i;
 
-			for (i = 0; i < 12; i++) {
+			for (i = 0; i < MAX_TXT_KEY; i++) {
 				if (i == *index)
 					continue;
 				if (config.txtkey[i] == key) {
