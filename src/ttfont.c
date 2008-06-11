@@ -277,7 +277,7 @@ static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode)
  * @param wAlpha alpha值(0-255)
  * @note 目的颜色 = 目的颜色 * alpha + ( 1 - alpha ) * 源颜色
  */
-static __inline void MakeAlpha(byte * wpSrc, byte * wpDes, byte wAlpha)
+static inline void MakeAlpha(byte * wpSrc, byte * wpDes, byte wAlpha)
 {
 	word result;
 
