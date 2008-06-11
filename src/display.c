@@ -668,7 +668,6 @@ extern void disp_flip()
 
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf)
 {
-//  CHECK_AND_VALID_WH(x, y, w, h);
 	pixel *lines = vram_disp + 0x40000000 / PIXEL_BYTES, *linesend =
 		lines + (min(PSP_SCREEN_HEIGHT - y, h) << 9);
 	dword rw = min(512 - x, w) * PIXEL_BYTES;
@@ -817,7 +816,6 @@ extern void disp_fix_osk(void *buffer)
 
 extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2)
 {
-//  CHECK_AND_VALID_4(x1, y1, x2, y2);
 	pixel *lines = disp_get_vaddr(x1, y1), *linesend =
 		disp_get_vaddr(x1, y2), *lined =
 		vram_disp + 0x40000000 / PIXEL_BYTES + x1 + (y1 << 9);
@@ -830,7 +828,6 @@ extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2)
 extern void disp_rectduptocachealpha(dword x1, dword y1, dword x2, dword y2,
 									 int percent)
 {
-//  CHECK_AND_VALID_4(x1, y1, x2, y2);
 	pixel *lines = disp_get_vaddr(x1, y1), *linesend =
 		disp_get_vaddr(x1, y2), *lined =
 		vram_disp + 0x40000000 / PIXEL_BYTES + x1 + (y1 << 9);
@@ -852,13 +849,280 @@ bool check_range(int x, int y)
 	return x >= 0 && x < PSP_SCREEN_WIDTH && y >= 0 && y < PSP_SCREEN_HEIGHT;
 }
 
+enum
+{
+	HORZ,
+	LVERT,
+	RVERT,
+	REVERSAL
+};
+
+static inline void next_col(int direction, pixel ** vpoint)
+{
+	switch (direction) {
+		case HORZ:
+			(*vpoint)++;
+			break;
+		case LVERT:
+			(*vpoint) -= 512;
+			break;
+		case RVERT:
+			(*vpoint) += 512;
+			break;
+		case REVERSAL:
+			(*vpoint)--;
+			break;
+	}
+}
+
+static inline void next_row(int direction, pixel ** vaddr)
+{
+	switch (direction) {
+		case HORZ:
+			(*vaddr) += 512;
+			break;
+		case LVERT:
+			(*vaddr)++;
+			break;
+		case RVERT:
+			(*vaddr)--;
+			break;
+		case REVERSAL:
+			(*vaddr) -= 512;
+			break;
+	}
+}
+
+typedef struct
+{
+	dword x;
+	dword y;
+	int top;
+	int height;
+	const byte *str;
+	pixel color;
+	dword count;
+	dword wordspace;
+	bool is_system;
+	int direction;
+} disp_draw_string_inf;
+
+static inline int putnstring_hanzi(disp_draw_string_inf * inf)
+{
+	if (inf == NULL)
+		return 0;
+	if (!check_range(inf->x, inf->y))
+		return 0;
+	pixel *vaddr = disp_get_vaddr(inf->x, inf->y);
+	const byte *ccur, *cend;
+
+	if (inf->is_system)
+		ccur =
+			cfont_buffer + (((dword) (*inf->str - 0x81)) * 0xBF +
+							((dword) (*(inf->str + 1) - 0x40))) *
+			DISP_CFONTSIZE + inf->top * DISP_CROWSIZE;
+	else
+		ccur =
+			book_cfont_buffer + (((dword) (*inf->str - 0x81)) * 0xBF +
+								 ((dword) (*(inf->str + 1) - 0x40))) *
+			DISP_BOOK_CFONTSIZE + inf->top * DISP_BOOK_CROWSIZE;
+
+	if (inf->is_system)
+		cend = ccur + inf->height * DISP_CROWSIZE;
+	else
+		cend = ccur + inf->height * DISP_BOOK_CROWSIZE;
+	for (; ccur < cend; ccur++) {
+		int b;
+		pixel *vpoint = vaddr;
+		int bitsleft;
+
+		if (inf->is_system)
+			bitsleft = DISP_FONTSIZE - 8;
+		else
+			bitsleft = DISP_BOOK_FONTSIZE - 8;
+
+		while (bitsleft > 0) {
+			for (b = 0x80; b > 0; b >>= 1) {
+				if (((*ccur) & b) != 0)
+					*vpoint = inf->color;
+				next_col(inf->direction, &vpoint);
+			}
+			++ccur;
+			bitsleft -= 8;
+		}
+		int t = inf->is_system ? fbits_last : fbits_book_last;
+
+		for (b = 0x80; b > t; b >>= 1) {
+			if (((*ccur) & b) != 0)
+				*vpoint = inf->color;
+			next_col(inf->direction, &vpoint);
+		}
+		next_row(inf->direction, &vaddr);
+	}
+	switch (inf->direction) {
+		case LVERT:
+			vaddr++;
+			break;
+		case RVERT:
+			vaddr--;
+			break;
+	}
+
+	inf->str += 2;
+	inf->count -= 2;
+
+	int d =
+		inf->is_system ? DISP_FONTSIZE +
+		inf->wordspace * 2 : DISP_BOOK_FONTSIZE + inf->wordspace * 2;
+
+	switch (inf->direction) {
+		case HORZ:
+			inf->x += d;
+			break;
+		case REVERSAL:
+			inf->x -= d;
+			break;
+		case LVERT:
+			inf->y -= d;
+			break;
+		case RVERT:
+			inf->y += d;
+			break;
+	}
+
+	return 1;
+}
+
+static inline int putnstring_ascii(disp_draw_string_inf * inf)
+{
+	if (!check_range(inf->x, inf->y))
+		return 0;
+	pixel *vaddr = disp_get_vaddr(inf->x, inf->y);
+	const byte *ccur, *cend;
+
+	if (inf->is_system)
+		ccur =
+			efont_buffer + ((dword) * inf->str) * DISP_EFONTSIZE +
+			inf->top * DISP_EROWSIZE;
+	else
+		ccur =
+			book_efont_buffer + ((dword) * inf->str) * DISP_BOOK_EFONTSIZE +
+			inf->top * DISP_BOOK_EROWSIZE;
+
+	if (inf->is_system)
+		cend = ccur + inf->height * DISP_EROWSIZE;
+	else
+		cend = ccur + inf->height * DISP_BOOK_EROWSIZE;
+	for (; ccur < cend; ccur++) {
+		int b;
+		pixel *vpoint = vaddr;
+		int bitsleft;
+
+		if (inf->is_system)
+			bitsleft = DISP_FONTSIZE / 2 - 8;
+		else
+			bitsleft = DISP_BOOK_FONTSIZE / 2 - 8;
+
+		while (bitsleft > 0) {
+			for (b = 0x80; b > 0; b >>= 1) {
+				if (((*ccur) & b) != 0)
+					*vpoint = inf->color;
+				next_col(inf->direction, &vpoint);
+			}
+			++ccur;
+			bitsleft -= 8;
+		}
+		int t = inf->is_system ? febits_last : febits_book_last;
+
+		for (b = 0x80; b > t; b >>= 1) {
+			if (((*ccur) & b) != 0)
+				*vpoint = inf->color;
+			next_col(inf->direction, &vpoint);
+		}
+		next_row(inf->direction, &vaddr);
+	}
+	switch (inf->direction) {
+		case LVERT:
+			vaddr++;
+			break;
+		case RVERT:
+			vaddr--;
+			break;
+	}
+
+	inf->str++;
+	inf->count--;
+
+	int d =
+		inf->is_system ? DISP_FONTSIZE / 2 +
+		inf->wordspace : DISP_BOOK_FONTSIZE / 2 + inf->wordspace;
+
+	switch (inf->direction) {
+		case HORZ:
+			inf->x += d;
+			break;
+		case REVERSAL:
+			inf->x -= d;
+			break;
+		case LVERT:
+			inf->y -= d;
+			break;
+		case RVERT:
+			inf->y += d;
+			break;
+	}
+
+	return 1;
+}
+
+static inline void disp_to_draw_string_inf(disp_draw_string_inf * inf, int x,
+										   int y, pixel color, const byte * str,
+										   int count, dword wordspace, int top,
+										   int height, bool is_system,
+										   int direction)
+{
+	inf->x = x;
+	inf->y = y;
+	inf->color = color;
+	inf->str = str;
+	inf->count = count;
+	inf->wordspace = wordspace;
+	inf->top = top;
+	inf->height = height;
+	inf->is_system = is_system;
+	inf->direction = direction;
+}
+
+static inline void disp_from_draw_string_inf(disp_draw_string_inf * inf, int *x,
+											 int *y, pixel * color,
+											 const byte ** str, int *count,
+											 dword * wordspace, int *top,
+											 int *height, int *direction)
+{
+	if (x)
+		*x = inf->x;
+	if (y)
+		*y = inf->y;
+	if (color)
+		*color = inf->color;
+	if (str)
+		*str = inf->str;
+	if (count)
+		*count = inf->count;
+	if (wordspace)
+		*wordspace = inf->wordspace;
+	if (top)
+		*top = inf->top;
+	if (height)
+		*height = inf->height;
+	if (direction)
+		*direction = inf->direction;
+}
+
 extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 							int count, dword wordspace, int top, int height,
 							int bot)
 {
-	pixel *vaddr;
-	const byte *ccur, *cend;
-
 	if (bot) {
 		if (y >= bot)
 			return;
@@ -871,78 +1135,32 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 		return;
 	}
 
+	disp_draw_string_inf inf;
+
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE) {
 				break;
 			}
-			if (!check_range(x, y))
+
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, true, HORZ);
+			if (putnstring_hanzi(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-			ccur =
-				cfont_buffer + (((dword) (*str - 0x81)) * 0xBF +
-								((dword) (*(str + 1) - 0x40))) *
-				DISP_CFONTSIZE + top * DISP_CROWSIZE;
-
-			for (cend = ccur + height * DISP_CROWSIZE; ccur < cend; ccur++) {
-				int b;
-				pixel *vpoint = vaddr;
-				int bitsleft = DISP_FONTSIZE - 8;
-
-				while (bitsleft > 0) {
-					for (b = 0x80; b > 0; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint++;
-					}
-					++ccur;
-					bitsleft -= 8;
-				}
-				for (b = 0x80; b > fbits_last; b >>= 1) {
-					if (((*ccur) & b) != 0)
-						*vpoint = color;
-					vpoint++;
-				}
-				vaddr += 512;
 			}
-			str += 2;
-			count -= 2;
-			x += DISP_FONTSIZE + wordspace * 2;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else if (*str > 0x1F) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, true, HORZ);
+			if (putnstring_ascii(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-			ccur =
-				efont_buffer + ((dword) * str) * DISP_EFONTSIZE +
-				top * DISP_EROWSIZE;
-
-			for (cend = ccur + height * DISP_EROWSIZE; ccur < cend; ccur++) {
-				int b;
-				pixel *vpoint = vaddr;
-				int bitsleft = DISP_FONTSIZE / 2 - 8;
-
-				while (bitsleft > 0) {
-					for (b = 0x80; b > 0; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint++;
-					}
-					++ccur;
-					bitsleft -= 8;
-				}
-				for (b = 0x80; b > febits_last; b >>= 1) {
-					if (((*ccur) & b) != 0)
-						*vpoint = color;
-					vpoint++;
-				}
-				vaddr += 512;
 			}
-			str++;
-			count--;
-			x += DISP_FONTSIZE / 2 + wordspace;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
@@ -964,9 +1182,6 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 										dword wordspace, int top, int height,
 										int bot)
 {
-	pixel *vaddr;
-	const byte *ccur, *cend;
-
 	if (bot) {
 		if (y >= bot)
 			return;
@@ -984,81 +1199,31 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 	if (x < 0 || y < 0)
 		return;
 
+	disp_draw_string_inf inf;
+
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (x < 0) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, true, REVERSAL);
+			if (putnstring_hanzi(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-			dword pos =
-				(((dword) (*str - 0x81)) * 0xBF +
-				 ((dword) (*(str + 1) - 0x40)));
-
-			ccur = cfont_buffer + pos * DISP_CFONTSIZE + top * DISP_CROWSIZE;
-
-			for (cend = ccur + height * DISP_CROWSIZE; ccur < cend; ccur++) {
-				int b;
-				pixel *vpoint = vaddr;
-				int bitsleft = DISP_FONTSIZE - 8;
-
-				while (bitsleft > 0) {
-					for (b = 0x80; b > 0; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint--;
-					}
-					++ccur;
-					bitsleft -= 8;
-				}
-				for (b = 0x80; b > fbits_last; b >>= 1) {
-					if (((*ccur) & b) != 0)
-						*vpoint = color;
-					vpoint--;
-				}
-				vaddr -= 512;
 			}
-			str += 2;
-			count -= 2;
-			x -= DISP_FONTSIZE + wordspace * 2;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else if (*str > 0x1F) {
 			if (x < 0) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, true, REVERSAL);
+			if (putnstring_ascii(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-
-			{
-				ccur =
-					efont_buffer +
-					((dword) * str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
-				for (cend = ccur + height * DISP_EROWSIZE; ccur < cend; ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_FONTSIZE / 2 - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint--;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > febits_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint--;
-					}
-					vaddr -= 512;
-				}
-				x -= DISP_FONTSIZE / 2 + wordspace;
 			}
-			str++;
-			count--;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else {
 			if (x < 0) {
 				break;
@@ -1308,9 +1473,6 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 								int count, dword wordspace, int top, int height,
 								int bot)
 {
-	pixel *vaddr;
-	const byte *ccur, *cend;
-
 #ifdef ENABLE_TTF
 	if (use_ttf) {
 		disp_putnstring_horz_truetype(cttf, ettf, x, y, color, str,
@@ -1331,84 +1493,31 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 		return;
 	}
 
+	disp_draw_string_inf inf;
+
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, false, HORZ);
+			if (putnstring_hanzi(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-			dword pos =
-				(((dword) (*str - 0x81)) * 0xBF +
-				 ((dword) (*(str + 1) - 0x40)));
-			ccur =
-				book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
-				top * DISP_BOOK_CROWSIZE;
-
-			for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur++) {
-				int b;
-				pixel *vpoint = vaddr;
-				int bitsleft = DISP_BOOK_FONTSIZE - 8;
-
-				while (bitsleft > 0) {
-					for (b = 0x80; b > 0; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint++;
-					}
-					++ccur;
-					bitsleft -= 8;
-				}
-				for (b = 0x80; b > fbits_book_last; b >>= 1) {
-					if (((*ccur) & b) != 0)
-						*vpoint = color;
-					vpoint++;
-				}
-				vaddr += 512;
 			}
-			str += 2;
-			count -= 2;
-			x += DISP_BOOK_FONTSIZE + wordspace * 2;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else if (*str > 0x1F) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, false, HORZ);
+			if (putnstring_ascii(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-
-			{
-				ccur =
-					book_efont_buffer +
-					((dword) * str) * DISP_BOOK_EFONTSIZE +
-					top * DISP_BOOK_EROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_EROWSIZE;
-					 ccur < cend; ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_BOOK_FONTSIZE / 2 - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint++;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > febits_book_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint++;
-					}
-					vaddr += 512;
-				}
-				x += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			}
-			str++;
-			count--;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
@@ -1430,9 +1539,6 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 									 dword wordspace, int top, int height,
 									 int bot)
 {
-	pixel *vaddr;
-	const byte *ccur, *cend;
-
 	if (bot) {
 		if (x >= bot)
 			return;
@@ -1445,80 +1551,31 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 		return;
 	}
 
+	disp_draw_string_inf inf;
+
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
-			if (y < DISP_RSPAN + DISP_FONTSIZE - 1) {
+			if (y < DISP_BOOK_FONTSIZE - 1) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, true, LVERT);
+			if (putnstring_hanzi(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-			dword pos =
-				(((dword) (*str - 0x81)) * 0xBF +
-				 ((dword) (*(str + 1) - 0x40)));
-			ccur = cfont_buffer + pos * DISP_CFONTSIZE + top * DISP_CROWSIZE;
-
-			for (cend = ccur + height * DISP_CROWSIZE; ccur < cend; ccur++) {
-				int b;
-				pixel *vpoint = vaddr;
-				int bitsleft = DISP_FONTSIZE - 8;
-
-				while (bitsleft > 0) {
-					for (b = 0x80; b > 0; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint -= 512;
-					}
-					++ccur;
-					bitsleft -= 8;
-				}
-				for (b = 0x80; b > fbits_last; b >>= 1) {
-					if (((*ccur) & b) != 0)
-						*vpoint = color;
-					vpoint -= 512;
-				}
-				vaddr++;
 			}
-			str += 2;
-			count -= 2;
-			y -= DISP_FONTSIZE + wordspace * 2;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else if (*str > 0x1F) {
-			if (y < DISP_RSPAN + DISP_FONTSIZE - 1) {
+			if (y < DISP_BOOK_FONTSIZE / 2 - 1) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, true, LVERT);
+			if (putnstring_ascii(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-
-			{
-				ccur =
-					efont_buffer +
-					((dword) * str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
-				for (cend = ccur + height * DISP_EROWSIZE; ccur < cend; ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_FONTSIZE / 2 - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint -= 512;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > febits_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint -= 512;
-					}
-					vaddr++;
-				}
-				y -= DISP_FONTSIZE / 2 + wordspace;
 			}
-			str++;
-			count--;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else {
 			if (y < DISP_RSPAN + DISP_FONTSIZE - 1) {
 				break;
@@ -1536,9 +1593,6 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 								 int count, dword wordspace, int top,
 								 int height, int bot)
 {
-	pixel *vaddr;
-	const byte *ccur, *cend;
-
 #ifdef ENABLE_TTF
 	if (use_ttf) {
 		disp_putnstring_lvert_truetype(cttf, ettf, x, y, color, str,
@@ -1559,84 +1613,31 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 		return;
 	}
 
+	disp_draw_string_inf inf;
+
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (y < DISP_BOOK_FONTSIZE - 1) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, false, LVERT);
+			if (putnstring_hanzi(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-			dword pos =
-				(((dword) (*str - 0x81)) * 0xBF +
-				 ((dword) (*(str + 1) - 0x40)));
-			ccur =
-				book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
-				top * DISP_BOOK_CROWSIZE;
-
-			for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur++) {
-				int b;
-				pixel *vpoint = vaddr;
-				int bitsleft = DISP_BOOK_FONTSIZE - 8;
-
-				while (bitsleft > 0) {
-					for (b = 0x80; b > 0; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint -= 512;
-					}
-					++ccur;
-					bitsleft -= 8;
-				}
-				for (b = 0x80; b > fbits_book_last; b >>= 1) {
-					if (((*ccur) & b) != 0)
-						*vpoint = color;
-					vpoint -= 512;
-				}
-				vaddr++;
 			}
-			str += 2;
-			count -= 2;
-			y -= DISP_BOOK_FONTSIZE + wordspace * 2;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else if (*str > 0x1F) {
 			if (y < DISP_BOOK_FONTSIZE / 2 - 1) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, false, LVERT);
+			if (putnstring_ascii(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-
-			{
-				ccur =
-					book_efont_buffer +
-					((dword) * str) * DISP_BOOK_EFONTSIZE +
-					top * DISP_BOOK_EROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_EROWSIZE;
-					 ccur < cend; ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_BOOK_FONTSIZE / 2 - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint -= 512;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > febits_book_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint -= 512;
-					}
-					vaddr++;
-				}
-				y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 			}
-			str++;
-			count--;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else {
 			if (y < DISP_BOOK_FONTSIZE / 2 - 1) {
 				break;
@@ -1658,9 +1659,6 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 									 dword wordspace, int top, int height,
 									 int bot)
 {
-	pixel *vaddr;
-	const byte *ccur, *cend;
-
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
 		return;
@@ -1671,81 +1669,31 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 	if (x + 1 - height < bot)
 		height = x + 1 - bot;
 
+	disp_draw_string_inf inf;
+
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_FONTSIZE) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, true, RVERT);
+			if (putnstring_hanzi(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-
-			dword pos =
-				(((dword) (*str - 0x81)) * 0xBF +
-				 ((dword) (*(str + 1) - 0x40)));
-			ccur = cfont_buffer + pos * DISP_CFONTSIZE + top * DISP_CROWSIZE;
-
-			for (cend = ccur + height * DISP_CROWSIZE; ccur < cend; ccur++) {
-				int b;
-				pixel *vpoint = vaddr;
-				int bitsleft = DISP_FONTSIZE - 8;
-
-				while (bitsleft > 0) {
-					for (b = 0x80; b > 0; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint += 512;
-					}
-					++ccur;
-					bitsleft -= 8;
-				}
-				for (b = 0x80; b > fbits_last; b >>= 1) {
-					if (((*ccur) & b) != 0)
-						*vpoint = color;
-					vpoint += 512;
-				}
-				vaddr--;
 			}
-			str += 2;
-			count -= 2;
-			y += DISP_FONTSIZE + wordspace * 2;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else if (*str > 0x1F) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, true, RVERT);
+			if (putnstring_ascii(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-
-			{
-				ccur =
-					efont_buffer +
-					((dword) * str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
-				for (cend = ccur + height * DISP_EROWSIZE; ccur < cend; ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_FONTSIZE / 2 - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint += 512;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > febits_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint += 512;
-					}
-					vaddr--;
-				}
-				y += DISP_FONTSIZE / 2 + wordspace;
 			}
-			str++;
-			count--;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
@@ -1763,9 +1711,6 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 								 int count, dword wordspace, int top,
 								 int height, int bot)
 {
-	pixel *vaddr;
-	const byte *ccur, *cend;
-
 #ifdef ENABLE_TTF
 	if (use_ttf) {
 		disp_putnstring_rvert_truetype(cttf, ettf, x, y, color, str,
@@ -1784,85 +1729,31 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 	if (x + 1 - height < bot)
 		height = x + 1 - bot;
 
+	disp_draw_string_inf inf;
+
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, false, RVERT);
+			if (putnstring_hanzi(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-
-			dword pos =
-				(((dword) (*str - 0x81)) * 0xBF +
-				 ((dword) (*(str + 1) - 0x40)));
-			ccur =
-				book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
-				top * DISP_BOOK_CROWSIZE;
-
-			for (cend = ccur + height * DISP_BOOK_CROWSIZE; ccur < cend; ccur++) {
-				int b;
-				pixel *vpoint = vaddr;
-				int bitsleft = DISP_BOOK_FONTSIZE - 8;
-
-				while (bitsleft > 0) {
-					for (b = 0x80; b > 0; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint += 512;
-					}
-					++ccur;
-					bitsleft -= 8;
-				}
-				for (b = 0x80; b > fbits_book_last; b >>= 1) {
-					if (((*ccur) & b) != 0)
-						*vpoint = color;
-					vpoint += 512;
-				}
-				vaddr--;
 			}
-			str += 2;
-			count -= 2;
-			y += DISP_BOOK_FONTSIZE + wordspace * 2;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else if (*str > 0x1F) {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
 			}
-			if (!check_range(x, y))
+			disp_to_draw_string_inf(&inf, x, y, color, str, count, wordspace,
+									top, height, false, RVERT);
+			if (putnstring_ascii(&inf) == 0) {
 				return;
-			vaddr = disp_get_vaddr(x, y);
-
-			{
-				ccur =
-					book_efont_buffer +
-					((dword) * str) * DISP_BOOK_EFONTSIZE +
-					top * DISP_BOOK_EROWSIZE;
-				for (cend = ccur + height * DISP_BOOK_EROWSIZE;
-					 ccur < cend; ccur++) {
-					int b;
-					pixel *vpoint = vaddr;
-					int bitsleft = DISP_BOOK_FONTSIZE / 2 - 8;
-
-					while (bitsleft > 0) {
-						for (b = 0x80; b > 0; b >>= 1) {
-							if (((*ccur) & b) != 0)
-								*vpoint = color;
-							vpoint += 512;
-						}
-						++ccur;
-						bitsleft -= 8;
-					}
-					for (b = 0x80; b > febits_book_last; b >>= 1) {
-						if (((*ccur) & b) != 0)
-							*vpoint = color;
-						vpoint += 512;
-					}
-					vaddr--;
-				}
-				y += DISP_BOOK_FONTSIZE / 2 + wordspace;
 			}
-			str++;
-			count--;
+			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
+									  &wordspace, &top, &height, NULL);
 		} else {
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
