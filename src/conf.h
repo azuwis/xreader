@@ -168,7 +168,7 @@ typedef struct
 	bool dis_scrsave;
 	int autosleep;
 	bool load_exif;
-	int brightness;
+	int max_brightness;
 	int launchtype;
 	bool infobar_use_ttf_mode;
 	bool cfont_antialias;

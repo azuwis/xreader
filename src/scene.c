@@ -2315,10 +2315,11 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 					config.launchtype = config.launchtype == 2 ? 4 : 2;
 					break;
 				case 12:
-					if (config.brightness > 28) {
-						config.brightness--;
+					if (config.max_brightness > 28) {
+						config.max_brightness--;
 						if (prx_loaded) {
-							xrSetBrightness(config.brightness);
+							xrSetBrightness(config.max_brightness);
+							xrSetMaxBrightness(config.max_brightness);
 						}
 					}
 					break;
@@ -2377,10 +2378,11 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 					config.launchtype = config.launchtype == 2 ? 4 : 2;
 					break;
 				case 12:
-					if (config.brightness < 99) {
-						config.brightness++;
+					if (config.max_brightness < 100) {
+						config.max_brightness++;
 						if (prx_loaded) {
-							xrSetBrightness(config.brightness);
+							xrSetBrightness(config.max_brightness);
+							xrSetMaxBrightness(config.max_brightness);
 						}
 					}
 					break;
@@ -2517,7 +2519,7 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 								   2 ? _("普通程序") : _("PS游戏")));
 	lines++;
 
-	SPRINTF_S(infomsg, "%d", config.brightness);
+	SPRINTF_S(infomsg, "%d", config.max_brightness);
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
@@ -2572,7 +2574,7 @@ dword scene_moptions(dword * selidx)
 	bool orgshowunknown = config.showunknown;
 	int orgfontindex = fontindex;
 	int orgbookfontindex = bookfontindex;
-	int orgbrightness = config.brightness;
+	int orgbrightness = config.max_brightness;
 	t_conf_arrange orgarrange = config.arrange;
 	char orglanguage[20];
 
@@ -2600,10 +2602,9 @@ dword scene_moptions(dword * selidx)
 	}
 
 	if (prx_loaded) {
-		if (orgbrightness != config.brightness) {
-			dbg_printf(d, _("亮度设置为%d"), config.brightness);
-			xrSetBrightness(config.brightness);
-			orgbrightness = config.brightness;
+		if (orgbrightness != config.max_brightness) {
+			xrSetMaxBrightness(config.max_brightness);
+			orgbrightness = config.max_brightness;
 		}
 	}
 #ifdef ENABLE_USB
@@ -3007,10 +3008,9 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 	else if (prev->enableusb && !curr->enableusb)
 		usb_deactivate();
 #endif
-	if (prev->brightness != curr->brightness) {
+	if (prev->max_brightness != curr->max_brightness) {
 		if (prx_loaded) {
-			dbg_printf(d, _("亮度设置为%d"), curr->brightness);
-			xrSetBrightness(curr->brightness);
+			xrSetMaxBrightness(curr->max_brightness);
 		}
 	}
 
@@ -5551,8 +5551,8 @@ extern void scene_init()
 	set_language();
 
 	if (prx_loaded) {
-		dbg_printf(d, _("亮度设置为%d"), config.brightness);
-		xrSetBrightness(config.brightness);
+		xrSetBrightness(50 >= config.max_brightness ? config.max_brightness : 50);
+		xrSetMaxBrightness(config.max_brightness);
 	}
 
 	dword c = get_bgcolor_by_time();

@@ -398,6 +398,8 @@ static bool mp3_load()
 	char lyricname[PATH_MAX];
 
 	strncpy_s(lyricname, NELEMS(lyricname), mp3_files[mp3_index][0], PATH_MAX);
+	dbg_printf(d, "%s: mp3_files[mp3_index][0] %s", __func__, mp3_files[mp3_index][0]);
+	dbg_printf(d, "%s: mp3_files[mp3_index][1] %s", __func__, mp3_files[mp3_index][1]);
 	int lsize = strlen(lyricname);
 
 	lyricname[lsize - 3] = 'l';

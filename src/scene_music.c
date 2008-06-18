@@ -311,7 +311,7 @@ static void scene_mp3bar_delay_action()
 	if (config.dis_scrsave)
 		scePowerTick(0);
 	if (prx_loaded) {
-		xrSetBrightness(config.brightness);
+//		xrSetBrightness(config.brightness);
 	}
 }
 

@@ -198,7 +198,7 @@ static void conf_default(p_conf conf)
 	conf->dis_scrsave = false;
 	conf->autosleep = 0;
 	conf->load_exif = true;
-	conf->brightness = 50;
+	conf->max_brightness = 100;
 	conf->prev_autopage = 2;
 	conf->launchtype = 2;
 
@@ -952,8 +952,11 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		iniparser_getint(dict, "Global:autosleep", conf->autosleep);
 	conf->load_exif =
 		iniparser_getboolean(dict, "Image:load_exif", conf->load_exif);
-	conf->brightness =
-		iniparser_getint(dict, "Global:brightness", conf->brightness);
+	conf->max_brightness =
+		iniparser_getint(dict, "Global:max_brightness", conf->max_brightness);
+	if (conf->max_brightness < 28 || conf->max_brightness > 100) {
+		conf->max_brightness = 100;
+	}
 	conf->launchtype =
 		iniparser_getint(dict, "Global:launchtype", conf->launchtype);
 	conf->infobar_use_ttf_mode =
@@ -1203,8 +1206,8 @@ extern bool ini_conf_save(p_conf conf)
 						intToString(buf, sizeof(buf), conf->autosleep));
 	iniparser_setstring(dict, "Image:load_exif",
 						booleanToString(buf, sizeof(buf), conf->load_exif));
-	iniparser_setstring(dict, "Global:brightness",
-						intToString(buf, sizeof(buf), conf->brightness));
+	iniparser_setstring(dict, "Global:max_brightness",
+						intToString(buf, sizeof(buf), conf->max_brightness));
 	iniparser_setstring(dict, "Global:launchtype",
 						intToString(buf, sizeof(buf), conf->launchtype));
 	iniparser_setstring(dict, "Text:infobar_use_ttf_mode",
@@ -1295,10 +1298,9 @@ extern bool conf_load(p_conf conf)
 
 extern bool conf_save(p_conf conf)
 {
-	extern bool prx_loaded;
-
-	if (prx_loaded)
-		conf->brightness = xrGetBrightness();
+//	extern bool prx_loaded;
+//	if (prx_loaded)
+//		conf->max_brightness = xrGetBrightness();
 
 	ini_conf_save(conf);
 	return true;
