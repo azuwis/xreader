@@ -566,7 +566,9 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		win_msg(_("文件打开失败"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		dbg_printf(d, _("scene_book_reload: 文件%s打开失败 where=%d"),
 				   pView->filename, where);
-		dbg_printf(d, _("scene_book_reload: %s %s %s"), filelist[selidx].name, filelist[selidx].shortname->ptr, filelist[selidx].compname->ptr, where);
+		dbg_printf(d, _("scene_book_reload: %s %s %s"), filelist[selidx].name,
+				   filelist[selidx].shortname->ptr,
+				   filelist[selidx].compname->ptr, where);
 		scene_power_save(true);
 		return 1;
 	}
@@ -1257,7 +1259,7 @@ static void scene_text_delay_action()
 	if (config.dis_scrsave)
 		scePowerTick(0);
 	if (prx_loaded) {
-//		xrSetBrightness(config.brightness);
+//      xrSetBrightness(config.brightness);
 	}
 }
 

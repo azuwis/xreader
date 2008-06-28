@@ -1022,7 +1022,7 @@ msgid "[电量不足]"
 msgstr ""
 
 #: scene.c:2593
-msgid "        亮度"
+msgid "    最大亮度"
 msgstr ""
 
 #: scene.c:2631

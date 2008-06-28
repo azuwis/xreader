@@ -6,7 +6,6 @@
 extern void scene_init();
 extern void scene_exit();
 extern void scene_power_save(bool save);
-extern void scene_exception();
 extern const char *scene_appdir();
 
 extern dword get_bgcolor_by_time(void);

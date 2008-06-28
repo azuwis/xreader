@@ -1591,7 +1591,7 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 }
 
 static void recalc_size(dword * drperpage, dword * rowsperpage,
-					   dword * pixelsperrow)
+						dword * pixelsperrow)
 {
 	int t = config.vertread;
 
@@ -2550,7 +2550,7 @@ dword scene_moptions(dword * selidx)
 	STRCPY_S(item[9].name, _("设置最高频率"));
 	STRCPY_S(item[10].name, _("禁用屏幕保护"));
 	STRCPY_S(item[11].name, _("启动程序类型"));
-	STRCPY_S(item[12].name, _("        亮度"));
+	STRCPY_S(item[12].name, _("    最大亮度"));
 	STRCPY_S(item[13].name, _("        语言"));
 
 	win_menu_predraw_data prev;
@@ -5551,7 +5551,8 @@ extern void scene_init()
 	set_language();
 
 	if (prx_loaded) {
-		xrSetBrightness(50 >= config.max_brightness ? config.max_brightness : 50);
+		xrSetBrightness(50 >=
+						config.max_brightness ? config.max_brightness : 50);
 		xrSetMaxBrightness(config.max_brightness);
 	}
 
@@ -5667,11 +5668,6 @@ extern void scene_power_save(bool save)
 						freq_list[config.freqs[1]][1]);
 }
 
-extern void scene_exception()
-{
-//  config.savesucc = false;
-}
-
 extern const char *scene_appdir()
 {
 	return appdir;
@@ -5737,14 +5733,12 @@ dword get_bgcolor_by_time(void)
 				   1.0 * tm.day / sceRtcGetDaysInMonth(tm.year, cur_month));
 
 	if (tm.hour >= 12) {
-//      dbg_printf(d, "c1: %f", (1.0 * get_diff_second(tm.hour, tm.minutes, 24, 0) / (12.0 * 60)));
 		origColor =
 			lerp_color(origColor, RGB(0, 0, 0),
 					   1.0 * get_diff_second(tm.hour, tm.minutes,
 											 tm.seconds, 24, 0,
 											 0) / (12 * 60 * 60));
 	} else {
-//      dbg_printf(d, "c2: %f", (1.0 * get_diff_second(0, 0, tm.hour, tm.minutes) / (12.0 * 60.0)));
 		origColor =
 			lerp_color(origColor, RGB(0, 0, 0),
 					   1.0 * get_diff_second(0, 0, 0, tm.hour,

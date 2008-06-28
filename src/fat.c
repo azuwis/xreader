@@ -575,3 +575,55 @@ extern void fat_free()
 	fat_type = fat16;
 	sceKernelDeleteSema(fat_sema);
 }
+
+/**
+ * 将长文件名转换为8.3文件名
+ * @param shortname 短文件名
+ * @param longname 长文件名
+ * @param size 短文件名缓冲字节大小
+ * @return 是否成功
+ * @note 参考: http://support.microsoft.com/kb/142982/zh-cn
+ */
+extern bool fat_longnametoshortname(char *shortname, const char *longname,
+									dword size)
+{
+	p_fat_info info = NULL;
+	char dirname[PATH_MAX], spath[PATH_MAX], longfilename[PATH_MAX];
+	char *p = NULL;
+	bool manual_init = false;
+
+	STRCPY_S(dirname, longname);
+	if ((p = strrchr(dirname, '/')) != NULL) {
+		*p = '\0';
+		STRCPY_S(longfilename, p + 1);
+	} else {
+		STRCPY_S(longfilename, dirname);
+	}
+
+	if (fatfd < 0) {
+		manual_init = true;
+		fat_init();
+	}
+	dword i, count = fat_readdir(dirname, spath, &info);
+
+	if (manual_init)
+		fat_free();
+
+	if (count == INVALID || info == NULL) {
+		return false;
+	}
+
+	for (i = 0; i < count; ++i) {
+		if (stricmp(info[i].longname, longfilename) == 0) {
+			if (spath[strlen(spath) - 1] != '/')
+				STRCAT_S(spath, "/");
+			STRCAT_S(spath, info[i].filename);
+			strcpy_s(shortname, size, spath);
+			free(info);
+			return true;
+		}
+	}
+
+	free(info);
+	return false;
+}

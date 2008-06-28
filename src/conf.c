@@ -11,7 +11,6 @@
 #include "version.h"
 #include "conf.h"
 #include "iniparser.h"
-#include "xrPrx/xrPrx.h"
 #include "simple_gettext.h"
 #include "dbg.h"
 
@@ -1298,10 +1297,6 @@ extern bool conf_load(p_conf conf)
 
 extern bool conf_save(p_conf conf)
 {
-//	extern bool prx_loaded;
-//	if (prx_loaded)
-//		conf->max_brightness = xrGetBrightness();
-
 	ini_conf_save(conf);
 	return true;
 }

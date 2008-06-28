@@ -396,16 +396,16 @@ static bool mp3_load()
 	isDirectPlay = false;
 #ifdef ENABLE_LYRIC
 	char lyricname[PATH_MAX];
+	char lyricshortname[PATH_MAX];
 
-	strncpy_s(lyricname, NELEMS(lyricname), mp3_files[mp3_index][0], PATH_MAX);
-	dbg_printf(d, "%s: mp3_files[mp3_index][0] %s", __func__, mp3_files[mp3_index][0]);
-	dbg_printf(d, "%s: mp3_files[mp3_index][1] %s", __func__, mp3_files[mp3_index][1]);
+	strncpy_s(lyricname, NELEMS(lyricname), mp3_files[mp3_index][1], PATH_MAX);
 	int lsize = strlen(lyricname);
 
 	lyricname[lsize - 3] = 'l';
 	lyricname[lsize - 2] = 'r';
 	lyricname[lsize - 1] = 'c';
-	lyric_open(&lyric, lyricname);
+	if (fat_longnametoshortname(lyricshortname, lyricname, PATH_MAX))
+		lyric_open(&lyric, lyricshortname);
 #endif
 
 	return true;

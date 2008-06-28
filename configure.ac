@@ -177,5 +177,6 @@ fi
 #AC_CONFIG_SUBDIRS([src/GenIndex])
 AC_CONFIG_FILES([Makefile
                  src/Makefile
+                 xrPrx/Makefile
                  ])
 AC_OUTPUT

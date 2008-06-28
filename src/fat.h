@@ -129,5 +129,7 @@ extern bool fat_locate(const char *name, char *sname, dword clus,
 					   p_fat_entry info);
 extern dword fat_readdir(const char *dir, char *sdir, p_fat_info * info);
 extern void fat_free();
+extern bool fat_longnametoshortname(char *shortname, const char *longname,
+									dword size);
 
 #endif

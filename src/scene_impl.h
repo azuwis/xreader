@@ -25,7 +25,6 @@ t_win_menu_op exit_confirm();
 extern void scene_init();
 extern void scene_exit();
 extern void scene_power_save(bool save);
-extern void scene_exception();
 extern const char *scene_appdir();
 dword scene_readbook(dword selidx);
 dword scene_readbook_raw(const char *title, const unsigned char *data,

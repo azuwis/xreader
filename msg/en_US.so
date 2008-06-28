@@ -1090,8 +1090,8 @@ msgid "日期错误"
 msgstr "Week error"
 
 #: scene.c:2593
-msgid "        亮度"
-msgstr "Brightness"
+msgid "    最大亮度"
+msgstr "Max Brightness"
 
 #: scene.c:2631
 msgid "        语言"

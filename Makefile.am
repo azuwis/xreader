@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I aclocal
 ACLOCAL_FILES = aclocal/version.m4 aclocal/pspdev.m4 aclocal/ac_doxygen.m4
 
-SUBDIRS = src 
+SUBDIRS = xrPrx src
 
 include aminclude.am
 
@@ -15,7 +15,6 @@ EXTRA_DIST =			\
 	Readme.txt \
 	Changelog.txt \
 	msg \
-	xrPrx \
 	src/include \
 	bootstrap \
 	Revision.sh \
