@@ -8,7 +8,7 @@ EXEEXT =
 AM_CFLAGS = -I $(top_srcdir)/src/include
 
 if OPTIMIZE
-AM_CFLAGS += -O2 -Os -G0 -Wall -fshort-wchar -fno-pic -mno-check-zero-division 
+AM_CFLAGS += -Os -G0 -Wall -fshort-wchar -fno-pic -mno-check-zero-division 
 else
 AM_CFLAGS += -O0 -G0 -g -Wall
 endif
