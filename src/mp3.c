@@ -1284,6 +1284,7 @@ extern void mp3_set_encode(t_conf_encode encode)
 		return;
 	}
 	t_conf_encode prev = mp3_encode;
+
 	mp3_encode = encode;
 
 	if (mp3info.found_apetag || mp3info.found_id3v2) {

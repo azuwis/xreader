@@ -12177,8 +12177,10 @@ extern dword charsets_utf32_conv(const byte * ucs, size_t inputlen, byte * cjk,
 		cjk = (byte *) ucs;
 
 	while ((*(ucs + i) != 0 || *(ucs + i + 1) != 0 ||
-		   *(ucs + i + 2) != 0 || *(ucs + i + 3) != 0) && inputlen && outputlen ) {
+			*(ucs + i + 2) != 0 || *(ucs + i + 3) != 0) && inputlen
+		   && outputlen) {
 		int l = gbk_wctomb(cjk + j, *(word *) (ucs + i), 2);
+
 		j += l;
 		outputlen -= l;
 		i += 4;
@@ -12199,6 +12201,7 @@ extern dword charsets_ucs_conv(const byte * ucs, size_t inputlen, byte * cjk,
 
 	while ((*(ucs + i) != 0 || *(ucs + i + 1) != 0) && inputlen && outputlen) {
 		int l = gbk_wctomb(cjk + j, *(word *) (ucs + i), 2);
+
 		j += l;
 		outputlen -= j;
 		i += 2;
@@ -12226,6 +12229,7 @@ extern dword charsets_utf8_conv(const byte * ucs, size_t inputlen, byte * cjk,
 		if (u > 0xFFFF)
 			u = 0x1FFF;
 		int l = gbk_wctomb(cjk + j, u, 2);
+
 		j += l;
 		i += p;
 		inputlen -= p;
@@ -12254,6 +12258,7 @@ extern dword charsets_utf16_conv(const byte * ucs, size_t inputlen, byte * cjk,
 		if (u > 0xFFFF)
 			u = 0x1FFF;
 		int l = gbk_wctomb(cjk + j, u, 2);
+
 		j += l;
 		i += p;
 		inputlen -= p;
@@ -12281,6 +12286,7 @@ extern dword charsets_utf16be_conv(const byte * ucs, size_t inputlen,
 		if (u > 0xFFFF)
 			u = 0x1FFF;
 		int l = gbk_wctomb(cjk + j, u, 2);
+
 		j += l;
 		i += p;
 		inputlen -= p;
@@ -12302,6 +12308,7 @@ extern dword charsets_big5_conv(const byte * big5, size_t inputlen, byte * cjk,
 
 	while (i < ilen && inputlen && outputlen) {
 		int l = charsets_bg5hk2cjk(big5 + i, 2, cjk + i, 2);
+
 		i += l;
 		inputlen -= l;
 		outputlen -= l;

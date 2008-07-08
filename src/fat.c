@@ -312,7 +312,7 @@ static bool fat_get_longname(p_fat_entry entrys, u32 cur, char *longnamestr)
 	longname[255] = 0;
 	memset(longnamestr, 0, 256);
 	charsets_ucs_conv((const byte *) longname, sizeof(longname),
-						(byte *) longnamestr, 256);
+					  (byte *) longnamestr, 256);
 	return true;
 }
 

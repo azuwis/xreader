@@ -59,8 +59,9 @@ static void text_decode(p_text txt, t_conf_encode encode)
 	} else {
 		switch (encode) {
 			case conf_encode_big5:
-				txt->size = charsets_big5_conv((const byte *) txt->buf, txt->size,
-								   (byte *) txt->buf, txt->size);
+				txt->size =
+					charsets_big5_conv((const byte *) txt->buf, txt->size,
+									   (byte *) txt->buf, txt->size);
 				break;
 			case conf_encode_sjis:
 				{
