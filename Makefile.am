@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I aclocal
 ACLOCAL_FILES = aclocal/version.m4 aclocal/pspdev.m4 aclocal/ac_doxygen.m4
 
-SUBDIRS = xrPrx src
+SUBDIRS = xrPrx xr_rdriver src
 
 include aminclude.am
 

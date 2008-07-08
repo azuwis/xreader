@@ -17,7 +17,7 @@ LDFLAGS = -mno-crt0 -nostartfiles
 xrPrxdir = $(srcdir)/
 xrPrx_PROGRAMS= xrPrx.elf
 
-xrPrx_elf_SOURCES = main.c exception_asm.S xrPrx.h export.exp
+xrPrx_elf_SOURCES = main.c exception_asm.S xrPrx.h exports.exp
 
 TARGET = xrPrx
 

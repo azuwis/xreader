@@ -7147,7 +7147,7 @@ if test x$ac_compiler_gnu = xyes; then
 fi
 
 #AC_CONFIG_SUBDIRS([src/GenIndex])
-ac_config_files="$ac_config_files Makefile src/Makefile xrPrx/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile xrPrx/Makefile xr_rdriver/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7927,6 +7927,7 @@ do
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "xrPrx/Makefile") CONFIG_FILES="$CONFIG_FILES xrPrx/Makefile" ;;
+    "xr_rdriver/Makefile") CONFIG_FILES="$CONFIG_FILES xr_rdriver/Makefile" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
