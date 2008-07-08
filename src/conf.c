@@ -237,9 +237,9 @@ static void conf_default(p_conf conf)
 	STRCPY_S(conf->language, "zh_CN");
 	conf->filelistwidth = 160;
 	if (kuKernelGetModel() == PSP_MODEL_SLIM_AND_LITE) {
-		conf->ttf_load_to_memory = true;
-	} else {
 		conf->ttf_load_to_memory = false;
+	} else {
+		conf->ttf_load_to_memory = true;
 	}
 }
 
