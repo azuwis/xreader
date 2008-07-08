@@ -3,8 +3,9 @@
 AUTHOR=hrimfaxi
 EMAIL=outmatch@gmail.com
 DIRS="msg fonts"
-SRCDIR=/home/liquid/xreader/xReader_git/src
+SRCDIR=/home/liquid/xreader/src
 DESTDIR=/media/disk/PSP/game/xReader
+DESTDRIVE=/media/disk
 DEBUG=y
 
 echo "xReader transfer script"
@@ -50,3 +51,5 @@ echo "\t\tmsg/zh_CN.so"
 cp -u "$SRCDIR/../msg/zh_CN.so" "$DESTDIR/msg"
 echo "\t\tmsg/en_US.so"
 cp -u "$SRCDIR/../msg/en_US.so" "$DESTDIR/msg"
+
+sudo umount $DESTDRIVE
