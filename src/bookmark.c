@@ -5,7 +5,10 @@
 #include <string.h>
 #include <pspkernel.h>
 #include "common/utils.h"
+#include "fat.h"
 #include "bookmark.h"
+#include <stdio.h>
+#include <psptypes.h>
 
 struct _bm_index
 {
@@ -240,6 +243,7 @@ extern bool bookmark_export(p_bookmark bm, const char *filename)
 
 	if (fd < 0)
 		return false;
+
 	sceIoWrite(fd, &bm->hash, sizeof(dword));
 	sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 	sceIoClose(fd);
@@ -250,6 +254,7 @@ extern bool bookmark_import(const char *filename)
 {
 	if (!filename)
 		return false;
+
 	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)

@@ -21,6 +21,7 @@ static bool hprmenable = false;
 static u32 lasthprmkey = 0;
 static u32 lastkhprmkey = 0;
 static SceUID hprm_sema = -1;
+static bool g_ctrl_lock = false;
 #endif
 
 extern void ctrl_init()
@@ -36,6 +37,16 @@ extern void ctrl_init()
 #endif
 }
 
+extern void ctrl_lock()
+{
+	g_ctrl_lock = true;
+}
+
+extern void ctrl_unlock()
+{
+	g_ctrl_lock = false;
+}
+
 extern void ctrl_destroy()
 {
 #ifdef ENABLE_HPRM
@@ -49,6 +60,9 @@ extern void ctrl_analog(int *x, int *y)
 {
 	SceCtrlData ctl;
 
+	if (g_ctrl_lock)
+		return;
+
 	sceCtrlReadBufferPositive(&ctl, 1);
 	*x = ((int) ctl.Lx) - 128;
 	*y = ((int) ctl.Ly) - 128;
@@ -58,6 +72,9 @@ extern void ctrl_analog(int *x, int *y)
 extern dword ctrl_read_cont()
 {
 	SceCtrlData ctl;
+
+	if (g_ctrl_lock)
+		return 0;
 
 	sceCtrlReadBufferPositive(&ctl, 1);
 
@@ -105,6 +122,9 @@ extern dword ctrl_read_cont()
 extern dword ctrl_read()
 {
 	SceCtrlData ctl;
+
+	if (g_ctrl_lock)
+		return 0;
 
 #ifdef ENABLE_HPRM
 	if (hprmenable && sceHprmIsRemoteExist()) {
@@ -155,6 +175,9 @@ extern void ctrl_waitreleaseintime(int i)
 {
 	SceCtrlData ctl;
 
+	if (g_ctrl_lock)
+		return;
+
 	do {
 		sceCtrlReadBufferPositive(&ctl, 1);
 		sceKernelDelayThread(i);
@@ -169,6 +192,9 @@ extern void ctrl_waitrelease()
 extern int ctrl_waitreleasekey(dword key)
 {
 	SceCtrlData pad;
+
+	if (g_ctrl_lock)
+		return 0;
 
 	sceCtrlReadBufferPositive(&pad, 1);
 	while (pad.Buttons == key) {

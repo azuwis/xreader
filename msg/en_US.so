@@ -1089,10 +1089,6 @@ msgstr "Saturday"
 msgid "日期错误"
 msgstr "Week error"
 
-#: scene.c:2593
-msgid "    最大亮度"
-msgstr "Max Brightness"
-
 #: scene.c:2631
 msgid "        语言"
 msgstr "Language"
@@ -1100,3 +1096,13 @@ msgstr "Language"
 #: scene.c:378
 msgid "输入GI值"
 msgstr "Enter GI"
+
+#: scene.c: 4012
+msgid "是否运行这个游戏?"
+msgstr "Run this game?"
+
+msgid "书签导入失败!"
+msgstr "Bookmark import failed!"
+
+msgid "书签导出失败!"
+msgstr "Bookmark export failed!"

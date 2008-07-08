@@ -7,8 +7,6 @@
 
 /* definitions */
 
-typedef dword ucs4_t;
-
 #define RET_ILSEQ      -1
 #define RET_TOOFEW(n)  (-2-(n))
 #define RET_ILUNI      -1
@@ -12152,9 +12150,9 @@ int gbk_wctomb(byte * r, ucs4_t wc, int n)
 }
 
 /* bg5hk -> unicode */
-int charsets_bg5hk2cjk(const byte * big5hk, byte * cjk)
+extern dword charsets_bg5hk2cjk(const byte * big5hk, size_t inputlen,
+								byte * cjk, size_t outputlen)
 {
-	//if(cjk==NULL)cjk=jis;
 	int transcount = 0;
 
 	if (big5hk[0] < 0x81) {
@@ -12170,47 +12168,56 @@ int charsets_bg5hk2cjk(const byte * big5hk, byte * cjk)
 }
 
 /* utf-32 (used in rar) string convert */
-extern dword charsets_utf32_conv(const byte * ucs, byte * cjk)
+extern dword charsets_utf32_conv(const byte * ucs, size_t inputlen, byte * cjk,
+								 size_t outputlen)
 {
 	int i = 0, j = 0;
 
 	if (cjk == NULL)
 		cjk = (byte *) ucs;
 
-	while (*(ucs + i) != 0 || *(ucs + i + 1) != 0 ||
-		   *(ucs + i + 2) != 0 || *(ucs + i + 3) != 0) {
-		j += gbk_wctomb(cjk + j, *(word *) (ucs + i), 2);
+	while ((*(ucs + i) != 0 || *(ucs + i + 1) != 0 ||
+		   *(ucs + i + 2) != 0 || *(ucs + i + 3) != 0) && inputlen && outputlen ) {
+		int l = gbk_wctomb(cjk + j, *(word *) (ucs + i), 2);
+		j += l;
+		outputlen -= l;
 		i += 4;
+		inputlen -= 4;
 	}
 	cjk[j] = 0;
 	return j;
 }
 
 /* unicode string convert */
-extern dword charsets_ucs_conv(const byte * ucs, byte * cjk)
+extern dword charsets_ucs_conv(const byte * ucs, size_t inputlen, byte * cjk,
+							   size_t outputlen)
 {
 	int i = 0, j = 0;
 
 	if (cjk == NULL)
 		cjk = (byte *) ucs;
 
-	while (*(ucs + i) != 0 || *(ucs + i + 1) != 0) {
-		j += gbk_wctomb(cjk + j, *(word *) (ucs + i), 2);
+	while ((*(ucs + i) != 0 || *(ucs + i + 1) != 0) && inputlen && outputlen) {
+		int l = gbk_wctomb(cjk + j, *(word *) (ucs + i), 2);
+		j += l;
+		outputlen -= j;
 		i += 2;
+		inputlen -= 2;
 	}
 	cjk[j] = 0;
 	return j;
 }
 
 /* utf-8 string convert */
-extern dword charsets_utf8_conv(const byte * ucs, byte * cjk)
+extern dword charsets_utf8_conv(const byte * ucs, size_t inputlen, byte * cjk,
+								size_t outputlen)
 {
 	int i = 0, j = 0, l = strlen((const char *) ucs);
 
 	if (cjk == NULL)
 		cjk = (byte *) ucs;
 
-	while (i < l) {
+	while (i < l && inputlen && outputlen) {
 		ucs4_t u = 0x1FFF;
 		int p = utf8_mbtowc(&u, ucs + i, l - i);
 
@@ -12218,15 +12225,19 @@ extern dword charsets_utf8_conv(const byte * ucs, byte * cjk)
 			break;
 		if (u > 0xFFFF)
 			u = 0x1FFF;
-		j += gbk_wctomb(cjk + j, u, 2);
+		int l = gbk_wctomb(cjk + j, u, 2);
+		j += l;
 		i += p;
+		inputlen -= p;
+		outputlen -= l;
 	}
 	cjk[j] = 0;
 	return j;
 }
 
 /* utf-16 string convert */
-extern dword charsets_utf16_conv(const byte * ucs, byte * cjk)
+extern dword charsets_utf16_conv(const byte * ucs, size_t inputlen, byte * cjk,
+								 size_t outputlen)
 {
 	int i = 0, j = 0, l = strlen((const char *) ucs);
 
@@ -12234,7 +12245,7 @@ extern dword charsets_utf16_conv(const byte * ucs, byte * cjk)
 		cjk = (byte *) ucs;
 	istate = 0;
 
-	while (i < l) {
+	while (i < l && inputlen && outputlen) {
 		ucs4_t u = 0x1FFF;
 		int p = utf16_mbtowc(&u, ucs + i, l - i);
 
@@ -12242,22 +12253,26 @@ extern dword charsets_utf16_conv(const byte * ucs, byte * cjk)
 			break;
 		if (u > 0xFFFF)
 			u = 0x1FFF;
-		j += gbk_wctomb(cjk + j, u, 2);
+		int l = gbk_wctomb(cjk + j, u, 2);
+		j += l;
 		i += p;
+		inputlen -= p;
+		outputlen -= l;
 	}
 	cjk[j] = 0;
 	return j;
 }
 
 /* utf-16be string convert */
-extern dword charsets_utf16be_conv(const byte * ucs, byte * cjk)
+extern dword charsets_utf16be_conv(const byte * ucs, size_t inputlen,
+								   byte * cjk, size_t outputlen)
 {
 	int i = 0, j = 0, l = strlen((const char *) ucs);
 
 	if (cjk == NULL)
 		cjk = (byte *) ucs;
 
-	while (i < l) {
+	while (i < l && inputlen && outputlen) {
 		ucs4_t u = 0x1FFF;
 		int p = utf16be_mbtowc(&u, ucs + i, l - i);
 
@@ -12265,15 +12280,19 @@ extern dword charsets_utf16be_conv(const byte * ucs, byte * cjk)
 			break;
 		if (u > 0xFFFF)
 			u = 0x1FFF;
-		j += gbk_wctomb(cjk + j, u, 2);
+		int l = gbk_wctomb(cjk + j, u, 2);
+		j += l;
 		i += p;
+		inputlen -= p;
+		outputlen -= l;
 	}
 	cjk[j] = 0;
 	return j;
 }
 
 /* big5 string convert */
-extern void charsets_big5_conv(const byte * big5, byte * cjk)
+extern dword charsets_big5_conv(const byte * big5, size_t inputlen, byte * cjk,
+								size_t outputlen)
 {
 	int ilen = strlen((const char *) big5);
 	int i = 0;
@@ -12281,9 +12300,15 @@ extern void charsets_big5_conv(const byte * big5, byte * cjk)
 	if (cjk == NULL)
 		cjk = (byte *) big5;
 
-	while (i < ilen)
-		i += charsets_bg5hk2cjk(big5 + i, cjk + i);
+	while (i < ilen && inputlen && outputlen) {
+		int l = charsets_bg5hk2cjk(big5 + i, 2, cjk + i, 2);
+		i += l;
+		inputlen -= l;
+		outputlen -= l;
+	}
 	cjk[i] = 0;
+
+	return i;
 }
 
 /* sjis -> unicode */

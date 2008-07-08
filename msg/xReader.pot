@@ -1021,14 +1021,20 @@ msgstr ""
 msgid "[电量不足]"
 msgstr ""
 
-#: scene.c:2593
-msgid "    最大亮度"
-msgstr ""
-
 #: scene.c:2631
 msgid "        语言"
 msgstr ""
 
 #: scene.c:378
 msgid "输入GI值"
+msgstr ""
+
+#: scene.c: 4012
+msgid "是否运行这个游戏?"
+msgstr ""
+
+msgid "书签导入失败!"
+msgstr ""
+
+msgid "书签导出失败!"
 msgstr ""

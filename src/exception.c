@@ -8,7 +8,7 @@
 #include <string.h>
 #include "version.h"
 #include "strsafe.h"
-#include "xrPrx/xrPrx.h"
+#include "kubridge.h"
 
 #define MAX_BACKTRACE_NUM 10
 
@@ -101,7 +101,7 @@ void ExceptionHandler(PspDebugRegBlock * regs)
 					  sceKernelDevkitVersion());
 			fwrite(testo, 1, strlen(testo), log);
 			SPRINTF_S(testo, "%-21s: %s\r\n", "PSP type",
-					  xrKernelGetModel() ==
+					  kuKernelGetModel() ==
 					  PSP_MODEL_STANDARD ? "1000(fat)" : "2000(slim)");
 			fwrite(testo, 1, strlen(testo), log);
 

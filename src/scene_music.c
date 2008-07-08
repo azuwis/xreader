@@ -42,7 +42,6 @@
 #include "pspscreen.h"
 #include "simple_gettext.h"
 #include "dbg.h"
-#include "xrPrx/xrPrx.h"
 
 extern win_menu_predraw_data g_predraw;
 
@@ -306,13 +305,8 @@ const char *get_week_str(int day)
 
 static void scene_mp3bar_delay_action()
 {
-	extern bool prx_loaded;
-
 	if (config.dis_scrsave)
 		scePowerTick(0);
-	if (prx_loaded) {
-//      xrSetBrightness(config.brightness);
-	}
 }
 
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)

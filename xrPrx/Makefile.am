@@ -21,7 +21,7 @@ xrPrx_elf_SOURCES = main.c exception_asm.S xrPrx.h export.exp
 
 TARGET = xrPrx
 
-PSP_FW_VERSION=390
+PSP_FW_VERSION=401
 BUILD_PRX=1
 
 # Use the kernel's small inbuilt libc

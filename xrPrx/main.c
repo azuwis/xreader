@@ -37,11 +37,6 @@ void _pspDebugExceptionHandler(void);
 int sceKernelRegisterDefaultExceptionHandler(void *func);
 int sceKernelRegisterDefaultExceptionHandler371(void *func);
 
-static void (*orig_sceDisplaySetBrightess) (int, int) = NULL;
-static void (*orig_sceDisplay_driver_E55F0D50) (int) = NULL;
-static int max_brightness = 100;
-static void new_sceDisplaySetBrightness(int level, int unk1);
-
 unsigned long FindProc(const char *szMod, const char *szLib, unsigned long nid)
 {
 	unsigned int k = pspSdkSetK1(0);
@@ -149,127 +144,6 @@ void xrPlayerSetSpeed(int cpu, int bus)
 	pspSdkSetK1(k);
 }
 
-/*
-void xrPlayerSetSpeed(int cpu, int bus)
-{
-	unsigned int k = pspSdkSetK1(0);
-	static bool inited = false;
-
-	if(!inited)
-	{
-		scePowerSetClockFrequency2 = (void *)FindProc("scePower_Service", "scePower", 0x545A7F3C);
-		inited = true;
-	}
-
-	if(scePowerSetClockFrequency2)
-		scePowerSetClockFrequency2(cpu, cpu, bus);
-	pspSdkSetK1(k);
-}
-*/
-
-int xrGetBrightness(void)
-{
-	unsigned int k = pspSdkSetK1(0);
-
-	int level, unk1 = 0;
-
-	sceDisplayGetBrightness(&level, &unk1);
-
-	pspSdkSetK1(k);
-
-	return level;
-}
-
-static void new_sceDisplay_driver_E55F0D50(int bright)
-{
-	bright = xrGetBrightness() + 10;
-	if (bright <= max_brightness && bright < 101 && bright >= 28) {
-		xrSetBrightness(bright);
-	} else {
-		xrSetBrightness(28);
-	}
-}
-
-int xrSetBrightness(int bright)
-{
-	unsigned int k = pspSdkSetK1(0);
-
-	sceDisplaySetBrightness(bright, 0);
-	sceImposeSetParam(PSP_IMPOSE_BACKLIGHT_BRIGHTNESS, bright);
-
-	pspSdkSetK1(k);
-
-	return bright;
-}
-
-int xrKernelGetModel()
-{
-	unsigned int k = pspSdkSetK1(0);
-
-	int ret;
-
-	ret = sceKernelGetModel();
-
-	pspSdkSetK1(k);
-
-	return ret;
-}
-
-int xrKernelLoadExecVSHMsX(int method, const char *exec,
-						   struct SceKernelLoadExecVSHParam *param)
-{
-	unsigned int k = pspSdkSetK1(0);
-	int r = 0;
-
-	if (!exec || !param)
-		goto ret;
-
-	switch (method) {
-		case 4:
-			r = sceKernelLoadExecVSHMs4(exec, param);
-			break;
-		case 3:
-			r = sceKernelLoadExecVSHMs3(exec, param);
-			break;
-		case 2:
-			r = sceKernelLoadExecVSHMs2(exec, param);
-			break;
-		case 1:
-			r = sceKernelLoadExecVSHMs1(exec, param);
-			break;
-		default:
-			r = -1;
-			break;
-	}
-
-  ret:
-	pspSdkSetK1(k);
-
-	return r;
-}
-
-extern int xrSetMaxBrightness(int newlevel)
-{
-	if (newlevel >= 28)
-		max_brightness = newlevel;
-	return max_brightness;
-}
-
-static void new_sceDisplaySetBrightness(int level, int unk1)
-{
-	unsigned int k = pspSdkSetK1(0);
-
-	int t = level;
-
-	if (t >= max_brightness)
-		t = max_brightness;
-
-	if (orig_sceDisplaySetBrightess != NULL)
-		(*orig_sceDisplaySetBrightess) (t, unk1);
-
-	pspSdkSetK1(k);
-}
-
 struct PspModuleImport
 {
 	const char *name;
@@ -283,105 +157,6 @@ struct PspModuleImport
 	unsigned int *vnids;
 	unsigned int *vars;
 } __attribute__ ((packed));
-
-static struct PspModuleImport *_libsFindImport(SceUID uid, const char *library)
-{
-	SceModule *pMod;
-	void *stubTab;
-	int stubLen;
-
-	pMod = sceKernelFindModuleByUID(uid);
-	if (pMod != NULL) {
-		int i = 0;
-
-		stubTab = pMod->stub_top;
-		stubLen = pMod->stub_size;
-		while (i < stubLen) {
-			struct PspModuleImport *pImp =
-				(struct PspModuleImport *) (stubTab + i);
-
-			if ((pImp->name) && (strcmp(pImp->name, library) == 0)) {
-				return pImp;
-			}
-
-			i += (pImp->entLen * 4);
-		}
-	}
-
-	return NULL;
-}
-
-unsigned int libsFindImportAddrByNid(SceUID uid, const char *library,
-									 unsigned int nid)
-{
-	struct PspModuleImport *pImp;
-
-	pImp = _libsFindImport(uid, library);
-	if (pImp) {
-		int i;
-
-		for (i = 0; i < pImp->funcCount; i++) {
-			if (pImp->fnids[i] == nid) {
-				return (unsigned int) &pImp->funcs[i * 2];
-			}
-		}
-	}
-
-	return 0;
-}
-
-static void patch_setbrightness(void)
-{
-	int intc;
-
-	intc = pspSdkDisableInterrupts();
-
-	if (sceKernelDevkitVersion() < 0x03070110)
-		orig_sceDisplaySetBrightess = (void (*)(int, int))
-			FindProc("sceDisplay_Service", "sceDisplay_driver", 0x9E3C6DC6);
-	else if (sceKernelDevkitVersion() == 0x03070110)
-		orig_sceDisplaySetBrightess = (void (*)(int, int))
-			FindProc("sceDisplay_Service", "sceDisplay_driver", 0x776ADFDB);
-	else
-		orig_sceDisplaySetBrightess = (void (*)(int, int))
-			FindProc("sceDisplay_Service", "sceDisplay_driver", 0x267BF9F7);
-
-	orig_sceDisplay_driver_E55F0D50 = (void (*)(int))
-		FindProc("sceDisplay_Service", "sceDisplay_driver", 0xE55F0D50);
-
-	if (orig_sceDisplaySetBrightess != NULL) {
-		u32 *t = NULL;
-		SceModule *pMod = sceKernelFindModuleByName("xrPrx");
-
-		if (pMod != NULL) {
-			if (sceKernelDevkitVersion() <= 0x03070110)
-				t = (u32 *) libsFindImportAddrByNid(pMod->modid,
-													"sceDisplay_driver",
-													0x9E3C6DC6);
-			else if (sceKernelDevkitVersion() > 0x03070110)
-				t = (u32 *) libsFindImportAddrByNid(pMod->modid,
-													"sceDisplay_driver",
-													0x267BF9F7);
-		}
-		if (t != NULL) {
-			*t = J_TO(&new_sceDisplaySetBrightness);
-		}
-
-		pMod = sceKernelFindModuleByName("sceImpose_Driver");
-		if (pMod != NULL) {
-			t = (u32 *) libsFindImportAddrByNid(pMod->modid,
-												"sceDisplay_driver",
-												0xE55F0D50);
-		}
-		if (t != NULL) {
-			*t = J_TO(&new_sceDisplay_driver_E55F0D50);
-		}
-		sceKernelDcacheWritebackInvalidateRange(t, sizeof(*t));
-		sceKernelIcacheInvalidateRange(t, sizeof(*t));
-	}
-
-	pspSdkEnableInterrupts(intc);
-}
 
 /* Entry point */
 int module_start(SceSize args, void *argp)
@@ -403,9 +178,6 @@ int module_start(SceSize args, void *argp)
 		ret = sceKernelRegisterDefaultExceptionHandler371((void *)
 														  _pspDebugExceptionHandler);
 #endif
-
-	if (sceKernelDevkitVersion() >= 0x03070110)
-		patch_setbrightness();
 
 	return ret;
 }

@@ -4,10 +4,11 @@ AR = @PSP_AR@
 RANLIB = @PSP_RANLIB@
 
 EXEEXT =
-AM_CPPFLAGS = -I$(srcdir)/ -I$(srcdir)/include -I$(srcdir)/include/freetype2 -I$(top_srcdir)/lib/ -I$(PSPSDK)/include
+AM_CPPFLAGS = -I$(srcdir)/ -I$(srcdir)/include -I$(srcdir)/include/freetype2 -I$(top_srcdir)/lib/ -I$(PSPSDK)/include -I$(top_srcdir)/xr_rdriver
 
 if OPTIMIZE
 AM_CFLAGS = -O3 -G0 -fomit-frame-pointer -ffast-math -frename-registers -Wall
+AM_CFLAGS          +=  -funsigned-char -ffast-math -fforce-addr -fmerge-all-constants -floop-optimize -funsafe-loop-optimizations -ftree-loop-linear
 else
 AM_CFLAGS = -O0 -G0 -g -Wall
 endif
@@ -30,7 +31,7 @@ common/qsort.c common/qsort.h common/utils.c common/utils.h \
 apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
 $(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h \
-exception.c exception.h
+exception.c exception.h m33boot.c m33boot.h $(top_srcdir)/xr_rdriver/xr_RDLib.S
 
 if NLS
 xReader_elf_SOURCES += simple_gettext.c sofile.c sofile.h hash.c hash.h
@@ -40,7 +41,7 @@ clean-local:
 	$(RM) -rf __SCE__xReader %__SCE__xReader xReader xReader% xReader.prx \
 		PARAM.SFO EBOOT.PBP
 
-PSP_FW_VERSION = 390
+PSP_FW_VERSION = 401
 BUILD_PRX = 1
 PSP_LARGE_MEMORY = 1
 
@@ -49,10 +50,10 @@ LIBS = $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a $(libdir)/libpng.a
 	$(libdir)/libgif.a $(libdir)/libjpeg.a $(libdir)/libbmp.a $(libdir)/libtga.a \
 	$(libdir)/libid3tag.a \
 	$(libdir)/libmad.a $(libdir)/libz.a $(libdir)/libfreetype.a $(libdir)/libwmadec.a \
-	$(libdir)/pmpmodavc/pmpmodavclib.a $(libdir)/pmpmodavc/libavformat.a $(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a $(libdir)/pmpmodavc/libpspmpeg.a $(libdir)/pmpmodavc/pmpmodavclib.a $(libdir)/libpspsystemctrl_kernel.a  \
-	-L$(libdir) -lexif -lm -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc \
-	-lpspusb -lpspusbstor -lstdc++ -lpspkubridge -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg \
-	-lpsputility
+	$(libdir)/pmpmodavc/pmpmodavclib.a $(libdir)/pmpmodavc/libavformat.a $(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a $(libdir)/pmpmodavc/libpspmpeg.a $(libdir)/pmpmodavc/pmpmodavclib.a  \
+	-L$(libdir) -lexif -lm -lpspkubridge -lpspsystemctrl_user -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc \
+	-lpspusb -lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg \
+	-lpsputility 
 
 TARGET = xReader
 EXTRA_TARGETS = EBOOT.PBP

@@ -106,6 +106,8 @@ t_fs_filetype_entry ft_table[] = {
 #endif
 #endif
 	{"ebm", fs_filetype_ebm},
+	{"iso", fs_filetype_iso},
+	{"cso", fs_filetype_iso},
 #ifdef ENABLE_TTF
 	{"ttf", fs_filetype_font},
 	{"ttc", fs_filetype_font},
@@ -603,9 +605,10 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 			memset(str, 0, 1024);
 			const byte *uni = (byte *) header.FileNameW;
 
-			charsets_utf32_conv(uni, (byte *) str);
-			buffer_copy_string_len(item[cur_count].compname,
-								   header.FileName, 256);
+			charsets_utf32_conv(uni, sizeof(header.FileNameW), (byte *) str,
+								sizeof(str));
+			buffer_copy_string_len(item[cur_count].compname, header.FileName,
+								   256);
 			filename_to_itemname(item, cur_count, str);
 		} else {
 			buffer_copy_string_len(item[cur_count].compname,
@@ -707,7 +710,8 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 		strncpy_s(fname, NELEMS(fname), ui->path, 256);
 	}
 
-	charsets_utf8_conv((unsigned char *) fname, (unsigned char *) fname);
+	charsets_utf8_conv((unsigned char *) fname, sizeof(fname),
+					   (unsigned char *) fname, sizeof(fname));
 
 	item[cur_count].data = (void *) ft;
 	filename_to_itemname(item, cur_count, fname);

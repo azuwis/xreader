@@ -13,6 +13,7 @@
 #include "iniparser.h"
 #include "simple_gettext.h"
 #include "dbg.h"
+#include "kubridge.h"
 
 extern bool scene_load_font();
 extern bool scene_load_book_font();
@@ -197,7 +198,6 @@ static void conf_default(p_conf conf)
 	conf->dis_scrsave = false;
 	conf->autosleep = 0;
 	conf->load_exif = true;
-	conf->max_brightness = 100;
 	conf->prev_autopage = 2;
 	conf->launchtype = 2;
 
@@ -209,6 +209,7 @@ static void conf_default(p_conf conf)
 	   conf->selbcolor = RGB(0x20, 0x20, 0xDF);
 	   conf->msgbcolor = RGB(0x18, 0x28, 0x50);
 	 */
+
 	conf->titlecolor = RGB(0x30, 0x60, 0x30);
 	conf->menutextcolor = RGB(0xDF, 0xDF, 0xDF);
 	conf->menubcolor = RGB(0x10, 0x30, 0x20);
@@ -221,25 +222,25 @@ static void conf_default(p_conf conf)
 	STRCAT_S(conf->cttfpath, "fonts/gbk.ttf");
 	STRCPY_S(conf->ettfpath, scene_appdir());
 	STRCAT_S(conf->ettfpath, "fonts/asc.ttf");
-	conf->infobar_use_ttf_mode = true;
 
+	conf->infobar_use_ttf_mode = true;
 	conf->cfont_antialias = false;
 	conf->cfont_cleartype = true;
 	conf->cfont_embolden = false;
-
 	conf->efont_antialias = false;
 	conf->efont_cleartype = true;
 	conf->efont_embolden = false;
-
 	conf->img_no_repeat = false;
-
 	conf->hide_flash = true;
 	conf->tabstop = 4;
-
 	conf->apetagorder = true;
-
 	STRCPY_S(conf->language, "zh_CN");
 	conf->filelistwidth = 160;
+	if (kuKernelGetModel() == PSP_MODEL_SLIM_AND_LITE) {
+		conf->ttf_load_to_memory = true;
+	} else {
+		conf->ttf_load_to_memory = false;
+	}
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -951,11 +952,6 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		iniparser_getint(dict, "Global:autosleep", conf->autosleep);
 	conf->load_exif =
 		iniparser_getboolean(dict, "Image:load_exif", conf->load_exif);
-	conf->max_brightness =
-		iniparser_getint(dict, "Global:max_brightness", conf->max_brightness);
-	if (conf->max_brightness < 28 || conf->max_brightness > 100) {
-		conf->max_brightness = 100;
-	}
 	conf->launchtype =
 		iniparser_getint(dict, "Global:launchtype", conf->launchtype);
 	conf->infobar_use_ttf_mode =
@@ -998,6 +994,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 
 	if (conf->filelistwidth < 0 || conf->filelistwidth > 240)
 		conf->filelistwidth = 160;
+
+	conf->ttf_load_to_memory =
+		iniparser_getboolean(dict, "Text:ttf_load_to_memory",
+							 conf->ttf_load_to_memory);
 
 	dictionary_del(dict);
 
@@ -1205,8 +1205,6 @@ extern bool ini_conf_save(p_conf conf)
 						intToString(buf, sizeof(buf), conf->autosleep));
 	iniparser_setstring(dict, "Image:load_exif",
 						booleanToString(buf, sizeof(buf), conf->load_exif));
-	iniparser_setstring(dict, "Global:max_brightness",
-						intToString(buf, sizeof(buf), conf->max_brightness));
 	iniparser_setstring(dict, "Global:launchtype",
 						intToString(buf, sizeof(buf), conf->launchtype));
 	iniparser_setstring(dict, "Text:infobar_use_ttf_mode",
@@ -1249,6 +1247,10 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "UI:filelistwidth",
 						intToString(buf, sizeof(buf), conf->filelistwidth));
+
+	iniparser_setstring(dict, "Text:ttf_load_to_memory",
+						booleanToString(buf, sizeof(buf),
+										conf->ttf_load_to_memory));
 
 	iniparser_dump_ini(dict, fp);
 

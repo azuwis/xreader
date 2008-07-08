@@ -41,7 +41,6 @@
 #include "pspscreen.h"
 #include "dbg.h"
 #include "simple_gettext.h"
-#include "xrPrx/xrPrx.h"
 #include "osk.h"
 
 #define MAX_TXT_KEY 14
@@ -162,12 +161,13 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 		char fname[PATH_MAX];
 
 		charsets_utf8_conv((unsigned char *) filelist[selidx].
-						   compname, (unsigned char *) fname);
+						   compname, sizeof(filelist[selidx].compname),
+						   (unsigned char *) fname, sizeof(fname));
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename
-											  (config.encode)),
+											  conf_get_encodename(config.
+																  encode)),
 				  fname, calc_gi(), autopageinfo);
 	} else if (scene_readbook_in_raw_mode == true) {
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
@@ -268,12 +268,13 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 		char fname[PATH_MAX];
 
 		charsets_utf8_conv((unsigned char *) filelist[selidx].
-						   compname, (unsigned char *) fname);
+						   compname, sizeof(filelist[selidx].compname),
+						   (unsigned char *) fname, sizeof(fname));
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename
-											  (config.encode)),
+											  conf_get_encodename(config.
+																  encode)),
 				  fname, calc_gi(), autopageinfo);
 	} else if (scene_readbook_in_raw_mode == true) {
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
@@ -518,16 +519,17 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 {
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
 		STRCPY_S(pView->filename, filelist[selidx].compname->ptr);
-		STRCPY_S(pView->bookmarkname, config.shortpath);
 		STRCPY_S(pView->archname, config.shortpath);
+		STRCPY_S(pView->bookmarkname, config.path);
 		if (config.shortpath[strlen(config.shortpath) - 1] != '/' &&
 			pView->filename[0] != '/')
 			STRCAT_S(pView->bookmarkname, "/");
 		STRCAT_S(pView->bookmarkname, pView->filename);
 	} else {
-		STRCPY_S(pView->filename, config.shortpath);
-		STRCAT_S(pView->filename, filelist[selidx].shortname->ptr);
-		STRCPY_S(pView->archname, pView->filename);
+		STRCPY_S(pView->filename, config.path);
+		STRCAT_S(pView->filename, filelist[selidx].compname->ptr);
+		STRCPY_S(pView->archname, config.shortpath);
+		STRCAT_S(pView->archname, filelist[selidx].shortname->ptr);
 		STRCPY_S(pView->bookmarkname, pView->filename);
 	}
 	dbg_printf(d, "scene_book_reload: fn %s bookmarkname %s archname %s",
@@ -1254,13 +1256,8 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 
 static void scene_text_delay_action()
 {
-	extern bool prx_loaded;
-
 	if (config.dis_scrsave)
 		scePowerTick(0);
-	if (prx_loaded) {
-//      xrSetBrightness(config.brightness);
-	}
 }
 
 dword scene_reload_raw(const char *title, const unsigned char *data,

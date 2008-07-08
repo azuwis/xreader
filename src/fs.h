@@ -34,7 +34,8 @@ typedef enum
 #endif
 #endif
 	fs_filetype_ebm,
-	fs_filetype_unknown
+	fs_filetype_unknown,
+	fs_filetype_iso
 #ifdef ENABLE_TTF
 		, fs_filetype_font
 #endif

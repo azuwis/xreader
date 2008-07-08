@@ -333,14 +333,16 @@ extern bool disp_load_truetype_book_font(const char *ettffile,
 		book_cfont_buffer = NULL;
 	}
 	if (ettf == NULL) {
-		if ((ettf = ttf_open(ettffile, size)) == NULL) {
+		if ((ettf =
+			 ttf_open(ettffile, size, config.ttf_load_to_memory)) == NULL) {
 			return false;
 		}
 	} else {
 		ttf_set_pixel_size(ettf, size);
 	}
 	if (cttf == NULL) {
-		if ((cttf = ttf_open(cttffile, size)) == NULL) {
+		if ((cttf =
+			 ttf_open(cttffile, size, config.ttf_load_to_memory)) == NULL) {
 			return false;
 		}
 	} else {
@@ -418,7 +420,9 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 												 config.ettfpath,
 												 config.bookfontsize);
 		} else {
-			ettf = ttf_open(config.ettfpath, config.bookfontsize);
+			ettf =
+				ttf_open(config.ettfpath, config.bookfontsize,
+						 config.ttf_load_to_memory);
 		}
 		STRCPY_S(prev_ettfarch, config.ettfarch);
 		STRCPY_S(prev_ettfpath, config.ettfpath);
@@ -437,7 +441,9 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 												 config.cttfpath,
 												 config.bookfontsize);
 		} else {
-			cttf = ttf_open(config.cttfpath, config.bookfontsize);
+			cttf =
+				ttf_open(config.cttfpath, config.bookfontsize,
+						 config.ttf_load_to_memory);
 		}
 		STRCPY_S(prev_cttfarch, config.cttfarch);
 		STRCPY_S(prev_cttfpath, config.cttfpath);
@@ -1130,6 +1136,11 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 			height = bot - y;
 	}
 
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
+	}
+
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
 		return;
@@ -1187,6 +1198,11 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 			return;
 		if (y + height > bot)
 			height = bot - y;
+	}
+
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
 	}
 
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
@@ -1257,6 +1273,11 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 			return;
 		if (y + height > bot)
 			height = bot - y;
+	}
+
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
 	}
 
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
@@ -1377,6 +1398,11 @@ extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
 			height = bot - y;
 	}
 
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
+	}
+
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
 		return;
@@ -1488,6 +1514,11 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 			height = bot - y;
 	}
 
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
+	}
+
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
 		return;
@@ -1544,6 +1575,11 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 			return;
 		if (x + height > bot)
 			height = bot - x;
+	}
+
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
 	}
 
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
@@ -1608,6 +1644,11 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			height = bot - x;
 	}
 
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
+	}
+
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
 		return;
@@ -1659,6 +1700,11 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 									 dword wordspace, int top, int height,
 									 int bot)
 {
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
+	}
+
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
 		return;
@@ -1718,6 +1764,11 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 		return;
 	}
 #endif
+
+	if (str == NULL) {
+		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
+		return;
+	}
 
 	if (x < 0 || x >= PSP_SCREEN_WIDTH || y < 0 || y >= PSP_SCREEN_HEIGHT) {
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);

@@ -49,13 +49,16 @@ typedef struct _ttf
 	int cacheSize;
 	int cachePop;
 
+	char fnpath[PATH_MAX];
 	int fileSize;
 	byte *fileBuffer;
 } t_ttf, *p_ttf;
 
-extern p_ttf ttf_open(const char *filename, int size);
+extern p_ttf ttf_open(const char *filename, int size, bool load2mem);
 extern p_ttf ttf_open_buffer(void *buf, size_t length, int pixelsize,
 							 const char *ttfname);
+extern p_ttf ttf_open_file(const char *filename, int pixelsize,
+						   const char *ttfname);
 extern void ttf_close(p_ttf ttf);
 extern bool ttf_set_pixel_size(p_ttf ttf, int size);
 extern void ttf_set_anti_alias(p_ttf ttf, bool cleartype);

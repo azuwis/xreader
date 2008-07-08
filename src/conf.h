@@ -168,7 +168,6 @@ typedef struct
 	bool dis_scrsave;
 	int autosleep;
 	bool load_exif;
-	int max_brightness;
 	int launchtype;
 	bool infobar_use_ttf_mode;
 	bool cfont_antialias;
@@ -183,6 +182,7 @@ typedef struct
 	bool apetagorder;
 	char language[20];
 	int filelistwidth;
+	bool ttf_load_to_memory;
 } t_conf, *p_conf;
 
 /* txt key:

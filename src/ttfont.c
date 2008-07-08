@@ -17,18 +17,13 @@
 #include "conf.h"
 #include "dbg.h"
 #include "scene.h"
+#include "strsafe.h"
 #include "power.h"
 
 extern t_conf config;
 
-/**
- * 打开TTF字体
- * @param filename TTF文件名
- * @param size 预设的字体大小
- * @return 描述TTF的指针
- * - NULL 失败
- */
-extern p_ttf ttf_open(const char *filename, int size)
+static p_ttf ttf_open_file_to_memory(const char *filename, int size,
+									 const char *ttfname)
 {
 	p_ttf ttf;
 	byte *buf;
@@ -38,18 +33,105 @@ extern p_ttf ttf_open(const char *filename, int size)
 		return NULL;
 
 	fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+
 	if (fd < 0) {
 		return NULL;
 	}
+
 	fileSize = sceIoLseek32(fd, 0, PSP_SEEK_END);
 	sceIoLseek32(fd, 0, PSP_SEEK_SET);
 	buf = malloc(fileSize);
+
 	if (buf == NULL) {
+		sceIoClose(fd);
 		return NULL;
 	}
+
 	sceIoRead(fd, buf, fileSize);
 	sceIoClose(fd);
-	ttf = ttf_open_buffer(buf, fileSize, size, filename);
+
+	ttf = ttf_open_buffer(buf, fileSize, size, ttfname);
+
+	if (ttf == NULL) {
+		free(buf);
+	}
+
+	return ttf;
+}
+
+/**
+ * 打开TTF字体
+ * @param filename TTF文件名
+ * @param size 预设的字体大小
+ * @param load2mem 是否加载到内存
+ * @return 描述TTF的指针
+ * - NULL 失败
+ */
+extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
+{
+	p_ttf ttf;
+
+	if (filename == NULL || size == 0)
+		return NULL;
+
+	if (load2mem)
+		ttf = ttf_open_file_to_memory(filename, size, filename);
+	else
+		ttf = ttf_open_file(filename, size, filename);
+
+	return ttf;
+}
+
+/**
+ * 打开TTF字体数据
+ * @param ttfpath TTF字体路径
+ * @param pixelSize 预设的字体大小
+ * @param ttfName TTF字体名
+ * @return 描述TTF的指针
+ * - NULL 失败
+ */
+extern p_ttf ttf_open_file(const char *ttfpath, int pixelSize,
+						   const char *ttfName)
+{
+	int i;
+	p_ttf ttf;
+
+	if (ttfpath == NULL || ttfName == NULL)
+		return NULL;
+
+	if ((ttf = calloc(1, sizeof(*ttf))) == NULL) {
+		return NULL;
+	}
+
+	memset(ttf, 0, sizeof(t_ttf));
+
+	if (strrchr(ttfName, '/') == NULL)
+		ttf->fontName = strdup(ttfName);
+	else {
+		ttf->fontName = strdup(strrchr(ttfName, '/') + 1);
+	}
+
+	if (FT_Init_FreeType(&ttf->library) != 0) {
+		free(ttf);
+		return NULL;
+	}
+
+	STRCPY_S(ttf->fnpath, ttfpath);
+	if (FT_New_Face(ttf->library, ttf->fnpath, 0, &ttf->face)
+		!= 0) {
+		FT_Done_FreeType(ttf->library);
+		free(ttf);
+		return NULL;
+	}
+
+	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
+		memset(&ttf->sbitHashRoot[i], 0, sizeof(SBit_HashItem));
+	}
+
+	ttf->cacheSize = 0;
+	ttf->cachePop = 0;
+	ttf_set_pixel_size(ttf, pixelSize);
+
 	return ttf;
 }
 
@@ -77,6 +159,7 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 
 	memset(ttf, 0, sizeof(t_ttf));
 
+	STRCPY_S(ttf->fnpath, "");
 	ttf->fileBuffer = ttfBuf;
 	ttf->fileSize = ttfLength;
 
@@ -87,15 +170,14 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 	}
 
 	if (FT_Init_FreeType(&ttf->library) != 0) {
-		free(ttf->fileBuffer);
 		free(ttf);
 		return NULL;
 	}
+
 	if (FT_New_Memory_Face
 		(ttf->library, ttf->fileBuffer, ttf->fileSize, 0, &ttf->face)
 		!= 0) {
 		FT_Done_FreeType(ttf->library);
-		free(ttf->fileBuffer);
 		free(ttf);
 		return NULL;
 	}
@@ -126,6 +208,7 @@ extern void ttf_close(p_ttf ttf)
 		free(ttf->fontName);
 		ttf->fontName = NULL;
 	}
+
 	if (ttf->fileBuffer != NULL) {
 		free(ttf->fileBuffer);
 		ttf->fileBuffer = NULL;

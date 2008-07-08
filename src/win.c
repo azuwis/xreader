@@ -18,7 +18,6 @@
 #include "fat.h"
 #include "mp3.h"
 #include "text.h"
-#include "xrPrx/xrPrx.h"
 
 static volatile int secticks = 0;
 
@@ -71,13 +70,8 @@ extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item,
 
 static void win_menu_delay_action()
 {
-	extern bool prx_loaded;
-
 	if (config.dis_scrsave)
 		scePowerTick(0);
-	if (prx_loaded) {
-//      xrSetBrightness(config.brightness);
-	}
 }
 
 extern dword win_menu(dword x, dword y, dword max_width, dword max_height,

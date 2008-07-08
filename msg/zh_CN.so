@@ -1089,10 +1089,6 @@ msgstr "星期六"
 msgid "日期错误"
 msgstr "日期错误"
 
-#: scene.c:2593
-msgid "    最大亮度"
-msgstr "    最大亮度"
-
 #: scene.c:2631
 msgid "        语言"
 msgstr "        语言"
@@ -1100,3 +1096,14 @@ msgstr "        语言"
 #: scene.c:378
 msgid "输入GI值"
 msgstr "输入GI值"
+
+#: scene.c: 4012
+msgid "是否运行这个游戏?"
+msgstr "是否运行这个游戏?"
+
+msgid "书签导入失败!"
+msgstr "书签导入失败!"
+
+msgid "书签导出失败!"
+msgstr "书签导出失败!"
+

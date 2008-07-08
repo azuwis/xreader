@@ -41,24 +41,26 @@ static void text_decode(p_text txt, t_conf_encode encode)
 		return;
 	if (*(word *) txt->buf == 0xFEFF) {
 		txt->size =
-			charsets_ucs_conv((const byte *) (txt->buf + 2), (byte *) txt->buf);
+			charsets_ucs_conv((const byte *) (txt->buf + 2), txt->size - 2,
+							  (byte *) txt->buf, txt->size);
 		txt->ucs = 1;
 	} else if (*(word *) txt->buf == 0xFFEF) {
 		txt->size =
-			charsets_utf16be_conv((const byte *) (txt->buf + 2),
-								  (byte *) txt->buf);
+			charsets_utf16be_conv((const byte *) (txt->buf + 2), txt->size - 2,
+								  (byte *) txt->buf, txt->size);
 		txt->ucs = 1;
 	} else if (txt->size > 2 && (unsigned char) txt->buf[0] == 0xEF
 			   && (unsigned char) txt->buf[1] == 0xBB
 			   && (unsigned char) txt->buf[2] == 0xBF) {
 		txt->size =
-			charsets_utf8_conv((const byte *) (txt->buf + 3),
-							   (byte *) txt->buf);
+			charsets_utf8_conv((const byte *) (txt->buf + 3), txt->size - 3,
+							   (byte *) txt->buf, txt->size);
 		txt->ucs = 2;
 	} else {
 		switch (encode) {
 			case conf_encode_big5:
-				charsets_big5_conv((const byte *) txt->buf, (byte *) txt->buf);
+				txt->size = charsets_big5_conv((const byte *) txt->buf, txt->size,
+								   (byte *) txt->buf, txt->size);
 				break;
 			case conf_encode_sjis:
 				{
@@ -76,8 +78,8 @@ static void text_decode(p_text txt, t_conf_encode encode)
 				break;
 			case conf_encode_utf8:
 				txt->size =
-					charsets_utf8_conv((const byte *) txt->buf,
-									   (byte *) txt->buf);
+					charsets_utf8_conv((const byte *) txt->buf, txt->size,
+									   (byte *) txt->buf, txt->size);
 				break;
 			default:;
 		}
@@ -1128,15 +1130,15 @@ extern p_text text_open_archive(const char *filename,
 	switch (where) {
 		case scene_in_dir:
 			if (ext && stricmp(ext, "gz") == 0)
-				pText = text_open_in_gz(filename, filename,
+				pText = text_open_in_gz(archname, archname,
 										filetype, rowpixels,
 										wordspace, encode, reorder);
 			else if (filetype != fs_filetype_unknown)
-				pText = text_open(filename, filetype,
+				pText = text_open(archname, filetype,
 								  rowpixels, wordspace, encode, reorder);
 			else {
 				pText =
-					text_open_binary(filename,
+					text_open_binary(archname,
 									 (vertread == conf_vertread_lvert
 									  || vertread == conf_vertread_rvert)
 					);

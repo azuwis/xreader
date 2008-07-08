@@ -344,7 +344,7 @@ static bool mp3_load()
 			else
 				SPRINTF_S(mp3_tag, "? - %s", mp3info.title);
 		} else {
-			char *mp3_tag2 = strrchr(mp3_files[mp3_index][0], '/');
+			char *mp3_tag2 = strrchr(mp3_files[mp3_index][1], '/');
 
 			if (mp3_tag2 != NULL)
 				mp3_tag2++;
@@ -375,7 +375,7 @@ static bool mp3_load()
 			else
 				SPRINTF_S(mp3_tag, "? - %s", (const char *) wma->title);
 		} else {
-			char *mp3_tag2 = strrchr(mp3_files[mp3_index][0], '/');
+			char *mp3_tag2 = strrchr(mp3_files[mp3_index][1], '/');
 
 			if (mp3_tag2 != NULL)
 				mp3_tag2++;
@@ -1283,6 +1283,7 @@ extern void mp3_set_encode(t_conf_encode encode)
 		STRCPY_S(mp3_tag_encode, "");
 		return;
 	}
+	t_conf_encode prev = mp3_encode;
 	mp3_encode = encode;
 
 	if (mp3info.found_apetag || mp3info.found_id3v2) {
@@ -1290,13 +1291,15 @@ extern void mp3_set_encode(t_conf_encode encode)
 	}
 	switch (mp3_encode) {
 		case conf_encode_utf8:
-			charsets_utf8_conv((const byte *) mp3_tag, (byte *) mp3_tag_encode);
+			charsets_utf8_conv((const byte *) mp3_tag, sizeof(mp3_tag),
+							   (byte *) mp3_tag_encode, sizeof(mp3_tag_encode));
 			break;
 		case conf_encode_gbk:
 			STRCPY_S(mp3_tag_encode, mp3_tag);
 			break;
 		case conf_encode_big5:
-			charsets_big5_conv((const byte *) mp3_tag, (byte *) mp3_tag_encode);
+			charsets_big5_conv((const byte *) mp3_tag, sizeof(mp3_tag),
+							   (byte *) mp3_tag_encode, sizeof(mp3_tag_encode));
 			break;
 		case conf_encode_sjis:
 			{
@@ -1316,6 +1319,7 @@ extern void mp3_set_encode(t_conf_encode encode)
 			STRCPY_S(mp3_tag_encode, mp3_files[mp3_index][1]);
 			break;
 	}
+	mp3_encode = prev;
 }
 
 #ifdef ENABLE_HPRM

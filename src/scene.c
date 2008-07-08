@@ -47,6 +47,9 @@
 #include "dbg.h"
 #include "simple_gettext.h"
 #include "exception.h"
+#include "m33boot.h"
+#include "xr_rdriver/xr_rdriver.h"
+#include "kubridge.h"
 
 #ifdef ENABLE_PMPAVC
 bool pmp_restart = false;
@@ -662,8 +665,8 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 						config.thumb++;
 					break;
 				case 7:
-					if (++config.imgbrightness > 100)
-						config.imgbrightness = 100;
+					if (++config.imgbrightness > 99)
+						config.imgbrightness = 99;
 					img_needrf = img_needrc = img_needrp = true;
 					break;
 				case 8:
@@ -2315,15 +2318,6 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 					config.launchtype = config.launchtype == 2 ? 4 : 2;
 					break;
 				case 12:
-					if (config.max_brightness > 28) {
-						config.max_brightness--;
-						if (prx_loaded) {
-							xrSetBrightness(config.max_brightness);
-							xrSetMaxBrightness(config.max_brightness);
-						}
-					}
-					break;
-				case 13:
 					if (strcmp(config.language, "zh_CN") == 0) {
 						STRCPY_S(config.language, "en_US");
 					} else {
@@ -2378,15 +2372,6 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 					config.launchtype = config.launchtype == 2 ? 4 : 2;
 					break;
 				case 12:
-					if (config.max_brightness < 100) {
-						config.max_brightness++;
-						if (prx_loaded) {
-							xrSetBrightness(config.max_brightness);
-							xrSetMaxBrightness(config.max_brightness);
-						}
-					}
-					break;
-				case 13:
 					if (strcmp(config.language, "zh_CN") == 0) {
 						STRCPY_S(config.language, "en_US");
 					} else {
@@ -2518,13 +2503,6 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   (const byte *) (config.launchtype ==
 								   2 ? _("普通程序") : _("PS游戏")));
 	lines++;
-
-	SPRINTF_S(infomsg, "%d", config.max_brightness);
-	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
-				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
-																	DISP_FONTSIZE),
-				   COLOR_WHITE, (const byte *) infomsg);
-	lines++;
 	SPRINTF_S(infomsg, "%s", GetLanguageHelpString(simple_textdomain(NULL)));
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
@@ -2535,7 +2513,7 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 
 dword scene_moptions(dword * selidx)
 {
-	t_win_menuitem item[14];
+	t_win_menuitem item[13];
 	dword i;
 
 	STRCPY_S(item[0].name, _("    隐藏文件"));
@@ -2550,8 +2528,7 @@ dword scene_moptions(dword * selidx)
 	STRCPY_S(item[9].name, _("设置最高频率"));
 	STRCPY_S(item[10].name, _("禁用屏幕保护"));
 	STRCPY_S(item[11].name, _("启动程序类型"));
-	STRCPY_S(item[12].name, _("    最大亮度"));
-	STRCPY_S(item[13].name, _("        语言"));
+	STRCPY_S(item[12].name, _("        语言"));
 
 	win_menu_predraw_data prev;
 
@@ -2574,7 +2551,6 @@ dword scene_moptions(dword * selidx)
 	bool orgshowunknown = config.showunknown;
 	int orgfontindex = fontindex;
 	int orgbookfontindex = bookfontindex;
-	int orgbrightness = config.max_brightness;
 	t_conf_arrange orgarrange = config.arrange;
 	char orglanguage[20];
 
@@ -2599,13 +2575,6 @@ dword scene_moptions(dword * selidx)
 
 	if (strcmp(orglanguage, config.language) != 0) {
 		set_language();
-	}
-
-	if (prx_loaded) {
-		if (orgbrightness != config.max_brightness) {
-			xrSetMaxBrightness(config.max_brightness);
-			orgbrightness = config.max_brightness;
-		}
 	}
 #ifdef ENABLE_USB
 	if (config.isreading == false) {
@@ -3008,12 +2977,6 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 	else if (prev->enableusb && !curr->enableusb)
 		usb_deactivate();
 #endif
-	if (prev->max_brightness != curr->max_brightness) {
-		if (prx_loaded) {
-			xrSetMaxBrightness(curr->max_brightness);
-		}
-	}
-
 	if (!curr->usettf) {
 		int i = 0;
 
@@ -3399,9 +3362,15 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 				} else
 					STRCPY_S(bmfn, fs->filename);
 				STRCAT_S(bmfn, ".ebm");
-				bookmark_export(bm, bmfn);
-				win_msg(_("已导出书签!"), COLOR_WHITE, COLOR_WHITE,
-						config.msgbcolor);
+				bool ret = bookmark_export(bm, bmfn);
+
+				if (ret) {
+					win_msg(_("已导出书签!"), COLOR_WHITE, COLOR_WHITE,
+							config.msgbcolor);
+				} else {
+					win_msg(_("书签导出失败!"), COLOR_WHITE, COLOR_WHITE,
+							config.msgbcolor);
+				}
 			}
 			return win_menu_op_force_redraw;
 		case PSP_CTRL_SQUARE:
@@ -3727,7 +3696,8 @@ static void scene_copy_files(int sidx)
 			char fname[PATH_MAX];
 
 			charsets_utf8_conv((unsigned char *) copylist[sidx].
-							   compname, (unsigned char *) fname);
+							   compname, sizeof(copylist[sidx].compname),
+							   (unsigned char *) fname, sizeof(fname));
 			STRCPY_S(temp, fname);
 		} else
 			STRCPY_S(temp, copylist[sidx].compname->ptr);
@@ -3775,7 +3745,7 @@ static void scene_copy_files(int sidx)
 		STRCPY_S(copysrc, copydir);
 		STRCAT_S(copysrc, copylist[sidx].shortname->ptr);
 		STRCPY_S(copydest, config.shortpath);
-		STRCAT_S(copydest, copylist[sidx].shortname->ptr);
+		STRCAT_S(copydest, copylist[sidx].compname->ptr);
 		if ((t_fs_filetype) copylist[sidx].data == fs_filetype_dir)
 			result = copy_dir(copysrc, copydest, NULL, confirm_overwrite, NULL);
 		else
@@ -4133,7 +4103,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 								if (bmcount > 0) {
 									char bmfn[PATH_MAX];
 
-									STRCPY_S(bmfn, config.path);
+									STRCPY_S(bmfn, config.shortpath);
 									STRCAT_S(bmfn, item[sidx].shortname->ptr);
 									bookmark_import(bmfn);
 								}
@@ -4216,7 +4186,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 								if (mp3count + dircount == 0) {
 									char bmfn[PATH_MAX];
 
-									STRCPY_S(bmfn, config.path);
+									STRCPY_S(bmfn, config.shortpath);
 									STRCAT_S(bmfn, item[sidx].shortname->ptr);
 									bookmark_import(bmfn);
 								}
@@ -4290,14 +4260,10 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 			if (where != scene_in_dir || strnicmp(config.path, "ms0:/", 5) != 0)
 				break;
 			if (copycount > 0 && copylist != NULL) {
-				copycount = 0;
-				free(copylist);
-				copylist = NULL;
+				win_item_destroy(&copylist, &copycount);
 			}
 			if (cutcount > 0 && cutlist != NULL) {
-				cutcount = 0;
-				free(cutlist);
-				cutlist = NULL;
+				win_item_destroy(&cutlist, &cutcount);
 			}
 			STRCPY_S(cutdir, config.shortpath);
 			cutlist = win_realloc_items(NULL, 0, (selcount > 0 ? selcount : 1));
@@ -4338,7 +4304,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 					STRCPY_S(cutsrc, cutdir);
 					STRCAT_S(cutsrc, cutlist[sidx].shortname->ptr);
 					STRCPY_S(cutdest, config.shortpath);
-					STRCAT_S(cutdest, cutlist[sidx].shortname->ptr);
+					STRCAT_S(cutdest, cutlist[sidx].compname->ptr);
 					dword result;
 
 					if ((t_fs_filetype) cutlist[sidx].data == fs_filetype_dir)
@@ -4357,9 +4323,9 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 				STRCPY_S(config.lastfile, item[*index].compname->ptr);
 				*retop = win_menu_op_cancel;
 				*inop = false;
-				cutcount = 0;
-				free(cutlist);
-				cutlist = NULL;
+				if (cutcount > 0 && cutlist != NULL) {
+					win_item_destroy(&cutlist, &cutcount);
+				}
 			}
 			break;
 		case PSP_CTRL_SELECT:
@@ -4797,35 +4763,31 @@ static char *strtoupper(char *d, const char *s)
 	return origd;
 }
 
-static void exec_homebrew(int method, char *path)
-{
-	int err;
-	struct SceKernelLoadExecVSHParam param;
-
-	memset(&param, 0, sizeof(param));
-	param.size = sizeof(struct SceKernelLoadExecVSHParam);
-	param.args = strlen(path) + 1;
-	param.argp = path;
-	if (method == 2)
-		param.key = "game";
-	else if (method == 4) {
-		param.key = "psx";
-	} else
-		param.key = "updater";
-	if ((err = xrKernelLoadExecVSHMsX(method, path, &param)) < 0) {
-		char infomsg[256];
-
-		SPRINTF_S(infomsg, _("%s: 方法%d启动错误, 返回错误代码: %08x"),
-				  path, method, err);
-		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
-		dbg_printf(d, infomsg);
-	} else
-		sceKernelExitDeleteThread(0);
-}
-
 static void scene_exec_prog(dword * idx)
 {
 	char infomsg[80];
+
+	const char *ext = utils_fileext(filelist[*idx].compname->ptr);
+
+	if (ext) {
+		if (stricmp(ext, "iso") == 0 || stricmp(ext, "cso") == 0) {
+			if (win_msgbox
+				(_("是否运行这个游戏?"), _("是"), _("否"), COLOR_WHITE,
+				 COLOR_WHITE, config.msgbcolor)) {
+				char path[PATH_MAX], upper[PATH_MAX];
+
+				conf_save(&config);
+				STRCPY_S(path, config.path);
+				strtoupper(upper, filelist[*idx].compname->ptr);
+				STRCAT_S(path, upper);
+
+				int r = run_iso(path);
+
+				dbg_printf(d, "%s: run_iso returns %08x", __func__, r);
+			}
+			return;
+		}
+	}
 
 	SPRINTF_S(infomsg, _("是否以%s方式执行该程序?"),
 			  config.launchtype == 2 ? _("普通程序") : _("PS游戏"));
@@ -4838,7 +4800,16 @@ static void scene_exec_prog(dword * idx)
 		STRCPY_S(path, config.path);
 		strtoupper(upper, filelist[*idx].compname->ptr);
 		STRCAT_S(path, upper);
-		exec_homebrew(config.launchtype, path);
+
+		if (config.launchtype == 2) {
+			int r = run_homebrew(path);
+
+			dbg_printf(d, "%s: run_homebrew returns %08x", __func__, r);
+		} else {
+			int r = run_psx_game(path);
+
+			dbg_printf(d, "%s: run_psx_game returns %08x", __func__, r);
+		}
 	}
 }
 
@@ -5039,8 +5010,15 @@ static void scene_open_ebm(dword * idx)
 
 		STRCPY_S(bmfn, config.shortpath);
 		STRCAT_S(bmfn, filelist[*idx].shortname->ptr);
-		bookmark_import(bmfn);
-		win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
+		bool ret = bookmark_import(bmfn);
+
+		if (ret) {
+			win_msg(_("已导入书签!"), COLOR_WHITE, COLOR_WHITE,
+					config.msgbcolor);
+		} else {
+			win_msg(_("书签导入失败!"), COLOR_WHITE, COLOR_WHITE,
+					config.msgbcolor);
+		}
 	}
 }
 
@@ -5239,6 +5217,7 @@ void scene_filelist()
 			continue;
 		}
 		switch ((t_fs_filetype) filelist[idx].data) {
+			case fs_filetype_iso:
 			case fs_filetype_prog:
 				scene_exec_prog(&idx);
 				break;
@@ -5316,6 +5295,25 @@ extern double pspDiffTime(u64 * t1, u64 * t2);
 static const bool is_log = true;
 DBG *d = 0;
 bool xreader_scene_inited = false;
+
+int load_rdriver(void)
+{
+	SceUID mod = kuKernelLoadModule("ms0:/seplugins/xr_rdriver.prx", 0, NULL);
+
+	if (mod >= 0) {
+		mod = sceKernelStartModule(mod, 0, NULL, NULL, NULL);
+		if (mod < 0) {
+			dbg_printf(d, "%s: error1 %08x", __func__, mod);
+		}
+	} else {
+		if (mod == SCE_KERNEL_ERROR_EXCLUSIVE_LOAD) {
+		} else {
+			dbg_printf(d, "%s: error2 %08x", __func__, mod);
+		}
+	}
+
+	return mod;
+}
 
 extern void scene_init()
 {
@@ -5522,6 +5520,8 @@ extern void scene_init()
 			dbg_printf(d, "xrPrx.prx load failed, return value %08X",
 					   (unsigned int) ret);
 		}
+		ret = load_rdriver();
+		dbg_printf(d, "load_rdriver returns 0x%08x", ret);
 	}
 	scene_power_save(true);
 	sceRtcGetCurrentTick(&dbgnow);
@@ -5549,12 +5549,6 @@ extern void scene_init()
 	disp_fillvram(0);
 
 	set_language();
-
-	if (prx_loaded) {
-		xrSetBrightness(50 >=
-						config.max_brightness ? config.max_brightness : 50);
-		xrSetMaxBrightness(config.max_brightness);
-	}
 
 	dword c = get_bgcolor_by_time();
 
@@ -5635,16 +5629,14 @@ extern void scene_exit()
 	simple_gettext_destroy();
 
 	if ((ctrl_read() == PSP_CTRL_LTRIGGER)) {
-		char path[PATH_MAX];
-
-		STRCPY_S(path, scene_appdir());
-		STRCAT_S(path, "EBOOT.PBP");
+		// restart
 		ctrl_destroy();
-		exec_homebrew(2, path);
 	} else {
+		// exit
 		ctrl_destroy();
-		sceKernelExitGame();
+		RestoreExitGame();
 	}
+	sceKernelExitGame();
 }
 
 extern void scene_power_save(bool save)

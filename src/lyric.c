@@ -261,11 +261,6 @@ extern bool lyric_check_changed(p_lyric l)
 	return false;
 }
 
-typedef dword ucs4_t;
-extern int charsets_bg5hk2cjk(const byte * big5hk, byte * cjk);
-extern int utf8_mbtowc(ucs4_t * pwc, const byte * s, int n);
-extern int gbk_wctomb(byte * r, ucs4_t wc, int n);
-
 extern t_conf config;
 
 void lyric_decode(const char *lrcsrc, char *lrcdst, dword * size)
@@ -281,9 +276,8 @@ void lyric_decode(const char *lrcsrc, char *lrcdst, dword * size)
 				int ilen = strnlen((const char *) lrcsrc, *size);
 				int i = 0;
 
-				while (i < ilen)
-					i += charsets_bg5hk2cjk((const byte *) lrcsrc +
-											i, (byte *) lrcdst + i);
+				i = charsets_bg5hk2cjk((const byte *) lrcsrc, ilen,
+									   (byte *) lrcdst, *size);
 				lrcdst[i] = 0;
 			}
 			break;
