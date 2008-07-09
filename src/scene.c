@@ -3583,7 +3583,7 @@ static bool is_contain_hanzi_str(const char *str)
 		return false;
 
 	for (i = 0, len = strlen(str); i < len; ++i) {
-		if (str[i] < 0) {
+		if (((unsigned char)str[i]) >= 0x80) {
 			return true;
 		}
 	}
@@ -3600,7 +3600,7 @@ static const char *remove_hanzi(char *dst, const char *src, size_t size)
 		return NULL;
 
 	for (i = 0; i < size - 1 && *src != '\0';) {
-		if (*src < 0) {
+		if ((unsigned char)*src >= 0x80) {
 			src += 2;
 			continue;
 		}
