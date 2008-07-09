@@ -38,6 +38,6 @@ LIBS=-lpspkernel -lpsploadexec_kernel -lpspsystemctrl_kernel
 
 include $(PSPSDK)/lib/build.mak
 
-all: xr_rdriver.S
-xr_rdriver.S: exports.exp
+all: xr_RDLib.S
+xr_RDLib.S: exports.exp
 	psp-build-exports -s $^
