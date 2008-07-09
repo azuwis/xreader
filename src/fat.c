@@ -362,7 +362,6 @@ extern bool fat_locate(const char *name, char *sname, u32 clus,
 {
 	u32 count;
 	p_fat_entry entrys;
-	char short_name[256];
 
 	if (!fat_dir_list(clus, &count, &entrys))
 		return false;
@@ -410,8 +409,15 @@ extern bool fat_locate(const char *name, char *sname, u32 clus,
 					entrys[i].norm.filename[0] = 0x05;
 				memcpy(info, &entrys[i], sizeof(t_fat_entry));
 				free(entrys);
-				fat_get_shortname(info, short_name);
-				strcat_s(sname, 256, short_name);
+				if (sceKernelDevkitVersion() <= 0x03070110) {
+					strcat_s(sname, 256, sid.d_name);
+				}
+				else {
+					char short_name[256];
+
+					fat_get_shortname(info, short_name);
+					strcat_s(sname, 256, short_name);
+				}
 				if ((info->norm.attr & FAT_FILEATTR_DIRECTORY) > 0)
 					strcat_s(sname, 256, "/");
 				sceIoDclose(dl);
@@ -426,8 +432,15 @@ extern bool fat_locate(const char *name, char *sname, u32 clus,
 			if (stricmp(name, longnames) == 0) {
 				memcpy(info, &entrys[i], sizeof(t_fat_entry));
 				free(entrys);
-				fat_get_shortname(info, short_name);
-				strcat_s(sname, 256, short_name);
+				if (sceKernelDevkitVersion() <= 0x03070110) {
+					strcat_s(sname, 256, sid.d_name);
+				}
+				else {
+					char short_name[256];
+
+					fat_get_shortname(info, short_name);
+					strcat_s(sname, 256, short_name);
+				}
 				if ((info->norm.attr & FAT_FILEATTR_DIRECTORY) > 0)
 					strcat_s(sname, 256, "/");
 				sceIoDclose(dl);
@@ -542,6 +555,9 @@ extern u32 fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 			inf->filename[0] = 0xE5;
 		if (!fat_get_longname(entrys, i, inf->longname))
 			STRCPY_S(inf->longname, inf->filename);
+		if (sceKernelDevkitVersion() <= 0x03070110) {
+			STRCPY_S(inf->filename, sid.d_name);
+		}
 		inf->filesize = entrys[i].norm.filesize;
 		inf->cdate = entrys[i].norm.cr_date;
 		inf->ctime = entrys[i].norm.cr_time;
