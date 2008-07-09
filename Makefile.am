@@ -16,7 +16,6 @@ EXTRA_DIST =			\
 	Changelog.txt \
 	msg \
 	src/include \
-	bootstrap \
 	Revision.sh \
 	lib \
 	resource \
