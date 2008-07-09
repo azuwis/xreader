@@ -30,6 +30,7 @@ static int power_callback(int arg1, int powerInfo, void *arg)
 	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0) {
 		if (config.usettf) {
 			ctrl_lock();
+			sceKernelDelayThread(500000);
 			disp_assign_book_font();
 		}
 	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
