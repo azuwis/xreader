@@ -88,6 +88,15 @@ GI页码是由GenIndex程序生成的目录页码数字。
 强制使用文字模式打开文件
 选中文件，按三角键，再按方块键即可强制使用用TXT方式打开文件
 
+有关xr_rdriver.prx
+这个插件使xReader拥有启动其它自制软件、游戏，并在退出时自动返回xReader的功能。
+它有以下要求：
+游戏启动方式只支持March33、Sony NP9660、和Normal三种
+xReader主程序必须放在K:\PSP\GAME\xReader目录
+xr_rdriver.prx插件必须放在K:\seplugins\目录，但不用再加入到GAME.txt
+
+某些自制软件和游戏可能会出现问题
+
 部分ini配置解释：
 global:brightness:
 PSP屏幕亮度（0-100）
