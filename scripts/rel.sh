@@ -7,7 +7,7 @@ SRCDIR=/home/liquid/xreader/src
 ROOTDIR=/home/liquid/xreader/PSP/
 DESTDIR=/home/liquid/xreader/PSP/PSP/GAME/xReader
 DESTDIR2=/home/liquid/xreader/PSP/seplugins
-LITE=y
+LITE=n
 
 echo "xReader transfer script"
 echo "Author: $AUTHOR($EMAIL)"
