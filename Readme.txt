@@ -119,3 +119,6 @@ ui:usedyncolor
 music::apetagorder
 APETagV2是否优先于ID3TagV2读取
 
+text:ttf_ttf_load_to_memory
+阅读文本时是否将TTF字体装载到内存，PSP-2000用户可设置为"true"，PSP-1000用户最好设置为"false"
+
