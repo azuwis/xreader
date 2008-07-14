@@ -1,18 +1,5 @@
 #!/bin/sh
 
-#rm -rf xReader*.rar
-#rm -rf PSP
-#mkdir -p ./PSP/GAME/xReader
-#cp EBOOT.PBP ./PSP/GAME/xReader
-#cp ../resource/bg.png ./PSP/GAME/xReader
-#cp ../fonts/fonts.zip ./PSP/GAME/xReader
-#cp ../xrPrx/xrPrx.prx ./PSP/GAME/xReader
-#mkdir -p ./PSP/GAME/xReader/msg
-#cp ../msg/*.so ./PSP/GAME/xReader/msg
-#cp ../Changelog.txt ./PSP/GAME/xReader
-#cp ../Readme.txt ./PSP/GAME/xReader
-#rar a -v1500k xReader.rar PSP #GenIndex/GenIndex.exe
-
 AUTHOR=hrimfaxi
 EMAIL=outmatch@gmail.com
 DIRS="msg fonts"
@@ -20,6 +7,7 @@ SRCDIR=/home/liquid/xreader/src
 ROOTDIR=/home/liquid/xreader/PSP/
 DESTDIR=/home/liquid/xreader/PSP/PSP/GAME/xReader
 DESTDIR2=/home/liquid/xreader/PSP/seplugins
+LITE=y
 
 echo "xReader transfer script"
 echo "Author: $AUTHOR($EMAIL)"
@@ -53,8 +41,10 @@ echo "\t\tReadme.txt"
 cp -u "$SRCDIR/../Readme.txt" "$DESTDIR/"
 echo "\t\tChangelog.txt"
 cp -u "$SRCDIR/../Changelog.txt" "$DESTDIR/"
+if [ x$LITE != xy ]; then
 echo "\t\tbg.png"
 cp -u "$SRCDIR/../resource/bg.png" "$DESTDIR/"
+fi
 echo "\t\tmsg/zh_CN.so"
 cp -u "$SRCDIR/../msg/zh_CN.so" "$DESTDIR/msg"
 echo "\t\tmsg/en_US.so"
