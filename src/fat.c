@@ -411,8 +411,7 @@ extern bool fat_locate(const char *name, char *sname, u32 clus,
 				free(entrys);
 				if (sceKernelDevkitVersion() <= 0x03070110) {
 					strcat_s(sname, 256, sid.d_name);
-				}
-				else {
+				} else {
 					char short_name[256];
 
 					fat_get_shortname(info, short_name);
@@ -434,8 +433,7 @@ extern bool fat_locate(const char *name, char *sname, u32 clus,
 				free(entrys);
 				if (sceKernelDevkitVersion() <= 0x03070110) {
 					strcat_s(sname, 256, sid.d_name);
-				}
-				else {
+				} else {
 					char short_name[256];
 
 					fat_get_shortname(info, short_name);
