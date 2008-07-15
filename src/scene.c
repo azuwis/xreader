@@ -1614,6 +1614,19 @@ static void recalc_size(dword * drperpage, dword * rowsperpage,
 		config.borderspace * 2;
 }
 
+static int scene_bookmark_autosave(void)
+{
+	if (!config.autobm || scene_readbook_in_raw_mode) {
+		return 0;
+	}
+
+	bookmark_autosave(cur_book_view.bookmarkname,
+					  (fs->rows[fs->crow >> 10] +
+					   (fs->crow & 0x3FF))->start - fs->buf);
+
+	return 1;
+}
+
 dword scene_boptions(dword * selidx)
 {
 	t_win_menuitem item[12];
@@ -1686,8 +1699,11 @@ dword scene_boptions(dword * selidx)
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
 
+		scene_bookmark_autosave();
 		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
-		cur_book_view.text_needrf = true;
+		cur_book_view.rrow = INVALID;
+		cur_book_view.text_needrf = cur_book_view.text_needrb =
+			cur_book_view.text_needrp = true;
 		if (orgpixelsperrow != pixelsperrow)
 			result = 4;
 	}
@@ -2071,7 +2087,11 @@ dword scene_fontsel(dword * selidx)
 		if (orgfontindex != fontindex)
 			scene_load_font();
 		scene_load_book_font();
+		scene_bookmark_autosave();
 		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
+		cur_book_view.rrow = INVALID;
+		cur_book_view.text_needrf = cur_book_view.text_needrb =
+			cur_book_view.text_needrp = true;
 
 		memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 		return win_menu_op_ok;
@@ -2080,16 +2100,22 @@ dword scene_fontsel(dword * selidx)
 	dword result = win_menu_op_continue;
 
 	if (orgrowspace != config.rowspace || orgborderspace != config.borderspace) {
+		scene_bookmark_autosave();
 		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
-		cur_book_view.text_needrf = true;
+		cur_book_view.rrow = INVALID;
+		cur_book_view.text_needrf = cur_book_view.text_needrb =
+			cur_book_view.text_needrp = true;
 	}
 	if (orgibar != config.infobar || orgvert != config.vertread
 		|| orgwordspace != config.wordspace
 		|| orgscrollbar != config.scrollbar) {
 		dword orgpixelsperrow = pixelsperrow;
 
-		cur_book_view.text_needrf = true;
+		scene_bookmark_autosave();
 		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
+		cur_book_view.rrow = INVALID;
+		cur_book_view.text_needrf = cur_book_view.text_needrb =
+			cur_book_view.text_needrp = true;
 		if (orgpixelsperrow != pixelsperrow)
 			result = win_menu_op_force_redraw;
 	}
@@ -2587,7 +2613,9 @@ dword scene_moptions(dword * selidx)
 	if (orgfontindex != fontindex || orgbookfontindex != bookfontindex) {
 		scene_load_font();
 		scene_load_book_font();
+		scene_bookmark_autosave();
 		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
+		cur_book_view.rrow = INVALID;
 
 		memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 		return 2;
@@ -3011,7 +3039,9 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 		scene_load_book_font();
 	}
 
+	scene_bookmark_autosave();
 	recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
+	cur_book_view.rrow = INVALID;
 
 #ifdef ENABLE_BG
 	bg_load(curr->bgfile, curr->bgarch, curr->bgcolor,
@@ -3583,7 +3613,7 @@ static bool is_contain_hanzi_str(const char *str)
 		return false;
 
 	for (i = 0, len = strlen(str); i < len; ++i) {
-		if (((unsigned char)str[i]) >= 0x80) {
+		if (((unsigned char) str[i]) >= 0x80) {
 			return true;
 		}
 	}
@@ -3600,7 +3630,7 @@ static const char *remove_hanzi(char *dst, const char *src, size_t size)
 		return NULL;
 
 	for (i = 0; i < size - 1 && *src != '\0';) {
-		if ((unsigned char)*src >= 0x80) {
+		if ((unsigned char) *src >= 0x80) {
 			src += 2;
 			continue;
 		}
@@ -5457,6 +5487,7 @@ extern void scene_init()
 		sceKernelExitGame();
 	}
 	recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
+	cur_book_view.rrow = INVALID;
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "scene_load_font() & scene_load_book_font(): %.2f second",
 			   pspDiffTime(&dbgnow, &dbglasttick));
@@ -5558,28 +5589,6 @@ extern void scene_init()
 	xreader_scene_inited = true;
 
 	scene_filelist();
-}
-
-static int scene_bookmark_autosave(void)
-{
-	if (!config.autobm) {
-		return 0;
-	}
-
-	char archname[PATH_MAX];
-
-	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
-		STRCPY_S(archname, config.shortpath);
-		if (archname[strlen(archname) - 1] != '/' && fs->filename[0] != '/')
-			STRCAT_S(archname, "/");
-		STRCAT_S(archname, fs->filename);
-	} else
-		STRCPY_S(archname, fs->filename);
-	bookmark_autosave(archname,
-					  (fs->rows[fs->crow >> 10] +
-					   (fs->crow & 0x3FF))->start - fs->buf);
-
-	return 1;
 }
 
 extern void scene_exit()
