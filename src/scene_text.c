@@ -520,7 +520,11 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
 		STRCPY_S(pView->filename, filelist[selidx].compname->ptr);
 		STRCPY_S(pView->archname, config.shortpath);
-		STRCPY_S(pView->bookmarkname, config.path);
+		if (sceKernelDevkitVersion() <= 0x03070110) {
+			STRCPY_S(pView->bookmarkname, config.shortpath);
+		} else {
+			STRCPY_S(pView->bookmarkname, config.path);
+		}
 		if (config.shortpath[strlen(config.shortpath) - 1] != '/' &&
 			pView->filename[0] != '/')
 			STRCAT_S(pView->bookmarkname, "/");
@@ -530,10 +534,15 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		STRCAT_S(pView->filename, filelist[selidx].compname->ptr);
 		STRCPY_S(pView->archname, config.shortpath);
 		STRCAT_S(pView->archname, filelist[selidx].shortname->ptr);
-		STRCPY_S(pView->bookmarkname, pView->filename);
+		if (sceKernelDevkitVersion() <= 0x03070110) {
+			STRCPY_S(pView->bookmarkname, pView->archname);
+		} else {
+			STRCPY_S(pView->bookmarkname, pView->filename);
+		}
 	}
-	dbg_printf(d, "scene_book_reload: fn %s bookmarkname %s archname %s",
+	dbg_printf(d, "%s: fn %s bookmarkname %s archname %s", __func__,
 			   pView->filename, pView->bookmarkname, pView->archname);
+	dbg_printf(d, "%s: rrow 0x%08x", __func__, pView->rrow);
 	if (pView->rrow == INVALID) {
 		// disable binary file type text's bookmark
 		if (config.autobm
