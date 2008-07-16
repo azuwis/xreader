@@ -159,6 +159,10 @@ extern dword fs_list_device(const char *dir, const char *sdir,
 							p_win_menuitem * mitem, dword icolor,
 							dword selicolor, dword selrcolor, dword selbcolor)
 {
+	extern dword filecount;
+
+	win_item_destroy(mitem, &filecount);
+
 	strcpy_s((char *) sdir, 256, dir);
 	dword cur_count = 0;
 	p_win_menuitem item = NULL;

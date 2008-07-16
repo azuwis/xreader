@@ -77,6 +77,9 @@ static int fontcount = 0, fontindex = 0, bookfontcount = 0, bookfontindex =
 	0, ttfsize = 0;
 bool g_force_text_view_mode = false;
 
+char prev_path[PATH_MAX], prev_shortpath[PATH_MAX];
+char prev_lastfile[PATH_MAX];
+
 int freq_list[][2] = {
 	{15, 33},
 	{33, 16},
@@ -293,7 +296,7 @@ t_win_menu_op scene_flkey_menucb(dword key, p_win_menuitem item, dword * count,
 				return win_menu_op_force_redraw;
 			int i;
 
-			for (i = 0; i < 7; i++) {
+			for (i = 0; i < 8; i++) {
 				if (i == *index)
 					continue;
 				if (config.flkey[i] == key) {
@@ -361,7 +364,7 @@ dword scene_flkey(dword * selidx)
 
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
 
-	t_win_menuitem item[7];
+	t_win_menuitem item[8];
 
 	STRCPY_S(item[0].name, _("    选定"));
 	STRCPY_S(item[1].name, _("  第一项"));
@@ -370,6 +373,7 @@ dword scene_flkey(dword * selidx)
 	STRCPY_S(item[4].name, _("刷新列表"));
 	STRCPY_S(item[5].name, _("文件操作"));
 	STRCPY_S(item[6].name, _("选择文件"));
+	STRCPY_S(item[7].name, _("返回先前文件"));
 	dword i, index;
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
@@ -4538,9 +4542,43 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 		return win_menu_op_redraw;
 	} else if (key == config.flkey[5] || key == config.flkey2[5]) {
 		return scene_fileops(item, index);
-	} else if (key == config.flkey[4] || key == config.flkey2[4])
+	} else if (key == config.flkey[4] || key == config.flkey2[4]) {
 		return win_menu_op_cancel;
-	else if (key == PSP_CTRL_SELECT) {
+	} else if (key == config.flkey[7]) {
+		dbg_printf(d, "%s: 返回到上一个文件", __func__);
+		if (fat_inited == false) {
+			fat_init();
+			fat_inited = true;
+		}
+
+		if (prev_lastfile[0] == '\0' ||
+			prev_path[0] == '\0' || prev_shortpath[0] == '\0')
+			return win_menu_op_cancel;
+
+		STRCPY_S(config.path, prev_path);
+		STRCPY_S(config.shortpath, prev_shortpath);
+		STRCPY_S(config.lastfile, prev_lastfile);
+		config.isreading = true;
+
+		dword idx = 0;
+
+		scene_open_dir_or_archive(&idx);
+		if (idx >= filecount) {
+			idx = 0;
+			config.isreading = locreading = false;
+		}
+		item[0].data = (void *) true;
+		item[1].data = (void *) idx;
+
+		scene_open_dir_or_archive(&idx);
+		if (idx >= filecount) {
+			idx = 0;
+			config.isreading = locreading = false;
+		}
+		item[0].data = (void *) true;
+		item[1].data = (void *) idx;
+		return win_menu_op_cancel;
+	} else if (key == PSP_CTRL_SELECT) {
 		{
 			switch (scene_options(index)) {
 				case 2:
@@ -5020,6 +5058,9 @@ static void scene_open_text(dword * idx)
 	usb_deactivate();
 #endif
 	config.isreading = true;
+	STRCPY_S(prev_path, config.path);
+	STRCPY_S(prev_shortpath, config.shortpath);
+	STRCPY_S(prev_lastfile, filelist[*idx].compname->ptr);
 	*idx = scene_readbook(*idx);
 	g_force_text_view_mode = false;
 	config.isreading = false;
@@ -5585,6 +5626,10 @@ extern void scene_init()
 
 	dbg_printf(d, "get_bgcolor_by_time() return %lu/%lu/%lu", RGB_R(c),
 			   RGB_G(c), RGB_B(c));
+
+	prev_path[0] = '\0';
+	prev_shortpath[0] = '\0';
+	prev_lastfile[0] = '\0';
 
 	xreader_scene_inited = true;
 
