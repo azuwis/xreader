@@ -1038,3 +1038,6 @@ msgstr ""
 
 msgid "书签导出失败!"
 msgstr ""
+
+msgid "返回先前文件"
+msgstr ""

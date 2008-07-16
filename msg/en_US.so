@@ -1106,3 +1106,7 @@ msgstr "Bookmark import failed!"
 
 msgid "书签导出失败!"
 msgstr "Bookmark export failed!"
+
+msgid "返回先前文件"
+msgstr "Return to prev file"
+
