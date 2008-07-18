@@ -31,7 +31,9 @@ common/qsort.c common/qsort.h common/utils.c common/utils.h \
 apetaglib/APETag.c apetaglib/APETag.h apetaglib/TagError.c \
 apetaglib/TagHeader.h apetaglib/TagItem.c apetaglib/TagItem.h \
 $(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h \
-exception.c exception.h m33boot.c m33boot.h $(top_srcdir)/xr_rdriver/xr_RDLib.S
+exception.c exception.h m33boot.c m33boot.h passwdmgr.c passwdmgr.h \
+archive.c archive.h \
+$(top_srcdir)/xr_rdriver/xr_RDLib.S
 
 if NLS
 xReader_elf_SOURCES += simple_gettext.c sofile.c sofile.h hash.c hash.h

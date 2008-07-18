@@ -13,6 +13,7 @@
 #include "iniparser.h"
 #include "strsafe.h"
 #include "fs.h"
+#include "archive.h"
 #include "dbg.h"
 
 extern t_conf config;

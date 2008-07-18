@@ -8,6 +8,7 @@
 #include "copy.h"
 #include "fs.h"
 #include "dbg.h"
+#include "archive.h"
 #include "buffer.h"
 
 extern bool copy_file(const char *src, const char *dest, t_copy_cb cb,

@@ -22,12 +22,11 @@ static void ClearScreen(pixel * saveimage)
 	}
 }
 
-int get_osk_input(char *buf, int size)
+int _get_osk_input(char *buf, int size, unsigned short desc[128])
 {
 	char tstr[128] = { 0 };
 	unsigned short intext[128] = { 0 };	// text already in the edit box on start
 	unsigned short outtext[128] = { 0 };	// text after input
-	unsigned short desc[128] = { 'E', 'n', 't', 'e', 'r', ' ', 'G', 'I', 0 };	// description
 
 	pixel *saveimage = (pixel *) memalign(16,
 										  PSP_SCREEN_WIDTH *
@@ -126,4 +125,22 @@ int get_osk_input(char *buf, int size)
 	disp_fix_osk(buffer);
 
 	return 1;
+}
+
+int get_osk_input(char *buf, int size)
+{
+	unsigned short desc[128] = {
+		'E', 'n', 't', 'e', 'r', ' ', 'G', 'I', 0
+	};
+
+	return _get_osk_input(buf, size, desc);
+}
+
+int get_osk_input_password(char *buf, int size)
+{
+	unsigned short passwd[128] = {
+		'E', 'n', 't', 'e', 'r', ' ', 'P', 'a', 's', 's', 'w', 'o', 'r', 'd', 0
+	};
+
+	return _get_osk_input(buf, size, passwd);
 }

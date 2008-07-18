@@ -48,6 +48,7 @@
 #include "simple_gettext.h"
 #include "exception.h"
 #include "m33boot.h"
+#include "passwdmgr.h"
 #include "xr_rdriver/xr_rdriver.h"
 #include "kubridge.h"
 
@@ -3729,9 +3730,8 @@ static void scene_copy_files(int sidx)
 			// CHM Compname is UTF8 encoding.
 			char fname[PATH_MAX];
 
-			charsets_utf8_conv((unsigned char *) copylist[sidx].
-							   compname, sizeof(copylist[sidx].compname),
-							   (unsigned char *) fname, sizeof(fname));
+			charsets_utf8_conv((byte *) copylist[sidx].compname->ptr, -1,
+							   (byte *) fname, sizeof(fname));
 			STRCPY_S(temp, fname);
 		} else
 			STRCPY_S(temp, copylist[sidx].compname->ptr);
@@ -4569,14 +4569,6 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 		}
 		item[0].data = (void *) true;
 		item[1].data = (void *) idx;
-
-		scene_open_dir_or_archive(&idx);
-		if (idx >= filecount) {
-			idx = 0;
-			config.isreading = locreading = false;
-		}
-		item[0].data = (void *) true;
-		item[1].data = (void *) idx;
 		return win_menu_op_cancel;
 	} else if (key == PSP_CTRL_SELECT) {
 		{
@@ -5015,6 +5007,9 @@ static void scene_open_image(dword * idx)
 	usb_deactivate();
 #endif
 	config.isreading = true;
+	STRCPY_S(prev_path, config.path);
+	STRCPY_S(prev_shortpath, config.shortpath);
+	STRCPY_S(prev_lastfile, filelist[*idx].compname->ptr);
 	*idx = scene_readimage(*idx);
 	config.isreading = false;
 #ifdef ENABLE_USB
@@ -5631,6 +5626,7 @@ extern void scene_init()
 	prev_shortpath[0] = '\0';
 	prev_lastfile[0] = '\0';
 
+	load_passwords();
 	xreader_scene_inited = true;
 
 	scene_filelist();
@@ -5639,6 +5635,8 @@ extern void scene_init()
 extern void scene_exit()
 {
 	power_set_clock(222, 111);
+	save_passwords();
+	free_passwords();
 	if (bm != NULL) {
 		bookmark_close(bm);
 		bm = NULL;

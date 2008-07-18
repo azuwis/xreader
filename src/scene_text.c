@@ -160,8 +160,7 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 	if (where == scene_in_chm) {
 		char fname[PATH_MAX];
 
-		charsets_utf8_conv((unsigned char *) filelist[selidx].
-						   compname, sizeof(filelist[selidx].compname),
+		charsets_utf8_conv((byte *) filelist[selidx].compname->ptr, -1,
 						   (unsigned char *) fname, sizeof(fname));
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
@@ -267,8 +266,7 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 	if (where == scene_in_chm) {
 		char fname[PATH_MAX];
 
-		charsets_utf8_conv((unsigned char *) filelist[selidx].
-						   compname, sizeof(filelist[selidx].compname),
+		charsets_utf8_conv((byte *) filelist[selidx].compname->ptr, -1,
 						   (unsigned char *) fname, sizeof(fname));
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
@@ -542,7 +540,6 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	}
 	dbg_printf(d, "%s: fn %s bookmarkname %s archname %s", __func__,
 			   pView->filename, pView->bookmarkname, pView->archname);
-	dbg_printf(d, "%s: rrow 0x%08x", __func__, pView->rrow);
 	if (pView->rrow == INVALID) {
 		// disable binary file type text's bookmark
 		if (config.autobm

@@ -13,7 +13,6 @@
 #include <tga.h>
 #include <chm_lib.h>
 #include <unzip.h>
-#include <unrar.h>
 #include <setjmp.h>
 #include <psprtc.h>
 #include "common/utils.h"
@@ -22,7 +21,10 @@
 #include "buffer.h"
 #include "dbg.h"
 #include "conf.h"
-#include "fs.h"
+#include "archive.h"
+#include "passwdmgr.h"
+#include "bg.h"
+#include "osk.h"
 #include "scene.h"
 
 extern t_conf config;
@@ -403,27 +405,6 @@ static long image_chm_ftell(void *stream)
 	return ((p_image_chm) stream)->readpos;
 }
 
-typedef struct
-{
-	int idx, size;
-	byte *buf;
-} t_image_rar, *p_image_rar;
-
-static int imagerarcbproc(UINT msg, LONG UserData, LONG P1, LONG P2)
-{
-	if (msg == UCM_PROCESSDATA) {
-		p_image_rar irar = (p_image_rar) UserData;
-
-		if (P2 > irar->size - irar->idx) {
-			memcpy(&irar->buf[irar->idx], (void *) P1, irar->size - irar->idx);
-			return -1;
-		}
-		memcpy(&irar->buf[irar->idx], (void *) P1, P2);
-		irar->idx += P2;
-	}
-	return 0;
-}
-
 static unsigned image_rar_fread(void *buf, unsigned r, unsigned n, void *stream)
 {
 	p_image_rar irar = (p_image_rar) stream;
@@ -648,19 +629,126 @@ extern int image_readpng(const char *filename, dword * pwidth, dword * pheight,
 	return result;
 }
 
-extern int image_readpng_in_zip(const char *zipfile, const char *filename,
-								dword * pwidth, dword * pheight,
-								pixel ** image_data, pixel * bgcolor)
+static unzFile open_zip_file_with_password(const char *zipfile,
+										   const char *filename,
+										   const char *password)
+{
+	unzFile unzf = unzOpen(zipfile);
+	int ret;
+	buffer *buf;
+
+	if (unzf == NULL)
+		return NULL;
+
+	if (unzLocateFile(unzf, filename, 0) != UNZ_OK
+		|| unzOpenCurrentFilePassword(unzf, password) != UNZ_OK) {
+		unzClose(unzf);
+		return NULL;
+	}
+
+	unz_file_info info;
+
+	if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK) {
+		unzCloseCurrentFile(unzf);
+		unzClose(unzf);
+		return NULL;
+	}
+
+	buf = buffer_init();
+	buffer_prepare_copy(buf, info.uncompressed_size);
+	ret = unzReadCurrentFile(unzf, buf->ptr, info.uncompressed_size);
+	buffer_free(buf);
+	unzCloseCurrentFile(unzf);
+	unzClose(unzf);
+
+	if (ret < 0) {
+		return NULL;
+	}
+
+	unzf = unzOpen(zipfile);
+	if (unzLocateFile(unzf, filename, 0) != UNZ_OK
+		|| unzOpenCurrentFilePassword(unzf, password) != UNZ_OK) {
+		unzClose(unzf);
+		return NULL;
+	}
+
+	return unzf;
+}
+
+static unzFile open_zip_file(const char *zipfile, const char *filename)
 {
 	unzFile unzf = unzOpen(zipfile);
 
 	if (unzf == NULL)
-		return -1;
+		return NULL;
+
 	if (unzLocateFile(unzf, filename, 0) != UNZ_OK
 		|| unzOpenCurrentFile(unzf) != UNZ_OK) {
 		unzClose(unzf);
-		return -1;
+		return NULL;
 	}
+
+	unz_file_info info;
+
+	if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK) {
+		unzCloseCurrentFile(unzf);
+		unzClose(unzf);
+		return NULL;
+	}
+
+	if (info.flag == 9) {
+		unzCloseCurrentFile(unzf);
+		unzClose(unzf);
+		dbg_printf(d, "%s: crc error, wrong password?", __func__);
+		// retry with loaded passwords
+		if (get_password_count()) {
+			int i, n;
+
+			for (n = get_password_count(), i = 0; i < n; ++i) {
+				buffer *b = get_password(i);
+
+				if (b == NULL || b->ptr == NULL) {
+					continue;
+				}
+				dbg_printf(d, "%s: trying list password: %s", __func__, b->ptr);
+				unzf = open_zip_file_with_password(zipfile, filename, b->ptr);
+				if (unzf != NULL) {
+					// ok
+					add_password(b->ptr);
+					return unzf;
+				}
+			}
+		}
+		// if all passwords failed, ask user input password
+		char pass[128];
+
+		if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
+			dbg_printf(d, "%s: input %s", __func__, pass);
+			unzf = open_zip_file_with_password(zipfile, filename, pass);
+			if (unzf != NULL) {
+				// ok
+				add_password(pass);
+				return unzf;
+			}
+		}
+		bg_display();
+		disp_flip();
+		bg_display();
+		disp_duptocache();
+		disp_waitv();
+	}
+
+	return unzf;
+}
+
+extern int image_readpng_in_zip(const char *zipfile, const char *filename,
+								dword * pwidth, dword * pheight,
+								pixel ** image_data, pixel * bgcolor)
+{
+	unzFile unzf = open_zip_file(zipfile, filename);
+
+	if (unzf == NULL)
+		return -1;
 	int result =
 		image_readpng2((void *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_png_zip_read);
@@ -697,44 +785,18 @@ extern int image_readpng_in_rar(const char *rarfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_rar rar;
-	struct RAROpenArchiveData arcdata;
 
-	arcdata.ArcName = (char *) rarfile;
-	arcdata.OpenMode = RAR_OM_EXTRACT;
-	arcdata.CmtBuf = NULL;
-	arcdata.CmtBufSize = 0;
-	HANDLE hrar = RAROpenArchive(&arcdata);
-
-	if (hrar == NULL)
+	extract_rar_file_into_image(&rar, rarfile, filename);
+	if (rar.buf == NULL) {
 		return -1;
-	RARSetCallback(hrar, imagerarcbproc, (LONG) & rar);
-	do {
-		struct RARHeaderData header;
+	}
+	rar.idx = 0;
+	int result = image_readpng2((void *) &rar, pwidth, pheight,
+								image_data,
+								bgcolor, image_png_rar_read);
 
-		if (RARReadHeader(hrar, &header) != 0)
-			break;
-		if (stricmp(header.FileName, filename) == 0) {
-			rar.size = header.UnpSize;
-			rar.idx = 0;
-			int e;
-
-			if ((rar.buf = calloc(1, rar.size)) == NULL
-				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
-				RARCloseArchive(hrar);
-				return -1;
-			}
-			RARCloseArchive(hrar);
-			rar.idx = 0;
-			int result = image_readpng2((void *) &rar, pwidth, pheight,
-										image_data,
-										bgcolor, image_png_rar_read);
-
-			free(rar.buf);
-			return result;
-		}
-	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
-	RARCloseArchive(hrar);
-	return -1;
+	free(rar.buf);
+	return result;
 }
 
 static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
@@ -882,15 +944,10 @@ extern int image_readgif_in_zip(const char *zipfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor)
 {
-	unzFile unzf = unzOpen(zipfile);
+	unzFile unzf = open_zip_file(zipfile, filename);
 
 	if (unzf == NULL)
 		return -1;
-	if (unzLocateFile(unzf, filename, 0) != UNZ_OK
-		|| unzOpenCurrentFile(unzf) != UNZ_OK) {
-		unzClose(unzf);
-		return -1;
-	}
 	int result =
 		image_readgif2((void *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_gif_zip_read);
@@ -927,44 +984,18 @@ extern int image_readgif_in_rar(const char *rarfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_rar rar;
-	struct RAROpenArchiveData arcdata;
 
-	arcdata.ArcName = (char *) rarfile;
-	arcdata.OpenMode = RAR_OM_EXTRACT;
-	arcdata.CmtBuf = NULL;
-	arcdata.CmtBufSize = 0;
-	HANDLE hrar = RAROpenArchive(&arcdata);
-
-	if (hrar == NULL)
+	extract_rar_file_into_image(&rar, rarfile, filename);
+	if (rar.buf == NULL) {
 		return -1;
-	RARSetCallback(hrar, imagerarcbproc, (LONG) & rar);
-	do {
-		struct RARHeaderData header;
+	}
+	rar.idx = 0;
+	int result = image_readgif2((void *) &rar, pwidth, pheight,
+								image_data,
+								bgcolor, image_gif_rar_read);
 
-		if (RARReadHeader(hrar, &header) != 0)
-			break;
-		if (stricmp(header.FileName, filename) == 0) {
-			rar.size = header.UnpSize;
-			rar.idx = 0;
-			int e;
-
-			if ((rar.buf = calloc(1, rar.size)) == NULL
-				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
-				RARCloseArchive(hrar);
-				return -1;
-			}
-			RARCloseArchive(hrar);
-			rar.idx = 0;
-			int result = image_readgif2((void *) &rar, pwidth, pheight,
-										image_data,
-										bgcolor, image_gif_rar_read);
-
-			free(rar.buf);
-			return result;
-		}
-	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
-	RARCloseArchive(hrar);
-	return -1;
+	free(rar.buf);
+	return result;
 }
 
 static jmp_buf jmp;
@@ -1085,16 +1116,10 @@ extern int exif_readjpg_in_zip(const char *zipfile, const char *filename,
 	if (!config.load_exif)
 		return -1;
 
-	unzFile unzf = unzOpen(zipfile);
+	unzFile unzf = open_zip_file(zipfile, filename);
 
 	if (unzf == NULL)
 		return -1;
-	if (unzLocateFile(unzf, filename, 0) != UNZ_OK
-		|| unzOpenCurrentFile(unzf) != UNZ_OK) {
-		unzClose(unzf);
-		return -1;
-	}
-
 	exif_data = exif_data_new_from_stream(image_zip_fread, unzf);
 	exif_viewer(exif_data);
 
@@ -1107,32 +1132,15 @@ extern int image_readjpg_in_zip(const char *zipfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor)
 {
-	unzFile unzf = unzOpen(zipfile);
+	unzFile unzf = open_zip_file(zipfile, filename);
 
 	if (unzf == NULL)
 		return -1;
-	if (unzLocateFile(unzf, filename, 0) != UNZ_OK
-		|| unzOpenCurrentFile(unzf) != UNZ_OK) {
-		unzClose(unzf);
-		return -1;
-	}
 	int result =
 		image_readjpg2((FILE *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_zip_fread);
 
 	if (config.load_exif) {
-		unzCloseCurrentFile(unzf);
-		unzClose(unzf);
-
-		unzf = unzOpen(zipfile);
-		if (unzf == NULL)
-			return -1;
-		if (unzLocateFile(unzf, filename, 0) != UNZ_OK
-			|| unzOpenCurrentFile(unzf) != UNZ_OK) {
-			unzClose(unzf);
-			return -1;
-		}
-
 		exif_data = exif_data_new_from_stream(image_zip_fread, unzf);
 		exif_viewer(exif_data);
 	}
@@ -1203,47 +1211,19 @@ extern int exif_readjpg_in_rar(const char *rarfile, const char *filename,
 
 	u64 dbglasttick, dbgnow;
 	t_image_rar rar;
-	struct RAROpenArchiveData arcdata;
 
-	arcdata.ArcName = (char *) rarfile;
-	arcdata.OpenMode = RAR_OM_EXTRACT;
-	arcdata.CmtBuf = NULL;
-	arcdata.CmtBufSize = 0;
-	sceRtcGetCurrentTick(&dbglasttick);
-	HANDLE hrar = RAROpenArchive(&arcdata);
-
-	if (hrar == NULL)
+	extract_rar_file_into_image(&rar, rarfile, filename);
+	if (rar.buf == NULL) {
 		return -1;
-	RARSetCallback(hrar, imagerarcbproc, (LONG) & rar);
-	do {
-		struct RARHeaderData header;
-
-		if (RARReadHeader(hrar, &header) != 0)
-			break;
-		if (stricmp(header.FileName, filename) == 0) {
-			rar.size = header.UnpSize;
-			rar.idx = 0;
-			int e;
-
-			if ((rar.buf = calloc(1, rar.size)) == NULL
-				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
-				RARCloseArchive(hrar);
-				return -1;
-			}
-			RARCloseArchive(hrar);
-			rar.idx = 0;
-			sceRtcGetCurrentTick(&dbgnow);
-			dbg_printf(d, "找到RAR中JPG文件耗时%.2f秒",
-					   pspDiffTime(&dbgnow, &dbglasttick));
-			exif_data = exif_data_new_from_data(rar.buf, rar.size);
-			exif_viewer(exif_data);
-			free(rar.buf);
-			return 0;
-		}
-	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
-
-	RARCloseArchive(hrar);
-	return -1;
+	}
+	rar.idx = 0;
+	sceRtcGetCurrentTick(&dbgnow);
+	dbg_printf(d, "找到RAR中JPG文件耗时%.2f秒",
+			   pspDiffTime(&dbgnow, &dbglasttick));
+	exif_data = exif_data_new_from_data(rar.buf, rar.size);
+	exif_viewer(exif_data);
+	free(rar.buf);
+	return 0;
 }
 
 extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
@@ -1252,53 +1232,26 @@ extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
 {
 	u64 dbglasttick, dbgnow;
 	t_image_rar rar;
-	struct RAROpenArchiveData arcdata;
 
-	arcdata.ArcName = (char *) rarfile;
-	arcdata.OpenMode = RAR_OM_EXTRACT;
-	arcdata.CmtBuf = NULL;
-	arcdata.CmtBufSize = 0;
 	sceRtcGetCurrentTick(&dbglasttick);
-	HANDLE hrar = RAROpenArchive(&arcdata);
-
-	if (hrar == NULL)
+	extract_rar_file_into_image(&rar, rarfile, filename);
+	if (rar.buf == NULL) {
 		return -1;
-	RARSetCallback(hrar, imagerarcbproc, (LONG) & rar);
-	do {
-		struct RARHeaderData header;
+	}
+	rar.idx = 0;
+	sceRtcGetCurrentTick(&dbgnow);
+	dbg_printf(d, "解压RAR中JPG文件耗时%.2f秒",
+			   pspDiffTime(&dbgnow, &dbglasttick));
+	int result = image_readjpg2((FILE *) & rar, pwidth, pheight,
+								image_data,
+								bgcolor, image_rar_fread);
 
-		if (RARReadHeader(hrar, &header) != 0)
-			break;
-		if (stricmp(header.FileName, filename) == 0) {
-			rar.size = header.UnpSize;
-			rar.idx = 0;
-			int e;
-
-			if ((rar.buf = calloc(1, rar.size)) == NULL
-				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
-				RARCloseArchive(hrar);
-				return -1;
-			}
-			RARCloseArchive(hrar);
-			rar.idx = 0;
-			sceRtcGetCurrentTick(&dbgnow);
-			dbg_printf(d, "找到RAR中JPG文件耗时%.2f秒",
-					   pspDiffTime(&dbgnow, &dbglasttick));
-			int result = image_readjpg2((FILE *) & rar, pwidth, pheight,
-										image_data,
-										bgcolor, image_rar_fread);
-
-			if (config.load_exif) {
-				exif_data = exif_data_new_from_data(rar.buf, rar.size);
-				exif_viewer(exif_data);
-			}
-			free(rar.buf);
-			return result;
-		}
-	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
-
-	RARCloseArchive(hrar);
-	return -1;
+	if (config.load_exif) {
+		exif_data = exif_data_new_from_data(rar.buf, rar.size);
+		exif_viewer(exif_data);
+	}
+	free(rar.buf);
+	return result;
 }
 
 static int image_bmp_to_32color(DIB dib, dword * width, dword * height,
@@ -1441,15 +1394,10 @@ extern int image_readbmp_in_zip(const char *zipfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor)
 {
-	unzFile unzf = unzOpen(zipfile);
+	unzFile unzf = open_zip_file(zipfile, filename);
 
 	if (unzf == NULL)
 		return -1;
-	if (unzLocateFile(unzf, filename, 0) != UNZ_OK
-		|| unzOpenCurrentFile(unzf) != UNZ_OK) {
-		unzClose(unzf);
-		return -1;
-	}
 	int result =
 		image_readbmp2((FILE *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_zip_fread);
@@ -1486,44 +1434,18 @@ extern int image_readbmp_in_rar(const char *rarfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_rar rar;
-	struct RAROpenArchiveData arcdata;
 
-	arcdata.ArcName = (char *) rarfile;
-	arcdata.OpenMode = RAR_OM_EXTRACT;
-	arcdata.CmtBuf = NULL;
-	arcdata.CmtBufSize = 0;
-	HANDLE hrar = RAROpenArchive(&arcdata);
-
-	if (hrar == NULL)
+	extract_rar_file_into_image(&rar, rarfile, filename);
+	if (rar.buf == NULL) {
 		return -1;
-	RARSetCallback(hrar, imagerarcbproc, (LONG) & rar);
-	do {
-		struct RARHeaderData header;
+	}
+	rar.idx = 0;
+	int result = image_readbmp2((FILE *) & rar, pwidth, pheight,
+								image_data,
+								bgcolor, image_rar_fread);
 
-		if (RARReadHeader(hrar, &header) != 0)
-			break;
-		if (stricmp(header.FileName, filename) == 0) {
-			rar.size = header.UnpSize;
-			rar.idx = 0;
-			int e;
-
-			if ((rar.buf = calloc(1, rar.size)) == NULL
-				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
-				RARCloseArchive(hrar);
-				return -1;
-			}
-			RARCloseArchive(hrar);
-			rar.idx = 0;
-			int result = image_readbmp2((FILE *) & rar, pwidth, pheight,
-										image_data,
-										bgcolor, image_rar_fread);
-
-			free(rar.buf);
-			return result;
-		}
-	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
-	RARCloseArchive(hrar);
-	return -1;
+	free(rar.buf);
+	return result;
 }
 
 static void image_freetgadata(TGAData * data)
@@ -1630,15 +1552,10 @@ extern int image_readtga_in_zip(const char *zipfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor)
 {
-	unzFile unzf = unzOpen(zipfile);
+	unzFile unzf = open_zip_file(zipfile, filename);
 
 	if (unzf == NULL)
 		return -1;
-	if (unzLocateFile(unzf, filename, 0) != UNZ_OK
-		|| unzOpenCurrentFile(unzf) != UNZ_OK) {
-		unzClose(unzf);
-		return -1;
-	}
 	int result =
 		image_readtga2((FILE *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_zip_fread, image_zip_fseek, image_zip_ftell);
@@ -1675,46 +1592,20 @@ extern int image_readtga_in_rar(const char *rarfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_rar rar;
-	struct RAROpenArchiveData arcdata;
 
-	arcdata.ArcName = (char *) rarfile;
-	arcdata.OpenMode = RAR_OM_EXTRACT;
-	arcdata.CmtBuf = NULL;
-	arcdata.CmtBufSize = 0;
-	HANDLE hrar = RAROpenArchive(&arcdata);
-
-	if (hrar == NULL)
+	extract_rar_file_into_image(&rar, rarfile, filename);
+	if (rar.buf == NULL) {
 		return -1;
-	RARSetCallback(hrar, imagerarcbproc, (LONG) & rar);
-	do {
-		struct RARHeaderData header;
+	}
+	rar.idx = 0;
+	int result = image_readtga2((FILE *) & rar, pwidth, pheight,
+								image_data,
+								bgcolor, image_rar_fread,
+								image_rar_fseek,
+								image_rar_ftell);
 
-		if (RARReadHeader(hrar, &header) != 0)
-			break;
-		if (stricmp(header.FileName, filename) == 0) {
-			rar.size = header.UnpSize;
-			rar.idx = 0;
-			int e;
-
-			if ((rar.buf = calloc(1, rar.size)) == NULL
-				|| (e = RARProcessFile(hrar, RAR_TEST, NULL, NULL)) != 0) {
-				RARCloseArchive(hrar);
-				return -1;
-			}
-			RARCloseArchive(hrar);
-			rar.idx = 0;
-			int result = image_readtga2((FILE *) & rar, pwidth, pheight,
-										image_data,
-										bgcolor, image_rar_fread,
-										image_rar_fseek,
-										image_rar_ftell);
-
-			free(rar.buf);
-			return result;
-		}
-	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
-	RARCloseArchive(hrar);
-	return -1;
+	free(rar.buf);
+	return result;
 }
 
 void exif_entry_viewer(ExifEntry * pentry, void *user_data)
