@@ -1041,3 +1041,6 @@ msgstr ""
 
 msgid "返回先前文件"
 msgstr ""
+
+msgid "压缩档案损坏或密码错误"
+msgstr ""

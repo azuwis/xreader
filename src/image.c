@@ -788,7 +788,7 @@ extern int image_readpng_in_rar(const char *rarfile, const char *filename,
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
 	if (rar.buf == NULL) {
-		return -1;
+		return 6;
 	}
 	rar.idx = 0;
 	int result = image_readpng2((void *) &rar, pwidth, pheight,
@@ -987,7 +987,7 @@ extern int image_readgif_in_rar(const char *rarfile, const char *filename,
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
 	if (rar.buf == NULL) {
-		return -1;
+		return 6;
 	}
 	rar.idx = 0;
 	int result = image_readgif2((void *) &rar, pwidth, pheight,
@@ -1214,7 +1214,7 @@ extern int exif_readjpg_in_rar(const char *rarfile, const char *filename,
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
 	if (rar.buf == NULL) {
-		return -1;
+		return 6;
 	}
 	rar.idx = 0;
 	sceRtcGetCurrentTick(&dbgnow);
@@ -1236,7 +1236,7 @@ extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
 	sceRtcGetCurrentTick(&dbglasttick);
 	extract_rar_file_into_image(&rar, rarfile, filename);
 	if (rar.buf == NULL) {
-		return -1;
+		return 6;
 	}
 	rar.idx = 0;
 	sceRtcGetCurrentTick(&dbgnow);
@@ -1437,7 +1437,7 @@ extern int image_readbmp_in_rar(const char *rarfile, const char *filename,
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
 	if (rar.buf == NULL) {
-		return -1;
+		return 6;
 	}
 	rar.idx = 0;
 	int result = image_readbmp2((FILE *) & rar, pwidth, pheight,
@@ -1595,7 +1595,7 @@ extern int image_readtga_in_rar(const char *rarfile, const char *filename,
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
 	if (rar.buf == NULL) {
-		return -1;
+		return 6;
 	}
 	rar.idx = 0;
 	int result = image_readtga2((FILE *) & rar, pwidth, pheight,

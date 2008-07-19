@@ -110,6 +110,9 @@ static void report_image_error(int status)
 		case 5:
 			errstr = _("内存不足");
 			break;
+		case 6:
+			errstr = _("压缩档案损坏或密码错误");
+			break;
 		default:
 			errstr = _("不明");
 			break;

@@ -1110,3 +1110,5 @@ msgstr "Bookmark export failed!"
 msgid "返回先前文件"
 msgstr "Return to prev file"
 
+msgid "压缩档案损坏或密码错误"
+msgstr "Corrupt archive or password incorrent"
