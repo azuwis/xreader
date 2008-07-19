@@ -2357,6 +2357,9 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 					}
 					set_language();
 					break;
+				case 13:
+					config.save_password = !config.save_password;
+					break;
 			}
 			return win_menu_op_redraw;
 		case PSP_CTRL_RIGHT:
@@ -2410,6 +2413,9 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 						STRCPY_S(config.language, "zh_CN");
 					}
 					set_language();
+					break;
+				case 13:
+					config.save_password = !config.save_password;
 					break;
 			}
 			return win_menu_op_redraw;
@@ -2541,11 +2547,17 @@ void scene_moptions_predraw(p_win_menuitem item, dword index, dword topindex,
 																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) infomsg);
 	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE,
+				   (const byte *) (config.save_password ? _("是") : _("否")));
+	lines++;
 }
 
 dword scene_moptions(dword * selidx)
 {
-	t_win_menuitem item[13];
+	t_win_menuitem item[14];
 	dword i;
 
 	STRCPY_S(item[0].name, _("    隐藏文件"));
@@ -2561,6 +2573,7 @@ dword scene_moptions(dword * selidx)
 	STRCPY_S(item[10].name, _("禁用屏幕保护"));
 	STRCPY_S(item[11].name, _("启动程序类型"));
 	STRCPY_S(item[12].name, _("        语言"));
+	STRCPY_S(item[13].name, _("保存档案密码"));
 
 	win_menu_predraw_data prev;
 
