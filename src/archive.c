@@ -265,6 +265,7 @@ static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
 		bg_display();
 		disp_duptocache();
 		disp_waitv();
+		return;
 	}
 
 	if (code != 0) {
