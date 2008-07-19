@@ -14,6 +14,7 @@
 #include "simple_gettext.h"
 #include "dbg.h"
 #include "kubridge.h"
+#include "passwdmgr.h"
 
 extern bool scene_load_font();
 extern bool scene_load_book_font();
@@ -242,6 +243,7 @@ static void conf_default(p_conf conf)
 	} else {
 		conf->ttf_load_to_memory = false;
 	}
+	conf->save_password = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -999,6 +1001,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->ttf_load_to_memory =
 		iniparser_getboolean(dict, "Text:ttf_load_to_memory",
 							 conf->ttf_load_to_memory);
+	
+	conf->save_password =
+		iniparser_getboolean(dict, "Global:save_password",
+							 conf->save_password);
 
 	dictionary_del(dict);
 
@@ -1253,6 +1259,10 @@ extern bool ini_conf_save(p_conf conf)
 						booleanToString(buf, sizeof(buf),
 										conf->ttf_load_to_memory));
 
+	iniparser_setstring(dict, "Global:save_password",
+						booleanToString(buf, sizeof(buf),
+										conf->save_password));
+
 	iniparser_dump_ini(dict, fp);
 
 	fclose(fp);
@@ -1300,6 +1310,8 @@ extern bool conf_load(p_conf conf)
 
 extern bool conf_save(p_conf conf)
 {
+	if (conf->save_password)
+		save_passwords();
 	ini_conf_save(conf);
 	return true;
 }

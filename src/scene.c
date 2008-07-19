@@ -1625,9 +1625,10 @@ static int scene_bookmark_autosave(void)
 		return 0;
 	}
 
-	bookmark_autosave(cur_book_view.bookmarkname,
-					  (fs->rows[fs->crow >> 10] +
-					   (fs->crow & 0x3FF))->start - fs->buf);
+	if (config.isreading)
+		bookmark_autosave(cur_book_view.bookmarkname,
+						  (fs->rows[fs->crow >> 10] +
+						   (fs->crow & 0x3FF))->start - fs->buf);
 
 	return 1;
 }
@@ -3001,6 +3002,7 @@ void scene_setting_mgr_predraw(p_win_menuitem item, dword index, dword topindex,
 
 int detect_config_change(const p_conf prev, const p_conf curr)
 {
+	load_passwords();
 	if (strcmp(prev->language, curr->language) != 0) {
 		set_language();
 	}
@@ -3099,6 +3101,8 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 				disp_waitv();
 				char conffile[PATH_MAX];
 
+				if (config.save_password)
+					save_passwords();
 				SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config",
 						  config_num, ".ini");
 				conf_set_file(conffile);
@@ -5635,7 +5639,8 @@ extern void scene_init()
 extern void scene_exit()
 {
 	power_set_clock(222, 111);
-	save_passwords();
+	if (config.save_password)
+		save_passwords();
 	free_passwords();
 	if (bm != NULL) {
 		bookmark_close(bm);

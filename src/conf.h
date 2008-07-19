@@ -183,6 +183,7 @@ typedef struct
 	char language[20];
 	int filelistwidth;
 	bool ttf_load_to_memory;
+	bool save_password;
 } t_conf, *p_conf;
 
 /* txt key:
