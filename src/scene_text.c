@@ -158,16 +158,12 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 			autopageinfo[0] = 0;
 	}
 	if (where == scene_in_chm) {
-		char fname[PATH_MAX];
-
-		charsets_utf8_conv((byte *) filelist[selidx].compname->ptr, -1,
-						   (unsigned char *) fname, sizeof(fname));
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename(config.
 																  encode)),
-				  fname, calc_gi(), autopageinfo);
+				  filelist[selidx].name, calc_gi(), autopageinfo);
 	} else if (scene_readbook_in_raw_mode == true) {
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
@@ -264,16 +260,12 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 			autopageinfo[0] = 0;
 	}
 	if (where == scene_in_chm) {
-		char fname[PATH_MAX];
-
-		charsets_utf8_conv((byte *) filelist[selidx].compname->ptr, -1,
-						   (unsigned char *) fname, sizeof(fname));
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename(config.
 																  encode)),
-				  fname, calc_gi(), autopageinfo);
+				  filelist[selidx].name, calc_gi(), autopageinfo);
 	} else if (scene_readbook_in_raw_mode == true) {
 		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
