@@ -28,20 +28,18 @@ static int power_callback(int arg1, int powerInfo, void *arg)
 {
 #ifdef ENABLE_TTF
 	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0) {
-		if (config.usettf) {
-			ctrl_lock();
+		if (config.usettf && !config.ttf_load_to_memory) {
 			sceKernelDelayThread(500000);
 			disp_assign_book_font();
 		}
 	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
-		if (config.usettf) {
+		if (config.usettf && !config.ttf_load_to_memory) {
 			disp_load_zipped_truetype_book_font(config.ettfarch,
 												config.cttfarch,
 												config.ettfpath,
 												config.cttfpath,
 												config.bookfontsize);
 		}
-		ctrl_unlock();
 	}
 #endif
 #ifdef ENABLE_MUSIC

@@ -40,7 +40,4 @@ extern dword ctrl_waittime(dword t);
 extern void ctrl_enablehprm(bool enable);
 #endif
 
-extern void ctrl_lock(void);
-extern void ctrl_unlock(void);
-
 #endif
