@@ -780,6 +780,8 @@ static t_conf_rotate stringToRotate(char *str)
 
 static void check_empty_imgkey(t_conf * conf)
 {
+	if (conf->confver >= XREADER_VERSION_NUM)
+		return;
 	if (conf->imgkey[12] == 0)
 		conf->imgkey[12] = PSP_CTRL_UP;
 	if (conf->imgkey[13] == 0)
@@ -1052,6 +1054,7 @@ extern bool ini_conf_save(p_conf conf)
 	if (conf == NULL) {
 		return false;
 	}
+	conf->confver = XREADER_VERSION_NUM;
 
 	dictionary *dict = dictionary_new(0);
 
@@ -1350,8 +1353,6 @@ extern bool conf_load(p_conf conf)
 
 extern bool conf_save(p_conf conf)
 {
-	if (conf->save_password)
-		save_passwords();
 	ini_conf_save(conf);
 	return true;
 }

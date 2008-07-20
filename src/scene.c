@@ -3172,6 +3172,7 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 				} else if (*index == 1) {
 					// save
 					load_fontsize_to_config();
+					save_passwords();
 					if (!conf_save(&config)) {
 						win_msg(_("±£´æÉèÖÃÊ§°Ü!"), COLOR_WHITE,
 								COLOR_WHITE, config.msgbcolor);
@@ -4892,6 +4893,7 @@ static void scene_exec_prog(dword * idx)
 				 COLOR_WHITE, config.msgbcolor)) {
 				char path[PATH_MAX], upper[PATH_MAX];
 
+				save_passwords();
 				conf_save(&config);
 				STRCPY_S(path, config.path);
 				strtoupper(upper, filelist[*idx].compname->ptr);
@@ -4912,6 +4914,7 @@ static void scene_exec_prog(dword * idx)
 		 config.msgbcolor)) {
 		char path[PATH_MAX], upper[PATH_MAX];
 
+		save_passwords();
 		conf_save(&config);
 		STRCPY_S(path, config.path);
 		strtoupper(upper, filelist[*idx].compname->ptr);
