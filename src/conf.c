@@ -778,7 +778,7 @@ static t_conf_rotate stringToRotate(char *str)
 	return conf_rotate_0;
 }
 
-static void check_empty_imgkey(t_conf *conf)
+static void check_empty_imgkey(t_conf * conf)
 {
 	if (conf->imgkey[12] == 0)
 		conf->imgkey[12] = PSP_CTRL_UP;

@@ -602,7 +602,7 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 					break;
 				case 5:
 					if (config.imgpagereserve == 0)
-						config.imgpagereserve = 50;
+						config.imgpagereserve = PSP_SCREEN_HEIGHT;
 					else
 						config.imgpagereserve--;
 					break;
@@ -671,7 +671,7 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 						config.imgpaging++;
 					break;
 				case 5:
-					if (config.imgpagereserve == 50)
+					if (config.imgpagereserve == PSP_SCREEN_HEIGHT)
 						config.imgpagereserve = 0;
 					else
 						config.imgpagereserve++;
@@ -741,8 +741,8 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 						config.slideinterval += 10;
 					break;
 				case 5:
-					if (config.imgpagereserve > 40)
-						config.imgpagereserve = 50;
+					if (config.imgpagereserve > PSP_SCREEN_HEIGHT - 10)
+						config.imgpagereserve = PSP_SCREEN_HEIGHT;
 					else
 						config.imgpagereserve += 10;
 					break;

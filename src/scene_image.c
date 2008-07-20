@@ -526,7 +526,7 @@ static void image_move(dword key)
 static bool image_paging_movedown(void)
 {
 	if (curtop + imgh < height_rotated) {
-		curtop += imgh - config.imgpagereserve;
+		curtop += MAX(imgh - (int) config.imgpagereserve, 0);
 		if (curtop + imgh > height_rotated)
 			curtop = height_rotated - imgh;
 		img_needrp = true;
@@ -539,7 +539,7 @@ static bool image_paging_movedown(void)
 static bool image_paging_moveup(void)
 {
 	if (curtop > 0) {
-		curtop -= imgh - config.imgpagereserve;
+		curtop -= MAX(imgh - (int) config.imgpagereserve, 0);
 		if (curtop < 0)
 			curtop = 0;
 		img_needrp = true;
