@@ -533,13 +533,17 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	dbg_printf(d, "%s: fn %s bookmarkname %s archname %s", __func__,
 			   pView->filename, pView->bookmarkname, pView->archname);
 	if (pView->rrow == INVALID) {
-		// disable binary file type text's bookmark
-		if (config.autobm
-			&& (t_fs_filetype) filelist[selidx].data != fs_filetype_unknown) {
+		if (!config.autobm
+			|| (t_fs_filetype) filelist[selidx].data == fs_filetype_unknown) {
+			// disable binary file type text's bookmark
+			pView->rrow = 0;
+		} else if (config.pagetonext) {
+			// disable pagetonext's bookmark
+			pView->rrow = 0;
+		} else {
 			pView->rrow = bookmark_autoload(pView->bookmarkname);
 			pView->text_needrb = true;
-		} else
-			pView->rrow = 0;
+		}
 	}
 	if (fs != NULL) {
 		text_close(fs);
