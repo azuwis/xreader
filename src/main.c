@@ -42,16 +42,18 @@ static int power_callback(int arg1, int powerInfo, void *arg)
 		}
 	}
 #endif
-#ifdef ENABLE_MUSIC
 	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0) {
+#ifdef ENABLE_MUSIC
 		mp3_powerdown();
+#endif
 		fat_powerdown();
 	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
 		sceKernelDelayThread(1000000);
 		fat_powerup();
+#ifdef ENABLE_MUSIC
 		mp3_powerup();
-	}
 #endif
+	}
 	scene_power_save(true);
 	return 0;
 }
