@@ -62,6 +62,7 @@ extern void *framebuffer;
 extern win_menu_predraw_data g_predraw;
 
 static volatile int secticks = 0;
+static int g_imgpaging_count = 0;
 
 static int open_image(dword selidx)
 {
@@ -499,20 +500,448 @@ static void image_right(void)
 
 static void image_move(dword key)
 {
-	if (key & PSP_CTRL_LEFT && !(key & PSP_CTRL_RIGHT)) {
+	if ((key & config.imgkey[14] && !(key & config.imgkey[15]))
+		|| (key & config.imgkey2[14] && !(key & config.imgkey2[15]))
+		) {
 		image_left();
 	}
-	if (key & PSP_CTRL_RIGHT && !(key & PSP_CTRL_LEFT)) {
+	if ((key & config.imgkey[15] && !(key & config.imgkey[14])) ||
+		(key & config.imgkey2[15] && !(key & config.imgkey2[14]))
+		) {
 		image_right();
 	}
-	if (key & PSP_CTRL_UP && !(key & PSP_CTRL_DOWN)) {
+	if ((key & config.imgkey[12] && !(key & config.imgkey[13])) ||
+		(key & config.imgkey2[12] && !(key & config.imgkey2[13]))
+		) {
 		image_up();
 	}
-	if (key & PSP_CTRL_DOWN && !(key & PSP_CTRL_UP)) {
+	if ((key & config.imgkey[13] && !(key & config.imgkey[12])) ||
+		(key & config.imgkey2[13] && !(key & config.imgkey2[12]))) {
 		image_down();
 	}
 	thumb = (config.thumb == conf_thumb_scroll);
 	img_needrp = thumb | img_needrp;
+}
+
+static bool image_paging_movedown(void)
+{
+	if (curtop + imgh < height_rotated) {
+		curtop += imgh - config.imgpagereserve;
+		if (curtop + imgh > height_rotated)
+			curtop = height_rotated - imgh;
+		img_needrp = true;
+		return false;
+	}
+
+	return true;
+}
+
+static bool image_paging_moveup(void)
+{
+	if (curtop > 0) {
+		curtop -= imgh - config.imgpagereserve;
+		if (curtop < 0)
+			curtop = 0;
+		img_needrp = true;
+		return false;
+	}
+
+	return true;
+}
+
+static bool image_paging_moveright(void)
+{
+	if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
+		curleft += PSP_SCREEN_WIDTH;
+		if (curleft + PSP_SCREEN_WIDTH > width_rotated)
+			curleft = width_rotated - PSP_SCREEN_WIDTH;
+		img_needrp = true;
+		return false;
+	}
+
+	return true;
+}
+
+static bool image_paging_moveleft(void)
+{
+	if (curleft > 0) {
+		curleft -= PSP_SCREEN_WIDTH;
+		if (curleft < 0)
+			curleft = 0;
+		img_needrp = true;
+		return false;
+	}
+
+	return true;
+}
+
+static bool image_paging_movedown_smooth(void)
+{
+	if (curtop + imgh < height_rotated) {
+		curtop += (int) config.imgpaging_spd;
+		if (curtop > height_rotated - imgh)
+			curtop = height_rotated - imgh;
+		img_needrp = true;
+		return false;
+	}
+
+	return true;
+}
+
+static bool image_paging_moveup_smooth(void)
+{
+	if (curtop > 0) {
+		curtop -= (int) config.imgpaging_spd;
+		if (curtop < 0)
+			curtop = 0;
+		img_needrp = true;
+		return false;
+	}
+
+	return true;
+}
+
+static bool image_paging_moveright_smooth(void)
+{
+	if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
+		curleft += (int) config.imgpaging_spd;
+		if (curleft > width_rotated - PSP_SCREEN_WIDTH)
+			curleft = width_rotated - PSP_SCREEN_WIDTH;
+		img_needrp = true;
+		return false;
+	}
+
+	return true;
+}
+
+static bool image_paging_moveleft_smooth(void)
+{
+	if (curleft > 0) {
+		curleft -= (int) config.imgpaging_spd;
+		if (curleft < 0)
+			curleft = 0;
+		img_needrp = true;
+		return false;
+	}
+
+	return true;
+}
+
+static bool image_paging_updown(bool is_forward)
+{
+	switch (ypos) {
+		case 0:
+		case 1:
+			if (is_forward) {
+				if (!image_paging_movedown()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveup()) {
+					return false;
+				}
+			}
+			break;
+		case 2:
+			if (is_forward) {
+				if (!image_paging_moveup()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_movedown()) {
+					return false;
+				}
+			}
+			break;
+	}
+	if (is_forward)
+		curtop = (height_rotated > imgh
+				  && ypos == 2) ? height_rotated - imgh : 0;
+	else
+		curtop = (height_rotated > imgh
+				  && ypos < 2) ? height_rotated - imgh : 0;
+	switch (xpos) {
+		case 0:
+		case 1:
+			if (is_forward) {
+				if (!image_paging_moveright()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveleft()) {
+					return false;
+				}
+			}
+			break;
+		case 2:
+			if (is_forward) {
+				if (!image_paging_moveleft()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveright()) {
+					return false;
+				}
+			}
+			break;
+	}
+
+	return true;
+}
+
+static bool image_paging_leftright(bool is_forward)
+{
+	switch (xpos) {
+		case 0:
+		case 1:
+			if (is_forward) {
+				if (!image_paging_moveright()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveleft()) {
+					return false;
+				}
+			}
+			break;
+		case 2:
+			if (is_forward) {
+				if (!image_paging_moveleft()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveright()) {
+					return false;
+				}
+			}
+			break;
+	}
+	if (is_forward)
+		curleft = (width_rotated > PSP_SCREEN_WIDTH
+				   && xpos == 2) ? width_rotated - PSP_SCREEN_WIDTH : 0;
+	else
+		curleft = (width_rotated > PSP_SCREEN_WIDTH
+				   && xpos < 2) ? width_rotated - PSP_SCREEN_WIDTH : 0;
+	switch (ypos) {
+		case 0:
+		case 1:
+			if (is_forward) {
+				if (!image_paging_movedown()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveup()) {
+					return false;
+				}
+			}
+			break;
+		case 2:
+			if (is_forward) {
+				if (!image_paging_moveup()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_movedown()) {
+					return false;
+				}
+			}
+			break;
+	}
+
+	return true;
+}
+
+static bool is_need_delay()
+{
+	if (config.imgpaging_interval == 0)
+		return false;
+
+	static u64 start, end;
+
+	if (g_imgpaging_count == 0)
+		sceRtcGetCurrentTick(&start);
+	sceRtcGetCurrentTick(&end);
+	if (pspDiffTime(&start, &end) >= 0.1) {
+		g_imgpaging_count++;
+		sceRtcGetCurrentTick(&start);
+	}
+
+	if (g_imgpaging_count < config.imgpaging_interval) {
+		return false;
+	} else {
+		if (g_imgpaging_count >= config.imgpaging_interval * 2) {
+			g_imgpaging_count = 0;
+		}
+		sceKernelDelayThread(100000 / 2);
+		return true;
+	}
+
+	return false;
+}
+
+static bool image_paging_leftright_smooth(bool is_forward)
+{
+	if (is_need_delay())
+		return false;
+
+	switch (xpos) {
+		case 0:
+		case 1:
+			if (is_forward) {
+				if (!image_paging_moveright_smooth()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveleft_smooth()) {
+					return false;
+				}
+			}
+			break;
+		case 2:
+			if (is_forward) {
+				if (!image_paging_moveleft_smooth()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveright_smooth()) {
+					return false;
+				}
+			}
+			break;
+	}
+	if (is_forward)
+		curleft = (width_rotated > PSP_SCREEN_WIDTH
+				   && xpos == 2) ? width_rotated - PSP_SCREEN_WIDTH : 0;
+	else
+		curleft = (width_rotated > PSP_SCREEN_WIDTH
+				   && xpos < 2) ? width_rotated - PSP_SCREEN_WIDTH : 0;
+	sceKernelDelayThread(100000 * config.imgpaging_interval / 2);
+	g_imgpaging_count = config.imgpaging_interval;
+	switch (ypos) {
+		case 0:
+		case 1:
+			if (is_forward) {
+				if (!image_paging_movedown()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveup()) {
+					return false;
+				}
+			}
+			break;
+		case 2:
+			if (is_forward) {
+				if (!image_paging_moveup()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_movedown()) {
+					return false;
+				}
+			}
+			break;
+	}
+
+	return true;
+}
+
+static bool image_paging_updown_smooth(bool is_forward)
+{
+	if (is_need_delay())
+		return false;
+
+	switch (ypos) {
+		case 0:
+		case 1:
+			if (is_forward) {
+				if (!image_paging_movedown_smooth()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveup_smooth()) {
+					return false;
+				}
+			}
+			break;
+		case 2:
+			if (is_forward) {
+				if (!image_paging_moveup_smooth()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_movedown_smooth()) {
+					return false;
+				}
+			}
+			break;
+	}
+	if (is_forward)
+		curtop = (height_rotated > imgh
+				  && ypos == 2) ? height_rotated - imgh : 0;
+	else
+		curtop = (height_rotated > imgh
+				  && ypos < 2) ? height_rotated - imgh : 0;
+	sceKernelDelayThread(100000 * config.imgpaging_interval / 2);
+	g_imgpaging_count = config.imgpaging_interval;;
+	switch (xpos) {
+		case 0:
+		case 1:
+			if (is_forward) {
+				if (!image_paging_moveright()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveleft()) {
+					return false;
+				}
+			}
+			break;
+		case 2:
+			if (is_forward) {
+				if (!image_paging_moveleft()) {
+					return false;
+				}
+			} else {
+				if (!image_paging_moveright()) {
+					return false;
+				}
+			}
+			break;
+	}
+
+	return true;
+}
+
+/**
+ * 处理图像卷动方式
+ * @param is_forward 是否为前进
+ * @param type 图像卷动方式
+ * @return 是否需要重新加载图像
+ */
+static bool image_paging(bool is_forward, t_conf_imgpaging type)
+{
+	switch (type) {
+		case conf_imgpaging_direct:
+			return true;
+			break;
+		case conf_imgpaging_updown:
+			return image_paging_updown(is_forward);
+			break;
+		case conf_imgpaging_leftright:
+			return image_paging_leftright(is_forward);
+			break;
+		case conf_imgpaging_updown_smooth:
+			return image_paging_updown_smooth(is_forward);
+			break;
+		case conf_imgpaging_leftright_smooth:
+			return image_paging_leftright_smooth(is_forward);
+			break;
+		default:
+			break;
+	}
+
+	return false;
 }
 
 static int image_handle_input(dword * selidx, dword key)
@@ -551,105 +980,11 @@ static int image_handle_input(dword * selidx, dword key)
 		img_needrp = true;
 	} else if (key == config.imgkey[1] || key == config.imgkey2[1]
 			   || key == CTRL_FORWARD) {
-		if (config.imgpaging > conf_imgpaging_direct)
+		if (config.imgpaging == conf_imgpaging_updown ||
+			config.imgpaging == conf_imgpaging_leftright)
 			sceKernelDelayThread(200000);
-		switch (config.imgpaging) {
-			case conf_imgpaging_updown:
-				switch (ypos) {
-					case 0:
-					case 1:
-						if (curtop + imgh < height_rotated) {
-							curtop += imgh - config.imgpagereserve;
-							if (curtop + imgh > height_rotated)
-								curtop = height_rotated - imgh;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-					case 2:
-						if (curtop > 0) {
-							curtop -= imgh - config.imgpagereserve;
-							if (curtop < 0)
-								curtop = 0;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-				}
-				curtop = 0;
-				if (height_rotated > imgh && ypos == 2)
-					curtop = height_rotated - imgh;
-				switch (xpos) {
-					case 0:
-					case 1:
-						if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
-							curleft += PSP_SCREEN_WIDTH;
-							if (curleft + PSP_SCREEN_WIDTH > width_rotated)
-								curleft = width_rotated - PSP_SCREEN_WIDTH;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-					case 2:
-						if (curleft > 0) {
-							curleft -= PSP_SCREEN_WIDTH;
-							if (curleft < 0)
-								curleft = 0;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-				}
-				break;
-			case conf_imgpaging_leftright:
-				switch (xpos) {
-					case 0:
-					case 1:
-						if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
-							curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
-							if (curleft + PSP_SCREEN_WIDTH > width_rotated)
-								curleft = width_rotated - PSP_SCREEN_WIDTH;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-					case 2:
-						if (curleft > 0) {
-							curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
-							if (curleft < 0)
-								curleft = 0;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-				}
-				curleft = 0;
-				if (width_rotated > PSP_SCREEN_WIDTH && xpos == 2)
-					curleft = width_rotated - PSP_SCREEN_WIDTH;
-				switch (ypos) {
-					case 0:
-					case 1:
-						if (curtop + imgh < height_rotated) {
-							curtop += imgh;
-							if (curtop + imgh > height_rotated)
-								curtop = height_rotated - imgh;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-					case 2:
-						if (curtop > 0) {
-							curtop -= imgh;
-							if (curtop < 0)
-								curtop = 0;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-				}
-				break;
-			default:;
-		}
+		if (!image_paging(true, config.imgpaging))
+			goto next;
 		dword orgidx = *selidx;
 
 		do {
@@ -667,105 +1002,11 @@ static int image_handle_input(dword * selidx, dword key)
 			img_needrf = img_needrc = img_needrp = true;
 	} else if (key == config.imgkey[0] || key == config.imgkey2[0]
 			   || key == CTRL_BACK) {
-		if (config.imgpaging > conf_imgpaging_direct)
+		if (config.imgpaging == conf_imgpaging_updown ||
+			config.imgpaging == conf_imgpaging_leftright)
 			sceKernelDelayThread(200000);
-		switch (config.imgpaging) {
-			case conf_imgpaging_updown:
-				switch (ypos) {
-					case 0:
-					case 1:
-						if (curtop > 0) {
-							curtop -= imgh - config.imgpagereserve;
-							if (curtop < 0)
-								curtop = 0;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-					case 2:
-						if (curtop + imgh < height_rotated) {
-							curtop += imgh - config.imgpagereserve;
-							if (curtop + imgh > height_rotated)
-								curtop = height_rotated - imgh;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-				}
-				curtop = 0;
-				if (height_rotated > imgh && ypos < 2)
-					curtop = height_rotated - imgh;
-				switch (xpos) {
-					case 0:
-					case 1:
-						if (curleft > 0) {
-							curleft -= PSP_SCREEN_WIDTH;
-							if (curleft < 0)
-								curleft = 0;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-					case 2:
-						if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
-							curleft += PSP_SCREEN_WIDTH;
-							if (curleft + PSP_SCREEN_WIDTH > width_rotated)
-								curleft = width_rotated - PSP_SCREEN_WIDTH;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-				}
-				break;
-			case conf_imgpaging_leftright:
-				switch (xpos) {
-					case 0:
-					case 1:
-						if (curleft > 0) {
-							curleft -= PSP_SCREEN_WIDTH - config.imgpagereserve;
-							if (curleft < 0)
-								curleft = 0;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-					case 2:
-						if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
-							curleft += PSP_SCREEN_WIDTH - config.imgpagereserve;
-							if (curleft + PSP_SCREEN_WIDTH > width_rotated)
-								curleft = width_rotated - PSP_SCREEN_WIDTH;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-				}
-				curleft = 0;
-				if (width_rotated > PSP_SCREEN_WIDTH && xpos < 2)
-					curleft = width_rotated - PSP_SCREEN_WIDTH;
-				switch (ypos) {
-					case 0:
-					case 1:
-						if (curtop > 0) {
-							curtop -= imgh;
-							if (curtop < 0)
-								curtop = 0;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-					case 2:
-						if (curtop + imgh < height_rotated) {
-							curtop += imgh;
-							if (curtop + imgh > height_rotated)
-								curtop = height_rotated - imgh;
-							img_needrp = true;
-							goto next;
-						}
-						break;
-				}
-				break;
-			default:;
-		}
+		if (!image_paging(false, config.imgpaging))
+			goto next;
 		dword orgidx = *selidx;
 
 		do {
@@ -798,13 +1039,7 @@ static int image_handle_input(dword * selidx, dword key)
 		img_needrp = (thumb || orgtop != curtop || orgleft != curleft);
 	}
 #endif
-	else if (key &
-			 (PSP_CTRL_LEFT | PSP_CTRL_RIGHT | PSP_CTRL_UP | PSP_CTRL_DOWN)
-			 && !(key &
-				  ~(PSP_CTRL_LEFT | PSP_CTRL_RIGHT | PSP_CTRL_UP |
-					PSP_CTRL_DOWN))) {
-		image_move(key);
-	} else if (key == config.imgkey[2] || key == config.imgkey2[2]) {
+	else if (key == config.imgkey[2] || key == config.imgkey2[2]) {
 		ctrl_waitrelease();
 		if (config.fit == conf_fit_custom)
 			config.fit = conf_fit_none;
@@ -901,6 +1136,17 @@ static int image_handle_input(dword * selidx, dword key)
 		config.fit = conf_fit_custom;
 		img_needrc = img_needrp = true;
 		ctrl_waitreleasekey(key);
+	} else if (key &
+			   (config.imgkey[12] | config.imgkey[13] | config.
+				imgkey[14] | config.imgkey[15] | config.imgkey2[12] | config.
+				imgkey2[13] | config.imgkey2[14] | config.imgkey2[15])
+			   && !(key &
+					~(config.imgkey[12] | config.imgkey[13] | config.
+					  imgkey[14] | config.imgkey[15] | config.
+					  imgkey2[12] | config.imgkey2[13] | config.
+					  imgkey2[14] | config.imgkey2[15]
+					))) {
+		image_move(key);
 	} else
 		img_needrf = img_needrc = false;
   next:
@@ -930,6 +1176,7 @@ dword scene_readimage(dword selidx)
 	else
 		imgh = PSP_SCREEN_HEIGHT;
 	u64 timer_start, timer_end;
+	u64 slide_start, slide_end;
 
 	sceRtcGetCurrentTick(&timer_start);
 	while (1) {
@@ -970,9 +1217,22 @@ dword scene_readimage(dword selidx)
 		}
 		if (slideshow) {
 			scePowerTick(0);
-			if (now - lasttime >= config.slideinterval) {
-				key = CTRL_FORWARD;
-				lasttime = now;
+			if (config.imgpaging == conf_imgpaging_direct ||
+				config.imgpaging == conf_imgpaging_updown ||
+				config.imgpaging == conf_imgpaging_leftright) {
+				if (now - lasttime >= config.slideinterval) {
+					key = CTRL_FORWARD;
+					lasttime = now;
+				}
+			} else {
+				sceRtcGetCurrentTick(&slide_end);
+				if (pspDiffTime(&slide_end, &slide_start) >= 0.1) {
+					sceRtcGetCurrentTick(&slide_start);
+					key = ctrl_read_cont();
+				} else {
+					key = CTRL_FORWARD;
+					lasttime = now;
+				}
 			}
 		}
 		if (showinfo && (key & PSP_CTRL_CIRCLE) == 0) {
@@ -1031,9 +1291,7 @@ static t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item,
 			do {
 				sceCtrlReadBufferPositive(&ctl, 1);
 				key = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
-			} while ((key &
-					  ~(PSP_CTRL_UP | PSP_CTRL_DOWN | PSP_CTRL_LEFT |
-						PSP_CTRL_RIGHT)) == 0);
+			} while (key == 0);
 			key2 = key;
 			while ((key2 & key) == key) {
 				key = key2;
@@ -1044,7 +1302,7 @@ static t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item,
 				return win_menu_op_force_redraw;
 			int i;
 
-			for (i = 0; i < 12; i++) {
+			for (i = 0; i < NELEMS(config.imgkey); i++) {
 				if (i == *index)
 					continue;
 				if (config.imgkey[i] == key) {
@@ -1110,7 +1368,7 @@ dword scene_imgkey(dword * selidx)
 	win_menu_predraw_data prev;
 
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
-	t_win_menuitem item[12];
+	t_win_menuitem item[16];
 
 	STRCPY_S(item[0].name, _("上一张图"));
 	STRCPY_S(item[1].name, _("下一张图"));
@@ -1124,11 +1382,15 @@ dword scene_imgkey(dword * selidx)
 	STRCPY_S(item[9].name, _("退出浏览"));
 	STRCPY_S(item[10].name, _("缩放引擎"));
 	STRCPY_S(item[11].name, _("幻灯播放"));
+	STRCPY_S(item[12].name, _("上"));
+	STRCPY_S(item[13].name, _("下"));
+	STRCPY_S(item[14].name, _("左"));
+	STRCPY_S(item[15].name, _("右"));
 	dword i, index;
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
 
-	for (i = 0; i < 12; i++) {
+	for (i = 0; i < NELEMS(item); i++) {
 		item[i].width = g_predraw.max_item_len;
 		item[i].selected = false;
 		item[i].icolor = config.menutextcolor;
@@ -1138,7 +1400,10 @@ dword scene_imgkey(dword * selidx)
 		item[i].data = NULL;
 	}
 
-	g_predraw.item_count = NELEMS(item);
+	if (DISP_FONTSIZE >= 14)
+		g_predraw.item_count = 12;
+	else
+		g_predraw.item_count = NELEMS(item);
 	g_predraw.x = 240;
 	g_predraw.y = 123;
 	g_predraw.left = g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2;
@@ -1148,7 +1413,7 @@ dword scene_imgkey(dword * selidx)
 	while ((index =
 			win_menu(g_predraw.left,
 					 g_predraw.upper, g_predraw.max_item_len,
-					 g_predraw.item_count, item, NELEMS(item), 0,
+					 g_predraw.item_count, item, g_predraw.item_count, 0,
 					 g_predraw.linespace,
 					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_imgkey_predraw, NULL,

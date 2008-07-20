@@ -596,7 +596,7 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 					break;
 				case 4:
 					if (config.imgpaging == conf_imgpaging_direct)
-						config.imgpaging = conf_imgpaging_leftright;
+						config.imgpaging = conf_imgpaging_leftright_smooth;
 					else
 						config.imgpaging--;
 					break;
@@ -626,6 +626,19 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 					config.load_exif = !config.load_exif;
 					img_needrp = true;
 					break;
+				case 10:
+					if (config.imgpaging_spd == 1)
+						config.imgpaging_spd = 200;
+					else
+						config.imgpaging_spd--;
+					break;
+				case 11:
+					if (config.imgpaging_interval == 0)
+						config.imgpaging_interval = 100;
+					else
+						config.imgpaging_interval--;
+					break;
+					break;
 			}
 			return win_menu_op_redraw;
 		case PSP_CTRL_RIGHT:
@@ -652,7 +665,7 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 						config.imgmvspd++;
 					break;
 				case 4:
-					if (config.imgpaging == conf_imgpaging_leftright)
+					if (config.imgpaging == conf_imgpaging_leftright_smooth)
 						config.imgpaging = conf_imgpaging_direct;
 					else
 						config.imgpaging++;
@@ -682,6 +695,18 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 				case 9:
 					config.load_exif = !config.load_exif;
 					img_needrp = true;
+					break;
+				case 10:
+					if (config.imgpaging_spd == 200)
+						config.imgpaging_spd = 1;
+					else
+						config.imgpaging_spd++;
+					break;
+				case 11:
+					if (config.imgpaging_interval == 100)
+						config.imgpaging_interval = 0;
+					else
+						config.imgpaging_interval++;
 					break;
 			}
 			return win_menu_op_redraw;
@@ -823,6 +848,18 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   config.load_exif ? (const byte *) _("是") : (const byte *)
 				   _("否"));
 	lines++;
+	SPRINTF_S(number, "%d", config.imgpaging_spd);
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE, (const byte *) number);
+	lines++;
+	SPRINTF_S(number, _("%.1f秒"), 0.1f * config.imgpaging_interval);
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE, (const byte *) number);
+	lines++;
 }
 
 dword scene_ioptions(dword * selidx)
@@ -831,7 +868,7 @@ dword scene_ioptions(dword * selidx)
 
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
 
-	t_win_menuitem item[10];
+	t_win_menuitem item[12];
 	dword i, index;
 
 	STRCPY_S(item[0].name, _("    缩放算法"));
@@ -844,6 +881,8 @@ dword scene_ioptions(dword * selidx)
 	STRCPY_S(item[7].name, _("    图像亮度"));
 	STRCPY_S(item[8].name, _("  启用类比键"));
 	STRCPY_S(item[9].name, _("查看EXIF信息"));
+	STRCPY_S(item[10].name, _("翻页滚动速度"));
+	STRCPY_S(item[11].name, _("翻页滚动间隔"));
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
 
@@ -1625,7 +1664,7 @@ static int scene_bookmark_autosave(void)
 		return 0;
 	}
 
-	if (config.isreading)
+	if (fs != NULL)
 		bookmark_autosave(cur_book_view.bookmarkname,
 						  (fs->rows[fs->crow >> 10] +
 						   (fs->crow & 0x3FF))->start - fs->buf);

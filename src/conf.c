@@ -152,6 +152,11 @@ static void conf_default(p_conf conf)
 	conf->imgkey[8] = PSP_CTRL_CIRCLE;
 	conf->imgkey[9] = PSP_CTRL_CROSS;
 	conf->imgkey[10] = PSP_CTRL_LTRIGGER | PSP_CTRL_CIRCLE;
+	conf->imgkey[11] = 0;
+	conf->imgkey[12] = PSP_CTRL_UP;
+	conf->imgkey[13] = PSP_CTRL_DOWN;
+	conf->imgkey[14] = PSP_CTRL_LEFT;
+	conf->imgkey[15] = PSP_CTRL_RIGHT;
 	conf->flkey[0] = PSP_CTRL_CIRCLE;
 	conf->flkey[1] = PSP_CTRL_LTRIGGER;
 	conf->flkey[2] = PSP_CTRL_RTRIGGER;
@@ -177,6 +182,8 @@ static void conf_default(p_conf conf)
 	conf->viewpos = conf_viewpos_leftup;
 	conf->imgmvspd = 8;
 	conf->imgpaging = conf_imgpaging_direct;
+	conf->imgpaging_spd = 8;
+	conf->imgpaging_interval = 10;
 	conf->fontsize = 12;
 	conf->bookfontsize = 12;
 	conf->reordertxt = false;
@@ -572,6 +579,12 @@ static char *imgpagingToString(char *str, int size, t_conf_imgpaging imgpaging)
 		case conf_imgpaging_leftright:
 			snprintf_s(str, size, "leftright");
 			break;
+		case conf_imgpaging_updown_smooth:
+			snprintf_s(str, size, "updown_smooth");
+			break;
+		case conf_imgpaging_leftright_smooth:
+			snprintf_s(str, size, "leftright_smooth");
+			break;
 		default:
 			snprintf_s(str, size, "");
 			break;
@@ -590,6 +603,12 @@ static t_conf_imgpaging stringToImgpaging(char *str)
 	}
 	if (stricmp(str, "leftright") == 0) {
 		return conf_imgpaging_leftright;
+	}
+	if (stricmp(str, "updown_smooth") == 0) {
+		return conf_imgpaging_updown_smooth;
+	}
+	if (stricmp(str, "leftright_smooth") == 0) {
+		return conf_imgpaging_leftright_smooth;
 	}
 
 	return conf_imgpaging_direct;
@@ -759,6 +778,18 @@ static t_conf_rotate stringToRotate(char *str)
 	return conf_rotate_0;
 }
 
+static void check_empty_imgkey(t_conf *conf)
+{
+	if (conf->imgkey[12] == 0)
+		conf->imgkey[12] = PSP_CTRL_UP;
+	if (conf->imgkey[13] == 0)
+		conf->imgkey[13] = PSP_CTRL_DOWN;
+	if (conf->imgkey[14] == 0)
+		conf->imgkey[14] = PSP_CTRL_LEFT;
+	if (conf->imgkey[15] == 0)
+		conf->imgkey[15] = PSP_CTRL_RIGHT;
+}
+
 extern bool ini_conf_load(const char *inifilename, p_conf conf)
 {
 	if (conf == NULL || inifilename == NULL) {
@@ -831,6 +862,7 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		SPRINTF_S(key, "Image:imgkey1_%02d", i);
 		conf->imgkey[i] = iniparser_getint(dict, key, conf->imgkey[i]);
 	}
+	check_empty_imgkey(conf);
 	STRCPY_S(conf->shortpath,
 			 iniparser_getstring(dict, "Global:shortpath", conf->shortpath));
 	conf->confver = iniparser_getint(dict, "Global:confver", conf->confver);
@@ -888,6 +920,11 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 						  (dict, "Image:imgpaging",
 						   imgpagingToString(buf, sizeof(buf),
 											 conf->imgpaging)));
+	conf->imgpaging_spd =
+		iniparser_getint(dict, "Image:imgpaging_spd", conf->imgpaging_spd);
+	conf->imgpaging_interval =
+		iniparser_getint(dict, "Image:imgpaging_interval",
+						 conf->imgpaging_interval);
 	for (i = 0; i < 20; ++i) {
 		char key[20];
 
@@ -1001,10 +1038,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->ttf_load_to_memory =
 		iniparser_getboolean(dict, "Text:ttf_load_to_memory",
 							 conf->ttf_load_to_memory);
-	
+
 	conf->save_password =
-		iniparser_getboolean(dict, "Global:save_password",
-							 conf->save_password);
+		iniparser_getboolean(dict, "Global:save_password", conf->save_password);
 
 	dictionary_del(dict);
 
@@ -1142,6 +1178,11 @@ extern bool ini_conf_save(p_conf conf)
 						dwordToString(buf, sizeof(buf), conf->imgmvspd));
 	iniparser_setstring(dict, "Image:imgpaging",
 						imgpagingToString(buf, sizeof(buf), conf->imgpaging));
+	iniparser_setstring(dict, "Image:imgpaging_spd",
+						dwordToString(buf, sizeof(buf), conf->imgpaging_spd));
+	iniparser_setstring(dict, "Image:imgpaging_interval",
+						dwordToString(buf, sizeof(buf),
+									  conf->imgpaging_interval));
 	for (i = 0; i < 20; ++i) {
 		char key[20];
 
@@ -1260,8 +1301,7 @@ extern bool ini_conf_save(p_conf conf)
 										conf->ttf_load_to_memory));
 
 	iniparser_setstring(dict, "Global:save_password",
-						booleanToString(buf, sizeof(buf),
-										conf->save_password));
+						booleanToString(buf, sizeof(buf), conf->save_password));
 
 	iniparser_dump_ini(dict, fp);
 
@@ -1435,6 +1475,10 @@ extern const char *conf_get_imgpagingname(t_conf_imgpaging imgpaging)
 			return _("先上下卷动");
 		case conf_imgpaging_leftright:
 			return _("先左右卷动");
+		case conf_imgpaging_updown_smooth:
+			return _("先上下滚动");
+		case conf_imgpaging_leftright_smooth:
+			return _("先左右滚动");
 		default:
 			return "";
 	}

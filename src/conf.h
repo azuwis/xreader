@@ -65,6 +65,8 @@ typedef enum
 	conf_imgpaging_direct = 0,
 	conf_imgpaging_updown = 1,
 	conf_imgpaging_leftright = 2,
+	conf_imgpaging_updown_smooth = 3,
+	conf_imgpaging_leftright_smooth = 4,
 } t_conf_imgpaging;
 
 typedef enum
@@ -140,6 +142,8 @@ typedef struct
 	t_conf_viewpos viewpos;
 	dword imgmvspd;
 	t_conf_imgpaging imgpaging;
+	dword imgpaging_spd;
+	dword imgpaging_interval;
 	dword flkey[20];
 	int fontsize;
 	bool reordertxt;
