@@ -125,8 +125,10 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 		int len = (int) ntag - (int) str - 1;
 
 		if (len > 0) {
-			if (str != cstr)
+			if (str != cstr) {
 				strncpy(cstr, str, len);
+				cstr[len] = '\0';
+			}
 			cstr += len;
 		}
 		if (istag) {
@@ -157,7 +159,7 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 							dstr++;
 						if (*dstr == qt) {
 							strncpy(cstr, kstr, dstr - kstr);
-							cstr[dstr - kstr] = 0;
+							cstr[dstr - kstr] = '\0';
 							cstr += html_to_text(cstr, 0, true);
 						}
 						kstr = dstr;
@@ -169,6 +171,7 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 				if (pstr != NULL) {
 					len = pstr - nstr - 6;
 					strncpy(cstr, nstr, len);
+					cstr[len] = '\0';
 					cstr += html_to_text(cstr, 0, false);
 				}
 				str = pstr;
@@ -251,6 +254,7 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 	int slen = strlen(str);
 
 	strncpy(cstr, str, slen);
+	cstr[slen] = '\0';
 	cstr += slen;
 	return cstr - string;
 }
