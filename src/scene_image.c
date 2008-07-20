@@ -948,7 +948,8 @@ static int image_handle_input(dword * selidx, dword key)
 {
 	if (key == 0)
 		goto next;
-	secticks = 0;
+	if (!slideshow || (key != CTRL_FORWARD && key != 0))
+		secticks = 0;
 	if (key == (PSP_CTRL_SELECT | PSP_CTRL_START)) {
 		return exit_confirm();
 	} else if (key == PSP_CTRL_SELECT) {
