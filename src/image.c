@@ -731,9 +731,11 @@ static unzFile open_zip_file(const char *zipfile, const char *filename)
 				return unzf;
 			}
 		}
+#ifdef ENABLE_BG
 		bg_display();
 		disp_flip();
 		bg_display();
+#endif
 		disp_duptocache();
 		disp_waitv();
 	}

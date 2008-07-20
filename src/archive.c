@@ -120,9 +120,11 @@ static void extract_zip_file_into_buffer(buffer * buf, const char *archname,
 				add_password(pass);
 			}
 		}
+#ifdef ENABLE_BG
 		bg_display();
 		disp_flip();
 		bg_display();
+#endif
 		disp_duptocache();
 		disp_waitv();
 		return;
@@ -260,9 +262,11 @@ static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
 				add_password(pass);
 			}
 		}
+#ifdef ENABLE_BG
 		bg_display();
 		disp_flip();
 		bg_display();
+#endif
 		disp_duptocache();
 		disp_waitv();
 		return;
@@ -494,9 +498,11 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 				add_password(pass);
 			}
 		}
+#ifdef ENABLE_BG
 		bg_display();
 		disp_flip();
 		bg_display();
+#endif
 		disp_duptocache();
 		disp_waitv();
 	}
