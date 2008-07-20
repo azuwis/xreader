@@ -1115,3 +1115,30 @@ msgstr "Corrupt archive or password incorrent"
 
 msgid "保存档案密码"
 msgstr "Save archive password"
+
+msgid "上"
+msgstr "Up"
+
+msgid "下"
+msgstr "Down"
+
+msgid "左"
+msgstr "Left"
+
+msgid "右"
+msgstr "Right"
+
+msgid "先上下滚动"
+msgstr "Scrolling up and down"
+
+msgid "先左右滚动"
+msgstr "Scrolling left and right"
+
+msgid "%.1f秒"
+msgstr "%.1f second"
+
+msgid "翻页滚动速度"
+msgstr "Page scrolling speed"
+
+msgid "翻页滚动间隔"
+msgstr "Page scrolling interval"

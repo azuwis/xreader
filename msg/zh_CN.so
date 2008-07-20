@@ -1115,3 +1115,30 @@ msgstr "压缩档案损坏或密码错误"
 
 msgid "保存档案密码"
 msgstr "保存档案密码"
+
+msgid "上"
+msgstr "上"
+
+msgid "下"
+msgstr "下"
+
+msgid "左"
+msgstr "左"
+
+msgid "右"
+msgstr "右"
+
+msgid "先上下滚动"
+msgstr "先上下滚动"
+
+msgid "先左右滚动"
+msgstr "先左右滚动"
+
+msgid "%.1f秒"
+msgstr "%.1f秒"
+
+msgid "翻页滚动速度"
+msgstr "翻页滚动速度"
+
+msgid "翻页滚动间隔"
+msgstr "翻页滚动间隔"

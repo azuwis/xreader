@@ -1047,3 +1047,30 @@ msgstr ""
 
 msgid "保存档案密码"
 msgstr ""
+
+msgid "上"
+msgstr ""
+
+msgid "下"
+msgstr ""
+
+msgid "左"
+msgstr ""
+
+msgid "右"
+msgstr ""
+
+msgid "先上下滚动"
+msgstr ""
+
+msgid "先左右滚动"
+msgstr ""
+
+msgid "%.1f秒"
+msgstr ""
+
+msgid "翻页滚动速度"
+msgstr ""
+
+msgid "翻页滚动间隔"
+msgstr ""
