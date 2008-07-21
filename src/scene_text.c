@@ -110,11 +110,21 @@ void get_screen_shot()
 }
 #endif
 
+static float calc_percent(dword current, dword total)
+{
+	float percent;
+
+	if (total == 0)
+		percent = 0.0;
+	else
+		percent = 100.0 * MIN(current + 1, total) / total;
+	return percent;
+}
+
 #ifdef ENABLE_TTF
 static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 								  int vertread)
 {
-	char ci[8] = "       ";
 	char cr[512];
 
 	switch (vertread) {
@@ -140,7 +150,6 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 		default:
 			break;
 	}
-	utils_dword2string(fs->crow + 1, ci, 7);
 	char autopageinfo[80];
 
 	if (config.autopagetype == 2)
@@ -158,25 +167,28 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 			autopageinfo[0] = 0;
 	}
 	if (where == scene_in_chm) {
-		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
+		SPRINTF_S(cr, "  %.1f%% %s %s GI: %d %s",
+				  calc_percent(fs->crow, fs->row_count),
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename(config.
 																  encode)),
 				  filelist[selidx].name, calc_gi(), autopageinfo);
 	} else if (scene_readbook_in_raw_mode == true) {
-		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
+		SPRINTF_S(cr, "  %.1f%% %s %s GI: %d %s",
+				  calc_percent(fs->crow, fs->row_count),
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename
-											  (config.encode)),
+											  conf_get_encodename(config.
+																  encode)),
 				  g_titlename, calc_gi(), autopageinfo);
 	} else {
-		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
+		SPRINTF_S(cr, "  %.1f%% %s %s GI: %d %s",
+				  calc_percent(fs->crow, fs->row_count),
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename
-											  (config.encode)),
+											  conf_get_encodename(config.
+																  encode)),
 				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo);
 	}
 	int wordspace = 0;
@@ -216,7 +228,6 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 
 static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 {
-	char ci[8] = "       ";
 	char cr[512];
 
 	switch (vertread) {
@@ -242,7 +253,6 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 		default:
 			break;
 	}
-	utils_dword2string(fs->crow + 1, ci, 7);
 	char autopageinfo[80];
 
 	if (config.autopagetype == 2)
@@ -260,25 +270,28 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 			autopageinfo[0] = 0;
 	}
 	if (where == scene_in_chm) {
-		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
+		SPRINTF_S(cr, "  %.1f%% %s %s GI: %d %s",
+				  calc_percent(fs->crow, fs->row_count),
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename(config.
 																  encode)),
 				  filelist[selidx].name, calc_gi(), autopageinfo);
 	} else if (scene_readbook_in_raw_mode == true) {
-		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
+		SPRINTF_S(cr, "  %.1f%% %s %s GI: %d %s",
+				  calc_percent(fs->crow, fs->row_count),
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename
-											  (config.encode)),
+											  conf_get_encodename(config.
+																  encode)),
 				  g_titlename, calc_gi(), autopageinfo);
 	} else {
-		SPRINTF_S(cr, "%s/%s  %s  %s  GI: %d  %s", ci, pView->trow,
+		SPRINTF_S(cr, "  %.1f%% %s %s GI: %d %s",
+				  calc_percent(fs->crow, fs->row_count),
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename
-											  (config.encode)),
+											  conf_get_encodename(config.
+																  encode)),
 				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo);
 	}
 	int wordspace = (DISP_FONTSIZE == 10 ? 1 : 0);
@@ -496,8 +509,6 @@ PBookViewData new_book_view(PBookViewData p)
 
 	p->rrow = INVALID;
 	p->rowtop = 0;
-	memset(p->tr, 0, 8);
-	p->trow = NULL;
 	p->text_needrf = p->text_needrp = true;
 	p->text_needrb = false;
 	p->filename[0] = p->archname[0] = p->bookmarkname[0] = '\0';
@@ -536,9 +547,6 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		if (!config.autobm
 			|| (t_fs_filetype) filelist[selidx].data == fs_filetype_unknown) {
 			// disable binary file type text's bookmark
-			pView->rrow = 0;
-		} else if (config.pagetonext) {
-			// disable pagetonext's bookmark
 			pView->rrow = 0;
 		} else {
 			pView->rrow = bookmark_autoload(pView->bookmarkname);
@@ -592,7 +600,6 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	if (fs->crow >= fs->row_count)
 		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
 
-	pView->trow = &pView->tr[utils_dword2string(fs->row_count, pView->tr, 7)];
 	STRCPY_S(config.lastfile, filelist[selidx].compname->ptr);
 	scene_power_save(true);
 	return 0;
@@ -952,7 +959,7 @@ int move_page_up(PBookViewData pView, dword key, dword * selidx)
 									   (fs->crow & 0x3FF))->start - fs->buf);
 				pView->text_needrf = pView->text_needrp = true;
 				pView->text_needrb = false;
-				pView->rrow = INVALID;
+				pView->rrow = 0;
 			}
 		}
 		return 1;
@@ -988,7 +995,7 @@ int move_page_down(PBookViewData pView, dword key, dword * selidx)
 									   (fs->crow & 0x3FF))->start - fs->buf);
 				pView->text_needrf = pView->text_needrp = true;
 				pView->text_needrb = false;
-				pView->rrow = INVALID;
+				pView->rrow = 0;
 			}
 		} else
 			fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
@@ -1295,10 +1302,6 @@ dword scene_reload_raw(const char *title, const unsigned char *data,
 
 	if (fs->crow >= fs->row_count)
 		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
-
-	cur_book_view.trow =
-		&cur_book_view.
-		tr[utils_dword2string(fs->row_count, cur_book_view.tr, 7)];
 
 	return 0;
 }

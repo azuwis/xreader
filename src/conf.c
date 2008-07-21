@@ -1361,13 +1361,13 @@ extern const char *conf_get_encodename(t_conf_encode encode)
 {
 	switch (encode) {
 		case conf_encode_gbk:
-			return "GBK ";
+			return "GBK";
 		case conf_encode_big5:
 			return "BIG5";
 		case conf_encode_sjis:
 			return "SJIS";
 		case conf_encode_ucs:
-			return "UCS ";
+			return "UCS";
 		case conf_encode_utf8:
 			return "UTF-8";
 		default:

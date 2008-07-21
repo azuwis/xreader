@@ -55,7 +55,6 @@ extern dword scene_readimage(dword selidx);
 typedef struct _BookViewData
 {
 	int rowtop;
-	char tr[8], *trow;
 	bool text_needrf, text_needrp, text_needrb;
 	char filename[PATH_MAX], bookmarkname[PATH_MAX], archname[PATH_MAX];
 	dword rrow;
