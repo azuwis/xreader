@@ -1311,7 +1311,7 @@ extern bool ini_conf_save(p_conf conf)
 						booleanToString(buf, sizeof(buf), conf->save_password));
 
 	iniparser_setstring(dict, "Text:scrollbar_width",
-						booleanToString(buf, sizeof(buf),
+						intToString(buf, sizeof(buf),
 										conf->scrollbar_width));
 
 	iniparser_dump_ini(dict, fp);
