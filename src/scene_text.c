@@ -682,6 +682,18 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		scene_power_save(true);
 		return 1;
 	}
+
+	if (pView->rrow == (dword) - 2) {
+		p_textrow tr;
+
+		if (fs->row_count != 0)
+			tr = fs->rows[(fs->row_count - 1) >> 10] +
+				((fs->row_count - 1) & 0x3FF);
+		else
+			tr = fs->rows[0];
+		pView->rrow = tr->start - fs->buf;
+		pView->text_needrb = true;
+	}
 	if (pView->text_needrb
 		&& (t_fs_filetype) filelist[selidx].data != fs_filetype_unknown) {
 		pView->rowtop = 0;
@@ -1045,7 +1057,7 @@ int move_page_up(PBookViewData pView, dword key, dword * selidx)
 									   (fs->crow & 0x3FF))->start - fs->buf);
 				pView->text_needrf = pView->text_needrp = true;
 				pView->text_needrb = false;
-				pView->rrow = 0;
+				pView->rrow = (dword) - 2;
 			}
 		}
 		return 1;
