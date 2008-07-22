@@ -13,7 +13,7 @@ echo "Author: $AUTHOR($EMAIL)"
 
 echo "Check the PSP is plugged in"
 
-while [ ! -e $DESTDIR ]
+while [ ! -e $DESTDRIVE ]
 do
 	sleep 1
 done
