@@ -118,6 +118,7 @@ static void conf_default(p_conf conf)
 	conf->borderspace = 0;
 	conf->vertread = 0;
 	conf->infobar = conf_infobar_info;
+	conf->infobar_style = 0;
 	conf->rlastrow = false;
 	conf->autobm = true;
 	conf->encode = conf_encode_gbk;
@@ -831,6 +832,8 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		stringToInfobar(iniparser_getstring
 						(dict, "Text:infobar",
 						 infobarToString(buf, sizeof(buf), conf->infobar)));
+	conf->infobar_style =
+		iniparser_getint(dict, "Text:infobar_style", conf->infobar_style);
 	conf->rlastrow =
 		iniparser_getboolean(dict, "Text:rlastrow", conf->rlastrow);
 	conf->autobm = iniparser_getboolean(dict, "Text:autobm", conf->autobm);
@@ -1109,6 +1112,8 @@ extern bool ini_conf_save(p_conf conf)
 						dwordToString(buf, sizeof(buf), conf->rowspace));
 	iniparser_setstring(dict, "Text:infobar",
 						infobarToString(buf, sizeof(buf), conf->infobar));
+	iniparser_setstring(dict, "Text:infobar_style",
+						intToString(buf, sizeof(buf), conf->infobar_style));
 	iniparser_setstring(dict, "Text:rlastrow",
 						booleanToString(buf, sizeof(buf), conf->rlastrow));
 	iniparser_setstring(dict, "Text:autobm",
@@ -1311,8 +1316,7 @@ extern bool ini_conf_save(p_conf conf)
 						booleanToString(buf, sizeof(buf), conf->save_password));
 
 	iniparser_setstring(dict, "Text:scrollbar_width",
-						intToString(buf, sizeof(buf),
-										conf->scrollbar_width));
+						intToString(buf, sizeof(buf), conf->scrollbar_width));
 
 	iniparser_dump_ini(dict, fp);
 

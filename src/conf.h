@@ -106,6 +106,7 @@ typedef struct
 	bool usedyncolor;
 	dword rowspace;
 	t_conf_infobar infobar;
+	int infobar_style;
 	bool rlastrow;
 	bool autobm;
 	dword vertread;

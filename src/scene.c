@@ -1437,6 +1437,12 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 					if (--config.scrollbar_width < 0)
 						config.scrollbar_width = 0;
 					break;
+				case 13:
+					config.infobar_style = config.infobar_style == 0 ? 1 : 0;
+					break;
+				case 14:
+					config.infobar_use_ttf_mode = !config.infobar_use_ttf_mode;
+					break;
 			}
 			return win_menu_op_redraw;
 		case PSP_CTRL_RIGHT:
@@ -1498,6 +1504,12 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 				case 12:
 					if (++config.scrollbar_width > 100)
 						config.scrollbar_width = 100;
+					break;
+				case 13:
+					config.infobar_style = config.infobar_style == 0 ? 1 : 0;
+					break;
+				case 14:
+					config.infobar_use_ttf_mode = !config.infobar_use_ttf_mode;
 					break;
 			}
 			return win_menu_op_redraw;
@@ -1651,6 +1663,23 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 														DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 +
+								g_predraw.linespace) * (1 +
+														DISP_FONTSIZE),
+				   COLOR_WHITE,
+				   (const byte *) (config.infobar_style ==
+								   0 ? _("矩形") : _("直线")));
+	lines++;
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 +
+								g_predraw.linespace) * (1 +
+														DISP_FONTSIZE),
+				   COLOR_WHITE,
+				   (const byte *) (config.
+								   infobar_use_ttf_mode ? _("TTF") :
+								   _("点阵")));
+	lines++;
 }
 
 static void recalc_size(dword * drperpage, dword * rowsperpage,
@@ -1667,7 +1696,8 @@ static void recalc_size(dword * drperpage, dword * rowsperpage,
 		 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	*rowsperpage =
 		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-		 (config.infobar != conf_infobar_none ? DISP_BOOK_FONTSIZE : 0) -
+		 (config.infobar !=
+		  conf_infobar_none ? scene_get_scrollbar_height() : 0) -
 		 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	*pixelsperrow =
 		(t
@@ -1694,7 +1724,7 @@ static int scene_bookmark_autosave(void)
 
 dword scene_boptions(dword * selidx)
 {
-	t_win_menuitem item[13];
+	t_win_menuitem item[15];
 	dword i;
 
 	STRCPY_S(item[0].name, _("      信息栏"));
@@ -1713,6 +1743,8 @@ dword scene_boptions(dword * selidx)
 	STRCPY_S(item[10].name, _("    滚屏时间"));
 	STRCPY_S(item[11].name, _("  启用类比键"));
 	STRCPY_S(item[12].name, _("  滚动条宽度"));
+	STRCPY_S(item[13].name, _("  信息栏样式"));
+	STRCPY_S(item[14].name, _("  信息栏字体"));
 
 	win_menu_predraw_data prev;
 
@@ -1740,6 +1772,8 @@ dword scene_boptions(dword * selidx)
 	dword orgwordspace = config.wordspace;
 	dword orgborderspace = config.borderspace;
 	int orgscrollbar_width = config.scrollbar_width;
+	int orginfobar_style = config.infobar_style;
+	bool orginfobar_use_ttf_mode = config.infobar_use_ttf_mode;
 
 	g_predraw.item_count = NELEMS(item);
 	g_predraw.x = 240;
@@ -1765,7 +1799,8 @@ dword scene_boptions(dword * selidx)
 		|| orgborderspace != config.borderspace
 		|| orgscrollbar != config.scrollbar
 		|| (config.scrollbar && orgscrollbar_width != config.scrollbar_width)
-		) {
+		|| orginfobar_style != config.infobar_style
+		|| orginfobar_use_ttf_mode != orginfobar_use_ttf_mode) {
 		dword orgpixelsperrow = pixelsperrow;
 
 		scene_bookmark_autosave();
