@@ -219,6 +219,10 @@ bool scene_load_book_font()
 	}
 #endif
 	if (!loaded) {
+		char infomsg[80];
+
+		SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
+		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		config.usettf = false;
 		STRCPY_S(fontzipfile, scene_appdir());
 		STRCAT_S(fontzipfile, "fonts.zip");

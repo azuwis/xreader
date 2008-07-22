@@ -1146,3 +1146,23 @@ msgstr "翻页滚动间隔"
 msgid "  滚动条宽度"
 msgstr "  滚动条宽度"
 
+msgid "矩形"
+msgstr "矩形"
+
+msgid "直线"
+msgstr "直线"
+
+msgid "TTF"
+msgstr "TTF"
+
+msgid "点阵"
+msgstr "点阵"
+
+msgid "  信息栏样式"
+msgstr "  信息栏样式"
+
+msgid "  信息栏字体"
+msgstr "  信息栏字体"
+
+msgid "没有指定中、英文TTF字体"
+msgstr "没有指定中、英文TTF字体"

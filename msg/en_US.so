@@ -1145,3 +1145,25 @@ msgstr "Page scrolling interval"
 
 msgid "  滚动条宽度"
 msgstr "Scrollbar width"
+
+msgid "矩形"
+msgstr "Rectangle"
+
+msgid "直线"
+msgstr "Line"
+
+msgid "TTF"
+msgstr "TTF font"
+
+msgid "点阵"
+msgstr "Lattice font"
+
+msgid "  信息栏样式"
+msgstr "Infobar style"
+
+msgid "  信息栏字体"
+msgstr "Infobar font"
+
+msgid "没有指定中、英文TTF字体"
+msgstr "Didn't specify Chinese or English TTF font"
+
