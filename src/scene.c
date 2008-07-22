@@ -1696,16 +1696,19 @@ static void recalc_size(dword * drperpage, dword * rowsperpage,
 	if (t == 3)
 		t = 0;
 
-	*drperpage =
-		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-		 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
-		 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	if (config.hide_last_row)
-		*drperpage = *drperpage != 0 ? *drperpage - 2 : 0;
+		*drperpage =
+			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
+			 scene_get_scrollbar_height() +
+			 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+	else
+		*drperpage =
+			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
+			 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
+			 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	*rowsperpage =
 		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-		 (config.infobar !=
-		  conf_infobar_none ? scene_get_scrollbar_height() : 0) -
+		 scene_get_scrollbar_height() -
 		 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	*pixelsperrow =
 		(t

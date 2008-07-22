@@ -53,6 +53,8 @@ bool scene_readbook_in_raw_mode = false;
 BookViewData cur_book_view, prev_book_view;
 extern win_menu_predraw_data g_predraw;
 
+static byte bgalpha = 0x40, fgalpha = 0xa0;
+
 static inline int calc_gi(void)
 {
 	int i = min(fs->crow, fs->row_count);
@@ -212,6 +214,9 @@ static void disp_fillrect_tran(dword x1, dword y1, dword x2, dword y2,
 
 extern int scene_get_scrollbar_height(void)
 {
+	if (config.infobar == conf_infobar_none)
+		return 0;
+
 	return (config.usettf
 			&& config.
 			infobar_use_ttf_mode) ? DISP_BOOK_FONTSIZE : DISP_FONTSIZE + 1;
@@ -251,24 +256,25 @@ static void draw_infobar_rect(int vertread)
 		case conf_vertread_reversal:
 			disp_fillrect_tran(0, scene_get_scrollbar_height(),
 							   (PSP_SCREEN_WIDTH - 1), 0, config.forecolor,
-							   0x40);
+							   bgalpha);
 			break;
 		case conf_vertread_lvert:
 			disp_fillrect_tran((PSP_SCREEN_WIDTH - 1) -
 							   scene_get_scrollbar_height(), 0,
 							   (PSP_SCREEN_WIDTH - 1), (PSP_SCREEN_HEIGHT - 1),
-							   config.forecolor, 0x40);
+							   config.forecolor, bgalpha);
 			break;
 		case conf_vertread_rvert:
 			disp_fillrect_tran(0, 0, scene_get_scrollbar_height(),
-							   (PSP_SCREEN_HEIGHT - 1), config.forecolor, 0x40);
+							   (PSP_SCREEN_HEIGHT - 1), config.forecolor,
+							   bgalpha);
 			break;
 		case conf_vertread_horz:
 			disp_fillrect_tran(0,
 							   (PSP_SCREEN_HEIGHT - 1) -
 							   (scene_get_scrollbar_height()),
 							   (PSP_SCREEN_WIDTH - 1), (PSP_SCREEN_HEIGHT - 1),
-							   config.forecolor, 0x40);
+							   config.forecolor, bgalpha);
 			break;
 		default:
 			break;
@@ -824,9 +830,10 @@ static void scene_draw_scrollbar_reversal(void)
 	endp = startp + bsize;
 	disp_fillrect_tran(0, PSP_SCREEN_HEIGHT - 1,
 					   config.scrollbar_width, PSP_SCREEN_HEIGHT - 1 - slen,
-					   config.forecolor, 0x40);
+					   config.forecolor, bgalpha);
 	disp_fillrect_tran(0, PSP_SCREEN_HEIGHT - 1 - endp, config.scrollbar_width,
-					   PSP_SCREEN_HEIGHT - 1 - startp, config.forecolor, 0xa0);
+					   PSP_SCREEN_HEIGHT - 1 - startp, config.forecolor,
+					   fgalpha);
 }
 
 static void scene_draw_scrollbar_lvert(void)
@@ -841,9 +848,9 @@ static void scene_draw_scrollbar_lvert(void)
 		startp = slen - bsize;
 	endp = startp + bsize;
 	disp_fillrect_tran(0, 0, sright, config.scrollbar_width,
-					   config.forecolor, 0x40);
+					   config.forecolor, bgalpha);
 	disp_fillrect_tran(startp, 0, endp, config.scrollbar_width,
-					   config.forecolor, 0xa0);
+					   config.forecolor, fgalpha);
 }
 
 static void scene_draw_scrollbar_rvert(void)
@@ -858,9 +865,9 @@ static void scene_draw_scrollbar_rvert(void)
 	startp = endp - bsize;
 	disp_fillrect_tran(sleft, PSP_SCREEN_HEIGHT - config.scrollbar_width,
 					   PSP_SCREEN_WIDTH - 1,
-					   PSP_SCREEN_HEIGHT - 1, config.forecolor, 0x40);
+					   PSP_SCREEN_HEIGHT - 1, config.forecolor, bgalpha);
 	disp_fillrect_tran(startp, PSP_SCREEN_HEIGHT - (config.scrollbar_width + 1),
-					   endp, PSP_SCREEN_HEIGHT - 1, config.forecolor, 0xa0);
+					   endp, PSP_SCREEN_HEIGHT - 1, config.forecolor, fgalpha);
 }
 
 static void scene_draw_scrollbar_horz(void)
@@ -875,9 +882,9 @@ static void scene_draw_scrollbar_horz(void)
 		startp = slen - bsize;
 	endp = startp + bsize;
 	disp_fillrect_tran(PSP_SCREEN_WIDTH - config.scrollbar_width - 1, 0,
-					   PSP_SCREEN_WIDTH - 1, slen, config.forecolor, 0x40);
+					   PSP_SCREEN_WIDTH - 1, slen, config.forecolor, bgalpha);
 	disp_fillrect_tran(PSP_SCREEN_WIDTH - config.scrollbar_width - 1, startp,
-					   PSP_SCREEN_WIDTH - 1, endp, config.forecolor, 0xa0);
+					   PSP_SCREEN_WIDTH - 1, endp, config.forecolor, fgalpha);
 }
 
 int scene_printbook(PBookViewData pView, dword selidx)
