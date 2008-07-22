@@ -1142,3 +1142,6 @@ msgstr "Page scrolling speed"
 
 msgid "翻页滚动间隔"
 msgstr "Page scrolling interval"
+
+msgid "  滚动条宽度"
+msgstr "Scrollbar width"

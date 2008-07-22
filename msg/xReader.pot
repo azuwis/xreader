@@ -1074,3 +1074,6 @@ msgstr ""
 
 msgid "翻页滚动间隔"
 msgstr ""
+
+msgid "  滚动条宽度"
+msgstr ""

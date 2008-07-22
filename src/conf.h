@@ -188,6 +188,7 @@ typedef struct
 	int filelistwidth;
 	bool ttf_load_to_memory;
 	bool save_password;
+	int scrollbar_width;
 } t_conf, *p_conf;
 
 /* txt key:

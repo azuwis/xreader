@@ -251,6 +251,7 @@ static void conf_default(p_conf conf)
 		conf->ttf_load_to_memory = false;
 	}
 	conf->save_password = true;
+	conf->scrollbar_width = 5;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -1044,6 +1045,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->save_password =
 		iniparser_getboolean(dict, "Global:save_password", conf->save_password);
 
+	conf->scrollbar_width =
+		iniparser_getint(dict, "Text:scrollbar_width", conf->scrollbar_width);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1305,6 +1309,10 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "Global:save_password",
 						booleanToString(buf, sizeof(buf), conf->save_password));
+
+	iniparser_setstring(dict, "Text:scrollbar_width",
+						booleanToString(buf, sizeof(buf),
+										conf->scrollbar_width));
 
 	iniparser_dump_ini(dict, fp);
 

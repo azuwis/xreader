@@ -767,10 +767,11 @@ static void scene_draw_scrollbar_reversal(void)
 	if (startp + bsize > slen)
 		startp = slen - bsize;
 	endp = startp + bsize;
-	disp_line(4, PSP_SCREEN_HEIGHT - 1, 4,
-			  PSP_SCREEN_HEIGHT - 1 - slen, config.forecolor);
-	disp_fillrect(3, PSP_SCREEN_HEIGHT - 1 - startp,
-				  0, PSP_SCREEN_HEIGHT - 1 - endp, config.forecolor);
+	disp_line(config.scrollbar_width, PSP_SCREEN_HEIGHT - 1,
+			  config.scrollbar_width, PSP_SCREEN_HEIGHT - 1 - slen,
+			  config.forecolor);
+	disp_fillrect(config.scrollbar_width - 1, PSP_SCREEN_HEIGHT - 1 - startp, 0,
+				  PSP_SCREEN_HEIGHT - 1 - endp, config.forecolor);
 }
 
 static void scene_draw_scrollbar_lvert(void)
@@ -784,8 +785,10 @@ static void scene_draw_scrollbar_lvert(void)
 	if (startp + bsize > slen)
 		startp = slen - bsize;
 	endp = startp + bsize;
-	disp_line(0, 4, sright, 4, config.forecolor);
-	disp_fillrect(startp, 0, endp, 3, config.forecolor);
+	disp_line(0, config.scrollbar_width, sright, config.scrollbar_width,
+			  config.forecolor);
+	disp_fillrect(startp, 0, endp, config.scrollbar_width - 1,
+				  config.forecolor);
 }
 
 static void scene_draw_scrollbar_rvert(void)
@@ -798,8 +801,11 @@ static void scene_draw_scrollbar_rvert(void)
 	if (endp - bsize < sleft)
 		endp = sleft + bsize;
 	startp = endp - bsize;
-	disp_line(sleft, 267, (PSP_SCREEN_WIDTH - 1), 267, config.forecolor);
-	disp_fillrect(startp, 268, endp, (PSP_SCREEN_HEIGHT - 1), config.forecolor);
+	disp_line(sleft, PSP_SCREEN_HEIGHT - config.scrollbar_width,
+			  (PSP_SCREEN_WIDTH - 1),
+			  PSP_SCREEN_HEIGHT - config.scrollbar_width, config.forecolor);
+	disp_fillrect(startp, PSP_SCREEN_HEIGHT - (config.scrollbar_width - 1),
+				  endp, (PSP_SCREEN_HEIGHT - 1), config.forecolor);
 }
 
 static void scene_draw_scrollbar_horz(void)
@@ -811,8 +817,11 @@ static void scene_draw_scrollbar_horz(void)
 	if (startp + bsize > slen)
 		startp = slen - bsize;
 	endp = startp + bsize;
-	disp_line(475, 0, 475, slen, config.forecolor);
-	disp_fillrect(476, startp, (PSP_SCREEN_WIDTH - 1), endp, config.forecolor);
+	disp_line(PSP_SCREEN_WIDTH - config.scrollbar_width, 0,
+			  PSP_SCREEN_WIDTH - config.scrollbar_width, slen,
+			  config.forecolor);
+	disp_fillrect(PSP_SCREEN_WIDTH - (config.scrollbar_width - 1), startp,
+				  (PSP_SCREEN_WIDTH - 1), endp, config.forecolor);
 }
 
 int scene_printbook(PBookViewData pView, dword selidx)

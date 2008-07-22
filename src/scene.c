@@ -1433,6 +1433,10 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 					config.enable_analog = !config.enable_analog;
 #endif
 					break;
+				case 12:
+					if (--config.scrollbar_width < 0)
+						config.scrollbar_width = 0;
+					break;
 			}
 			return win_menu_op_redraw;
 		case PSP_CTRL_RIGHT:
@@ -1490,6 +1494,10 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 #ifdef ENABLE_ANALOG
 					config.enable_analog = !config.enable_analog;
 #endif
+					break;
+				case 12:
+					if (++config.scrollbar_width > 100)
+						config.scrollbar_width = 100;
 					break;
 			}
 			return win_menu_op_redraw;
@@ -1635,6 +1643,14 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   COLOR_WHITE, (const byte *) _("已关闭"));
 #endif
 	lines++;
+	memset(number, ' ', 4);
+	utils_dword2string(config.scrollbar_width, number, 2);
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 +
+								g_predraw.linespace) * (1 +
+														DISP_FONTSIZE),
+				   COLOR_WHITE, (const byte *) number);
+	lines++;
 }
 
 static void recalc_size(dword * drperpage, dword * rowsperpage,
@@ -1653,8 +1669,12 @@ static void recalc_size(dword * drperpage, dword * rowsperpage,
 		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
 		 (config.infobar != conf_infobar_none ? DISP_BOOK_FONTSIZE : 0) -
 		 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
-	*pixelsperrow = (t ? (config.scrollbar ? 267 : PSP_SCREEN_HEIGHT)
-					 : (config.scrollbar ? 475 : PSP_SCREEN_WIDTH)) -
+	*pixelsperrow =
+		(t
+		 ? (config.scrollbar ? PSP_SCREEN_HEIGHT -
+			config.scrollbar_width : PSP_SCREEN_HEIGHT)
+		 : (config.scrollbar ? PSP_SCREEN_WIDTH -
+			config.scrollbar_width : PSP_SCREEN_WIDTH)) -
 		config.borderspace * 2;
 }
 
@@ -1674,7 +1694,7 @@ static int scene_bookmark_autosave(void)
 
 dword scene_boptions(dword * selidx)
 {
-	t_win_menuitem item[12];
+	t_win_menuitem item[13];
 	dword i;
 
 	STRCPY_S(item[0].name, _("      信息栏"));
@@ -1692,6 +1712,7 @@ dword scene_boptions(dword * selidx)
 		STRCPY_S(item[9].name, _("    滚屏速度"));
 	STRCPY_S(item[10].name, _("    滚屏时间"));
 	STRCPY_S(item[11].name, _("  启用类比键"));
+	STRCPY_S(item[12].name, _("  滚动条宽度"));
 
 	win_menu_predraw_data prev;
 
@@ -1718,6 +1739,7 @@ dword scene_boptions(dword * selidx)
 	dword orgrowspace = config.rowspace;
 	dword orgwordspace = config.wordspace;
 	dword orgborderspace = config.borderspace;
+	int orgscrollbar_width = config.scrollbar_width;
 
 	g_predraw.item_count = NELEMS(item);
 	g_predraw.x = 240;
@@ -1741,7 +1763,9 @@ dword scene_boptions(dword * selidx)
 		|| orgrowspace != config.rowspace
 		|| orgwordspace != config.wordspace
 		|| orgborderspace != config.borderspace
-		|| orgscrollbar != config.scrollbar) {
+		|| orgscrollbar != config.scrollbar
+		|| (config.scrollbar && orgscrollbar_width != config.scrollbar_width)
+		) {
 		dword orgpixelsperrow = pixelsperrow;
 
 		scene_bookmark_autosave();
