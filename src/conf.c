@@ -253,6 +253,7 @@ static void conf_default(p_conf conf)
 	}
 	conf->save_password = true;
 	conf->scrollbar_width = 5;
+	conf->hide_last_row = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -1051,6 +1052,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->scrollbar_width =
 		iniparser_getint(dict, "Text:scrollbar_width", conf->scrollbar_width);
 
+	conf->hide_last_row =
+		iniparser_getboolean(dict, "Text:hide_last_row", conf->hide_last_row);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1317,6 +1321,9 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "Text:scrollbar_width",
 						intToString(buf, sizeof(buf), conf->scrollbar_width));
+
+	iniparser_setstring(dict, "Text:hide_last_row",
+						booleanToString(buf, sizeof(buf), conf->hide_last_row));
 
 	iniparser_dump_ini(dict, fp);
 

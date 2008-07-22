@@ -190,6 +190,7 @@ typedef struct
 	bool ttf_load_to_memory;
 	bool save_password;
 	int scrollbar_width;
+	bool hide_last_row;
 } t_conf, *p_conf;
 
 /* txt key:
