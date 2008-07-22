@@ -216,13 +216,15 @@ bool scene_load_book_font()
 												config.cttfpath,
 												config.bookfontsize);
 		scene_power_save(imgreading || fs != NULL);
+		if (!loaded) {
+			char infomsg[80];
+
+			SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
+			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
+		}
 	}
 #endif
 	if (!loaded) {
-		char infomsg[80];
-
-		SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
-		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		config.usettf = false;
 		STRCPY_S(fontzipfile, scene_appdir());
 		STRCAT_S(fontzipfile, "fonts.zip");
@@ -1698,6 +1700,8 @@ static void recalc_size(dword * drperpage, dword * rowsperpage,
 		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
 		 config.borderspace * 2 + config.rowspace + DISP_BOOK_FONTSIZE * 2 -
 		 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
+	if (config.hide_last_row)
+		*drperpage = *drperpage != 0 ? *drperpage - 2 : 0;
 	*rowsperpage =
 		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
 		 (config.infobar !=
