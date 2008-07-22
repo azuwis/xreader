@@ -494,14 +494,18 @@ static u32 fat_dir_clus(const char *dir, char *shortdir)
 
 extern u32 fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 {
-	if (!fat_load_table() || fatfd < 0)
+	fat_lock();
+	if (!fat_load_table() || fatfd < 0) {
+		fat_unlock();
 		return INVALID;
+	}
 	u32 clus = fat_dir_clus(dir, sdir);
 	SceUID dl = 0;
 
 	if (clus == 0 || (dl = sceIoDopen(sdir)) < 0) {
 		fat_free_table();
 		sceIoDclose(dl);
+		fat_unlock();
 		return INVALID;
 	}
 	u32 ecount = 0;
@@ -510,6 +514,7 @@ extern u32 fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 	if (!fat_dir_list(clus, &ecount, &entrys)) {
 		fat_free_table();
 		sceIoDclose(dl);
+		fat_unlock();
 		return INVALID;
 	}
 	u32 count = 0, cur = 0, i;
@@ -527,6 +532,7 @@ extern u32 fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 		free(entrys);
 		fat_free_table();
 		sceIoDclose(dl);
+		fat_unlock();
 		return INVALID;
 	}
 	SceIoDirent sid;
@@ -571,6 +577,7 @@ extern u32 fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 	free(entrys);
 	fat_free_table();
 	sceIoDclose(dl);
+	fat_unlock();
 	return cur;
 }
 

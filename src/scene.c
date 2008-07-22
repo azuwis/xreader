@@ -4947,6 +4947,12 @@ static void scene_enter_dir(dword * idx)
 					config.path[ll] = 0;
 					ll--;
 				}
+
+			if ((ll = strlen(config.shortpath) - 1) >= 0)
+				while (config.shortpath[ll] == '/' && ll >= 0) {
+					config.shortpath[ll] = 0;
+					ll--;
+				}
 		}
 		char *lps;
 
@@ -4960,6 +4966,8 @@ static void scene_enter_dir(dword * idx)
 	} else if (where == scene_in_dir) {
 		STRCAT_S(config.path, filelist[*idx].compname->ptr);
 		STRCAT_S(config.path, "/");
+		STRCAT_S(config.shortpath, filelist[*idx].shortname->ptr);
+		STRCAT_S(config.shortpath, "/");
 	}
 	if (config.path[0] == 0) {
 		fat_inited = false;
