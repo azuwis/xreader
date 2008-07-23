@@ -139,3 +139,17 @@ APETagV2是否优先于ID3TagV2读取
 text:ttf_ttf_load_to_memory
 阅读文本时是否将TTF字体装载到内存，PSP-2000用户可设置为"true"，PSP-1000用户最好设置为"false"
 
+text:infobar_style
+当为0时信息栏为透明矩形，当为1时为分割直线
+
+text:scroll_width
+滚动条宽度，以像素记
+
+global:save_password
+是否保存ZIP、RAR档案密码到password.lst
+
+text:hide_last_row
+文本显示时是否隐藏最后一行，设置为真可解决分行问题
+
+text:infobar_show_timer
+文件信息栏是否显示时间电量信息

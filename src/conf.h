@@ -191,6 +191,7 @@ typedef struct
 	bool save_password;
 	int scrollbar_width;
 	bool hide_last_row;
+	bool infobar_show_timer;
 } t_conf, *p_conf;
 
 /* txt key:

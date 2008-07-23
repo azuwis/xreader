@@ -281,18 +281,33 @@ static void draw_infobar_rect(int vertread)
 	}
 }
 
-#ifdef ENABLE_TTF
-static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
-								  int vertread)
+static void get_infobar_system_string(char *dest, int size)
 {
-	char cr[512];
+	pspTime tm;
+	char t[512];
+	int percent, unused;
 
-	if (config.infobar_style == 0)
-		draw_infobar_rect(vertread);
-	else
-		draw_infobar_single_line(vertread);
+	sceRtcGetCurrentClockLocalTime(&tm);
 
+	power_get_battery(&percent, &unused, &unused, &unused);
+	if (tm.seconds % 2 == 0) {
+		if (percent == 100)
+			SPRINTF_S(t, "[%02u:%02u]", tm.hour, tm.minutes);
+		else
+			SPRINTF_S(t, "[%02u:%02u %d%%]", tm.hour, tm.minutes, percent);
+	} else {
+		if (percent == 100)
+			SPRINTF_S(t, "[%02u %02u]", tm.hour, tm.minutes);
+		else
+			SPRINTF_S(t, "[%02u %02u %d%%]", tm.hour, tm.minutes, percent);
+	}
+	strcpy_s(dest, size, t);
+}
+
+static void get_infobar_string(dword selidx, char *dest, int size)
+{
 	char autopageinfo[80];
+	char cr[512];
 
 	if (config.autopagetype == 2)
 		autopageinfo[0] = 0;
@@ -308,41 +323,70 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 		} else
 			autopageinfo[0] = 0;
 	}
-	if (where == scene_in_chm) {
-		char t[512];
 
-		SPRINTF_S(t, "%s %s GI: %d %s",
+	if (where == scene_in_chm) {
+		char t[512], u[512];
+
+		if (config.infobar_show_timer)
+			get_infobar_system_string(u, sizeof(u));
+		else
+			STRCPY_S(u, "");
+
+		SPRINTF_S(t, "%s %s GI: %d %s %s",
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename(config.
 																  encode)),
-				  filelist[selidx].name, calc_gi(), autopageinfo);
+				  filelist[selidx].name, calc_gi(), autopageinfo, u);
 		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
 					t);
 	} else if (scene_readbook_in_raw_mode == true) {
-		char t[512];
+		char t[512], u[512];
 
-		SPRINTF_S(t, "%s %s GI: %d %s",
+		if (config.infobar_show_timer)
+			get_infobar_system_string(u, sizeof(u));
+		else
+			STRCPY_S(u, "");
+		SPRINTF_S(t, "%s %s GI: %d %s %s",
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename(config.
 																  encode)),
-				  g_titlename, calc_gi(), autopageinfo);
+				  g_titlename, calc_gi(), autopageinfo, u);
 		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
 					t);
 	} else {
-		char t[512];
+		char t[512], u[512];
 
-		SPRINTF_S(t, "%s %s GI: %d %s",
+		if (config.infobar_show_timer)
+			get_infobar_system_string(u, sizeof(u));
+		else
+			STRCPY_S(u, "");
+		SPRINTF_S(t, "%s %s GI: %d %s %s",
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
 											  conf_get_encodename(config.
 																  encode)),
-				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo);
+				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo, u);
 		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
 					t);
 	}
+
+	strcpy_s(dest, size, cr);
+}
+
+#ifdef ENABLE_TTF
+static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
+								  int vertread)
+{
+	char cr[512];
 	int wordspace = 0;
+
+	if (config.infobar_style == 0)
+		draw_infobar_rect(vertread);
+	else
+		draw_infobar_single_line(vertread);
+	get_infobar_string(selidx, cr, sizeof(cr));
 
 	switch (vertread) {
 		case conf_vertread_reversal:
@@ -380,63 +424,14 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 {
 	char cr[512];
+	int wordspace = (DISP_FONTSIZE == 10 ? 1 : 0);
 
 	if (config.infobar_style == 0)
 		draw_infobar_rect(vertread);
 	else
 		draw_infobar_single_line(vertread);
 
-	char autopageinfo[80];
-
-	if (config.autopagetype == 2)
-		autopageinfo[0] = 0;
-	else if (config.autopagetype == 1) {
-		if (config.autopage != 0)
-			SPRINTF_S(autopageinfo, _("%s: 时间 %d 速度 %d"),
-					  _("自动滚屏"), config.autolinedelay, config.autopage);
-		else
-			autopageinfo[0] = 0;
-	} else {
-		if (config.autopage != 0) {
-			SPRINTF_S(autopageinfo, _("自动翻页: 时间 %d"), config.autopage);
-		} else
-			autopageinfo[0] = 0;
-	}
-	if (where == scene_in_chm) {
-		char t[512];
-
-		SPRINTF_S(t, "%s %s GI: %d %s",
-				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
-											  1 ? "UCS " :
-											  conf_get_encodename(config.
-																  encode)),
-				  filelist[selidx].name, calc_gi(), autopageinfo);
-		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
-					t);
-	} else if (scene_readbook_in_raw_mode == true) {
-		char t[512];
-
-		SPRINTF_S(t, "%s %s GI: %d %s",
-				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
-											  1 ? "UCS " :
-											  conf_get_encodename(config.
-																  encode)),
-				  g_titlename, calc_gi(), autopageinfo);
-		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
-					t);
-	} else {
-		char t[512];
-
-		SPRINTF_S(t, "%s %s GI: %d %s",
-				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
-											  1 ? "UCS " :
-											  conf_get_encodename(config.
-																  encode)),
-				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo);
-		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
-					t);
-	}
-	int wordspace = (DISP_FONTSIZE == 10 ? 1 : 0);
+	get_infobar_string(selidx, cr, sizeof(cr));
 
 	switch (vertread) {
 		case conf_vertread_reversal:
@@ -887,6 +882,50 @@ static void scene_draw_scrollbar_horz(void)
 					   PSP_SCREEN_WIDTH - 1, endp, config.forecolor, fgalpha);
 }
 
+static void scene_draw_infobar(PBookViewData pView, dword selidx)
+{
+	if (config.infobar == conf_infobar_info) {
+#ifdef ENABLE_TTF
+		if (config.infobar_use_ttf_mode && config.usettf)
+			draw_infobar_info_ttf(pView, selidx, config.vertread);
+		else
+#endif
+			draw_infobar_info(pView, selidx, config.vertread);
+	}
+#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
+	else if (config.infobar == conf_infobar_lyric) {
+#ifdef ENABLE_TTF
+		if (config.infobar_use_ttf_mode && config.usettf)
+			draw_infobar_lyric_ttf(pView, selidx, config.vertread);
+		else
+#endif
+			draw_infobar_lyric(pView, selidx, config.vertread);
+	}
+#endif
+}
+
+static void scene_draw_scrollbar(void)
+{
+	if (config.scrollbar) {
+		switch (config.vertread) {
+			case conf_vertread_reversal:
+				scene_draw_scrollbar_reversal();
+				break;
+			case conf_vertread_lvert:
+				scene_draw_scrollbar_lvert();
+				break;
+			case conf_vertread_rvert:
+				scene_draw_scrollbar_rvert();
+				break;
+			case conf_vertread_horz:
+				scene_draw_scrollbar_horz();
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 int scene_printbook(PBookViewData pView, dword selidx)
 {
 	disp_waitv();
@@ -912,44 +951,6 @@ int scene_printbook(PBookViewData pView, dword selidx)
 			break;
 	}
 
-	if (config.infobar == conf_infobar_info) {
-#ifdef ENABLE_TTF
-		if (config.infobar_use_ttf_mode && config.usettf)
-			draw_infobar_info_ttf(pView, selidx, config.vertread);
-		else
-#endif
-			draw_infobar_info(pView, selidx, config.vertread);
-	}
-#if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
-	else if (config.infobar == conf_infobar_lyric) {
-#ifdef ENABLE_TTF
-		if (config.infobar_use_ttf_mode && config.usettf)
-			draw_infobar_lyric_ttf(pView, selidx, config.vertread);
-		else
-#endif
-			draw_infobar_lyric(pView, selidx, config.vertread);
-	}
-#endif
-
-	if (config.scrollbar) {
-		switch (config.vertread) {
-			case conf_vertread_reversal:
-				scene_draw_scrollbar_reversal();
-				break;
-			case conf_vertread_lvert:
-				scene_draw_scrollbar_lvert();
-				break;
-			case conf_vertread_rvert:
-				scene_draw_scrollbar_rvert();
-				break;
-			case conf_vertread_horz:
-				scene_draw_scrollbar_horz();
-				break;
-			default:
-				break;
-		}
-	}
-	disp_flip();
 	return 0;
 }
 
@@ -1555,6 +1556,10 @@ dword scene_readbook(dword selidx)
 		}
 		if (cur_book_view.text_needrp) {
 			scene_printbook(&cur_book_view, selidx);
+			scene_draw_infobar(&cur_book_view, selidx);
+			scene_draw_scrollbar();
+
+			disp_flip();
 #ifdef _DEBUG
 //          disp_flip();
 //          get_screen_shot();
@@ -1568,6 +1573,19 @@ dword scene_readbook(dword selidx)
 
 		while ((key = ctrl_read()) == 0) {
 			sceKernelDelayThread(20000);
+			if (config.infobar_show_timer) {
+				static u64 start, end;
+
+				sceRtcGetCurrentTick(&end);
+				if (pspDiffTime(&end, &start) >= 1.0) {
+					sceRtcGetCurrentTick(&start);
+					scene_printbook(&cur_book_view, selidx);
+					scene_draw_infobar(&cur_book_view, selidx);
+					scene_draw_scrollbar();
+
+					disp_flip();
+				}
+			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if (config.infobar == conf_infobar_lyric
 				&& lyric_check_changed(mp3_get_lyric())) {

@@ -254,6 +254,7 @@ static void conf_default(p_conf conf)
 	conf->save_password = true;
 	conf->scrollbar_width = 5;
 	conf->hide_last_row = true;
+	conf->infobar_show_timer = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -1055,6 +1056,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->hide_last_row =
 		iniparser_getboolean(dict, "Text:hide_last_row", conf->hide_last_row);
 
+	conf->infobar_show_timer =
+		iniparser_getboolean(dict, "Text:infobar_show_timer",
+							 conf->infobar_show_timer);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1324,6 +1329,10 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "Text:hide_last_row",
 						booleanToString(buf, sizeof(buf), conf->hide_last_row));
+
+	iniparser_setstring(dict, "Text:infobar_show_timer",
+						booleanToString(buf, sizeof(buf),
+										conf->infobar_show_timer));
 
 	iniparser_dump_ini(dict, fp);
 
