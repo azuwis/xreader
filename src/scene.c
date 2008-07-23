@@ -2222,6 +2222,7 @@ dword scene_fontsel(dword * selidx)
 	dword orgrowspace = config.rowspace;
 	dword orgwordspace = config.wordspace;
 	dword orgborderspace = config.borderspace;
+	dword orginfobar_fontsize = config.infobar_fontsize;
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
 	g_predraw.item_count = NELEMS(item);
@@ -2266,7 +2267,9 @@ dword scene_fontsel(dword * selidx)
 	}
 	if (orgibar != config.infobar || orgvert != config.vertread
 		|| orgwordspace != config.wordspace
-		|| orgscrollbar != config.scrollbar) {
+		|| orgscrollbar != config.scrollbar
+		|| (config.infobar != conf_infobar_none
+			&& orginfobar_fontsize != config.infobar_fontsize)) {
 		dword orgpixelsperrow = pixelsperrow;
 
 		scene_bookmark_autosave();
