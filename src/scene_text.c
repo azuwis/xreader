@@ -216,10 +216,7 @@ extern int scene_get_scrollbar_height(void)
 {
 	if (config.infobar == conf_infobar_none)
 		return 0;
-
-	return (config.usettf
-			&& config.
-			infobar_use_ttf_mode) ? DISP_BOOK_FONTSIZE : DISP_FONTSIZE + 1;
+	return config.infobar_fontsize + 1;
 }
 
 static void draw_infobar_single_line(int vertread)
@@ -391,29 +388,33 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 	switch (vertread) {
 		case conf_vertread_reversal:
 			disp_putnstringreversal(0,
-									PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE -
-									1, config.forecolor, (const byte *) cr,
-									960 / DISP_BOOK_FONTSIZE, wordspace, 0,
-									DISP_BOOK_FONTSIZE, 0);
+									PSP_SCREEN_HEIGHT -
+									scene_get_scrollbar_height() - 1,
+									config.forecolor, (const byte *) cr,
+									960 / config.infobar_fontsize, wordspace, 0,
+									config.infobar_fontsize, 0);
 			break;
 		case conf_vertread_lvert:
-			disp_putnstringlvert(PSP_SCREEN_WIDTH - DISP_BOOK_FONTSIZE - 1,
+			disp_putnstringlvert(PSP_SCREEN_WIDTH -
+								 scene_get_scrollbar_height() - 1,
 								 (PSP_SCREEN_HEIGHT - 1), config.forecolor,
-								 (const byte *) cr, 544 / DISP_BOOK_FONTSIZE,
-								 wordspace, 0, DISP_BOOK_FONTSIZE, 0);
+								 (const byte *) cr,
+								 544 / config.infobar_fontsize, wordspace, 0,
+								 config.infobar_fontsize, 0);
 			break;
 		case conf_vertread_rvert:
-			disp_putnstringrvert(DISP_BOOK_FONTSIZE, 0,
+			disp_putnstringrvert(scene_get_scrollbar_height(), 0,
 								 config.forecolor, (const byte *) cr,
-								 544 / DISP_BOOK_FONTSIZE, wordspace, 0,
-								 DISP_BOOK_FONTSIZE, 1);
+								 544 / config.infobar_fontsize, wordspace, 0,
+								 config.infobar_fontsize, 0);
 			break;
 		case conf_vertread_horz:
 			disp_putnstringhorz(0,
-								PSP_SCREEN_HEIGHT - DISP_BOOK_FONTSIZE - 1,
+								PSP_SCREEN_HEIGHT -
+								scene_get_scrollbar_height() - 1,
 								config.forecolor, (const byte *) cr,
-								960 / DISP_BOOK_FONTSIZE, wordspace, 0,
-								DISP_BOOK_FONTSIZE, 0);
+								960 / config.infobar_fontsize, wordspace, 0,
+								config.infobar_fontsize, 0);
 			break;
 		default:
 			break;
@@ -424,7 +425,7 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 {
 	char cr[512];
-	int wordspace = (DISP_FONTSIZE == 10 ? 1 : 0);
+	int wordspace = (config.infobar_fontsize == 10 ? 1 : 0);
 
 	if (config.infobar_style == 0)
 		draw_infobar_rect(vertread);
@@ -436,29 +437,32 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 	switch (vertread) {
 		case conf_vertread_reversal:
 			disp_putnstringreversal_sys(0,
-										PSP_SCREEN_HEIGHT - DISP_FONTSIZE,
+										PSP_SCREEN_HEIGHT -
+										config.infobar_fontsize,
 										config.forecolor, (const byte *) cr,
-										960 / DISP_FONTSIZE, wordspace, 0,
-										DISP_FONTSIZE, 0);
+										960 / config.infobar_fontsize,
+										wordspace, 0, config.infobar_fontsize,
+										0);
 			break;
 		case conf_vertread_lvert:
-			disp_putnstringlvert_sys(PSP_SCREEN_WIDTH - DISP_FONTSIZE,
+			disp_putnstringlvert_sys(PSP_SCREEN_WIDTH - config.infobar_fontsize,
 									 (PSP_SCREEN_HEIGHT - 1),
 									 config.forecolor, (const byte *) cr,
-									 544 / DISP_FONTSIZE, wordspace, 0,
-									 DISP_FONTSIZE, 0);
+									 544 / config.infobar_fontsize, wordspace,
+									 0, config.infobar_fontsize, 0);
 			break;
 		case conf_vertread_rvert:
-			disp_putnstringrvert_sys(DISP_FONTSIZE - 1, 0,
+			disp_putnstringrvert_sys(config.infobar_fontsize - 1, 0,
 									 config.forecolor, (const byte *) cr,
-									 544 / DISP_FONTSIZE, wordspace, 0,
-									 DISP_FONTSIZE, 0);
+									 544 / config.infobar_fontsize, wordspace,
+									 0, config.infobar_fontsize, 0);
 			break;
 		case conf_vertread_horz:
-			disp_putnstringhorz_sys(0, PSP_SCREEN_HEIGHT - DISP_FONTSIZE,
+			disp_putnstringhorz_sys(0,
+									PSP_SCREEN_HEIGHT - config.infobar_fontsize,
 									config.forecolor, (const byte *) cr,
-									960 / DISP_FONTSIZE, wordspace, 0,
-									DISP_FONTSIZE, 0);
+									960 / config.infobar_fontsize, wordspace, 0,
+									config.infobar_fontsize, 0);
 			break;
 		default:
 			break;
@@ -481,48 +485,50 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 
 	if (lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss)
 		&& ls[0] != NULL) {
-		if (ss[0] > 960 / DISP_BOOK_FONTSIZE)
-			ss[0] = 960 / DISP_BOOK_FONTSIZE;
+		if (ss[0] > 960 / config.infobar_fontsize)
+			ss[0] = 960 / config.infobar_fontsize;
 		char t[BUFSIZ];
 
 		lyric_decode(ls[0], t, &ss[0]);
 		switch (vertread) {
 			case conf_vertread_reversal:
 				disp_putnstringreversal((240 -
-										 ss[0] * DISP_BOOK_FONTSIZE /
+										 ss[0] * config.infobar_fontsize /
 										 4),
 										PSP_SCREEN_HEIGHT -
 										scene_get_scrollbar_height() - 1,
 										config.forecolor,
 										(const byte *) t, ss[0],
-										wordspace, 0, DISP_BOOK_FONTSIZE, 0);
+										wordspace, 0, config.infobar_fontsize,
+										0);
 				break;
 			case conf_vertread_lvert:
 				disp_putnstringlvert(PSP_SCREEN_WIDTH -
 									 scene_get_scrollbar_height() - 1,
 									 (PSP_SCREEN_HEIGHT - 1) - (136 -
 																ss[0] *
-																DISP_BOOK_FONTSIZE
+																config.
+																infobar_fontsize
 																/ 4),
-									 config.forecolor, (const byte *) t,
-									 ss[0], wordspace, 0,
-									 DISP_BOOK_FONTSIZE, 0);
+									 config.forecolor, (const byte *) t, ss[0],
+									 wordspace, 0, config.infobar_fontsize, 0);
 				break;
 			case conf_vertread_rvert:
 				disp_putnstringrvert(scene_get_scrollbar_height(),
 									 (136 -
-									  ss[0] * DISP_BOOK_FONTSIZE / 4),
+									  ss[0] * config.infobar_fontsize / 4),
 									 config.forecolor, (const byte *) t,
 									 ss[0], wordspace, 0,
-									 DISP_BOOK_FONTSIZE, 0);
+									 config.infobar_fontsize, 0);
 				break;
 			case conf_vertread_horz:
 				disp_putnstringhorz((240 -
-									 ss[0] * DISP_BOOK_FONTSIZE / 4),
+									 ss[0] * config.infobar_fontsize / 4),
 									PSP_SCREEN_HEIGHT -
 									scene_get_scrollbar_height() - 1,
 									config.forecolor, (const byte *) t,
-									ss[0], wordspace, 0, DISP_BOOK_FONTSIZE, 0);
+									ss[0], wordspace, 0,
+									config.infobar_fontsize, 0);
 				break;
 			default:
 				break;
@@ -540,50 +546,54 @@ static void draw_infobar_lyric(PBookViewData pView, dword selidx, int vertread)
 
 	const char *ls[1];
 	dword ss[1];
-	int wordspace = (DISP_FONTSIZE == 10 ? 1 : 0);
+	int wordspace = (config.infobar_fontsize == 10 ? 1 : 0);
 
 	if (lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss)
 		&& ls[0] != NULL) {
-		if (ss[0] > 960 / DISP_FONTSIZE)
-			ss[0] = 960 / DISP_FONTSIZE;
+		if (ss[0] > 960 / config.infobar_fontsize)
+			ss[0] = 960 / config.infobar_fontsize;
 		char t[BUFSIZ];
 
 		lyric_decode(ls[0], t, &ss[0]);
 		switch (vertread) {
 			case conf_vertread_reversal:
 				disp_putnstringreversal_sys((240 -
-											 ss[0] * DISP_FONTSIZE / 4),
+											 ss[0] * config.infobar_fontsize /
+											 4),
 											PSP_SCREEN_HEIGHT -
 											scene_get_scrollbar_height(),
-											config.forecolor,
-											(const byte *) t, ss[0],
-											wordspace, 0, DISP_FONTSIZE, 0);
+											config.forecolor, (const byte *) t,
+											ss[0], wordspace, 0,
+											config.infobar_fontsize, 0);
 				break;
 			case conf_vertread_lvert:
 				disp_putnstringlvert_sys(PSP_SCREEN_WIDTH -
 										 scene_get_scrollbar_height(),
 										 (PSP_SCREEN_HEIGHT - 1) -
 										 (136 -
-										  ss[0] * DISP_FONTSIZE / 4),
+										  ss[0] * config.infobar_fontsize / 4),
 										 config.forecolor,
 										 (const byte *) t, ss[0],
-										 wordspace, 0, DISP_FONTSIZE, 0);
+										 wordspace, 0, config.infobar_fontsize,
+										 0);
 				break;
 			case conf_vertread_rvert:
 				disp_putnstringrvert_sys(scene_get_scrollbar_height() - 1,
 										 (136 -
-										  ss[0] * DISP_FONTSIZE / 4),
+										  ss[0] * config.infobar_fontsize / 4),
 										 config.forecolor,
 										 (const byte *) t, ss[0],
-										 wordspace, 0, DISP_FONTSIZE, 0);
+										 wordspace, 0, config.infobar_fontsize,
+										 0);
 				break;
 			case conf_vertread_horz:
 				disp_putnstringhorz_sys((240 -
-										 ss[0] * DISP_FONTSIZE / 4),
+										 ss[0] * config.infobar_fontsize / 4),
 										PSP_SCREEN_HEIGHT -
 										scene_get_scrollbar_height(),
 										config.forecolor, (const byte *) t,
-										ss[0], wordspace, 0, DISP_FONTSIZE, 0);
+										ss[0], wordspace, 0,
+										config.infobar_fontsize, 0);
 				break;
 			default:
 				break;

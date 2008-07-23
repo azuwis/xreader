@@ -197,6 +197,7 @@ bool scene_load_book_font()
 		config.bookfontsize = ttfsize;
 	else {
 		config.bookfontsize = bookfonts[bookfontindex].size;
+		config.infobar_fontsize = config.fontsize;
 		if (config.bookfontsize == config.fontsize) {
 			disp_assign_book_font();
 			disp_set_book_fontsize(config.bookfontsize);
@@ -1448,6 +1449,8 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 					break;
 				case 14:
 					config.infobar_use_ttf_mode = !config.infobar_use_ttf_mode;
+					if (!config.infobar_use_ttf_mode)
+						config.infobar_fontsize = fonts[fontindex].size;
 					break;
 			}
 			return win_menu_op_redraw;
@@ -1516,6 +1519,8 @@ t_win_menu_op scene_boptions_menucb(dword key, p_win_menuitem item,
 					break;
 				case 14:
 					config.infobar_use_ttf_mode = !config.infobar_use_ttf_mode;
+					if (!config.infobar_use_ttf_mode)
+						config.infobar_fontsize = fonts[fontindex].size;
 					break;
 			}
 			return win_menu_op_redraw;
@@ -1963,6 +1968,8 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 					else
 						fontindex--;
 					break;
+					if (!config.usettf || !config.infobar_use_ttf_mode)
+						config.infobar_fontsize = fonts[fontindex].size;
 				case 1:
 					if (config.usettf) {
 						ttfsize--;
@@ -2010,6 +2017,19 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 					}
 #endif
 					break;
+				case 6:
+					if (config.usettf && config.infobar_use_ttf_mode) {
+						config.infobar_fontsize--;
+						if (config.infobar_fontsize < 8)
+							config.infobar_fontsize = 128;
+					} else {
+						if (fontindex == 0)
+							fontindex = fontcount - 1;
+						else
+							fontindex--;
+						config.infobar_fontsize = fonts[fontindex].size;
+					}
+					break;
 			}
 			return win_menu_op_redraw;
 		case PSP_CTRL_RIGHT:
@@ -2020,6 +2040,8 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 					else
 						fontindex++;
 					break;
+					if (!config.usettf || !config.infobar_use_ttf_mode)
+						config.infobar_fontsize = fonts[fontindex].size;
 				case 1:
 					if (config.usettf) {
 						ttfsize++;
@@ -2066,6 +2088,19 @@ t_win_menu_op scene_fontsel_menucb(dword key, p_win_menuitem item,
 							bookfontindex--;
 					}
 #endif
+					break;
+				case 6:
+					if (config.usettf && config.infobar_use_ttf_mode) {
+						config.infobar_fontsize++;
+						if (config.infobar_fontsize > 128)
+							config.infobar_fontsize = 8;
+					} else {
+						if (fontindex == fontcount - 1)
+							fontindex = 0;
+						else
+							fontindex++;
+						config.infobar_fontsize = fonts[fontindex].size;
+					}
 					break;
 			}
 			return win_menu_op_redraw;
@@ -2138,11 +2173,18 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex,
 				   COLOR_WHITE, (const byte *) (_("已关闭")));
 	lines++;
 #endif
+	memset(number, ' ', 4);
+	utils_dword2string(config.infobar_fontsize, number, 4);
+	disp_putstring(g_predraw.x + 2,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE, (const byte *) number);
+	lines++;
 }
 
 dword scene_fontsel(dword * selidx)
 {
-	t_win_menuitem item[6];
+	t_win_menuitem item[7];
 	dword i;
 
 	STRCPY_S(item[0].name, _("菜单字体大小"));
@@ -2151,6 +2193,7 @@ dword scene_fontsel(dword * selidx)
 	STRCPY_S(item[3].name, _("      行间距"));
 	STRCPY_S(item[4].name, _("    保留边距"));
 	STRCPY_S(item[5].name, _(" 使用TTF字体"));
+	STRCPY_S(item[6].name, _("信息栏字体大小"));
 
 	win_menu_predraw_data prev;
 

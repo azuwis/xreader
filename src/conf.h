@@ -107,6 +107,7 @@ typedef struct
 	dword rowspace;
 	t_conf_infobar infobar;
 	int infobar_style;
+	dword infobar_fontsize;
 	bool rlastrow;
 	bool autobm;
 	dword vertread;

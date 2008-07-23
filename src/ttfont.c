@@ -920,6 +920,8 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	power_get_clock(&cpu, &bus);
 	if (cpu < 222)
 		power_set_clock(222, 111);
+	ttf_set_pixel_size(ettf, height);
+	ttf_set_pixel_size(cttf, height);
 	while (*str != 0 && count > 0) {
 		if (!check_range(x, y)) {
 			scene_power_save(true);
@@ -1269,6 +1271,8 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 	power_get_clock(&cpu, &bus);
 	if (cpu < 222)
 		power_set_clock(222, 111);
+	ttf_set_pixel_size(ettf, height);
+	ttf_set_pixel_size(cttf, height);
 	while (*str != 0 && count > 0) {
 		if (!check_range(x, y)) {
 			scene_power_save(true);
@@ -1555,6 +1559,8 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	power_get_clock(&cpu, &bus);
 	if (cpu < 222)
 		power_set_clock(222, 111);
+	ttf_set_pixel_size(ettf, height);
+	ttf_set_pixel_size(cttf, height);
 	while (*str != 0 && count > 0) {
 		if (!check_range(x, y)) {
 			scene_power_save(true);
@@ -1842,6 +1848,8 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	power_get_clock(&cpu, &bus);
 	if (cpu < 222)
 		power_set_clock(222, 111);
+	ttf_set_pixel_size(ettf, height);
+	ttf_set_pixel_size(cttf, height);
 	while (*str != 0 && count > 0) {
 		if (!check_range(x, y)) {
 			scene_power_save(true);

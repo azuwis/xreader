@@ -255,6 +255,7 @@ static void conf_default(p_conf conf)
 	conf->scrollbar_width = 5;
 	conf->hide_last_row = false;
 	conf->infobar_show_timer = true;
+	conf->infobar_fontsize = 12;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -836,6 +837,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 						 infobarToString(buf, sizeof(buf), conf->infobar)));
 	conf->infobar_style =
 		iniparser_getint(dict, "Text:infobar_style", conf->infobar_style);
+	conf->infobar_fontsize =
+		iniparser_getunsigned(dict, "Text:infobar_fontsize",
+							  conf->infobar_fontsize);
 	conf->rlastrow =
 		iniparser_getboolean(dict, "Text:rlastrow", conf->rlastrow);
 	conf->autobm = iniparser_getboolean(dict, "Text:autobm", conf->autobm);
@@ -1005,7 +1009,6 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->infobar_use_ttf_mode =
 		iniparser_getboolean(dict, "Text:infobar_use_ttf_mode",
 							 conf->infobar_use_ttf_mode);
-
 	conf->cfont_antialias =
 		iniparser_getboolean(dict, "Text:cfont_antialias",
 							 conf->cfont_antialias);
@@ -1279,7 +1282,9 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Text:infobar_use_ttf_mode",
 						booleanToString(buf, sizeof(buf),
 										conf->infobar_use_ttf_mode));
-
+	iniparser_setstring(dict, "Text:infobar_fontsize",
+						dwordToString(buf, sizeof(buf),
+									  conf->infobar_fontsize));
 	iniparser_setstring(dict, "Text:cfont_antialias",
 						booleanToString(buf, sizeof(buf),
 										conf->cfont_antialias));
