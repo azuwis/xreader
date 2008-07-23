@@ -253,7 +253,7 @@ static void conf_default(p_conf conf)
 	}
 	conf->save_password = true;
 	conf->scrollbar_width = 5;
-	conf->hide_last_row = true;
+	conf->hide_last_row = false;
 	conf->infobar_show_timer = true;
 }
 
