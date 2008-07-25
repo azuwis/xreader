@@ -80,7 +80,7 @@ void ExceptionHandler(PspDebugRegBlock * regs)
 	sceKernelDelayThread(1000000);
 	pspDebugScreenPrintf
 		("\n\nPress O to dump information on file exception.log and quit");
-	pspDebugScreenPrintf("\nPress X to quit");
+	pspDebugScreenPrintf("\nPress X to restart");
 
 	for (;;) {
 		sceCtrlReadBufferPositive(&pad, 1);
