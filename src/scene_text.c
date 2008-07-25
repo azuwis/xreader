@@ -1498,6 +1498,10 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 		}
 		if (cur_book_view.text_needrp) {
 			scene_printbook(&cur_book_view, selidx);
+			scene_draw_infobar(&cur_book_view, selidx);
+			scene_draw_scrollbar();
+
+			disp_flip();
 			cur_book_view.text_needrp = false;
 		}
 
@@ -1509,6 +1513,11 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
 				sceRtcGetCurrentTick(&timer_start);
 				secticks++;
+				scene_printbook(&cur_book_view, selidx);
+				scene_draw_infobar(&cur_book_view, selidx);
+				scene_draw_scrollbar();
+
+				disp_flip();
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 #ifdef ENABLE_MUSIC
