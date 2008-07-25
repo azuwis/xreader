@@ -340,7 +340,8 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 /**
  * 在TTF字形缓存中查找字形 
  */
-static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode)
+static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode,
+									int format)
 {
 	int i;
 
@@ -349,7 +350,9 @@ static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode)
 			(ttf->sbitHashRoot[i].size == ttf->pixelSize) &&
 			(ttf->sbitHashRoot[i].anti_alias == ttf->antiAlias) &&
 			(ttf->sbitHashRoot[i].cleartype == ttf->cleartype) &&
-			(ttf->sbitHashRoot[i].embolden == ttf->embolden))
+			(ttf->sbitHashRoot[i].embolden == ttf->embolden) &&
+			(ttf->sbitHashRoot[i].bitmap.format == format)
+			)
 			return (&ttf->sbitHashRoot[i]);
 	}
 	return NULL;
@@ -458,6 +461,33 @@ static void _drawBitmap_horz(byte * buffer, int format, int width, int height,
 
 				*(pixel *) disp_get_vaddr((i + x), (j + y)) = (RGB(rd, gd, bd));
 			}
+	} else if (format == FT_PIXEL_MODE_LCD_V) {
+		for (j = 0; j < height / 3; j++)
+			for (i = 0; i < width; i++) {
+				if (i + x < 0 || i + x >= scr_width || j + y < 0
+					|| j + y >= scr_height)
+					continue;
+				// RGB or BGR ?
+				pixel origcolor = *disp_get_vaddr((i + x), (j + y));
+
+				ra = buffer[j * 3 * pitch + i];
+				ga = buffer[(j * 3 + 1) * pitch + i];
+				ba = buffer[(j * 3 + 2) * pitch + i];
+
+				rs = RGB_R(origcolor);
+				gs = RGB_G(origcolor);
+				bs = RGB_B(origcolor);
+
+				rd = RGB_R(color);
+				gd = RGB_G(color);
+				bd = RGB_B(color);
+
+				MakeAlpha(&rs, &rd, ra);
+				MakeAlpha(&gs, &gd, ga);
+				MakeAlpha(&bs, &bd, ba);
+
+				*(pixel *) disp_get_vaddr((i + x), (j + y)) = (RGB(rd, gd, bd));
+			}
 	}
 }
 
@@ -530,7 +560,7 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs, FT_RENDER_MODE_LCD);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -634,7 +664,7 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 		if (*str > 0x80) {
 			useKerning = FT_HAS_KERNING(cttf->face);
 			word ucs = charsets_gbk_to_ucs(str);
-			SBit_HashItem *cache = sbitCacheFind(cttf, ucs);
+			SBit_HashItem *cache = sbitCacheFind(cttf, ucs, FT_PIXEL_MODE_LCD);
 
 			if (cache) {
 				if (useKerning && cprevious && cache->glyph_index) {
@@ -707,7 +737,7 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 		} else if (*str > 0x1F) {
 			useKerning = FT_HAS_KERNING(ettf->face);
 			word ucs = charsets_gbk_to_ucs(str);
-			SBit_HashItem *cache = sbitCacheFind(ettf, ucs);
+			SBit_HashItem *cache = sbitCacheFind(ettf, ucs, FT_PIXEL_MODE_LCD);
 
 			if (cache) {
 				if (useKerning && eprevious && cache->glyph_index) {
@@ -1096,6 +1126,34 @@ static void _drawBitmap_reversal(byte * buffer, int format, int width,
 
 				*(pixel *) disp_get_vaddr((x - i), (y - j)) = (RGB(rd, gd, bd));
 			}
+	} else if (format == FT_PIXEL_MODE_LCD_V) {
+		for (j = 0; j < height / 3; j++)
+			for (i = 0; i < width; i++) {
+				if (x - i < 0 || x - i >= scr_width
+					|| y - j < PSP_SCREEN_HEIGHT - scr_height
+					|| y - j >= PSP_SCREEN_HEIGHT)
+					continue;
+				// RGB or BGR ?
+				pixel origcolor = *disp_get_vaddr((x - i), (y - j));
+
+				ra = buffer[j * 3 * pitch + i];
+				ga = buffer[(j * 3 + 1) * pitch + i];
+				ba = buffer[(j * 3 + 2) * pitch + i];
+
+				rs = RGB_R(origcolor);
+				gs = RGB_G(origcolor);
+				bs = RGB_B(origcolor);
+
+				rd = RGB_R(color);
+				gd = RGB_G(color);
+				bd = RGB_B(color);
+
+				MakeAlpha(&rs, &rd, ra);
+				MakeAlpha(&gs, &gd, ga);
+				MakeAlpha(&bs, &bd, ba);
+
+				*(pixel *) disp_get_vaddr((x - i), (y - j)) = (RGB(rd, gd, bd));
+			}
 	}
 }
 
@@ -1169,7 +1227,7 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs, FT_PIXEL_MODE_LCD);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1388,6 +1446,33 @@ static void _drawBitmap_lvert(byte * buffer, int format, int width, int height,
 
 				*(pixel *) disp_get_vaddr((x + j), (y - i)) = (RGB(rd, gd, bd));
 			}
+	} else if (format == FT_PIXEL_MODE_LCD_V) {
+		for (j = 0; j < height / 3; j++)
+			for (i = 0; i < width; i++) {
+				if (y - i < 0 || y - i >= scr_height
+					|| x + j < 0 || x + j >= scr_width)
+					continue;
+				// RGB or BGR ?
+				pixel origcolor = *disp_get_vaddr((x + j), (y - i));
+
+				ra = buffer[j * 3 * pitch + i];
+				ga = buffer[(j * 3 + 1) * pitch + i];
+				ba = buffer[(j * 3 + 2) * pitch + i];
+
+				rs = RGB_R(origcolor);
+				gs = RGB_G(origcolor);
+				bs = RGB_B(origcolor);
+
+				rd = RGB_R(color);
+				gd = RGB_G(color);
+				bd = RGB_B(color);
+
+				MakeAlpha(&rs, &rd, ra);
+				MakeAlpha(&gs, &gd, ga);
+				MakeAlpha(&bs, &bd, ba);
+
+				*(pixel *) disp_get_vaddr((x + j), (y - i)) = (RGB(rd, gd, bd));
+			}
 	}
 }
 
@@ -1458,7 +1543,7 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs, FT_PIXEL_MODE_LCD_V);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1488,7 +1573,7 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 			if (ttf->cleartype) {
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD_V);
 			} else if (ttf->antiAlias) {
 				error =
 					FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
@@ -1649,7 +1734,6 @@ static void _drawBitmap_rvert(byte * buffer, int format, int width, int height,
 				}
 			}
 	} else if (format == FT_PIXEL_MODE_LCD) {
-//      dbg_printf(d, "%s: %d, %d, %d", __func__, x, y, scr_height);
 		for (j = 0; j < height; j++)
 			for (i = 0; i < width / 3; i++) {
 				if (y + i < 0 || y + i >= scr_height
@@ -1662,6 +1746,34 @@ static void _drawBitmap_rvert(byte * buffer, int format, int width, int height,
 				ra = buffer[j * pitch + i * 3];
 				ga = buffer[j * pitch + i * 3 + 1];
 				ba = buffer[j * pitch + i * 3 + 2];
+
+				rs = RGB_R(origcolor);
+				gs = RGB_G(origcolor);
+				bs = RGB_B(origcolor);
+
+				rd = RGB_R(color);
+				gd = RGB_G(color);
+				bd = RGB_B(color);
+
+				MakeAlpha(&rs, &rd, ra);
+				MakeAlpha(&gs, &gd, ga);
+				MakeAlpha(&bs, &bd, ba);
+
+				*(pixel *) disp_get_vaddr((x - j), (y + i)) = (RGB(rd, gd, bd));
+			}
+	} else if (format == FT_PIXEL_MODE_LCD_V) {
+		for (j = 0; j < height / 3; j++)
+			for (i = 0; i < width; i++) {
+				if (y + i < 0 || y + i >= scr_height
+					|| x - j < PSP_SCREEN_WIDTH - scr_width
+					|| x - j >= PSP_SCREEN_WIDTH)
+					continue;
+				// RGB or BGR ?
+				pixel origcolor = *disp_get_vaddr((x - j), (y + i));
+
+				ra = buffer[j * 3 * pitch + i];
+				ga = buffer[(j * 3 + 1) * pitch + i];
+				ba = buffer[(j * 3 + 2) * pitch + i];
 
 				rs = RGB_R(origcolor);
 				gs = RGB_G(origcolor);
@@ -1748,7 +1860,7 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs, FT_PIXEL_MODE_LCD_V);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1779,7 +1891,7 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 			if (ttf->cleartype) {
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
+				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD_V);
 			} else if (ttf->antiAlias) {
 				error =
 					FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
