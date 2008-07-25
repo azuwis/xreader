@@ -15,9 +15,8 @@
 #include <stdio.h>
 #include "dbg.h"
 #include "conf.h"
-#include "fat.h"
-#include "mp3.h"
 #include "text.h"
+#include "power.h"
 
 static volatile int secticks = 0;
 
@@ -218,10 +217,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 				secticks++;
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
-#ifdef ENABLE_MUSIC
-				mp3_powerdown();
-#endif
-				fat_powerdown();
+				power_down();
 				scePowerRequestSuspend();
 				secticks = 0;
 			}
@@ -241,10 +237,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 					secticks++;
 				}
 				if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
-#ifdef ENABLE_MUSIC
-					mp3_powerdown();
-#endif
-					fat_powerdown();
+					power_down();
 					scePowerRequestSuspend();
 					secticks = 0;
 				}

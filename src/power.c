@@ -2,10 +2,16 @@
 
 #include <string.h>
 #include <psppower.h>
+#include <pspsdk.h>
 #include "common/utils.h"
 #include "xrPrx/xrPrx.h"
 #include "power.h"
 #include "simple_gettext.h"
+#include "conf.h"
+#include "mp3.h"
+#include "fat.h"
+#include "display.h"
+#include "scene.h"
 
 bool use_prx_power_save = false;
 
@@ -80,4 +86,40 @@ extern const char *power_get_battery_charging()
 			STRCAT_S(status_str, _("[µçÁ¿²»×ã]"));
 	}
 	return status_str;
+}
+
+extern t_conf config;
+
+extern void power_down(void)
+{
+#ifdef ENABLE_TTF
+	if (config.usettf && !config.ttf_load_to_memory) {
+		sceKernelDelayThread(500000);
+		disp_assign_book_font();
+	}
+#endif
+#ifdef ENABLE_MUSIC
+	mp3_powerdown();
+#endif
+	fat_powerdown();
+	scene_power_save(true);
+}
+
+extern void power_up(void)
+{
+#ifdef ENABLE_TTF
+	if (config.usettf && !config.ttf_load_to_memory) {
+		disp_load_zipped_truetype_book_font(config.ettfarch,
+											config.cttfarch,
+											config.ettfpath,
+											config.cttfpath,
+											config.bookfontsize);
+	}
+#endif
+	sceKernelDelayThread(1000000);
+	fat_powerup();
+#ifdef ENABLE_MUSIC
+	mp3_powerup();
+#endif
+	scene_power_save(true);
 }

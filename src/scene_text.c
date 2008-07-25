@@ -21,7 +21,6 @@
 #include "bookmark.h"
 #include "conf.h"
 #include "charsets.h"
-#include "fat.h"
 #include "location.h"
 #ifdef ENABLE_MUSIC
 #include "mp3.h"
@@ -1520,10 +1519,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 				disp_flip();
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
-#ifdef ENABLE_MUSIC
-				mp3_powerdown();
-#endif
-				fat_powerdown();
+				power_down();
 				scePowerRequestSuspend();
 				secticks = 0;
 			}
@@ -1617,10 +1613,7 @@ dword scene_readbook(dword selidx)
 				secticks++;
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
-#ifdef ENABLE_MUSIC
-				mp3_powerdown();
-#endif
-				fat_powerdown();
+				power_down();
 				scePowerRequestSuspend();
 				secticks = 0;
 			}

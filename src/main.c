@@ -17,6 +17,7 @@
 #include "conf.h"
 #include "display.h"
 #include "ctrl.h"
+#include "power.h"
 
 PSP_MODULE_INFO("XREADER", 0x0200, 1, 6);
 PSP_MAIN_THREAD_PARAMS(45, 256, PSP_THREAD_ATTR_USER);
@@ -26,35 +27,11 @@ extern t_conf config;
 
 static int power_callback(int arg1, int powerInfo, void *arg)
 {
-#ifdef ENABLE_TTF
 	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0) {
-		if (config.usettf && !config.ttf_load_to_memory) {
-			sceKernelDelayThread(500000);
-			disp_assign_book_font();
-		}
+		power_down();
 	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
-		if (config.usettf && !config.ttf_load_to_memory) {
-			disp_load_zipped_truetype_book_font(config.ettfarch,
-												config.cttfarch,
-												config.ettfpath,
-												config.cttfpath,
-												config.bookfontsize);
-		}
+		power_up();
 	}
-#endif
-	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0) {
-#ifdef ENABLE_MUSIC
-		mp3_powerdown();
-#endif
-		fat_powerdown();
-	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
-		sceKernelDelayThread(1000000);
-		fat_powerup();
-#ifdef ENABLE_MUSIC
-		mp3_powerup();
-#endif
-	}
-	scene_power_save(true);
 	return 0;
 }
 
