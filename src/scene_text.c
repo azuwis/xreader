@@ -1459,6 +1459,23 @@ dword scene_reload_raw(const char *title, const unsigned char *data,
 	return 0;
 }
 
+#ifdef ENABLE_TTF
+extern p_ttf cttf, ettf;
+#endif
+
+static void redraw_book(dword selidx)
+{
+	ttf_set_pixel_size(cttf, DISP_BOOK_FONTSIZE);
+	ttf_set_pixel_size(ettf, DISP_BOOK_FONTSIZE);
+	scene_printbook(&cur_book_view, selidx);
+	ttf_set_pixel_size(cttf, config.infobar_fontsize);
+	ttf_set_pixel_size(ettf, config.infobar_fontsize);
+	scene_draw_infobar(&cur_book_view, selidx);
+	scene_draw_scrollbar();
+	disp_flip();
+	cur_book_view.text_needrp = false;
+}
+
 dword scene_readbook_raw(const char *title, const unsigned char *data,
 						 size_t size, t_fs_filetype ft)
 {
@@ -1505,18 +1522,10 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 		if (cur_book_view.text_needrp) {
 			if (config.usettf && !config.ttf_load_to_memory) {
 				ttf_lock();
-				scene_printbook(&cur_book_view, selidx);
-				scene_draw_infobar(&cur_book_view, selidx);
-				scene_draw_scrollbar();
-				disp_flip();
-				cur_book_view.text_needrp = false;
+				redraw_book(selidx);
 				ttf_unlock();
 			} else {
-				scene_printbook(&cur_book_view, selidx);
-				scene_draw_infobar(&cur_book_view, selidx);
-				scene_draw_scrollbar();
-				disp_flip();
-				cur_book_view.text_needrp = false;
+				redraw_book(selidx);
 			}
 		}
 
@@ -1597,18 +1606,10 @@ dword scene_readbook(dword selidx)
 		if (cur_book_view.text_needrp) {
 			if (config.usettf && !config.ttf_load_to_memory) {
 				ttf_lock();
-				scene_printbook(&cur_book_view, selidx);
-				scene_draw_infobar(&cur_book_view, selidx);
-				scene_draw_scrollbar();
-				disp_flip();
-				cur_book_view.text_needrp = false;
+				redraw_book(selidx);
 				ttf_unlock();
 			} else {
-				scene_printbook(&cur_book_view, selidx);
-				scene_draw_infobar(&cur_book_view, selidx);
-				scene_draw_scrollbar();
-				disp_flip();
-				cur_book_view.text_needrp = false;
+				redraw_book(selidx);
 			}
 		}
 
