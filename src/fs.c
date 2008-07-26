@@ -20,6 +20,7 @@
 #include "osk.h"
 #include "bg.h"
 #include "image.h"
+#include "archive.h"
 #include "dbg.h"
 
 extern t_conf config;
