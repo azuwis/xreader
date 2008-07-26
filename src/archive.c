@@ -554,8 +554,8 @@ extern HANDLE reopen_rar_with_passwords(struct RAROpenArchiveData *arcdata)
 	if (hrar == 0)
 		return hrar;
 
-	int ret, n, i;
-	buffer *b;
+	int ret = -1, n, i;
+	buffer *b = NULL;
 
 	for (n = get_password_count(), i = 0; i < n; ++i) {
 		b = get_password(i);
