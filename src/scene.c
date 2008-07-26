@@ -5810,6 +5810,11 @@ extern void scene_init()
 	prev_lastfile[0] = '\0';
 
 	load_passwords();
+
+#ifdef ENABLE_TTF
+	ttf_init();
+#endif
+
 	xreader_scene_inited = true;
 
 	scene_filelist();
@@ -5817,6 +5822,9 @@ extern void scene_init()
 
 extern void scene_exit()
 {
+#ifdef ENABLE_TTF
+	ttf_free();
+#endif
 	power_set_clock(222, 111);
 	if (config.save_password)
 		save_passwords();

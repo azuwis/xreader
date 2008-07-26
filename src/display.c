@@ -1928,3 +1928,33 @@ pixel *disp_swizzle_image(pixel * buf, int width, int height)
 
 	return out;
 }
+
+#ifdef ENABLE_TTF
+extern void disp_ttf_reload(void)
+{
+	if (config.ettfarch[0] != '\0') {
+		ettf =
+			load_archieve_truetype_book_font(config.ettfarch,
+											 config.ettfpath,
+											 config.bookfontsize);
+	} else {
+		ettf =
+			ttf_open(config.ettfpath, config.bookfontsize,
+					 config.ttf_load_to_memory);
+	}
+	if (config.cttfarch[0] != '\0') {
+		cttf =
+			load_archieve_truetype_book_font(config.cttfarch,
+											 config.cttfpath,
+											 config.bookfontsize);
+	} else {
+		cttf =
+			ttf_open(config.cttfpath, config.bookfontsize,
+					 config.ttf_load_to_memory);
+	}
+
+	load_ttf_config();
+
+	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
+}
+#endif

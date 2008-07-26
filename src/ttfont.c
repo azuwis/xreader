@@ -22,6 +22,8 @@
 
 extern t_conf config;
 
+static SceUID ttf_sema = -1;
+
 static p_ttf ttf_open_file_to_memory(const char *filename, int size,
 									 const char *ttfname)
 {
@@ -714,8 +716,9 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				// disable hinting when loading chinese characters
 				error =
 					FT_Load_Glyph(cttf->face, glyphIndex, FT_LOAD_NO_HINTING);
-				if (error)
+				if (error) {
 					return count;
+				}
 				if (cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 					if (cttf->cleartype) {
 						error =
@@ -788,8 +791,9 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				glyphIndex = FT_Get_Char_Index(ettf->face, ucs);
 				// disable hinting when loading chinese characters
 				error = FT_Load_Glyph(ettf->face, glyphIndex, FT_LOAD_DEFAULT);
-				if (error)
+				if (error) {
 					return count;
+				}
 				if (ettf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 					if (ettf->cleartype) {
 						error =
@@ -1040,8 +1044,9 @@ extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 		useKerning = FT_HAS_KERNING(ttf->face);
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
 		error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
-		if (error)
+		if (error) {
 			return;
+		}
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 			if (ttf->cleartype) {
 				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
@@ -2018,3 +2023,34 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 }
 
 #endif
+
+extern void ttf_lock(void)
+{
+#ifdef ENABLE_TTF
+	if (ttf_sema >= 0)
+		sceKernelWaitSema(ttf_sema, 1, NULL);
+#endif
+}
+
+extern void ttf_unlock(void)
+{
+#ifdef ENABLE_TTF
+	if (ttf_sema >= 0)
+		sceKernelSignalSema(ttf_sema, 1);
+#endif
+}
+
+extern void ttf_init(void)
+{
+#ifdef ENABLE_TTF
+	ttf_sema = sceKernelCreateSema("TTF Sema", 0, 1, 1, NULL);
+#endif
+}
+
+extern void ttf_free(void)
+{
+#ifdef ENABLE_TTF
+	if (ttf_sema >= 0)
+		sceKernelDeleteSema(ttf_sema);
+#endif
+}

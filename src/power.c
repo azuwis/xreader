@@ -12,6 +12,8 @@
 #include "fat.h"
 #include "display.h"
 #include "scene.h"
+#include "display.h"
+#include "ttfont.h"
 
 bool use_prx_power_save = false;
 
@@ -89,13 +91,23 @@ extern const char *power_get_battery_charging()
 }
 
 extern t_conf config;
+extern int use_ttf;
+extern p_ttf cttf, ettf;
 
 extern void power_down(void)
 {
 #ifdef ENABLE_TTF
-	if (config.usettf && !config.ttf_load_to_memory) {
-		sceKernelDelayThread(500000);
-		disp_assign_book_font();
+	if (use_ttf && !config.ttf_load_to_memory) {
+		ttf_lock();
+
+		if (ettf != NULL) {
+			ttf_close(ettf);
+			ettf = NULL;
+		}
+		if (cttf != NULL) {
+			ttf_close(cttf);
+			cttf = NULL;
+		}
 	}
 #endif
 #ifdef ENABLE_MUSIC
@@ -107,19 +119,15 @@ extern void power_down(void)
 
 extern void power_up(void)
 {
-#ifdef ENABLE_TTF
-	if (config.usettf && !config.ttf_load_to_memory) {
-		disp_load_zipped_truetype_book_font(config.ettfarch,
-											config.cttfarch,
-											config.ettfpath,
-											config.cttfpath,
-											config.bookfontsize);
-	}
-#endif
-	sceKernelDelayThread(1000000);
 	fat_powerup();
 #ifdef ENABLE_MUSIC
 	mp3_powerup();
+#endif
+#ifdef ENABLE_TTF
+	if (use_ttf && !config.ttf_load_to_memory) {
+		disp_ttf_reload();
+		ttf_unlock();
+	}
 #endif
 	scene_power_save(true);
 }

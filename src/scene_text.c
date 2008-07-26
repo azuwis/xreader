@@ -1496,12 +1496,21 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			cur_book_view.text_needrf = false;
 		}
 		if (cur_book_view.text_needrp) {
-			scene_printbook(&cur_book_view, selidx);
-			scene_draw_infobar(&cur_book_view, selidx);
-			scene_draw_scrollbar();
-
-			disp_flip();
-			cur_book_view.text_needrp = false;
+			if (config.usettf && !config.ttf_load_to_memory) {
+				ttf_lock();
+				scene_printbook(&cur_book_view, selidx);
+				scene_draw_infobar(&cur_book_view, selidx);
+				scene_draw_scrollbar();
+				disp_flip();
+				cur_book_view.text_needrp = false;
+				ttf_unlock();
+			} else {
+				scene_printbook(&cur_book_view, selidx);
+				scene_draw_infobar(&cur_book_view, selidx);
+				scene_draw_scrollbar();
+				disp_flip();
+				cur_book_view.text_needrp = false;
+			}
 		}
 
 		dword key;
@@ -1533,7 +1542,15 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			scene_text_delay_action();
 		}
 		dword selidx = 0;
-		int ret = book_handle_input(&cur_book_view, &selidx, key);
+		int ret;
+
+		if (config.usettf && !config.ttf_load_to_memory) {
+			ttf_lock();
+			ret = book_handle_input(&cur_book_view, &selidx, key);
+			ttf_unlock();
+		} else {
+			ret = book_handle_input(&cur_book_view, &selidx, key);
+		}
 
 		if (ret != -1) {
 			text_close(fs);
@@ -1572,18 +1589,21 @@ dword scene_readbook(dword selidx)
 			cur_book_view.text_needrf = false;
 		}
 		if (cur_book_view.text_needrp) {
-			scene_printbook(&cur_book_view, selidx);
-			scene_draw_infobar(&cur_book_view, selidx);
-			scene_draw_scrollbar();
-
-			disp_flip();
-#ifdef _DEBUG
-//          disp_flip();
-//          get_screen_shot();
-//          dbg_printf(d, "Screen Captured");
-//          disp_flip();
-#endif
-			cur_book_view.text_needrp = false;
+			if (config.usettf && !config.ttf_load_to_memory) {
+				ttf_lock();
+				scene_printbook(&cur_book_view, selidx);
+				scene_draw_infobar(&cur_book_view, selidx);
+				scene_draw_scrollbar();
+				disp_flip();
+				cur_book_view.text_needrp = false;
+				ttf_unlock();
+			} else {
+				scene_printbook(&cur_book_view, selidx);
+				scene_draw_infobar(&cur_book_view, selidx);
+				scene_draw_scrollbar();
+				disp_flip();
+				cur_book_view.text_needrp = false;
+			}
 		}
 
 		dword key;
@@ -1628,7 +1648,15 @@ dword scene_readbook(dword selidx)
 			}
 			scene_text_delay_action();
 		}
-		int ret = book_handle_input(&cur_book_view, &selidx, key);
+		int ret;
+
+		if (config.usettf && !config.ttf_load_to_memory) {
+			ttf_lock();
+			ret = book_handle_input(&cur_book_view, &selidx, key);
+			ttf_unlock();
+		} else {
+			ret = book_handle_input(&cur_book_view, &selidx, key);
+		}
 
 		if (ret != -1) {
 			scene_power_save(true);

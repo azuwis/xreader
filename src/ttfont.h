@@ -71,4 +71,10 @@ extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 									 dword maxpixels, dword wordspace);
 extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size);
+
+extern void ttf_lock(void);
+extern void ttf_unlock(void);
+extern void ttf_init(void);
+extern void ttf_free(void);
+
 #endif
