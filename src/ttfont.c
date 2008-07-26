@@ -905,7 +905,8 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
  * @param cttf 中文TTF字体
  * @param ettf 英文TTF字体
  * @param str 字符串
- * @param maxpixels 最大长度
+ * @param maxpixels 最大象素长度
+ * @param maxbytes 最大字符长度，以字节计
  * @param wordspace 字间距（以像素点计）
  * @return 字符串个数计数，以字节计
  * @note 如果遇到换行，则字符串计数停止累加。
@@ -913,18 +914,21 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
  * <br>  这个版本速度快，但对于英文字母可能有出界问题
  */
 extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
-								dword maxpixels, dword wordspace)
+								dword maxpixels, dword maxbytes,
+								dword wordspace)
 {
 	dword width = 0;
 	const byte *ostr = str;
 	static int hanzi_len, hanzi_size = 0;
+	dword bytes = 0;
 
 	if (hanzi_len == 0 || hanzi_size != DISP_BOOK_FONTSIZE) {
 		hanzi_len = ttf_get_char_width(cttf, (const byte *) "字");
 		hanzi_size = DISP_BOOK_FONTSIZE;
 	}
 
-	while (*str != 0 && width <= maxpixels && bytetable[*str] != 1) {
+	while (*str != 0 && width <= maxpixels && bytes < maxbytes
+		   && bytetable[*str] != 1) {
 		if (*str > 0x80) {
 			width += hanzi_len;
 			if (width > maxpixels)
@@ -950,6 +954,7 @@ extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 			width += wordspace;
 			str++;
 		}
+		bytes++;
 	}
 
 	return str - ostr;

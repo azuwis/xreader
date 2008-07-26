@@ -198,7 +198,7 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 		if (ttf_mode) {
 			pos +=
 				ttf_get_string_width(cttf, ettf, (const byte *) pos,
-									 rowpixels, wordspace);
+									 rowpixels, posend - pos, wordspace);
 		} else
 #endif
 		{

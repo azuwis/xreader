@@ -1,5 +1,7 @@
 #pragma once
 
+#include "unrar.h"
+
 typedef struct
 {
 	int idx, size;
@@ -14,3 +16,5 @@ extern void extract_archive_file_into_buffer(buffer ** buf,
 extern void extract_rar_file_into_image(t_image_rar * image,
 										const char *archname,
 										const char *archpath);
+
+extern HANDLE reopen_rar_with_passwords(struct RAROpenArchiveData *arcdata);

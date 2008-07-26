@@ -66,7 +66,8 @@ extern void ttf_set_cleartype(p_ttf ttf, bool aa);
 extern void ttf_set_embolden(p_ttf ttf, bool embolden);
 
 extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
-								dword maxpixels, dword wordspace);
+								dword maxpixels, dword maxbytes,
+								dword wordspace);
 extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 									 dword maxpixels, dword wordspace);
 extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size);

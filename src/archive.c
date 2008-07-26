@@ -180,6 +180,7 @@ static void extract_rar_file_into_buffer_with_password(buffer * buf,
 	if (hrar == NULL)
 		return;
 	RARSetCallback(hrar, rarcbproc, (LONG) buf);
+	RARSetPassword(hrar, password);
 	do {
 		struct RARHeaderData header;
 
@@ -187,7 +188,6 @@ static void extract_rar_file_into_buffer_with_password(buffer * buf,
 			break;
 		if (stricmp(header.FileName, archpath) == 0) {
 			dbg_printf(d, "%s: setting password %s", __func__, password);
-			RARSetPassword(hrar, password);
 			code = RARProcessFile(hrar, RAR_TEST, NULL, NULL);
 			break;
 		}
@@ -201,11 +201,60 @@ static void extract_rar_file_into_buffer_with_password(buffer * buf,
 	}
 }
 
+static bool test_rar_file_password(buffer * buf,
+								   const char *archname, const char *archpath)
+{
+	dbg_printf(d, "%s: bad data, wrong password?", __func__);
+	// retry with loaded passwords
+	if (get_password_count()) {
+		int i, n;
+
+		for (n = get_password_count(), i = 0; i < n; ++i) {
+			buffer *b = get_password(i);
+
+			if (b == NULL || b->ptr == NULL) {
+				continue;
+			}
+			dbg_printf(d, "%s: trying list password: %s", __func__, b->ptr);
+			extract_rar_file_into_buffer_with_password(buf, archname,
+													   archpath, b->ptr);
+			if (buf->ptr != NULL) {
+				// ok
+				add_password(b->ptr);
+				return true;
+			}
+		}
+	}
+	// if all passwords failed, ask user input password
+	char pass[128];
+	bool result = false;
+
+	if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
+		dbg_printf(d, "%s: input %s", __func__, pass);
+		extract_rar_file_into_buffer_with_password(buf, archname,
+												   archpath, pass);
+		if (buf->ptr != NULL) {
+			// ok
+			add_password(pass);
+			result = true;
+		}
+	}
+#ifdef ENABLE_BG
+	bg_display();
+	disp_flip();
+	bg_display();
+#endif
+	disp_duptocache();
+	disp_waitv();
+	return result;
+}
+
 static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
 										 const char *archpath)
 {
 	struct RAROpenArchiveData arcdata;
 	int code = 0;
+	int ret;
 
 	arcdata.ArcName = (char *) archname;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
@@ -219,8 +268,13 @@ static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
 	do {
 		struct RARHeaderData header;
 
-		if (RARReadHeader(hrar, &header) != 0)
-			break;
+		if ((ret = RARReadHeader(hrar, &header)) != 0) {
+			if (ret != ERAR_UNKNOWN && ret != ERAR_BAD_DATA)
+				break;
+			RARCloseArchive(hrar);
+			test_rar_file_password(buf, archname, archpath);
+			return;
+		}
 		if (stricmp(header.FileName, archpath) == 0) {
 			code = RARProcessFile(hrar, RAR_TEST, NULL, NULL);
 			break;
@@ -229,46 +283,7 @@ static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
 	RARCloseArchive(hrar);
 
 	if (code == 22) {
-		dbg_printf(d, "%s: bad data, wrong password?", __func__);
-		// retry with loaded passwords
-		if (get_password_count()) {
-			int i, n;
-
-			for (n = get_password_count(), i = 0; i < n; ++i) {
-				buffer *b = get_password(i);
-
-				if (b == NULL || b->ptr == NULL) {
-					continue;
-				}
-				dbg_printf(d, "%s: trying list password: %s", __func__, b->ptr);
-				extract_rar_file_into_buffer_with_password(buf, archname,
-														   archpath, b->ptr);
-				if (buf->ptr != NULL) {
-					// ok
-					add_password(b->ptr);
-					return;
-				}
-			}
-		}
-		// if all passwords failed, ask user input password
-		char pass[128];
-
-		if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
-			dbg_printf(d, "%s: input %s", __func__, pass);
-			extract_rar_file_into_buffer_with_password(buf, archname,
-													   archpath, pass);
-			if (buf->ptr != NULL) {
-				// ok
-				add_password(pass);
-			}
-		}
-#ifdef ENABLE_BG
-		bg_display();
-		disp_flip();
-		bg_display();
-#endif
-		disp_duptocache();
-		disp_waitv();
+		test_rar_file_password(buf, archname, archpath);
 		return;
 	}
 
@@ -385,6 +400,8 @@ static void extract_rar_file_into_image_with_password(t_image_rar * image,
 
 	if (hrar == NULL)
 		return;
+	RARSetCallback(hrar, imagerarcbproc, (LONG) image);
+	RARSetPassword(hrar, password);
 	do {
 		struct RARHeaderData header;
 
@@ -402,8 +419,6 @@ static void extract_rar_file_into_image_with_password(t_image_rar * image,
 				}
 				return;
 			}
-			RARSetPassword(hrar, password);
-			RARSetCallback(hrar, imagerarcbproc, (LONG) image);
 			code = RARProcessFile(hrar, RAR_TEST, NULL, NULL);
 			break;
 		}
@@ -415,6 +430,54 @@ static void extract_rar_file_into_image_with_password(t_image_rar * image,
 		image->buf = NULL;
 		image->size = image->idx = 0;
 	}
+}
+
+static bool test_rar_image_password(t_image_rar * image,
+									const char *archname, const char *archpath)
+{
+	dbg_printf(d, "%s: bad data, wrong password?", __func__);
+	// retry with loaded passwords
+	if (get_password_count()) {
+		int i, n;
+
+		for (n = get_password_count(), i = 0; i < n; ++i) {
+			buffer *b = get_password(i);
+
+			if (b == NULL || b->ptr == NULL) {
+				continue;
+			}
+			dbg_printf(d, "%s: trying list password: %s", __func__, b->ptr);
+			extract_rar_file_into_image_with_password(image, archname,
+													  archpath, b->ptr);
+			if (image->buf != NULL) {
+				// ok
+				add_password(b->ptr);
+				return true;
+			}
+		}
+	}
+	// if all passwords failed, ask user input password
+	char pass[128];
+	bool result = false;
+
+	if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
+		dbg_printf(d, "%s: input %s", __func__, pass);
+		extract_rar_file_into_image_with_password(image, archname,
+												  archpath, pass);
+		if (image->buf != NULL) {
+			// ok
+			add_password(pass);
+			result = true;
+		}
+	}
+#ifdef ENABLE_BG
+	bg_display();
+	disp_flip();
+	bg_display();
+#endif
+	disp_duptocache();
+	disp_waitv();
+	return result;
 }
 
 /**
@@ -430,7 +493,7 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 										const char *archpath)
 {
 	struct RAROpenArchiveData arcdata;
-	int code = 0;
+	int code = 0, ret;
 
 	arcdata.ArcName = (char *) archname;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
@@ -440,11 +503,17 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 
 	if (hrar == NULL)
 		return;
+	RARSetCallback(hrar, imagerarcbproc, (LONG) image);
 	do {
 		struct RARHeaderData header;
 
-		if (RARReadHeader(hrar, &header) != 0)
-			break;
+		if ((ret = RARReadHeader(hrar, &header)) != 0) {
+			if (ret != ERAR_UNKNOWN && ret != ERAR_BAD_DATA)
+				break;
+			RARCloseArchive(hrar);
+			test_rar_image_password(image, archname, archpath);
+			return;
+		}
 		if (stricmp(header.FileName, archpath) == 0) {
 			image->size = header.UnpSize;
 			image->idx = 0;
@@ -457,7 +526,6 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 				}
 				return;
 			}
-			RARSetCallback(hrar, imagerarcbproc, (LONG) image);
 			code = RARProcessFile(hrar, RAR_TEST, NULL, NULL);
 			break;
 		}
@@ -465,38 +533,65 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 	RARCloseArchive(hrar);
 
 	if (code == 22) {
-		dbg_printf(d, "%s: bad data, wrong password?", __func__);
-		// retry with loaded passwords
-		if (get_password_count()) {
-			int i, n;
+		test_rar_image_password(image, archname, archpath);
+		return;
+	}
 
-			for (n = get_password_count(), i = 0; i < n; ++i) {
-				buffer *b = get_password(i);
+	if (code != 0) {
+		free(image->buf);
+		image->buf = NULL;
+		image->size = image->idx = 0;
+	}
+}
 
-				if (b == NULL || b->ptr == NULL) {
-					continue;
-				}
-				dbg_printf(d, "%s: trying list password: %s", __func__, b->ptr);
-				extract_rar_file_into_image_with_password(image, archname,
-														  archpath, b->ptr);
-				if (image->buf != NULL) {
-					// ok
-					add_password(b->ptr);
-					return;
-				}
-			}
+extern HANDLE reopen_rar_with_passwords(struct RAROpenArchiveData *arcdata)
+{
+	struct RARHeaderData header;
+
+	HANDLE hrar = 0;
+
+	hrar = RAROpenArchive(arcdata);
+	if (hrar == 0)
+		return hrar;
+
+	int ret, n, i;
+	buffer *b;
+
+	for (n = get_password_count(), i = 0; i < n; ++i) {
+		b = get_password(i);
+
+		if (b == NULL || b->ptr == NULL) {
+			continue;
 		}
-		// if all passwords failed, ask user input password
-		char pass[128];
+		dbg_printf(d, "%s: trying list password: %s", __func__, b->ptr);
+		RARSetPassword(hrar, b->ptr);
+		if ((ret = RARReadHeader(hrar, &header)) == 0)
+			break;
+		else {
+			RARCloseArchive(hrar);
+			hrar = RAROpenArchive(arcdata);
+		}
+	}
 
-		if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
-			dbg_printf(d, "%s: input %s", __func__, pass);
-			extract_rar_file_into_image_with_password(image, archname,
-													  archpath, pass);
-			if (image->buf != NULL) {
-				// ok
-				add_password(pass);
-			}
+	if (ret == 0) {
+		RARCloseArchive(hrar);
+		hrar = RAROpenArchive(arcdata);
+		RARSetPassword(hrar, b->ptr);
+		return hrar;
+	}
+	// if all passwords failed, ask user input password
+	char pass[128];
+
+	if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
+		dbg_printf(d, "%s: input %s", __func__, pass);
+		RARSetPassword(hrar, pass);
+		if ((ret = RARReadHeader(hrar, &header)) == 0) {
+			// ok
+			add_password(pass);
+			RARCloseArchive(hrar);
+			hrar = RAROpenArchive(arcdata);
+			RARSetPassword(hrar, pass);
+			return hrar;
 		}
 #ifdef ENABLE_BG
 		bg_display();
@@ -507,9 +602,8 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 		disp_waitv();
 	}
 
-	if (code != 0) {
-		free(image->buf);
-		image->buf = NULL;
-		image->size = image->idx = 0;
-	}
+	RARCloseArchive(hrar);
+	hrar = 0;
+
+	return hrar;
 }

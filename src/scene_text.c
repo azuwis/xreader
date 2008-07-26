@@ -1512,11 +1512,13 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
 				sceRtcGetCurrentTick(&timer_start);
 				secticks++;
+#if 0
 				scene_printbook(&cur_book_view, selidx);
 				scene_draw_infobar(&cur_book_view, selidx);
 				scene_draw_scrollbar();
 
 				disp_flip();
+#endif
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 				power_down();
@@ -1588,6 +1590,7 @@ dword scene_readbook(dword selidx)
 
 		while ((key = ctrl_read()) == 0) {
 			sceKernelDelayThread(20000);
+#if 0
 			if (config.infobar_show_timer) {
 				static u64 start, end;
 
@@ -1601,6 +1604,7 @@ dword scene_readbook(dword selidx)
 					disp_flip();
 				}
 			}
+#endif
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if (config.infobar == conf_infobar_lyric
 				&& lyric_check_changed(mp3_get_lyric())) {

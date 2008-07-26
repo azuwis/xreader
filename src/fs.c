@@ -580,10 +580,18 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 	item[0].selrcolor = selrcolor;
 	item[0].selbcolor = selbcolor;
 	struct RARHeaderDataEx header;
+	int ret;
 
 	do {
-		if (RARReadHeaderEx(hrar, &header) != 0)
-			break;
+		if ((ret = RARReadHeaderEx(hrar, &header)) != 0) {
+			if (ret != ERAR_UNKNOWN)
+				break;
+			RARCloseArchive(hrar);
+			if ((hrar = reopen_rar_with_passwords(&arcdata)) == 0)
+				break;
+			if (RARReadHeaderEx(hrar, &header) != 0)
+				break;
+		}
 		if (header.UnpSize == 0)
 			continue;
 		t_fs_filetype ft = fs_file_get_type(header.FileName);
