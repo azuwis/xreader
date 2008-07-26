@@ -286,6 +286,7 @@ static void get_infobar_system_string(char *dest, int size)
 	sceRtcGetCurrentClockLocalTime(&tm);
 
 	power_get_battery(&percent, &unused, &unused, &unused);
+#if 0
 	if (tm.seconds % 2 == 0) {
 		if (percent == 100)
 			SPRINTF_S(t, "[%02u:%02u]", tm.hour, tm.minutes);
@@ -297,6 +298,12 @@ static void get_infobar_system_string(char *dest, int size)
 		else
 			SPRINTF_S(t, "[%02u %02u %d%%]", tm.hour, tm.minutes, percent);
 	}
+#else
+	if (percent == 100)
+		SPRINTF_S(t, "[%02u:%02u]", tm.hour, tm.minutes);
+	else
+		SPRINTF_S(t, "[%02u:%02u %d%%]", tm.hour, tm.minutes, percent);
+#endif
 	strcpy_s(dest, size, t);
 }
 
@@ -1522,11 +1529,10 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 				sceRtcGetCurrentTick(&timer_start);
 				secticks++;
 #if 0
-				scene_printbook(&cur_book_view, selidx);
-				scene_draw_infobar(&cur_book_view, selidx);
-				scene_draw_scrollbar();
-
-				disp_flip();
+				if (config.infobar_show_timer) {
+					cur_book_view.text_needrp = true;
+					goto redraw;
+				}
 #endif
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
@@ -1616,12 +1622,8 @@ dword scene_readbook(dword selidx)
 
 				sceRtcGetCurrentTick(&end);
 				if (pspDiffTime(&end, &start) >= 1.0) {
-					sceRtcGetCurrentTick(&start);
-					scene_printbook(&cur_book_view, selidx);
-					scene_draw_infobar(&cur_book_view, selidx);
-					scene_draw_scrollbar();
-
-					disp_flip();
+					cur_book_view.text_needrp = true;
+					goto redraw;
 				}
 			}
 #endif

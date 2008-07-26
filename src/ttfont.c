@@ -975,9 +975,8 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	if (bot) {
 		if (y >= bot)
 			return;
-		if (y + height > bot)
-			height = bot - y;
-//      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
+//		if (y + height > bot)
+//			height = bot - y;
 	}
 
 	FT_UInt cprevious, eprevious;
@@ -1349,8 +1348,8 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 	if (bot) {
 		if (y >= bot)
 			return;
-		if (y + height > bot)
-			height = bot - y;
+//		if (y + height > bot)
+//			height = bot - y;
 //      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
 	}
 
@@ -1662,8 +1661,8 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	if (bot) {
 		if (x >= bot)
 			return;
-		if (x + height > bot)
-			height = bot - x;
+//		if (x + height > bot)
+//			height = bot - x;
 //      dbg_printf(d, "%s: bot now: height: %d bot %d", __func__, height, bot);
 	}
 
@@ -1976,8 +1975,8 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 
 	if (x < bot)
 		return;
-	if (x + 1 - height < bot)
-		height = x + 1 - bot;
+//	if (x + 1 - height < bot)
+//		height = x + 1 - bot;
 
 	FT_UInt cprevious, eprevious;
 
