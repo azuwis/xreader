@@ -7,7 +7,7 @@
 #include FT_FREETYPE_H
 #include "./common/datatype.h"
 
-#define SBIT_HASH_SIZE (256)
+#define SBIT_HASH_SIZE (1024)
 
 typedef struct Cache_Bitmap_
 {

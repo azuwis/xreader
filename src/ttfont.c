@@ -303,6 +303,7 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 		if (ttf->cachePop == SBIT_HASH_SIZE)
 			ttf->cachePop = 0;
 	}
+
 	SBit_HashItem *item = &ttf->sbitHashRoot[addIndex];
 
 	if (item->bitmap.buffer) {
@@ -356,6 +357,36 @@ static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode,
 			return (&ttf->sbitHashRoot[i]);
 	}
 	return NULL;
+}
+
+static FT_Render_Mode get_render_mode(p_ttf ttf, bool isVertical)
+{
+	if (ttf->cleartype && isVertical)
+		return FT_RENDER_MODE_LCD_V;
+	if (ttf->cleartype && !isVertical)
+		return FT_RENDER_MODE_LCD;
+	if (ttf->antiAlias)
+		return FT_RENDER_MODE_NORMAL;
+
+	return FT_RENDER_MODE_MONO;
+}
+
+static FT_Pixel_Mode get_pixel_mode(FT_Render_Mode mode)
+{
+	switch (mode) {
+		case FT_RENDER_MODE_LCD:
+			return FT_PIXEL_MODE_LCD;
+		case FT_RENDER_MODE_LCD_V:
+			return FT_PIXEL_MODE_LCD_V;
+		case FT_RENDER_MODE_NORMAL:
+			return FT_PIXEL_MODE_GRAY;
+		case FT_RENDER_MODE_MONO:
+			return FT_PIXEL_MODE_MONO;
+		default:
+			break;
+	}
+
+	return FT_PIXEL_MODE_NONE;
 }
 
 /**
@@ -560,7 +591,8 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs, FT_RENDER_MODE_LCD);
+	SBit_HashItem *cache =
+		sbitCacheFind(ttf, ucs, get_pixel_mode(get_render_mode(ttf, false)));
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -588,13 +620,8 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 		if (error)
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-			if (ttf->cleartype) {
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
-			} else if (ttf->antiAlias) {
-				error =
-					FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-			} else
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			error =
+				FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, false));
 			if (error) {
 				return;
 			}
@@ -664,8 +691,9 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 		if (*str > 0x80) {
 			useKerning = FT_HAS_KERNING(cttf->face);
 			word ucs = charsets_gbk_to_ucs(str);
-			SBit_HashItem *cache = sbitCacheFind(cttf, ucs, FT_PIXEL_MODE_LCD);
-
+			SBit_HashItem *cache = sbitCacheFind(cttf, ucs,
+												 get_pixel_mode(get_render_mode
+																(cttf, false)));
 			if (cache) {
 				if (useKerning && cprevious && cache->glyph_index) {
 					FT_Vector delta;
@@ -737,7 +765,9 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 		} else if (*str > 0x1F) {
 			useKerning = FT_HAS_KERNING(ettf->face);
 			word ucs = charsets_gbk_to_ucs(str);
-			SBit_HashItem *cache = sbitCacheFind(ettf, ucs, FT_PIXEL_MODE_LCD);
+			SBit_HashItem *cache = sbitCacheFind(ettf, ucs,
+												 get_pixel_mode(get_render_mode
+																(ettf, false)));
 
 			if (cache) {
 				if (useKerning && eprevious && cache->glyph_index) {
@@ -1227,7 +1257,8 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs, FT_PIXEL_MODE_LCD);
+	SBit_HashItem *cache =
+		sbitCacheFind(ttf, ucs, get_pixel_mode(get_render_mode(ttf, false)));
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1255,13 +1286,8 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 		if (error)
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-			if (ttf->cleartype) {
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
-			} else if (ttf->antiAlias) {
-				error =
-					FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-			} else
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			error =
+				FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, false));
 			if (error) {
 				return;
 			}
@@ -1543,7 +1569,8 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs, FT_PIXEL_MODE_LCD_V);
+	SBit_HashItem *cache =
+		sbitCacheFind(ttf, ucs, get_pixel_mode(get_render_mode(ttf, true)));
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1572,13 +1599,8 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 		if (error)
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-			if (ttf->cleartype) {
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD_V);
-			} else if (ttf->antiAlias) {
-				error =
-					FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-			} else
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			error =
+				FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, true));
 			if (error) {
 				return;
 			}
@@ -1860,7 +1882,8 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs, FT_PIXEL_MODE_LCD_V);
+	SBit_HashItem *cache =
+		sbitCacheFind(ttf, ucs, get_pixel_mode(get_render_mode(ttf, true)));
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1890,13 +1913,8 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 		if (error)
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-			if (ttf->cleartype) {
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD_V);
-			} else if (ttf->antiAlias) {
-				error =
-					FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-			} else
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			error =
+				FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, true));
 			if (error) {
 				return;
 			}
