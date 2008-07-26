@@ -1704,7 +1704,7 @@ static void recalc_size(dword * drperpage, dword * rowsperpage,
 	if (config.hide_last_row)
 		*drperpage =
 			((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-			 scene_get_scrollbar_height() +
+			 scene_get_infobar_height() +
 			 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	else
 		*drperpage =
@@ -1713,7 +1713,7 @@ static void recalc_size(dword * drperpage, dword * rowsperpage,
 			 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	*rowsperpage =
 		((t ? PSP_SCREEN_WIDTH : PSP_SCREEN_HEIGHT) -
-		 scene_get_scrollbar_height() -
+		 scene_get_infobar_height() -
 		 config.borderspace * 2) / (config.rowspace + DISP_BOOK_FONTSIZE);
 	*pixelsperrow =
 		(t
@@ -1807,7 +1807,7 @@ dword scene_boptions(dword * selidx)
 					 menubcolor, true, scene_boptions_predraw, NULL,
 					 scene_boptions_menucb)) != INVALID);
 
-	dword result = 0;
+	dword result = win_menu_op_continue;
 
 	if (orgibar != config.infobar || orgvert != config.vertread
 		|| orgrowspace != config.rowspace
@@ -1825,12 +1825,12 @@ dword scene_boptions(dword * selidx)
 		cur_book_view.text_needrf = cur_book_view.text_needrb =
 			cur_book_view.text_needrp = true;
 		if (orgpixelsperrow != pixelsperrow)
-			result = 4;
+			result = win_menu_op_force_redraw;
 	}
 	if (orgreordertxt != config.reordertxt)
-		result = 4;
+		result = win_menu_op_force_redraw;
 	if (fs != NULL && fs->ucs == 0 && orgencode != config.encode)
-		result = 3;
+		result = win_menu_op_cancel;
 
 	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 

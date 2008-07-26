@@ -211,7 +211,7 @@ static void disp_fillrect_tran(dword x1, dword y1, dword x2, dword y2,
 	}
 }
 
-extern int scene_get_scrollbar_height(void)
+extern int scene_get_infobar_height(void)
 {
 	if (config.infobar == conf_infobar_none)
 		return 0;
@@ -222,23 +222,23 @@ static void draw_infobar_single_line(int vertread)
 {
 	switch (vertread) {
 		case conf_vertread_reversal:
-			disp_line(0, scene_get_scrollbar_height(), (PSP_SCREEN_WIDTH - 1),
-					  scene_get_scrollbar_height(), config.forecolor);
+			disp_line(0, scene_get_infobar_height(), (PSP_SCREEN_WIDTH - 1),
+					  scene_get_infobar_height(), config.forecolor);
 			break;
 		case conf_vertread_lvert:
-			disp_line((PSP_SCREEN_WIDTH - 1) - scene_get_scrollbar_height(), 0,
-					  (PSP_SCREEN_WIDTH - 1) - scene_get_scrollbar_height(),
+			disp_line((PSP_SCREEN_WIDTH - 1) - scene_get_infobar_height(), 0,
+					  (PSP_SCREEN_WIDTH - 1) - scene_get_infobar_height(),
 					  (PSP_SCREEN_HEIGHT - 1), config.forecolor);
 			break;
 		case conf_vertread_rvert:
-			disp_line(scene_get_scrollbar_height(), 0,
-					  scene_get_scrollbar_height(), (PSP_SCREEN_HEIGHT - 1),
+			disp_line(scene_get_infobar_height(), 0,
+					  scene_get_infobar_height(), (PSP_SCREEN_HEIGHT - 1),
 					  config.forecolor);
 			break;
 		case conf_vertread_horz:
-			disp_line(0, (PSP_SCREEN_HEIGHT - 1) - scene_get_scrollbar_height(),
+			disp_line(0, (PSP_SCREEN_HEIGHT - 1) - scene_get_infobar_height(),
 					  (PSP_SCREEN_WIDTH - 1),
-					  (PSP_SCREEN_HEIGHT - 1) - scene_get_scrollbar_height(),
+					  (PSP_SCREEN_HEIGHT - 1) - scene_get_infobar_height(),
 					  config.forecolor);
 			break;
 		default:
@@ -250,25 +250,25 @@ static void draw_infobar_rect(int vertread)
 {
 	switch (vertread) {
 		case conf_vertread_reversal:
-			disp_fillrect_tran(0, scene_get_scrollbar_height(),
+			disp_fillrect_tran(0, scene_get_infobar_height(),
 							   (PSP_SCREEN_WIDTH - 1), 0, config.forecolor,
 							   bgalpha);
 			break;
 		case conf_vertread_lvert:
 			disp_fillrect_tran((PSP_SCREEN_WIDTH - 1) -
-							   scene_get_scrollbar_height(), 0,
+							   scene_get_infobar_height(), 0,
 							   (PSP_SCREEN_WIDTH - 1), (PSP_SCREEN_HEIGHT - 1),
 							   config.forecolor, bgalpha);
 			break;
 		case conf_vertread_rvert:
-			disp_fillrect_tran(0, 0, scene_get_scrollbar_height(),
+			disp_fillrect_tran(0, 0, scene_get_infobar_height(),
 							   (PSP_SCREEN_HEIGHT - 1), config.forecolor,
 							   bgalpha);
 			break;
 		case conf_vertread_horz:
 			disp_fillrect_tran(0,
 							   (PSP_SCREEN_HEIGHT - 1) -
-							   (scene_get_scrollbar_height()),
+							   (scene_get_infobar_height()),
 							   (PSP_SCREEN_WIDTH - 1), (PSP_SCREEN_HEIGHT - 1),
 							   config.forecolor, bgalpha);
 			break;
@@ -395,21 +395,21 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 		case conf_vertread_reversal:
 			disp_putnstringreversal(0,
 									PSP_SCREEN_HEIGHT -
-									scene_get_scrollbar_height() - 1,
+									scene_get_infobar_height() - 1,
 									config.forecolor, (const byte *) cr,
 									960 / config.infobar_fontsize, wordspace, 0,
 									config.infobar_fontsize, 0);
 			break;
 		case conf_vertread_lvert:
 			disp_putnstringlvert(PSP_SCREEN_WIDTH -
-								 scene_get_scrollbar_height() - 1,
+								 scene_get_infobar_height() - 1,
 								 (PSP_SCREEN_HEIGHT - 1), config.forecolor,
 								 (const byte *) cr,
 								 544 / config.infobar_fontsize, wordspace, 0,
 								 config.infobar_fontsize, 0);
 			break;
 		case conf_vertread_rvert:
-			disp_putnstringrvert(scene_get_scrollbar_height(), 0,
+			disp_putnstringrvert(scene_get_infobar_height(), 0,
 								 config.forecolor, (const byte *) cr,
 								 544 / config.infobar_fontsize, wordspace, 0,
 								 config.infobar_fontsize, 0);
@@ -417,7 +417,7 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 		case conf_vertread_horz:
 			disp_putnstringhorz(0,
 								PSP_SCREEN_HEIGHT -
-								scene_get_scrollbar_height() - 1,
+								scene_get_infobar_height() - 1,
 								config.forecolor, (const byte *) cr,
 								960 / config.infobar_fontsize, wordspace, 0,
 								config.infobar_fontsize, 0);
@@ -502,7 +502,7 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 										 ss[0] * config.infobar_fontsize /
 										 4),
 										PSP_SCREEN_HEIGHT -
-										scene_get_scrollbar_height() - 1,
+										scene_get_infobar_height() - 1,
 										config.forecolor,
 										(const byte *) t, ss[0],
 										wordspace, 0, config.infobar_fontsize,
@@ -510,7 +510,7 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 				break;
 			case conf_vertread_lvert:
 				disp_putnstringlvert(PSP_SCREEN_WIDTH -
-									 scene_get_scrollbar_height() - 1,
+									 scene_get_infobar_height() - 1,
 									 (PSP_SCREEN_HEIGHT - 1) - (136 -
 																ss[0] *
 																config.
@@ -520,7 +520,7 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 									 wordspace, 0, config.infobar_fontsize, 0);
 				break;
 			case conf_vertread_rvert:
-				disp_putnstringrvert(scene_get_scrollbar_height(),
+				disp_putnstringrvert(scene_get_infobar_height(),
 									 (136 -
 									  ss[0] * config.infobar_fontsize / 4),
 									 config.forecolor, (const byte *) t,
@@ -531,7 +531,7 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 				disp_putnstringhorz((240 -
 									 ss[0] * config.infobar_fontsize / 4),
 									PSP_SCREEN_HEIGHT -
-									scene_get_scrollbar_height() - 1,
+									scene_get_infobar_height() - 1,
 									config.forecolor, (const byte *) t,
 									ss[0], wordspace, 0,
 									config.infobar_fontsize, 0);
@@ -567,14 +567,14 @@ static void draw_infobar_lyric(PBookViewData pView, dword selidx, int vertread)
 											 ss[0] * config.infobar_fontsize /
 											 4),
 											PSP_SCREEN_HEIGHT -
-											scene_get_scrollbar_height(),
+											scene_get_infobar_height(),
 											config.forecolor, (const byte *) t,
 											ss[0], wordspace, 0,
 											config.infobar_fontsize, 0);
 				break;
 			case conf_vertread_lvert:
 				disp_putnstringlvert_sys(PSP_SCREEN_WIDTH -
-										 scene_get_scrollbar_height(),
+										 scene_get_infobar_height(),
 										 (PSP_SCREEN_HEIGHT - 1) -
 										 (136 -
 										  ss[0] * config.infobar_fontsize / 4),
@@ -584,7 +584,7 @@ static void draw_infobar_lyric(PBookViewData pView, dword selidx, int vertread)
 										 0);
 				break;
 			case conf_vertread_rvert:
-				disp_putnstringrvert_sys(scene_get_scrollbar_height() - 1,
+				disp_putnstringrvert_sys(scene_get_infobar_height() - 1,
 										 (136 -
 										  ss[0] * config.infobar_fontsize / 4),
 										 config.forecolor,
@@ -596,7 +596,7 @@ static void draw_infobar_lyric(PBookViewData pView, dword selidx, int vertread)
 				disp_putnstringhorz_sys((240 -
 										 ss[0] * config.infobar_fontsize / 4),
 										PSP_SCREEN_HEIGHT -
-										scene_get_scrollbar_height(),
+										scene_get_infobar_height(),
 										config.forecolor, (const byte *) t,
 										ss[0], wordspace, 0,
 										config.infobar_fontsize, 0);
@@ -752,8 +752,7 @@ static void scene_printtext_reversal(PBookViewData pView)
 								(const byte *) tr->start, (int) tr->count,
 								config.wordspace, 0, DISP_BOOK_FONTSIZE,
 								config.infobar ? PSP_SCREEN_HEIGHT -
-								scene_get_scrollbar_height() :
-								PSP_SCREEN_HEIGHT);
+								scene_get_infobar_height() : PSP_SCREEN_HEIGHT);
 	}
 }
 
@@ -776,7 +775,7 @@ static void scene_printtext_rvert(PBookViewData pView)
 							 config.borderspace, config.forecolor,
 							 (const byte *) tr->start, (int) tr->count,
 							 config.wordspace, 0, DISP_BOOK_FONTSIZE,
-							 config.infobar ? scene_get_scrollbar_height() +
+							 config.infobar ? scene_get_infobar_height() +
 							 1 : 1);
 	}
 }
@@ -801,7 +800,7 @@ static void scene_printtext_lvert(PBookViewData pView)
 							 (const byte *) tr->start, (int) tr->count,
 							 config.wordspace, 0, DISP_BOOK_FONTSIZE,
 							 config.infobar ? (PSP_SCREEN_WIDTH - 1) -
-							 scene_get_scrollbar_height() : PSP_SCREEN_WIDTH);
+							 scene_get_infobar_height() : PSP_SCREEN_WIDTH);
 	}
 
 }
@@ -824,7 +823,7 @@ static void scene_printtext_horz(PBookViewData pView)
 							(const byte *) tr->start, (int) tr->count,
 							config.wordspace, 0, DISP_BOOK_FONTSIZE,
 							config.infobar ? (PSP_SCREEN_HEIGHT - 1) -
-							scene_get_scrollbar_height() : PSP_SCREEN_HEIGHT);
+							scene_get_infobar_height() : PSP_SCREEN_HEIGHT);
 	}
 }
 
@@ -832,7 +831,7 @@ static void scene_draw_scrollbar_reversal(void)
 {
 	dword slen =
 		config.infobar ? (PSP_SCREEN_HEIGHT - 1 - 1 -
-						  scene_get_scrollbar_height())
+						  scene_get_infobar_height())
 		: (PSP_SCREEN_HEIGHT - 1), bsize =
 		2 + (slen - 2) * rowsperpage / fs->row_count, startp =
 		slen * fs->crow / fs->row_count, endp;
@@ -851,7 +850,7 @@ static void scene_draw_scrollbar_lvert(void)
 {
 	dword sright =
 		(PSP_SCREEN_WIDTH - 1) - 1 -
-		(config.infobar ? scene_get_scrollbar_height() : 0), slen =
+		(config.infobar ? scene_get_infobar_height() : 0), slen =
 		sright, bsize =
 		2 + (slen - 2) * rowsperpage / fs->row_count, startp =
 		slen * fs->crow / fs->row_count, endp;
@@ -867,7 +866,7 @@ static void scene_draw_scrollbar_lvert(void)
 static void scene_draw_scrollbar_rvert(void)
 {
 	dword sleft =
-		(config.infobar ? scene_get_scrollbar_height() : 0) + 1, slen =
+		(config.infobar ? scene_get_infobar_height() : 0) + 1, slen =
 		(PSP_SCREEN_WIDTH - 1) - sleft, bsize =
 		2 + (slen - 2) * rowsperpage / fs->row_count, endp =
 		(PSP_SCREEN_WIDTH - 1) - slen * fs->crow / fs->row_count, startp;
@@ -885,7 +884,7 @@ static void scene_draw_scrollbar_horz(void)
 {
 	dword slen =
 		config.infobar ? (PSP_SCREEN_HEIGHT - 1 - 1 -
-						  scene_get_scrollbar_height())
+						  scene_get_infobar_height())
 		: (PSP_SCREEN_HEIGHT - 1), bsize =
 		2 + (slen - 2) * rowsperpage / fs->row_count, startp =
 		slen * fs->crow / fs->row_count, endp;
@@ -1470,7 +1469,11 @@ static void redraw_book(dword selidx)
 	scene_printbook(&cur_book_view, selidx);
 	ttf_set_pixel_size(cttf, config.infobar_fontsize);
 	ttf_set_pixel_size(ettf, config.infobar_fontsize);
+	int prev = DISP_BOOK_FONTSIZE;
+
+	DISP_BOOK_FONTSIZE = config.infobar_fontsize;
 	scene_draw_infobar(&cur_book_view, selidx);
+	DISP_BOOK_FONTSIZE = prev;
 	scene_draw_scrollbar();
 	disp_flip();
 	cur_book_view.text_needrp = false;
