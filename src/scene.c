@@ -239,6 +239,10 @@ bool scene_load_book_font()
 					  config.bookfontsize);
 			if (!disp_load_book_font(efontfile, cfontfile)) {
 				scene_power_save(true);
+#ifdef ENABLE_LITE
+				config.bookfontsize = 12;
+				return scene_load_book_font();
+#endif
 				return false;
 			}
 		}
