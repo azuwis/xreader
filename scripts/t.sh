@@ -49,6 +49,8 @@ echo "\t\tbg.png"
 cp -u "$SRCDIR/../resource/bg.png" "$DESTDIR/"
 echo "\t\tmsg/zh_CN.so"
 cp -u "$SRCDIR/../msg/zh_CN.so" "$DESTDIR/msg"
+echo "\t\tmsg/zh_TW.so"
+cp -u "$SRCDIR/../msg/zh_TW.so" "$DESTDIR/msg"
 echo "\t\tmsg/en_US.so"
 cp -u "$SRCDIR/../msg/en_US.so" "$DESTDIR/msg"
 
