@@ -989,7 +989,7 @@ static void save_infobar_image()
 
 static void load_infobar_image()
 {
-	if (!config.infobar)
+	if (!config.infobar || infobar_saveimage == NULL)
 		return;
 
 	switch (config.vertread) {
@@ -1012,11 +1012,6 @@ static void load_infobar_image()
 						  PSP_SCREEN_WIDTH, scene_get_infobar_height() + 1, 0,
 						  0, infobar_saveimage);
 			break;
-	}
-
-	if (infobar_saveimage != NULL) {
-		free(infobar_saveimage);
-		infobar_saveimage = NULL;
 	}
 }
 
