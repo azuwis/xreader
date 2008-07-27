@@ -673,9 +673,22 @@ extern void disp_flip()
 	framebuffer = sceGuSwapBuffers();
 }
 
+extern void disp_getimage_draw(dword x, dword y, dword w, dword h, pixel * buf)
+{
+	pixel *lines = disp_get_vaddr(x, y), *linesend =
+		lines + (min(PSP_SCREEN_HEIGHT - y, h) << 9);
+	dword rw = min(512 - x, w) * PIXEL_BYTES;
+
+	for (; lines < linesend; lines += 512) {
+		memcpy(buf, lines, rw);
+		buf += w;
+	}
+}
+
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf)
 {
-	pixel *lines = vram_disp + 0x40000000 / PIXEL_BYTES, *linesend =
+	pixel *lines =
+		(vram_disp + (x) + ((y) << 9)) + 0x40000000 / PIXEL_BYTES, *linesend =
 		lines + (min(PSP_SCREEN_HEIGHT - y, h) << 9);
 	dword rw = min(512 - x, w) * PIXEL_BYTES;
 

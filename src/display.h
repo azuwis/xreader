@@ -58,6 +58,7 @@ extern void disp_assign_book_font();
 extern void disp_free_font();
 extern void disp_flip();
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf);
+extern void disp_getimage_draw(dword x, dword y, dword w, dword h, pixel * buf);
 
 extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
 							 int starty, int ow, int oh, pixel * buf,

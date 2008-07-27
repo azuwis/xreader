@@ -53,6 +53,7 @@ BookViewData cur_book_view, prev_book_view;
 extern win_menu_predraw_data g_predraw;
 
 static byte bgalpha = 0x40, fgalpha = 0xa0;
+static pixel *infobar_saveimage = NULL;
 
 static inline int calc_gi(void)
 {
@@ -286,7 +287,6 @@ static void get_infobar_system_string(char *dest, int size)
 	sceRtcGetCurrentClockLocalTime(&tm);
 
 	power_get_battery(&percent, &unused, &unused, &unused);
-#if 0
 	if (tm.seconds % 2 == 0) {
 		if (percent == 100)
 			SPRINTF_S(t, "[%02u:%02u]", tm.hour, tm.minutes);
@@ -298,12 +298,6 @@ static void get_infobar_system_string(char *dest, int size)
 		else
 			SPRINTF_S(t, "[%02u %02u %d%%]", tm.hour, tm.minutes, percent);
 	}
-#else
-	if (percent == 100)
-		SPRINTF_S(t, "[%02u:%02u]", tm.hour, tm.minutes);
-	else
-		SPRINTF_S(t, "[%02u:%02u %d%%]", tm.hour, tm.minutes, percent);
-#endif
 	strcpy_s(dest, size, t);
 }
 
@@ -941,6 +935,91 @@ static void scene_draw_scrollbar(void)
 	}
 }
 
+static void save_infobar_image()
+{
+	if (!config.infobar)
+		return;
+
+	if (infobar_saveimage != NULL) {
+		free(infobar_saveimage);
+		infobar_saveimage = NULL;
+	}
+
+	switch (config.vertread) {
+		case conf_vertread_reversal:
+		case conf_vertread_horz:
+			infobar_saveimage =
+				(pixel *) memalign(16,
+								   (scene_get_infobar_height() +
+									1) * PSP_SCREEN_WIDTH * sizeof(pixel));
+			break;
+		case conf_vertread_rvert:
+		case conf_vertread_lvert:
+			infobar_saveimage =
+				(pixel *) memalign(16,
+								   (scene_get_infobar_height() +
+									1) * PSP_SCREEN_HEIGHT * sizeof(pixel));
+			break;
+	}
+
+	switch (config.vertread) {
+		case conf_vertread_reversal:
+			disp_getimage_draw(0, 0, PSP_SCREEN_WIDTH,
+							   scene_get_infobar_height() + 1,
+							   infobar_saveimage);
+			break;
+		case conf_vertread_lvert:
+			disp_getimage_draw(PSP_SCREEN_WIDTH - scene_get_infobar_height() +
+							   1, 0, scene_get_infobar_height() - 1,
+							   PSP_SCREEN_HEIGHT, infobar_saveimage);
+			break;
+		case conf_vertread_rvert:
+			disp_getimage_draw(0, 0, scene_get_infobar_height() + 1,
+							   PSP_SCREEN_HEIGHT, infobar_saveimage);
+			break;
+		case conf_vertread_horz:
+			disp_getimage_draw(0,
+							   PSP_SCREEN_HEIGHT - 1 -
+							   scene_get_infobar_height(), PSP_SCREEN_WIDTH,
+							   scene_get_infobar_height() + 1,
+							   infobar_saveimage);
+			break;
+	}
+}
+
+static void load_infobar_image()
+{
+	if (!config.infobar)
+		return;
+
+	switch (config.vertread) {
+		case conf_vertread_reversal:
+			disp_putimage(0, 0, PSP_SCREEN_WIDTH,
+						  scene_get_infobar_height() + 1, 0, 0,
+						  infobar_saveimage);
+			break;
+		case conf_vertread_lvert:
+			disp_putimage(PSP_SCREEN_WIDTH - scene_get_infobar_height() + 1, 0,
+						  scene_get_infobar_height() - 1, PSP_SCREEN_HEIGHT, 0,
+						  0, infobar_saveimage);
+			break;
+		case conf_vertread_rvert:
+			disp_putimage(0, 0, scene_get_infobar_height() + 1,
+						  PSP_SCREEN_HEIGHT, 0, 0, infobar_saveimage);
+			break;
+		case conf_vertread_horz:
+			disp_putimage(0, PSP_SCREEN_HEIGHT - 1 - scene_get_infobar_height(),
+						  PSP_SCREEN_WIDTH, scene_get_infobar_height() + 1, 0,
+						  0, infobar_saveimage);
+			break;
+	}
+
+	if (infobar_saveimage != NULL) {
+		free(infobar_saveimage);
+		infobar_saveimage = NULL;
+	}
+}
+
 int scene_printbook(PBookViewData pView, dword selidx)
 {
 	disp_waitv();
@@ -1472,11 +1551,25 @@ static void redraw_book(dword selidx)
 	int prev = DISP_BOOK_FONTSIZE;
 
 	DISP_BOOK_FONTSIZE = config.infobar_fontsize;
+	save_infobar_image();
 	scene_draw_infobar(&cur_book_view, selidx);
 	DISP_BOOK_FONTSIZE = prev;
 	scene_draw_scrollbar();
 	disp_flip();
 	cur_book_view.text_needrp = false;
+}
+
+static void redraw_infobar(dword selidx)
+{
+	disp_duptocache();
+	load_infobar_image();
+	int prev = DISP_BOOK_FONTSIZE;
+
+	DISP_BOOK_FONTSIZE = config.infobar_fontsize;
+	scene_draw_infobar(&cur_book_view, selidx);
+	DISP_BOOK_FONTSIZE = prev;
+	scene_draw_scrollbar();
+	disp_flip();
 }
 
 dword scene_readbook_raw(const char *title, const unsigned char *data,
@@ -1540,12 +1633,9 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
 				sceRtcGetCurrentTick(&timer_start);
 				secticks++;
-#if 0
 				if (config.infobar_show_timer) {
-					cur_book_view.text_needrp = true;
-					goto redraw;
+					redraw_infobar(selidx);
 				}
-#endif
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 				power_down();
@@ -1620,17 +1710,14 @@ dword scene_readbook(dword selidx)
 
 		while ((key = ctrl_read()) == 0) {
 			sceKernelDelayThread(20000);
-#if 0
 			if (config.infobar_show_timer) {
 				static u64 start, end;
 
 				sceRtcGetCurrentTick(&end);
 				if (pspDiffTime(&end, &start) >= 1.0) {
-					cur_book_view.text_needrp = true;
-					goto redraw;
+					redraw_infobar(selidx);
 				}
 			}
-#endif
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if (config.infobar == conf_infobar_lyric
 				&& lyric_check_changed(mp3_get_lyric())) {
