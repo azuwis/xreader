@@ -15,7 +15,7 @@ extern t_conf config;
 
 static bool is_usb_inited = false;
 
-extern bool usb_open()
+extern bool usb_open(void)
 {
 	sceKernelStartModule(kuKernelLoadModule
 						 ("flash0:/kd/chkreg.prx", 0, NULL), 0, NULL, 0, NULL);
@@ -51,7 +51,7 @@ extern bool usb_open()
 	return true;
 }
 
-extern void usb_close()
+extern void usb_close(void)
 {
 	if (!is_usb_inited) {
 		usb_open();
@@ -66,7 +66,7 @@ extern void usb_close()
 
 static bool have_prompt = false;
 
-extern bool usb_activate()
+extern bool usb_activate(void)
 {
 	if (!is_usb_inited) {
 		usb_open();
@@ -82,7 +82,7 @@ extern bool usb_activate()
 	return (sceUsbActivate(0x1c8) == 0);
 }
 
-extern bool usb_deactivate()
+extern bool usb_deactivate(void)
 {
 	if (!is_usb_inited) {
 		usb_open();
@@ -93,7 +93,7 @@ extern bool usb_deactivate()
 	return false;
 }
 
-extern bool usb_isactive()
+extern bool usb_isactive(void)
 {
 	if (!is_usb_inited) {
 		usb_open();
@@ -102,7 +102,7 @@ extern bool usb_isactive()
 	return (sceUsbGetState() & PSP_USB_ACTIVATED);
 }
 
-extern bool usb_cableconnected()
+extern bool usb_cableconnected(void)
 {
 	if (!is_usb_inited) {
 		usb_open();
@@ -111,7 +111,7 @@ extern bool usb_cableconnected()
 	return (sceUsbGetState() & PSP_USB_CABLE_CONNECTED);
 }
 
-extern bool usb_connectionestablished()
+extern bool usb_connectionestablished(void)
 {
 	if (!is_usb_inited) {
 		usb_open();

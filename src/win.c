@@ -67,7 +67,7 @@ extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item,
 	return win_menu_op_continue;
 }
 
-static void win_menu_delay_action()
+static void win_menu_delay_action(void)
 {
 	if (config.dis_scrsave)
 		scePowerTick(0);

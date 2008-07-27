@@ -54,7 +54,7 @@ static int dbg_add_handle(DBG * d, void (*init) (void *), dbg_func writer,
 	return (int) d->otsize;
 }
 
-DBG *dbg_init()
+DBG *dbg_init(void)
 {
 	DBG *d = malloc(sizeof(*d));
 
@@ -562,7 +562,7 @@ void WriteToMessageBox(const char *pszText)
 #endif
 
 #ifdef TEST_DBG
-int main()
+int main(int argc, char *argv[])
 {
 	WSADATA data;
 	int index;

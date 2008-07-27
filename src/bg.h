@@ -6,9 +6,9 @@
 
 extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
 					t_fs_filetype ft, dword grayscale, int where);
-extern bool bg_display();
-extern void bg_cancel();
-extern void bg_cache();
-extern void bg_restore();
+extern bool bg_display(void);
+extern void bg_cancel(void);
+extern void bg_cache(void);
+extern void bg_restore(void);
 
 #endif

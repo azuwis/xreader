@@ -23,7 +23,7 @@ typedef struct _Dbg
 } DBG, *PDBG;
 
 /** ≥ı ºªØ */
-extern DBG *dbg_init();
+extern DBG *dbg_init(void);
 
 /** πÿ±’ */
 extern int dbg_close(DBG * d);

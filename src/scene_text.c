@@ -55,6 +55,10 @@ extern win_menu_predraw_data g_predraw;
 static byte bgalpha = 0x40, fgalpha = 0xa0;
 static pixel *infobar_saveimage = NULL;
 
+#ifdef ENABLE_TTF
+extern p_ttf cttf, ettf;
+#endif
+
 static inline int calc_gi(void)
 {
 	int i = min(fs->crow, fs->row_count);
@@ -69,7 +73,7 @@ static void write_byte(int fd, unsigned char b)
 	sceIoWrite(fd, &b, 1);
 }
 
-void get_screen_shot()
+void get_screen_shot(void)
 {
 	const char tgaHeader[] = { 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	const int width = PSP_SCREEN_WIDTH;
@@ -992,7 +996,7 @@ static void save_infobar_image(void)
 	}
 }
 
-static void load_infobar_image()
+static void load_infobar_image(void)
 {
 	if (!config.infobar || infobar_saveimage == NULL)
 		return;
@@ -1497,7 +1501,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 	return -1;
 }
 
-static void scene_text_delay_action()
+static void scene_text_delay_action(void)
 {
 	if (config.dis_scrsave)
 		scePowerTick(0);
@@ -1539,10 +1543,6 @@ dword scene_reload_raw(const char *title, const unsigned char *data,
 
 	return 0;
 }
-
-#ifdef ENABLE_TTF
-extern p_ttf cttf, ettf;
-#endif
 
 static void _redraw_infobar(dword selidx)
 {

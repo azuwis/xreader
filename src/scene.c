@@ -135,7 +135,7 @@ int default_predraw(const win_menu_predraw_data * pData, const char *str,
 	return 0;
 }
 
-static void load_fontsize_to_config()
+static void load_fontsize_to_config(void)
 {
 	if (!config.usettf) {
 		config.fontsize = fonts[fontindex].size;
@@ -146,7 +146,7 @@ static void load_fontsize_to_config()
 	}
 }
 
-t_win_menu_op exit_confirm()
+t_win_menu_op exit_confirm(void)
 {
 	if (win_msgbox(_("是否退出软件?"), _("是"), _("否"),
 				   COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
@@ -156,7 +156,7 @@ t_win_menu_op exit_confirm()
 	return win_menu_op_force_redraw;
 }
 
-bool scene_load_font()
+bool scene_load_font(void)
 {
 	char fontzipfile[PATH_MAX], efontfile[PATH_MAX], cfontfile[PATH_MAX];
 
@@ -187,7 +187,7 @@ bool scene_load_font()
 	return true;
 }
 
-bool scene_load_book_font()
+bool scene_load_book_font(void)
 {
 	char fontzipfile[PATH_MAX], efontfile[PATH_MAX], cfontfile[PATH_MAX];
 
@@ -2441,7 +2441,7 @@ dword scene_musicopt(dword * selidx)
 	return 0;
 }
 
-static void set_language()
+static void set_language(void)
 {
 	char msgpath[PATH_MAX];
 
@@ -5310,7 +5310,7 @@ static void scene_open_font(dword * idx)
 }
 #endif
 
-void scene_filelist()
+void scene_filelist(void)
 {
 	dword idx = 0;
 
@@ -5568,7 +5568,7 @@ int load_rdriver(void)
 	return mod;
 }
 
-extern void scene_init()
+extern void scene_init(void)
 {
 	char logfile[PATH_MAX];
 	char infomsg[256];
@@ -5824,7 +5824,7 @@ extern void scene_init()
 	scene_filelist();
 }
 
-extern void scene_exit()
+extern void scene_exit(void)
 {
 #ifdef ENABLE_TTF
 	ttf_free();
@@ -5908,7 +5908,7 @@ extern void scene_power_save(bool save)
 						freq_list[config.freqs[1]][1]);
 }
 
-extern const char *scene_appdir()
+extern const char *scene_appdir(void)
 {
 	return appdir;
 }

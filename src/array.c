@@ -180,7 +180,7 @@ Element *new_element(int i)
 	return p;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	Array *myArray = array_init();
 	Element *p;

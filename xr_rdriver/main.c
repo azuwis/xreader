@@ -17,7 +17,7 @@ PSP_MODULE_INFO("xr_RDLib", 0x1007, 1, 0);
 
 u32 orig_funcs[2];
 
-int ExitPatched()
+int ExitPatched(void)
 {
 	int k1 = pspSdkSetK1(0);
 
@@ -37,12 +37,12 @@ int ExitPatched()
 	return res;
 }
 
-int ExitPatched2()
+int ExitPatched2(void)
 {
 	return ExitPatched();
 }
 
-int RestoreExitGame()
+int RestoreExitGame(void)
 {
 	int k1 = pspSdkSetK1(0);
 

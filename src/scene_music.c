@@ -218,7 +218,7 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex,
 	}
 }
 
-void scene_mp3_list()
+void scene_mp3_list(void)
 {
 #ifdef ENABLE_MUSIC
 	t_win_menuitem item[mp3_list_count()];
@@ -302,7 +302,7 @@ const char *get_week_str(int day)
 	return _(week_str[day]);
 }
 
-static void scene_mp3bar_delay_action()
+static void scene_mp3bar_delay_action(void)
 {
 	if (config.dis_scrsave)
 		scePowerTick(0);
@@ -557,7 +557,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 	return 0;
 }
 
-void scene_mp3bar()
+void scene_mp3bar(void)
 {
 	bool firstdup = true;
 	pixel *saveimage = (pixel *) memalign(16,

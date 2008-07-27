@@ -25,7 +25,7 @@ static char *chopper(const char *str)
 	return p;
 }
 
-bool load_passwords()
+bool load_passwords(void)
 {
 	char path[PATH_MAX];
 	char buf[80];
@@ -60,7 +60,7 @@ bool load_passwords()
 	return true;
 }
 
-bool save_passwords()
+bool save_passwords(void)
 {
 	FILE *fp;
 	char path[PATH_MAX];
@@ -82,7 +82,7 @@ bool save_passwords()
 	return true;
 }
 
-void free_passwords()
+void free_passwords(void)
 {
 	if (list != NULL) {
 		int i;
@@ -145,7 +145,7 @@ void add_password(const char *passwd)
 	}
 }
 
-int get_password_count()
+int get_password_count(void)
 {
 	return list_count;
 }

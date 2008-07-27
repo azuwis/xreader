@@ -22,7 +22,7 @@ char *gu_font_init();
 char *gu_font_load(char *name);
 void gu_font_close();
 
-extern bool avc_init()
+extern bool avc_init(void)
 {
 	if (pmp_inited)
 		return true;
@@ -47,7 +47,7 @@ extern bool avc_init()
 	return true;
 }
 
-extern void avc_free()
+extern void avc_free(void)
 {
 	gu_font_close();
 	if (m1 != NULL) {
@@ -62,7 +62,7 @@ extern void avc_free()
 	sceUtilityUnloadAvModule(PSP_AV_MODULE_SASCORE);
 }
 
-extern void avc_start()
+extern void avc_start(void)
 {
 	bg_cache();
 	void *vram = (void *) (0x40000000 | (u32) sceGeEdramGetAddr());
@@ -73,7 +73,7 @@ extern void avc_start()
 	scePowerLock(0);
 }
 
-extern void avc_end()
+extern void avc_end(void)
 {
 	scePowerUnlock(0);
 	disp_init();

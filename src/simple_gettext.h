@@ -14,7 +14,7 @@ struct _TextDomainEntry
 const char *simple_gettext(const char *msgid);
 char *simple_bindtextdomain(const char *domainname, const char *dirname);
 char *simple_textdomain(const char *domainname);
-void simple_gettext_destroy();
+void simple_gettext_destroy(void);
 
 #define _(STRING) simple_gettext(STRING)
 #else

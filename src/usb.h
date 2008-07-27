@@ -3,12 +3,12 @@
 
 #include "common/datatype.h"
 
-extern bool usb_open();
-extern void usb_close();
-extern bool usb_activate();
-extern bool usb_deactivate();
-extern bool usb_isactive();
-extern bool usb_cableconnected();
-extern bool usb_connectionestablished();
+extern bool usb_open(void);
+extern void usb_close(void);
+extern bool usb_activate(void);
+extern bool usb_deactivate(void);
+extern bool usb_isactive(void);
+extern bool usb_cableconnected(void);
+extern bool usb_connectionestablished(void);
 
 #endif

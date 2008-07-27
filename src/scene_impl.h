@@ -21,11 +21,11 @@ extern int locaval[10];
 extern t_fonts fonts[5], bookfonts[21];
 extern bool scene_readbook_in_raw_mode;
 
-t_win_menu_op exit_confirm();
-extern void scene_init();
-extern void scene_exit();
+t_win_menu_op exit_confirm(void);
+extern void scene_init(void);
+extern void scene_exit(void);
 extern void scene_power_save(bool save);
-extern const char *scene_appdir();
+extern const char *scene_appdir(void);
 dword scene_readbook(dword selidx);
 dword scene_readbook_raw(const char *title, const unsigned char *data,
 						 size_t size, t_fs_filetype ft);
@@ -33,7 +33,7 @@ extern void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku,
 							 dword * kd, dword * kl, dword * kr);
 extern bool scene_bookmark(dword * orgp);
 extern dword scene_options(dword * selidx);
-extern void scene_mp3bar();
+extern void scene_mp3bar(void);
 extern int scene_get_infobar_height(void);
 extern int default_predraw(const win_menu_predraw_data * pData, const char *str,
 						   int max_height, int *left, int *right, int *upper,

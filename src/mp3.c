@@ -237,7 +237,7 @@ static signed short MadFixedToSshort(mad_fixed_t Fixed)
 	return ((signed short) (Fixed >> (MAD_F_FRACBITS - 15)));
 }
 
-static bool mp3_load()
+static bool mp3_load(void)
 {
 #ifdef ENABLE_LYRIC
 	lyric_close(&lyric);
@@ -425,12 +425,12 @@ static void hprm_fb(int flag)
 	}
 }
 
-static void hprm_forward()
+static void hprm_forward(void)
 {
 	hprm_fb(PSP_HPRM_FORWARD);
 }
 
-static void hprm_backward()
+static void hprm_backward(void)
 {
 	hprm_fb(PSP_HPRM_BACK);
 }
@@ -769,7 +769,7 @@ static int mp3_thread(unsigned int args, void *argp)
 	return 0;
 }
 
-extern bool mp3_init()
+extern bool mp3_init(void)
 {
 	srand((unsigned) time(NULL));
 #ifdef ENABLE_LYRIC
@@ -795,7 +795,7 @@ extern bool mp3_init()
 	return true;
 }
 
-static void mp3_freetune()
+static void mp3_freetune(void)
 {
 	mad_synth_finish(&Synth);
 	mad_frame_finish(&Frame);
@@ -803,7 +803,7 @@ static void mp3_freetune()
 	free(Resampled);
 }
 
-extern void mp3_start()
+extern void mp3_start(void)
 {
 	mp3_direct = -1;
 	eos = true;
@@ -814,7 +814,7 @@ extern void mp3_start()
 	sceKernelResumeThread(mp3_thid);
 }
 
-extern void mp3_end()
+extern void mp3_end(void)
 {
 #ifdef ENABLE_LYRIC
 	lyric_close(&lyric);
@@ -840,13 +840,13 @@ extern void mp3_end()
 	sceAudioChRelease(mp3_handle);
 }
 
-extern void mp3_pause()
+extern void mp3_pause(void)
 {
 	isPause = true;
 	scene_power_save(true);
 }
 
-extern void mp3_resume()
+extern void mp3_resume(void)
 {
 	if (mp3_nfiles == 0 || mp3_files == NULL)
 		return;
@@ -854,7 +854,7 @@ extern void mp3_resume()
 	isPause = false;
 }
 
-extern void mp3_stop()
+extern void mp3_stop(void)
 {
 	isPlaying = false;
 	isPause = false;
@@ -870,7 +870,7 @@ extern void mp3_stop()
 static bool lastpause;
 static dword lastpos, lastindex;
 
-extern void mp3_powerdown()
+extern void mp3_powerdown(void)
 {
 	lastpause = isPause;
 	isPause = true;
@@ -892,7 +892,7 @@ extern void mp3_powerdown()
 	setMinPlaybackFreqs();
 }
 
-extern void mp3_powerup()
+extern void mp3_powerup(void)
 {
 	mp3_index = lastindex;
 #ifdef ENABLE_WMA
@@ -968,7 +968,7 @@ extern void mp3_list_add_dir(const char *comppath)
 	free(info);
 }
 
-extern void mp3_list_free()
+extern void mp3_list_free(void)
 {
 	if (mp3_files != NULL) {
 		free(mp3_files);
@@ -1145,7 +1145,7 @@ extern void mp3_list_movedown(dword index)
 		mp3_index = index;
 }
 
-extern dword mp3_list_count()
+extern dword mp3_list_count(void)
 {
 	return mp3_nfiles;
 }
@@ -1164,7 +1164,7 @@ extern const char *mp3_list_get(dword index)
 	return mp3_files[index][1];
 }
 
-extern void mp3_prev()
+extern void mp3_prev(void)
 {
 	mp3_direct = 0;
 	manualSw = true;
@@ -1176,7 +1176,7 @@ extern void mp3_prev()
 	isPlaying = true;
 }
 
-extern void mp3_next()
+extern void mp3_next(void)
 {
 	mp3_direct = 1;
 	manualSw = true;
@@ -1222,27 +1222,27 @@ extern void mp3_directplay(const char *filename, const char *longname)
 	isDirectPlay = true;
 }
 
-extern void mp3_forward()
+extern void mp3_forward(void)
 {
 	mp3_jump = 1;
 }
 
-extern void mp3_backward()
+extern void mp3_backward(void)
 {
 	mp3_jump = -1;
 }
 
-extern void mp3_restart()
+extern void mp3_restart(void)
 {
 	mp3_jump = -2;
 }
 
-extern bool mp3_paused()
+extern bool mp3_paused(void)
 {
 	return isPause;
 }
 
-extern char *mp3_get_tag()
+extern char *mp3_get_tag(void)
 {
 	return mp3_tag_encode;
 }
@@ -1331,7 +1331,7 @@ extern void mp3_set_hprm(bool enable)
 #endif
 
 #ifdef ENABLE_LYRIC
-extern void *mp3_get_lyric()
+extern void *mp3_get_lyric(void)
 {
 	return (void *) &lyric;
 }

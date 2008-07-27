@@ -35,7 +35,7 @@ extern pixel *vram_draw;
 #define disp_get_vaddr(x, y) (vram_draw + (x) + ((y) << 9))
 
 extern void disp_putpixel(int x, int y, pixel color);
-extern void disp_init();
+extern void disp_init(void);
 extern void init_gu(void);
 extern void disp_set_fontsize(int fontsize);
 extern void disp_set_book_fontsize(int fontsize);
@@ -54,9 +54,9 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 extern bool disp_has_font(const char *efont, const char *cfont);
 extern bool disp_load_font(const char *efont, const char *cfont);
 extern bool disp_load_book_font(const char *efont, const char *cfont);
-extern void disp_assign_book_font();
-extern void disp_free_font();
-extern void disp_flip();
+extern void disp_assign_book_font(void);
+extern void disp_free_font(void);
+extern void disp_flip(void);
 extern void disp_getimage(dword x, dword y, dword w, dword h, pixel * buf);
 extern void disp_getimage_draw(dword x, dword y, dword w, dword h, pixel * buf);
 
@@ -65,7 +65,7 @@ extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
 							 bool swizzled);
 extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx,
 						  dword starty, pixel * buf);
-extern void disp_duptocache();
+extern void disp_duptocache(void);
 extern void disp_duptocachealpha(int percent);
 extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2);
 extern void disp_rectduptocachealpha(dword x1, dword y1, dword x2, dword y2,

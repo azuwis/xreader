@@ -14,25 +14,25 @@
 #define CTRL_ANALOG 0x80000000
 #endif
 
-extern void ctrl_init();
-extern void ctrl_destroy();
+extern void ctrl_init(void);
+extern void ctrl_destroy(void);
 
 #ifdef ENABLE_ANALOG
 extern void ctrl_analog(int *x, int *y);
 #endif
-extern dword ctrl_read_cont();
-extern dword ctrl_read();
+extern dword ctrl_read_cont(void);
+extern dword ctrl_read(void);
 extern void ctrl_waitreleaseintime(int i);
-extern void ctrl_waitrelease();
-extern dword ctrl_waitany();
+extern void ctrl_waitrelease(void);
+extern dword ctrl_waitany(void);
 extern dword ctrl_waitkey(dword keymask);
 extern dword ctrl_waitmask(dword keymask);
-extern dword ctrl_waitlyric();
+extern dword ctrl_waitlyric(void);
 extern int ctrl_waitreleasekey(dword key);
 
 #ifdef ENABLE_HPRM
-extern dword ctrl_hprm();
-extern dword ctrl_hprm_raw();
+extern dword ctrl_hprm(void);
+extern dword ctrl_hprm_raw(void);
 #endif
 extern dword ctrl_waittime(dword t);
 

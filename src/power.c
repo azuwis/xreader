@@ -74,7 +74,7 @@ extern void power_get_battery(int *percent, int *lifetime, int *tempe,
 static int last_status = 0;
 static char status_str[256] = "";
 
-extern const char *power_get_battery_charging()
+extern const char *power_get_battery_charging(void)
 {
 	int status = scePowerGetBatteryChargingStatus();
 

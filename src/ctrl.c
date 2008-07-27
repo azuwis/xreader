@@ -23,7 +23,7 @@ static u32 lastkhprmkey = 0;
 static SceUID hprm_sema = -1;
 #endif
 
-extern void ctrl_init()
+extern void ctrl_init(void)
 {
 	sceCtrlSetSamplingCycle(0);
 #ifdef ENABLE_ANALOG
@@ -36,7 +36,7 @@ extern void ctrl_init()
 #endif
 }
 
-extern void ctrl_destroy()
+extern void ctrl_destroy(void)
 {
 #ifdef ENABLE_HPRM
 	sceKernelDeleteSema(hprm_sema);
@@ -55,7 +55,7 @@ extern void ctrl_analog(int *x, int *y)
 }
 #endif
 
-extern dword ctrl_read_cont()
+extern dword ctrl_read_cont(void)
 {
 	SceCtrlData ctl;
 
@@ -102,7 +102,7 @@ extern dword ctrl_read_cont()
 	return last_btn;
 }
 
-extern dword ctrl_read()
+extern dword ctrl_read(void)
 {
 	SceCtrlData ctl;
 
@@ -161,7 +161,7 @@ extern void ctrl_waitreleaseintime(int i)
 	} while (ctl.Buttons != 0);
 }
 
-extern void ctrl_waitrelease()
+extern void ctrl_waitrelease(void)
 {
 	return ctrl_waitreleaseintime(20000);
 }
@@ -179,7 +179,7 @@ extern int ctrl_waitreleasekey(dword key)
 	return 0;
 }
 
-extern dword ctrl_waitany()
+extern dword ctrl_waitany(void)
 {
 	dword key;
 
@@ -210,7 +210,7 @@ extern dword ctrl_waitmask(dword keymask)
 }
 
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
-extern dword ctrl_waitlyric()
+extern dword ctrl_waitlyric(void)
 {
 	dword key;
 
@@ -224,7 +224,7 @@ extern dword ctrl_waitlyric()
 #endif
 
 #ifdef ENABLE_HPRM
-extern dword ctrl_hprm()
+extern dword ctrl_hprm(void)
 {
 	u32 key = ctrl_hprm_raw();
 
@@ -235,7 +235,7 @@ extern dword ctrl_hprm()
 	return (dword) key;
 }
 
-extern dword ctrl_hprm_raw()
+extern dword ctrl_hprm_raw(void)
 {
 /*	if(sceKernelDevkitVersion() >= 0x02000010)
 		return 0;*/

@@ -27,30 +27,30 @@ static enum
 } fat_type = fat16;
 static SceUID fat_sema = -1;
 
-void fat_powerdown()
+void fat_powerdown(void)
 {
 	fat_lock();
 	sceIoClose(fatfd);
 	fatfd = -1;
 }
 
-void fat_powerup()
+void fat_powerup(void)
 {
 	fatfd = sceIoOpen("msstor:", PSP_O_RDONLY, 0777);
 	fat_unlock();
 }
 
-void fat_lock()
+void fat_lock(void)
 {
 	sceKernelWaitSema(fat_sema, 1, NULL);
 }
 
-void fat_unlock()
+void fat_unlock(void)
 {
 	sceKernelSignalSema(fat_sema, 1);
 }
 
-extern bool fat_init()
+extern bool fat_init(void)
 {
 	fat_sema = sceKernelCreateSema("FAT Sema", 0, 1, 1, NULL);
 	if (fat_sema < 0)
@@ -121,7 +121,7 @@ extern bool fat_init()
 	return true;
 }
 
-static bool convert_table_fat12()
+static bool convert_table_fat12(void)
 {
 	u16 *otable = malloc(dbr.sec_per_fat * dbr.bytes_per_sec);
 
@@ -149,7 +149,7 @@ static bool convert_table_fat12()
 	return true;
 }
 
-static bool convert_table_fat16()
+static bool convert_table_fat16(void)
 {
 	u16 *otable = malloc(dbr.sec_per_fat * dbr.bytes_per_sec);
 
@@ -170,7 +170,7 @@ static bool convert_table_fat16()
 	return true;
 }
 
-static bool fat_load_table()
+static bool fat_load_table(void)
 {
 	if (loadcount > 0) {
 		loadcount++;
@@ -205,7 +205,7 @@ static bool fat_load_table()
 	return true;
 }
 
-static void fat_free_table()
+static void fat_free_table(void)
 {
 	if (loadcount > 0) {
 		loadcount--;
@@ -581,7 +581,7 @@ extern u32 fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 	return cur;
 }
 
-extern void fat_free()
+extern void fat_free(void)
 {
 	if (fatfd >= 0) {
 		sceIoClose(fatfd);

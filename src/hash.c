@@ -78,7 +78,7 @@ struct hash_control
 
 /* Create a hash table.  This return a control block.  */
 
-struct hash_control *hash_new()
+struct hash_control *hash_new(void)
 {
 	unsigned int size;
 	struct hash_control *ret;
@@ -423,7 +423,7 @@ char command;
 /* Number 0:TABLES-1 of current hashed symbol table.  */
 int number;
 
-int main()
+int main(void)
 {
 	void applicatee();
 	void destroy();
@@ -548,7 +548,7 @@ char *value;
 /* Determine number: what hash table to use.
    Also determine h: points to hash_control.  */
 
-void whattable()
+void whattable(void)
 {
 	for (;;) {
 		printf("   what hash table (%d:%d) ?  ", 0, TABLES - 1);

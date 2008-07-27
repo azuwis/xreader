@@ -69,7 +69,7 @@ static inline void setVertexUV(Vertex * vertex, u16 x, u16 y, u16 z, u32 color,
 
 #define DISP_RSPAN 0
 
-extern void disp_init()
+extern void disp_init(void)
 {
 	sceDisplaySetMode(0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 	vram_page = 0;
@@ -222,7 +222,7 @@ extern bool disp_has_font(const char *efont, const char *cfont)
 	return true;
 }
 
-extern void disp_assign_book_font()
+extern void disp_assign_book_font(void)
 {
 	use_ttf = 0;
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
@@ -626,7 +626,7 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 	return true;
 }
 
-extern void disp_free_font()
+extern void disp_free_font(void)
 {
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
 		free(book_efont_buffer);
@@ -660,7 +660,7 @@ extern void disp_free_font()
 
 void *framebuffer = 0;
 
-extern void disp_flip()
+extern void disp_flip(void)
 {
 	vram_page ^= 1;
 	vram_disp =
@@ -788,7 +788,7 @@ extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx,
 	}
 }
 
-extern void disp_duptocache()
+extern void disp_duptocache(void)
 {
 	memmove(vram_draw, ((byte *) vram_disp) + 0x40000000,
 			512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);

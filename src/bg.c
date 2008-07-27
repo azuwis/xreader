@@ -115,7 +115,7 @@ extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
 	free(imgdata);
 }
 
-extern bool bg_display()
+extern bool bg_display(void)
 {
 	if (config.have_bg) {
 		memcpy(vram_draw, bg_start,
@@ -125,14 +125,14 @@ extern bool bg_display()
 	return false;
 }
 
-extern void bg_cancel()
+extern void bg_cancel(void)
 {
 	config.have_bg = false;
 }
 
 static byte *_cache = NULL;
 
-extern void bg_cache()
+extern void bg_cache(void)
 {
 	if (!config.have_bg)
 		return;
@@ -145,7 +145,7 @@ extern void bg_cache()
 		   PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 }
 
-extern void bg_restore()
+extern void bg_restore(void)
 {
 	if (!config.have_bg)
 		return;

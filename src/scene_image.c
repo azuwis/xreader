@@ -123,7 +123,7 @@ static void report_image_error(int status)
 }
 
 // TODO: use GU to improve speed...
-static void recalc_brightness()
+static void recalc_brightness(void)
 {
 	int i;
 
@@ -163,7 +163,7 @@ static int scene_reloadimage(dword selidx)
 	return 0;
 }
 
-static dword scene_rotateimage()
+static dword scene_rotateimage(void)
 {
 	scene_power_save(false);
 	image_rotate(imgdata, &width, &height, oldangle,
@@ -744,7 +744,7 @@ static bool image_paging_leftright(bool is_forward)
 	return true;
 }
 
-static bool is_need_delay()
+static bool is_need_delay(void)
 {
 	if (config.imgpaging_interval == 0)
 		return false;
@@ -1147,7 +1147,7 @@ static int image_handle_input(dword * selidx, dword key)
 	return -1;
 }
 
-static void scene_image_delay_action()
+static void scene_image_delay_action(void)
 {
 	if (config.dis_scrsave)
 		scePowerTick(0);
