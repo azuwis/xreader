@@ -1098,3 +1098,6 @@ msgstr ""
 
 msgid "没有指定中、英文TTF字体"
 msgstr ""
+
+msgid "信息栏字体大小"
+msgstr ""

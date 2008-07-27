@@ -1167,3 +1167,5 @@ msgstr "Infobar font"
 msgid "没有指定中、英文TTF字体"
 msgstr "Didn't specify Chinese or English TTF font"
 
+msgid "信息栏字体大小"
+msgstr "Infobar font size"
