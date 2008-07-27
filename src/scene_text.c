@@ -935,15 +935,20 @@ static void scene_draw_scrollbar(void)
 	}
 }
 
-static void save_infobar_image()
+static void free_infobar_image(void)
 {
-	if (!config.infobar)
-		return;
-
 	if (infobar_saveimage != NULL) {
 		free(infobar_saveimage);
 		infobar_saveimage = NULL;
 	}
+}
+
+static void save_infobar_image(void)
+{
+	if (!config.infobar)
+		return;
+
+	free_infobar_image();
 
 	switch (config.vertread) {
 		case conf_vertread_reversal:
@@ -1605,6 +1610,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 				copy_book_view(&cur_book_view, &prev_book_view);
 
 				scene_readbook_in_raw_mode = prev_raw;
+				free_infobar_image();
 				return 1;
 			}
 
@@ -1661,6 +1667,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			copy_book_view(&cur_book_view, &prev_book_view);
 
 			scene_readbook_in_raw_mode = prev_raw;
+			free_infobar_image();
 			return ret;
 		}
 	  redraw:
@@ -1672,6 +1679,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 	disp_duptocachealpha(50);
 
 	scene_readbook_in_raw_mode = prev_raw;
+	free_infobar_image();
 	return INVALID;
 }
 
@@ -1687,6 +1695,7 @@ dword scene_readbook(dword selidx)
 	while (1) {
 		if (cur_book_view.text_needrf) {
 			if (scene_book_reload(&cur_book_view, selidx)) {
+				free_infobar_image();
 				return selidx;
 			}
 			cur_book_view.text_needrf = false;
@@ -1748,6 +1757,7 @@ dword scene_readbook(dword selidx)
 
 		if (ret != -1) {
 			scene_power_save(true);
+			free_infobar_image();
 			return ret;
 		}
 	  redraw:
@@ -1762,6 +1772,7 @@ dword scene_readbook(dword selidx)
 	fs = NULL;
 	disp_duptocachealpha(50);
 	scene_power_save(true);
+	free_infobar_image();
 	return selidx;
 }
 
