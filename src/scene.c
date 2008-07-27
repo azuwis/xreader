@@ -695,8 +695,8 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 						config.thumb++;
 					break;
 				case 7:
-					if (++config.imgbrightness > 99)
-						config.imgbrightness = 99;
+					if (++config.imgbrightness > 100)
+						config.imgbrightness = 100;
 					img_needrf = img_needrc = img_needrp = true;
 					break;
 				case 8:
@@ -778,7 +778,8 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 {
 	int left, right, upper, bottom, lines = 0;
 
-	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0)
+	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0 ||
+		strcmp(simple_textdomain(NULL), "zh_TW") == 0)
 		default_predraw(&g_predraw, _("看图选项"), max_height, &left,
 						&right, &upper, &bottom, 4 * DISP_FONTSIZE + 4);
 	else
@@ -1223,7 +1224,8 @@ void scene_color_predraw(p_win_menuitem item, dword index, dword topindex,
 	int left, right, upper, bottom, lines = 0;
 	int npad;
 
-	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0)
+	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0 ||
+		strcmp(simple_textdomain(NULL), "zh_TW") == 0)
 		npad = 35;
 	else
 		npad = 0;
@@ -2442,6 +2444,14 @@ dword scene_musicopt(dword * selidx)
 	return 0;
 }
 
+char *langlist[] = {
+	"zh_CN",
+	"zh_TW",
+	"en_US"
+};
+
+int langid = 0;
+
 static void set_language(void)
 {
 	char msgpath[PATH_MAX];
@@ -2453,6 +2463,20 @@ static void set_language(void)
 		dbg_printf(d, "language file not found!");
 		simple_bindtextdomain("zh_CN", msgpath);
 		simple_textdomain("zh_CN");
+	}
+}
+
+extern void get_language(void)
+{
+	for (langid = 0; langid < NELEMS(langlist); ++langid) {
+		if (strcmp(langlist[langid], config.language) == 0) {
+			break;
+		}
+	}
+
+	if (langid == NELEMS(langlist)) {
+		langid = 0;
+		STRCPY_S(config.language, langlist[langid]);
 	}
 }
 
@@ -2510,11 +2534,10 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 					config.launchtype = config.launchtype == 2 ? 4 : 2;
 					break;
 				case 12:
-					if (strcmp(config.language, "zh_CN") == 0) {
-						STRCPY_S(config.language, "en_US");
-					} else {
-						STRCPY_S(config.language, "zh_CN");
+					if (--langid < 0) {
+						langid = NELEMS(langlist) - 1;
 					}
+					STRCPY_S(config.language, langlist[langid]);
 					set_language();
 					break;
 				case 13:
@@ -2567,11 +2590,10 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 					config.launchtype = config.launchtype == 2 ? 4 : 2;
 					break;
 				case 12:
-					if (strcmp(config.language, "zh_CN") == 0) {
-						STRCPY_S(config.language, "en_US");
-					} else {
-						STRCPY_S(config.language, "zh_CN");
+					if (++langid >= NELEMS(langlist)) {
+						langid = 0;
 					}
+					STRCPY_S(config.language, langlist[langid]);
 					set_language();
 					break;
 				case 13:
@@ -2589,15 +2611,19 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 static const char *GetLanguageHelpString(const char *language)
 {
 	static char *langList[] = {
-		"中文",
+		"简体中文",
+		"繁體中文",
 		"English"
 	};
 
 	if (strcmp(language, "zh_CN") == 0) {
 		return langList[0];
 	}
-	if (strcmp(language, "en_US") == 0) {
+	if (strcmp(language, "zh_TW") == 0) {
 		return langList[1];
+	}
+	if (strcmp(language, "en_US") == 0) {
+		return langList[2];
 	}
 
 	return NULL;
@@ -4078,7 +4104,8 @@ static void scene_fileops_menu_draw(int selcount, p_win_menuitem item,
 	disp_duptocachealpha(50);
 	int left, right;
 
-	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0) {
+	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0 ||
+		strcmp(simple_textdomain(NULL), "zh_TW") == 0) {
 		left = 240 - DISP_FONTSIZE * 3 - 1;
 		right = 240 + DISP_FONTSIZE * 3 + 1;
 	} else {

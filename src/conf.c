@@ -1040,6 +1040,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	STRCPY_S(conf->language,
 			 iniparser_getstring(dict, "UI:language", conf->language));
 
+	extern void get_language(void);
+
+	get_language();
+
 	conf->filelistwidth =
 		iniparser_getint(dict, "UI:filelistwidth", conf->filelistwidth);
 
