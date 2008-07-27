@@ -260,10 +260,10 @@ static void draw_infobar_rect(int vertread)
 							   bgalpha);
 			break;
 		case conf_vertread_lvert:
-			disp_fillrect_tran((PSP_SCREEN_WIDTH - 1) -
-							   scene_get_infobar_height(), 0,
-							   (PSP_SCREEN_WIDTH - 1), (PSP_SCREEN_HEIGHT - 1),
-							   config.forecolor, bgalpha);
+			disp_fillrect_tran(PSP_SCREEN_WIDTH - scene_get_infobar_height() -
+							   1, 0, (PSP_SCREEN_WIDTH - 1),
+							   (PSP_SCREEN_HEIGHT - 1), config.forecolor,
+							   bgalpha);
 			break;
 		case conf_vertread_rvert:
 			disp_fillrect_tran(0, 0, scene_get_infobar_height(),
@@ -978,8 +978,8 @@ static void save_infobar_image(void)
 							   infobar_saveimage);
 			break;
 		case conf_vertread_lvert:
-			disp_getimage_draw(PSP_SCREEN_WIDTH - scene_get_infobar_height() +
-							   1, 0, scene_get_infobar_height() - 1,
+			disp_getimage_draw(PSP_SCREEN_WIDTH - scene_get_infobar_height() -
+							   1, 0, scene_get_infobar_height() + 1,
 							   PSP_SCREEN_HEIGHT, infobar_saveimage);
 			break;
 		case conf_vertread_rvert:
@@ -1008,8 +1008,8 @@ static void load_infobar_image(void)
 						  infobar_saveimage);
 			break;
 		case conf_vertread_lvert:
-			disp_putimage(PSP_SCREEN_WIDTH - scene_get_infobar_height() + 1, 0,
-						  scene_get_infobar_height() - 1, PSP_SCREEN_HEIGHT, 0,
+			disp_putimage(PSP_SCREEN_WIDTH - scene_get_infobar_height() - 1, 0,
+						  scene_get_infobar_height() + 1, PSP_SCREEN_HEIGHT, 0,
 						  0, infobar_saveimage);
 			break;
 		case conf_vertread_rvert:
