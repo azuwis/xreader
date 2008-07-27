@@ -1581,7 +1581,6 @@ static void redraw_infobar(dword selidx)
 	disp_duptocache();
 	load_infobar_image();
 	_redraw_infobar(selidx);
-	scene_draw_scrollbar();
 	disp_flip();
 	if (config.usettf && !config.ttf_load_to_memory) {
 		ttf_unlock();
