@@ -1541,35 +1541,50 @@ dword scene_reload_raw(const char *title, const unsigned char *data,
 extern p_ttf cttf, ettf;
 #endif
 
+static void _redraw_infobar(dword selidx)
+{
+	int prev = DISP_BOOK_FONTSIZE;
+
+#ifdef ENABLE_TTF
+	ttf_set_pixel_size(cttf, config.infobar_fontsize);
+	ttf_set_pixel_size(ettf, config.infobar_fontsize);
+#endif
+	DISP_BOOK_FONTSIZE = config.infobar_fontsize;
+	scene_draw_infobar(&cur_book_view, selidx);
+	DISP_BOOK_FONTSIZE = prev;
+}
+
 static void redraw_book(dword selidx)
 {
+	if (config.usettf && !config.ttf_load_to_memory) {
+		ttf_lock();
+	}
 	ttf_set_pixel_size(cttf, DISP_BOOK_FONTSIZE);
 	ttf_set_pixel_size(ettf, DISP_BOOK_FONTSIZE);
 	scene_printbook(&cur_book_view, selidx);
-	ttf_set_pixel_size(cttf, config.infobar_fontsize);
-	ttf_set_pixel_size(ettf, config.infobar_fontsize);
-	int prev = DISP_BOOK_FONTSIZE;
-
-	DISP_BOOK_FONTSIZE = config.infobar_fontsize;
 	save_infobar_image();
-	scene_draw_infobar(&cur_book_view, selidx);
-	DISP_BOOK_FONTSIZE = prev;
+	_redraw_infobar(selidx);
 	scene_draw_scrollbar();
 	disp_flip();
 	cur_book_view.text_needrp = false;
+	if (config.usettf && !config.ttf_load_to_memory) {
+		ttf_unlock();
+	}
 }
 
 static void redraw_infobar(dword selidx)
 {
+	if (config.usettf && !config.ttf_load_to_memory) {
+		ttf_lock();
+	}
 	disp_duptocache();
 	load_infobar_image();
-	int prev = DISP_BOOK_FONTSIZE;
-
-	DISP_BOOK_FONTSIZE = config.infobar_fontsize;
-	scene_draw_infobar(&cur_book_view, selidx);
-	DISP_BOOK_FONTSIZE = prev;
+	_redraw_infobar();
 	scene_draw_scrollbar();
 	disp_flip();
+	if (config.usettf && !config.ttf_load_to_memory) {
+		ttf_unlock();
+	}
 }
 
 dword scene_readbook_raw(const char *title, const unsigned char *data,
@@ -1617,13 +1632,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			cur_book_view.text_needrf = false;
 		}
 		if (cur_book_view.text_needrp) {
-			if (config.usettf && !config.ttf_load_to_memory) {
-				ttf_lock();
-				redraw_book(selidx);
-				ttf_unlock();
-			} else {
-				redraw_book(selidx);
-			}
+			redraw_book(selidx);
 		}
 
 		dword key;
@@ -1653,13 +1662,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 		dword selidx = 0;
 		int ret;
 
-		if (config.usettf && !config.ttf_load_to_memory) {
-			ttf_lock();
-			ret = book_handle_input(&cur_book_view, &selidx, key);
-			ttf_unlock();
-		} else {
-			ret = book_handle_input(&cur_book_view, &selidx, key);
-		}
+		ret = book_handle_input(&cur_book_view, &selidx, key);
 
 		if (ret != -1) {
 			text_close(fs);
@@ -1701,13 +1704,7 @@ dword scene_readbook(dword selidx)
 			cur_book_view.text_needrf = false;
 		}
 		if (cur_book_view.text_needrp) {
-			if (config.usettf && !config.ttf_load_to_memory) {
-				ttf_lock();
-				redraw_book(selidx);
-				ttf_unlock();
-			} else {
-				redraw_book(selidx);
-			}
+			redraw_book(selidx);
 		}
 
 		dword key;
@@ -1747,13 +1744,7 @@ dword scene_readbook(dword selidx)
 		}
 		int ret;
 
-		if (config.usettf && !config.ttf_load_to_memory) {
-			ttf_lock();
-			ret = book_handle_input(&cur_book_view, &selidx, key);
-			ttf_unlock();
-		} else {
-			ret = book_handle_input(&cur_book_view, &selidx, key);
-		}
+		ret = book_handle_input(&cur_book_view, &selidx, key);
 
 		if (ret != -1) {
 			scene_power_save(true);
