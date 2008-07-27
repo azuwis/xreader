@@ -80,6 +80,7 @@ bool g_force_text_view_mode = false;
 
 char prev_path[PATH_MAX], prev_shortpath[PATH_MAX];
 char prev_lastfile[PATH_MAX];
+int prev_where;
 
 int freq_list[][2] = {
 	{15, 33},
@@ -4735,6 +4736,7 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 		STRCPY_S(config.path, prev_path);
 		STRCPY_S(config.shortpath, prev_shortpath);
 		STRCPY_S(config.lastfile, prev_lastfile);
+		where = prev_where;
 		config.isreading = true;
 
 		dword idx = 0;
@@ -5197,6 +5199,7 @@ static void scene_open_image(dword * idx)
 	STRCPY_S(prev_path, config.path);
 	STRCPY_S(prev_shortpath, config.shortpath);
 	STRCPY_S(prev_lastfile, filelist[*idx].compname->ptr);
+	prev_where = where;
 	*idx = scene_readimage(*idx);
 	config.isreading = false;
 #ifdef ENABLE_USB
@@ -5243,6 +5246,7 @@ static void scene_open_text(dword * idx)
 	STRCPY_S(prev_path, config.path);
 	STRCPY_S(prev_shortpath, config.shortpath);
 	STRCPY_S(prev_lastfile, filelist[*idx].compname->ptr);
+	prev_where = where;
 	*idx = scene_readbook(*idx);
 	g_force_text_view_mode = false;
 	config.isreading = false;
@@ -5812,6 +5816,7 @@ extern void scene_init(void)
 	prev_path[0] = '\0';
 	prev_shortpath[0] = '\0';
 	prev_lastfile[0] = '\0';
+	prev_where = scene_in_dir;
 
 	load_passwords();
 
