@@ -1027,7 +1027,10 @@ int scene_printbook(PBookViewData pView, dword selidx)
 	if (!bg_display())
 #endif
 		disp_fillvram(config.bgcolor);
-
+#ifdef ENABLE_TTF
+	ttf_set_pixel_size(cttf, DISP_BOOK_FONTSIZE);
+	ttf_set_pixel_size(ettf, DISP_BOOK_FONTSIZE);
+#endif
 	switch (config.vertread) {
 		case conf_vertread_reversal:
 			scene_printtext_reversal(pView);
@@ -1559,8 +1562,6 @@ static void redraw_book(dword selidx)
 	if (config.usettf && !config.ttf_load_to_memory) {
 		ttf_lock();
 	}
-	ttf_set_pixel_size(cttf, DISP_BOOK_FONTSIZE);
-	ttf_set_pixel_size(ettf, DISP_BOOK_FONTSIZE);
 	scene_printbook(&cur_book_view, selidx);
 	save_infobar_image();
 	_redraw_infobar(selidx);
@@ -1579,7 +1580,7 @@ static void redraw_infobar(dword selidx)
 	}
 	disp_duptocache();
 	load_infobar_image();
-	_redraw_infobar();
+	_redraw_infobar(selidx);
 	scene_draw_scrollbar();
 	disp_flip();
 	if (config.usettf && !config.ttf_load_to_memory) {
