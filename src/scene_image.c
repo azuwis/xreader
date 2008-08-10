@@ -35,6 +35,7 @@
 #include "pspscreen.h"
 #include "dbg.h"
 #include "simple_gettext.h"
+#include "math.h"
 
 #ifdef ENABLE_IMAGE
 
@@ -56,6 +57,9 @@ extern win_menu_predraw_data g_predraw;
 
 static volatile int secticks = 0;
 static int g_imgpaging_count = 0;
+static int g_current_spd = 0;
+static int destx = 0, desty = 0, srcx = 0, srcy = 0;
+static bool in_move_z_mode = false;
 
 static int open_image(dword selidx)
 {
@@ -493,6 +497,7 @@ static void image_right(void)
 
 static void image_move(dword key)
 {
+	in_move_z_mode = false;
 	if ((key & config.imgkey[14] && !(key & config.imgkey[15]))
 		|| (key & config.imgkey2[14] && !(key & config.imgkey2[15]))
 		) {
@@ -571,7 +576,7 @@ static bool image_paging_moveleft(void)
 static bool image_paging_movedown_smooth(void)
 {
 	if (curtop + imgh < height_rotated) {
-		curtop += (int) config.imgpaging_spd;
+		curtop += (int) g_current_spd;
 		if (curtop > height_rotated - imgh)
 			curtop = height_rotated - imgh;
 		img_needrp = true;
@@ -584,7 +589,7 @@ static bool image_paging_movedown_smooth(void)
 static bool image_paging_moveup_smooth(void)
 {
 	if (curtop > 0) {
-		curtop -= (int) config.imgpaging_spd;
+		curtop -= (int) g_current_spd;
 		if (curtop < 0)
 			curtop = 0;
 		img_needrp = true;
@@ -597,7 +602,7 @@ static bool image_paging_moveup_smooth(void)
 static bool image_paging_moveright_smooth(void)
 {
 	if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
-		curleft += (int) config.imgpaging_spd;
+		curleft += (int) g_current_spd;
 		if (curleft > width_rotated - PSP_SCREEN_WIDTH)
 			curleft = width_rotated - PSP_SCREEN_WIDTH;
 		img_needrp = true;
@@ -610,7 +615,7 @@ static bool image_paging_moveright_smooth(void)
 static bool image_paging_moveleft_smooth(void)
 {
 	if (curleft > 0) {
-		curleft -= (int) config.imgpaging_spd;
+		curleft -= (int) g_current_spd;
 		if (curleft < 0)
 			curleft = 0;
 		img_needrp = true;
@@ -760,6 +765,19 @@ static bool is_need_delay(void)
 	}
 
 	if (g_imgpaging_count < config.imgpaging_interval) {
+		if (config.imgpaging_interval != 0) {
+			if (g_imgpaging_count <= config.imgpaging_interval / 2)
+				g_current_spd =
+					config.imgpaging_spd * 2 * g_imgpaging_count /
+					config.imgpaging_interval;
+			else
+				g_current_spd =
+					config.imgpaging_spd -
+					config.imgpaging_spd * 2 * (g_imgpaging_count -
+												config.imgpaging_interval / 2) /
+					config.imgpaging_interval;
+		} else
+			g_current_spd = config.imgpaging_spd;
 		return false;
 	} else {
 		if (g_imgpaging_count >= config.imgpaging_interval * 2) {
@@ -772,8 +790,200 @@ static bool is_need_delay(void)
 	return false;
 }
 
+static bool splashz(void)
+{
+	static int z_mode_cnt = 0;
+	static u64 start, end;
+	double s, t, t2;
+
+	if (z_mode_cnt == 0)
+		sceRtcGetCurrentTick(&start);
+	sceRtcGetCurrentTick(&end);
+	if (pspDiffTime(&start, &end) >= 0.1) {
+		z_mode_cnt++;
+		sceRtcGetCurrentTick(&start);
+	}
+
+	s = sqrt(1. * (destx - srcx) * (destx - srcx) +
+			 (desty - srcy) * (desty - srcy));
+	if (config.imgpaging_spd)
+		t = s / config.imgpaging_spd;
+	else
+		t = 0;
+	if (z_mode_cnt <= t + 1) {
+		if (s) {
+			if (destx > srcx)
+				t2 = srcx + z_mode_cnt * (destx -
+										  srcx) * config.imgpaging_spd / s;
+			else
+				t2 = srcx - z_mode_cnt * (srcx -
+										  destx) * config.imgpaging_spd / s;
+			curleft = (int) t2;
+			if (destx - srcx)
+				curtop = srcy + (desty - srcy) * (t2 - srcx) / (destx - srcx);
+			else
+				goto finish;
+		} else {
+			goto finish;
+		}
+		if (curleft < 0) {
+			curleft = 0;
+		}
+		if (curleft + PSP_SCREEN_WIDTH > width_rotated) {
+			curleft = width_rotated - PSP_SCREEN_WIDTH;
+		}
+		if (curtop < 0) {
+			curtop = 0;
+		}
+		if (curtop > height_rotated - imgh) {
+			curtop = height_rotated - imgh;
+		}
+		img_needrp = true;
+	} else {
+	  finish:
+		in_move_z_mode = false;
+		z_mode_cnt = 0;
+		srcx = 0;
+		srcy = 0;
+		curleft = destx;
+		curtop = desty;
+		destx = 0;
+		desty = 0;
+	}
+	return false;
+}
+
+static bool z_mode_up(void)
+{
+	desty = curtop + MAX(imgh - (int) config.imgpagereserve, 0);
+	if (desty + imgh > height_rotated)
+		desty = height_rotated - imgh;
+	if (curtop + imgh < height_rotated) {
+		return false;
+	}
+
+	return true;
+}
+
+static bool z_mode_down(void)
+{
+	desty = curtop - MAX(imgh - (int) config.imgpagereserve, 0);
+	if (desty < 0)
+		desty = 0;
+	if (curtop > 0) {
+		return false;
+	}
+
+	return true;
+}
+
+static bool z_mode_left(void)
+{
+	destx = curleft - MAX(imgh - (int) config.imgpagereserve, 0);
+	if (destx < 0) {
+		destx = 0;
+	}
+	if (curleft > 0) {
+		return false;
+	}
+
+	return true;
+}
+
+static bool z_mode_right(void)
+{
+	destx = curleft + MAX(imgh - (int) config.imgpagereserve, 0);
+	if (destx + PSP_SCREEN_WIDTH < width_rotated) {
+		destx = width_rotated - PSP_SCREEN_WIDTH;
+	}
+	if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
+		return false;
+	}
+
+	return true;
+}
+
+bool enter_z_mode(bool is_forward, bool leftright)
+{
+	in_move_z_mode = true;
+	srcx = curleft;
+	srcy = curtop;
+	if (leftright) {
+		if (is_forward)
+			destx = (width_rotated > PSP_SCREEN_WIDTH
+					 && xpos == 2) ? width_rotated - PSP_SCREEN_WIDTH : 0;
+		else
+			destx = (width_rotated > PSP_SCREEN_WIDTH
+					 && xpos < 2) ? width_rotated - PSP_SCREEN_WIDTH : 0;
+	} else {
+		if (is_forward)
+			desty = (height_rotated > imgh
+					 && ypos == 2) ? height_rotated - imgh : 0;
+		else
+			desty = (height_rotated > imgh
+					 && ypos < 2) ? height_rotated - imgh : 0;
+	}
+	if (leftright) {
+		switch (ypos) {
+			case 0:
+			case 1:
+				if (is_forward) {
+					if (!z_mode_up())
+						return false;
+				} else {
+					if (!z_mode_down())
+						return false;
+				}
+				break;
+			case 2:
+				if (is_forward) {
+					if (!z_mode_down())
+						return false;
+				} else {
+					if (!z_mode_up())
+						return false;
+				}
+				break;
+		}
+	} else {
+		switch (xpos) {
+			case 0:
+			case 1:
+				if (is_forward) {
+					if (!z_mode_right())
+						return false;
+				} else {
+					if (!z_mode_left())
+						return false;
+				}
+				break;
+			case 2:
+				if (is_forward) {
+					if (!z_mode_left())
+						return false;
+				} else {
+					if (!z_mode_right())
+						return false;
+				}
+				break;
+		}
+	}
+
+	in_move_z_mode = false;
+	srcx = 0;
+	srcy = 0;
+	curleft = 0;
+	curtop = 0;
+	destx = 0;
+	desty = 0;
+	return true;
+}
+
 static bool image_paging_leftright_smooth(bool is_forward)
 {
+	if (in_move_z_mode)
+		return splashz();
+
 	if (is_need_delay())
 		return false;
 
@@ -802,38 +1012,10 @@ static bool image_paging_leftright_smooth(bool is_forward)
 			}
 			break;
 	}
-	if (is_forward)
-		curleft = (width_rotated > PSP_SCREEN_WIDTH
-				   && xpos == 2) ? width_rotated - PSP_SCREEN_WIDTH : 0;
-	else
-		curleft = (width_rotated > PSP_SCREEN_WIDTH
-				   && xpos < 2) ? width_rotated - PSP_SCREEN_WIDTH : 0;
-	sceKernelDelayThread(100000 * config.imgpaging_interval / 2);
 	g_imgpaging_count = config.imgpaging_interval;
-	switch (ypos) {
-		case 0:
-		case 1:
-			if (is_forward) {
-				if (!image_paging_movedown()) {
-					return false;
-				}
-			} else {
-				if (!image_paging_moveup()) {
-					return false;
-				}
-			}
-			break;
-		case 2:
-			if (is_forward) {
-				if (!image_paging_moveup()) {
-					return false;
-				}
-			} else {
-				if (!image_paging_movedown()) {
-					return false;
-				}
-			}
-			break;
+	sceKernelDelayThread(100000 * config.imgpaging_interval / 2);
+	if (!in_move_z_mode) {
+		return enter_z_mode(is_forward, true);
 	}
 
 	return true;
@@ -841,6 +1023,9 @@ static bool image_paging_leftright_smooth(bool is_forward)
 
 static bool image_paging_updown_smooth(bool is_forward)
 {
+	if (in_move_z_mode)
+		return splashz();
+
 	if (is_need_delay())
 		return false;
 
@@ -869,38 +1054,10 @@ static bool image_paging_updown_smooth(bool is_forward)
 			}
 			break;
 	}
-	if (is_forward)
-		curtop = (height_rotated > imgh
-				  && ypos == 2) ? height_rotated - imgh : 0;
-	else
-		curtop = (height_rotated > imgh
-				  && ypos < 2) ? height_rotated - imgh : 0;
+	g_imgpaging_count = config.imgpaging_interval;
 	sceKernelDelayThread(100000 * config.imgpaging_interval / 2);
-	g_imgpaging_count = config.imgpaging_interval;;
-	switch (xpos) {
-		case 0:
-		case 1:
-			if (is_forward) {
-				if (!image_paging_moveright()) {
-					return false;
-				}
-			} else {
-				if (!image_paging_moveleft()) {
-					return false;
-				}
-			}
-			break;
-		case 2:
-			if (is_forward) {
-				if (!image_paging_moveleft()) {
-					return false;
-				}
-			} else {
-				if (!image_paging_moveright()) {
-					return false;
-				}
-			}
-			break;
+	if (!in_move_z_mode) {
+		return enter_z_mode(is_forward, false);
 	}
 
 	return true;
