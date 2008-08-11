@@ -3,7 +3,7 @@
 AUTHOR=hrimfaxi
 EMAIL=outmatch@gmail.com
 DIRS="msg fonts"
-SRCDIR=/home/liquid/xreader/src
+SRCDIR=$HOME/xreader/src
 DESTDIR=/media/disk/PSP/game/xReader
 DESTDRIVE=/media/disk
 DEBUG=y
@@ -54,4 +54,5 @@ cp -u "$SRCDIR/../msg/zh_TW.so" "$DESTDIR/msg"
 echo "\t\tmsg/en_US.so"
 cp -u "$SRCDIR/../msg/en_US.so" "$DESTDIR/msg"
 
+touch "$DESTDIR"
 sudo umount $DESTDRIVE
