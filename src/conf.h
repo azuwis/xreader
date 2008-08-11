@@ -194,6 +194,7 @@ typedef struct
 	bool hide_last_row;
 	bool infobar_show_timer;
 	bool englishtruncate;
+	bool image_scroll_chgn_speed;
 } t_conf, *p_conf;
 
 /* txt key:

@@ -576,7 +576,9 @@ static bool image_paging_moveleft(void)
 static bool image_paging_movedown_smooth(void)
 {
 	if (curtop + imgh < height_rotated) {
-		curtop += (int) g_current_spd;
+		curtop +=
+			config.image_scroll_chgn_speed ? (int) g_current_spd : (int) config.
+			imgpaging_spd;
 		if (curtop > height_rotated - imgh)
 			curtop = height_rotated - imgh;
 		img_needrp = true;
@@ -589,7 +591,9 @@ static bool image_paging_movedown_smooth(void)
 static bool image_paging_moveup_smooth(void)
 {
 	if (curtop > 0) {
-		curtop -= (int) g_current_spd;
+		curtop -=
+			config.image_scroll_chgn_speed ? (int) g_current_spd : (int) config.
+			imgpaging_spd;
 		if (curtop < 0)
 			curtop = 0;
 		img_needrp = true;
@@ -602,7 +606,9 @@ static bool image_paging_moveup_smooth(void)
 static bool image_paging_moveright_smooth(void)
 {
 	if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
-		curleft += (int) g_current_spd;
+		curleft +=
+			config.image_scroll_chgn_speed ? (int) g_current_spd : (int) config.
+			imgpaging_spd;
 		if (curleft > width_rotated - PSP_SCREEN_WIDTH)
 			curleft = width_rotated - PSP_SCREEN_WIDTH;
 		img_needrp = true;
@@ -615,7 +621,9 @@ static bool image_paging_moveright_smooth(void)
 static bool image_paging_moveleft_smooth(void)
 {
 	if (curleft > 0) {
-		curleft -= (int) g_current_spd;
+		curleft -=
+			config.image_scroll_chgn_speed ? (int) g_current_spd : (int) config.
+			imgpaging_spd;
 		if (curleft < 0)
 			curleft = 0;
 		img_needrp = true;
@@ -765,7 +773,7 @@ static bool is_need_delay(void)
 	}
 
 	if (g_imgpaging_count < config.imgpaging_interval) {
-		if (config.imgpaging_interval != 0) {
+		if (config.image_scroll_chgn_speed && config.imgpaging_interval != 0) {
 			if (g_imgpaging_count <= config.imgpaging_interval / 2)
 				g_current_spd =
 					config.imgpaging_spd * 2 * g_imgpaging_count /
