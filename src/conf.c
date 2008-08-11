@@ -256,6 +256,7 @@ static void conf_default(p_conf conf)
 	conf->hide_last_row = false;
 	conf->infobar_show_timer = true;
 	conf->infobar_fontsize = 12;
+	conf->englishtruncate = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -1067,6 +1068,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		iniparser_getboolean(dict, "Text:infobar_show_timer",
 							 conf->infobar_show_timer);
 
+	conf->englishtruncate =
+		iniparser_getboolean(dict, "Text:englishtruncate",
+							 conf->englishtruncate);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1342,6 +1347,10 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Text:infobar_show_timer",
 						booleanToString(buf, sizeof(buf),
 										conf->infobar_show_timer));
+
+	iniparser_setstring(dict, "Text:englishtruncate",
+						booleanToString(buf, sizeof(buf),
+										conf->englishtruncate));
 
 	iniparser_dump_ini(dict, fp);
 

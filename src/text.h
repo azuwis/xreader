@@ -67,5 +67,6 @@ extern p_text text_open_archive(const char *filename,
 int text_get_string_width_sys(const byte * pos, size_t size, dword wordspace);
 int text_get_string_width(const char *pos, const char *posend, dword maxpixel,
 						  dword wordspace, dword * count);
+bool is_scrollable_char(char ch);
 
 #endif

@@ -8,6 +8,7 @@
 #include <unzip.h>
 #include <chm_lib.h>
 #include <unrar.h>
+#include <ctype.h>
 #include "common/utils.h"
 #include "charsets.h"
 #include "display.h"
@@ -171,6 +172,82 @@ int text_get_string_width(const char *pos, const char *posend, dword maxpixel,
 	return width;
 }
 
+bool is_scrollable_char(char ch)
+{
+	static char charlist[] = {
+		'~', '!', '@', '#', '$', '^', '&', '*', '(', ')', '_', '+', '{', '}',
+		'|', ':', '"', '<', ',',
+		'>', '?', '`', '-', '=', '[', ']', '\\', ';', '\'', ',', '.', '/'
+	};
+	int i;
+
+	if (isalnum(ch))
+		return true;
+
+	for (i = 0; i < NELEMS(charlist); ++i)
+		if (ch == charlist[i])
+			return true;
+	return false;
+}
+
+/*
+ * 得到文本长度，以像素计，显示文本使用
+ * @note: 这个版本会将不截断英文单词
+ */
+int text_get_string_width_english(const char *pos, const char *posend,
+								  dword maxpixel, dword wordspace,
+								  dword * count)
+{
+	int width = 0;
+	const char *posstart = pos;
+	const char *word_start, *word_end;
+
+	word_start = NULL, word_end = NULL;
+	while (pos < posend && bytetable[*(byte *) pos] != 1) {
+		if ((*(byte *) pos) >= 0x80) {
+			width += DISP_BOOK_FONTSIZE;
+			if (width > maxpixel)
+				break;
+			width += wordspace * 2;
+			pos += 2;
+		} else {
+			int j;
+
+			if (is_scrollable_char(*pos)) {
+				if (word_start == NULL) {
+					// search for next English word
+					word_end = word_start = pos;
+					while (word_end <= posend && is_scrollable_char(*word_end)) {
+						word_end++;
+					}
+					dword cnt;
+					int ret =
+						text_get_string_width(word_start, word_end, maxpixel,
+											  wordspace, &cnt);
+
+					if (ret < maxpixel && width + ret > maxpixel) {
+						goto finish;
+					}
+				}
+			} else {
+				word_end = word_start = NULL;
+			}
+			for (j = 0; j < (*pos == 0x09 ? config.tabstop : 1); ++j)
+				width += disp_ewidth[*(byte *) pos];
+			if (width > maxpixel)
+				break;
+			width += wordspace;
+			++pos;
+		}
+
+	}
+
+  finish:
+	*count = pos - posstart;
+
+	return width;
+}
+
 extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 						bool ttf_mode)
 {
@@ -196,15 +273,26 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 
 #ifdef ENABLE_TTF
 		if (ttf_mode) {
-			pos +=
-				ttf_get_string_width(cttf, ettf, (const byte *) pos,
-									 rowpixels, posend - pos, wordspace);
+			if (config.englishtruncate)
+				pos +=
+					ttf_get_string_width_english(cttf, ettf, (const byte *) pos,
+												 rowpixels, posend - pos,
+												 wordspace);
+			else
+				pos +=
+					ttf_get_string_width(cttf, ettf, (const byte *) pos,
+										 rowpixels, posend - pos, wordspace);
 		} else
 #endif
 		{
 			dword count = 0;
 
-			text_get_string_width(pos, posend, rowpixels, wordspace, &count);
+			if (config.englishtruncate)
+				text_get_string_width_english(pos, posend, rowpixels, wordspace,
+											  &count);
+			else
+				text_get_string_width(pos, posend, rowpixels, wordspace,
+									  &count);
 			pos += count;
 		}
 		if (pos + 1 < posend && bytetable[*(byte *) pos] == 1) {

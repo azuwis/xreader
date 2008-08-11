@@ -193,6 +193,7 @@ typedef struct
 	int scrollbar_width;
 	bool hide_last_row;
 	bool infobar_show_timer;
+	bool englishtruncate;
 } t_conf, *p_conf;
 
 /* txt key:

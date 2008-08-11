@@ -18,6 +18,7 @@
 #include "dbg.h"
 #include "scene.h"
 #include "strsafe.h"
+#include "text.h"
 #include "power.h"
 
 extern t_conf config;
@@ -902,6 +903,91 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 	x += slot->advance.x >> 6;
 
 	return x;
+}
+
+/**
+ * 得到字符串所能显示在maxpixels中的长度
+ * @param cttf 中文TTF字体
+ * @param ettf 英文TTF字体
+ * @param str 字符串
+ * @param maxpixels 最大象素长度
+ * @param maxbytes 最大字符长度，以字节计
+ * @param wordspace 字间距（以像素点计）
+ * @return 字符串个数计数，以字节计
+ * @note 如果遇到换行，则字符串计数停止累加。
+ * <br>  如果字符串绘制长度＞maxpixels，则字符串计数停止累加。
+ * <br>  这个版本速度快，但对于英文字母可能有出界问题
+ * <br>  这个版本为英文回绕版本
+ */
+extern int ttf_get_string_width_english(p_ttf cttf, p_ttf ettf,
+										const byte * str, dword maxpixels,
+										dword maxbytes, dword wordspace)
+{
+	dword width = 0;
+	const byte *ostr = str;
+	static int hanzi_len, hanzi_size = 0;
+	dword bytes = 0;
+	const byte *word_start, *word_end;
+
+	if (hanzi_len == 0 || hanzi_size != DISP_BOOK_FONTSIZE) {
+		hanzi_len = ttf_get_char_width(cttf, (const byte *) "字");
+		hanzi_size = DISP_BOOK_FONTSIZE;
+	}
+
+	word_start = word_end = NULL;
+	while (*str != 0 && width <= maxpixels && bytes < maxbytes
+		   && bytetable[*str] != 1) {
+		if (*str > 0x80) {
+			width += hanzi_len;
+			if (width > maxpixels)
+				break;
+			width += wordspace * 2;
+			str += 2;
+			word_end = word_start = NULL;
+		} else if (*str == 0x20) {
+			width += DISP_BOOK_FONTSIZE / 2;
+			if (width > maxpixels)
+				break;
+			width += wordspace;
+			str++;
+			word_end = word_start = NULL;
+		} else {
+			if (is_scrollable_char(*str)) {
+				if (word_start == NULL) {
+					int ret;
+
+					// search for next English word
+					word_end = word_start = str;
+					ret = 0;
+					while (word_end <= ostr + maxbytes
+						   && is_scrollable_char(*word_end)) {
+						ret += disp_ewidth[*word_end];
+						ret += wordspace;
+						word_end++;
+					}
+					if (ret < maxpixels && width + ret > maxpixels) {
+						return str - ostr;
+					}
+				}
+			} else {
+				word_end = word_start = NULL;
+			}
+			if (*str == 0x09) {
+				int j;
+
+				for (j = 0; j < config.tabstop; ++j)
+					width += DISP_BOOK_FONTSIZE / 2;
+			} else
+				width += disp_ewidth[*str];
+			if (width > maxpixels)
+				break;
+			width += wordspace;
+			str++;
+		}
+		bytes++;
+	}
+
+	return str - ostr;
 }
 
 /**
