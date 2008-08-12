@@ -132,7 +132,7 @@ static char *strfloatpad(char *str, int maxsize, float num, int pad,
 {
 	int d, i;
 
-	snprintf_s(str, maxsize, "  %.1f%%%n", num, &d);
+	snprintf_s(str, maxsize, "  %.2f%%%n", num, &d);
 	for (i = 0; i < pad - d; ++i) {
 		strcat_s(str, maxsize, " ");
 	}
@@ -339,7 +339,7 @@ static void get_infobar_string(dword selidx, char *dest, int size)
 											  conf_get_encodename(config.
 																  encode)),
 				  filelist[selidx].name, calc_gi(), autopageinfo, u);
-		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
+		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 10,
 					t);
 	} else if (scene_readbook_in_raw_mode == true) {
 		char t[512], u[512];
@@ -354,7 +354,7 @@ static void get_infobar_string(dword selidx, char *dest, int size)
 											  conf_get_encodename(config.
 																  encode)),
 				  g_titlename, calc_gi(), autopageinfo, u);
-		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
+		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 10,
 					t);
 	} else {
 		char t[512], u[512];
@@ -369,7 +369,7 @@ static void get_infobar_string(dword selidx, char *dest, int size)
 											  conf_get_encodename(config.
 																  encode)),
 				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo, u);
-		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 9,
+		strfloatpad(cr, sizeof(cr), calc_percent(fs->crow, fs->row_count), 10,
 					t);
 	}
 
