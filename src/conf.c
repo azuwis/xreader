@@ -258,6 +258,7 @@ static void conf_default(p_conf conf)
 	conf->infobar_fontsize = 12;
 	conf->englishtruncate = true;
 	conf->image_scroll_chgn_speed = true;
+	conf->ttf_haste_up = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -1077,6 +1078,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		iniparser_getboolean(dict, "Image:image_scroll_chgn_speed",
 							 conf->image_scroll_chgn_speed);
 
+	conf->ttf_haste_up =
+		iniparser_getboolean(dict, "Text:ttf_haste_up", conf->ttf_haste_up);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1360,6 +1364,9 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Image:image_scroll_chgn_speed",
 						booleanToString(buf, sizeof(buf),
 										conf->image_scroll_chgn_speed));
+
+	iniparser_setstring(dict, "Text:ttf_haste_up",
+						booleanToString(buf, sizeof(buf), conf->ttf_haste_up));
 
 	iniparser_dump_ini(dict, fp);
 

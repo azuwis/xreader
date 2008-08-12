@@ -195,6 +195,7 @@ typedef struct
 	bool infobar_show_timer;
 	bool englishtruncate;
 	bool image_scroll_chgn_speed;
+	bool ttf_haste_up;
 } t_conf, *p_conf;
 
 /* txt key:
