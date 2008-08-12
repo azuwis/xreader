@@ -99,15 +99,7 @@ extern void power_down(void)
 #ifdef ENABLE_TTF
 	if (use_ttf && !config.ttf_load_to_memory) {
 		ttf_lock();
-
-		if (ettf != NULL) {
-			ttf_close(ettf);
-			ettf = NULL;
-		}
-		if (cttf != NULL) {
-			ttf_close(cttf);
-			cttf = NULL;
-		}
+		disp_ttf_close();
 	}
 #endif
 #ifdef ENABLE_MUSIC

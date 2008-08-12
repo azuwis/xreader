@@ -223,6 +223,20 @@ extern bool disp_has_font(const char *efont, const char *cfont)
 	return true;
 }
 
+extern void disp_ttf_close(void)
+{
+	if (ettf != NULL) {
+		if (!g_ttf_share_two_font)
+			ttf_close(ettf);
+		ettf = NULL;
+		g_ttf_share_two_font = false;
+	}
+	if (cttf != NULL) {
+		ttf_close(cttf);
+		cttf = NULL;
+	}
+}
+
 extern void disp_assign_book_font(void)
 {
 	use_ttf = 0;
@@ -235,16 +249,7 @@ extern void disp_assign_book_font(void)
 		book_cfont_buffer = NULL;
 	}
 #ifdef ENABLE_TTF
-	if (ettf != NULL) {
-		if (!g_ttf_share_two_font)
-			ttf_close(ettf);
-		ettf = NULL;
-		g_ttf_share_two_font = false;
-	}
-	if (cttf != NULL) {
-		ttf_close(cttf);
-		cttf = NULL;
-	}
+	disp_ttf_close();
 #endif
 	book_efont_buffer = efont_buffer;
 	book_cfont_buffer = cfont_buffer;
@@ -527,16 +532,7 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 {
 	use_ttf = 0;
 #ifdef ENABLE_TTF
-	if (ettf != NULL) {
-		if (!g_ttf_share_two_font)
-			ttf_close(ettf);
-		ettf = NULL;
-		g_ttf_share_two_font = false;
-	}
-	if (cttf != NULL) {
-		ttf_close(cttf);
-		cttf = NULL;
-	}
+	disp_ttf_close();
 #endif
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
 		free(book_efont_buffer);
@@ -601,16 +597,7 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 {
 	use_ttf = 0;
 #ifdef ENABLE_TTF
-	if (ettf != NULL) {
-		if (!g_ttf_share_two_font)
-			ttf_close(ettf);
-		ettf = NULL;
-		g_ttf_share_two_font = false;
-	}
-	if (cttf != NULL) {
-		ttf_close(cttf);
-		cttf = NULL;
-	}
+	disp_ttf_close();
 #endif
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
 		free(book_efont_buffer);
@@ -673,16 +660,7 @@ extern void disp_free_font(void)
 	use_ttf = 0;
 #ifdef ENABLE_TTF
 	memset(disp_ewidth, 0, 0x80);
-	if (ettf != NULL) {
-		if (!g_ttf_share_two_font)
-			ttf_close(ettf);
-		ettf = NULL;
-		g_ttf_share_two_font = false;
-	}
-	if (cttf != NULL) {
-		ttf_close(cttf);
-		cttf = NULL;
-	}
+	disp_ttf_close();
 #endif
 }
 

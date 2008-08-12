@@ -151,5 +151,6 @@ extern bool check_range(int x, int y);
 extern void disp_fix_osk(void *buffer);
 pixel *disp_swizzle_image(pixel * buf, int width, int height);
 extern void disp_ttf_reload(void);
+extern void disp_ttf_close(void);
 
 #endif
