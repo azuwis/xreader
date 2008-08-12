@@ -2887,7 +2887,11 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item,
 						&& filelist[(dword) item[1].data].compname->
 						ptr[0] != '/')
 						STRCAT_S(t, "/");
-					STRCAT_S(t, filelist[(dword) item[1].data].compname->ptr);
+					if (strcmp
+						(filelist[(dword) item[1].data].compname->ptr, "..")) {
+						STRCAT_S(t,
+								 filelist[(dword) item[1].data].compname->ptr);
+					}
 					scene_locname_to_itemname(item[*index].name,
 											  NELEMS(item[*index].
 													 name), t,
@@ -2927,7 +2931,8 @@ void scene_loc_enum(dword index, char *comppath, char *shortpath,
 		if (comppath[strlen(comppath) - 1] != '/' && compname[0] != '/') {
 			STRCAT_S(t, "/");
 		}
-		STRCAT_S(t, compname);
+		if (strcmp(compname, ".."))
+			STRCAT_S(t, compname);
 		scene_locname_to_itemname(item[index].name,
 								  NELEMS(item[index].name), t,
 								  (config.filelistwidth /
