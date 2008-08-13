@@ -153,3 +153,13 @@ text:hide_last_row
 
 text:infobar_show_timer
 文件信息栏是否显示时间电量信息
+
+text:englishtruncate
+开启英文换行截断单词功能，默认为打开
+
+image:image_scroll_chgn_speed
+开启图像翻页方式中上下、左右滚动时滚动时速度逐渐变化功能，默认为打开
+
+text:ttf_haste_up
+开启绘制TTF字型时升高CPU频率功能，可能会导致字体闪烁显示，默认为打开
+
