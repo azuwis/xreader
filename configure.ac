@@ -5,7 +5,7 @@ AC_PREREQ(2.59)
 #m4_include([aclocal/version.m4])
 #AC_PSPSDK_VERSION
 #AC_CONFIG_SRCDIR([tools/bin2c.c])
-AC_INIT([xReader],[1.1.0],[])
+AC_INIT([xReader],[1.2.0],[])
 AC_XREADER_VERSION
 AC_XREADER_VERSIONNUM
 AC_CONFIG_HEADER([config.h])
