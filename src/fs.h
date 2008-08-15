@@ -28,6 +28,7 @@ typedef enum
 #endif
 #ifdef ENABLE_MUSIC
 	fs_filetype_mp3,
+	fs_filetype_mpc,
 	fs_filetype_aa3,
 #ifdef ENABLE_WMA
 	fs_filetype_wma,

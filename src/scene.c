@@ -28,7 +28,7 @@
 #include "fat.h"
 #include "location.h"
 #ifdef ENABLE_MUSIC
-#include "mp3.h"
+#include "musicmgr.h"
 #ifdef ENABLE_LYRIC
 #include "lyric.h"
 #endif
@@ -51,6 +51,8 @@
 #include "passwdmgr.h"
 #include "xr_rdriver/xr_rdriver.h"
 #include "kubridge.h"
+#include "clock.h"
+#include "musicdrv.h"
 
 #ifdef ENABLE_PMPAVC
 bool pmp_restart = false;
@@ -1949,7 +1951,7 @@ dword scene_ctrlset(dword * selidx)
 	if (orghprmctrl != config.hprmctrl) {
 		ctrl_enablehprm(config.hprmctrl);
 #ifdef ENABLE_MUSIC
-		mp3_set_hprm(!config.hprmctrl);
+		music_set_hprm(!config.hprmctrl);
 #endif
 	}
 #endif
@@ -4256,11 +4258,13 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							(_("添加目录内所有歌曲到播放列表？"),
 							 _("是"), _("否"),
 							 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
-							char cfn[PATH_MAX];
+							char cfn[PATH_MAX], sfn[PATH_MAX];
 
 							SPRINTF_S(cfn, "%s%s/", config.path,
 									  item[sidx].compname->ptr);
-							mp3_list_add_dir(cfn);
+							SPRINTF_S(sfn, "%s%s/", config.shortpath,
+									  item[sidx].shortname->ptr);
+							music_add_dir(sfn, cfn);
 							win_msg(_("已添加歌曲到列表!"),
 									COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 						}
@@ -4280,7 +4284,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							STRCAT_S(mp3name, filelist[sidx].shortname->ptr);
 							STRCPY_S(mp3longname, config.path);
 							STRCAT_S(mp3longname, filelist[sidx].compname->ptr);
-							mp3_list_add(mp3name, mp3longname);
+							music_add(mp3name, mp3longname);
 							win_msg(_("已添加歌曲到列表!"),
 									COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 						}
@@ -4334,12 +4338,14 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 #ifdef ENABLE_MUSIC
 							case fs_filetype_dir:
 								if (bmcount == 0) {
-									char cfn[PATH_MAX];
+									char cfn[PATH_MAX], sfn[PATH_MAX];
 
 									SPRINTF_S(cfn, "%s%s/",
 											  config.path,
 											  item[sidx].compname->ptr);
-									mp3_list_add_dir(cfn);
+									SPRINTF_S(sfn, "%s%s/", config.shortpath,
+											  item[sidx].shortname->ptr);
+									music_add_dir(sfn, cfn);
 								}
 								break;
 #endif
@@ -4368,7 +4374,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 									STRCPY_S(mp3longname, config.path);
 									STRCAT_S(mp3longname,
 											 filelist[sidx].compname->ptr);
-									mp3_list_add(mp3name, mp3longname);
+									music_add(mp3name, mp3longname);
 								}
 								break;
 #endif
@@ -4417,12 +4423,15 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 #ifdef ENABLE_MUSIC
 							case fs_filetype_dir:
 								if (dircount > 0) {
-									char cfn[PATH_MAX];
+									char cfn[PATH_MAX], lfn[PATH_MAX];
 
 									SPRINTF_S(cfn, "%s%s/",
 											  config.path,
 											  item[sidx].compname->ptr);
-									mp3_list_add_dir(cfn);
+									SPRINTF_S(lfn, "%s%s/",
+											  config.shortpath,
+											  item[sidx].shortname->ptr);
+									music_add_dir(lfn, cfn);
 								}
 								break;
 #endif
@@ -4451,7 +4460,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 									STRCPY_S(mp3longname, config.path);
 									STRCAT_S(mp3longname,
 											 filelist[sidx].compname->ptr);
-									mp3_list_add(mp3name, mp3longname);
+									music_add(mp3name, mp3longname);
 								}
 								break;
 #endif
@@ -5265,7 +5274,7 @@ static void scene_open_music(dword * idx)
 	STRCAT_S(fn, filelist[*idx].shortname->ptr);
 	STRCPY_S(lfn, config.path);
 	STRCAT_S(lfn, filelist[*idx].compname->ptr);
-	mp3_directplay(fn, lfn);
+	music_directplay(fn, lfn);
 }
 #endif
 
@@ -5541,6 +5550,7 @@ void scene_filelist(void)
 				break;
 #ifdef ENABLE_MUSIC
 			case fs_filetype_mp3:
+			case fs_filetype_mpc:
 			case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 			case fs_filetype_wma:
@@ -5771,28 +5781,26 @@ extern void scene_init(void)
 
 #ifdef ENABLE_MUSIC
 	sceRtcGetCurrentTick(&dbglasttick);
-	mp3_init();
+	music_init();
 	sceRtcGetCurrentTick(&dbgnow);
-	dbg_printf(d, "mp3_init(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
+	dbg_printf(d, "music_init(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 
-	if (config.confver < 0x00090100 || !mp3_list_load(mp3conf)) {
+	if (config.confver < 0x00090100 || music_list_load(mp3conf) != 0) {
 		sceRtcGetCurrentTick(&dbglasttick);
-		mp3_list_add_dir("ms0:/MUSIC/");
+		music_add_dir("ms0:/MUSIC/", "ms0:/MUSIC/");
 		sceRtcGetCurrentTick(&dbgnow);
-		dbg_printf(d, "mp3_list_add_dir(): %.2fs",
+		dbg_printf(d, "music_add_dir(): %.2fs",
 				   pspDiffTime(&dbgnow, &dbglasttick));
 	}
 	sceRtcGetCurrentTick(&dbglasttick);
-	mp3_start();
-	mp3_set_encode(config.mp3encode);
+	music_loadonly(0);
 #ifdef ENABLE_HPRM
-	mp3_set_hprm(!config.hprmctrl);
+	music_set_hprm(!config.hprmctrl);
 #endif
-	mp3_set_cycle(config.mp3cycle);
+	music_set_cycle_mode(config.mp3cycle);
 	if (config.autoplay)
-		mp3_resume();
+		music_resume();
 	sceRtcGetCurrentTick(&dbgnow);
-	dbg_printf(d, "mp3_start() etc: %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 #endif
 
 	sceRtcGetCurrentTick(&dbglasttick);
@@ -5886,7 +5894,7 @@ extern void scene_exit(void)
 	conf_save(&config);
 
 #ifdef ENABLE_MUSIC
-	mp3_end();
+	music_list_stop();
 #ifdef ENABLE_ME
 	extern void *pMMgr;
 
@@ -5897,8 +5905,8 @@ extern void scene_exit(void)
 
 	STRCPY_S(mp3conf, scene_appdir());
 	STRCAT_S(mp3conf, "music.lst");
-	mp3_list_save(mp3conf);
-	mp3_list_free();
+	music_list_save(mp3conf);
+	music_free();
 #endif
 
 	fat_free();
@@ -5926,23 +5934,53 @@ extern void scene_exit(void)
 
 extern void scene_power_save(bool save)
 {
-	if (save
+	if (save) {
 #ifdef ENABLE_MUSIC
-		&& mp3_paused()
+		// 音乐正在播放？
+		if (music_curr_playing()) {
+			// defaultCPUClock
+			struct music_info info = { 0 };
+			info.type = MD_GET_CPUFREQ;
+			if (musicdrv_get_info(&info) == 0) {
+				if (info.psp_freq[0] != 0) {
+					int cpu = info.psp_freq[0] > freq_list[config.freqs[0]][0] ?
+						info.psp_freq[0] : freq_list[config.freqs[0]][0];
+					dbg_printf(d, "scene_power_save: cpu: %d bus: %d", cpu, 0);
+					xrSetCpuClock(cpu, 0);
+				}
+			}
+
+		} else
 #endif
-		)
-		power_set_clock(freq_list[config.freqs[0]][0],
-						freq_list[config.freqs[0]][1]);
-	else if (imgreading
+		{
+			dbg_printf(d, "scene_power_save: cpu: %d bus: %d",
+					   freq_list[config.freqs[0]][0],
+					   freq_list[config.freqs[0]][1]);
+			// 最低频率
+			power_set_clock(freq_list[config.freqs[0]][0],
+							freq_list[config.freqs[0]][1]);
+		}
+	} else {
 #ifdef ENABLE_MUSIC
-			 && !mp3_paused()
+		// 音乐正在播放？
+		if (music_curr_playing()) {
+			dbg_printf(d, "scene_power_save: cpu: %d bus: %d",
+					   freq_list[config.freqs[2]][0],
+					   freq_list[config.freqs[2]][1]);
+			// 最高频率
+			power_set_clock(freq_list[config.freqs[2]][0],
+							freq_list[config.freqs[2]][1]);
+		} else
 #endif
-		) {
-		power_set_clock(freq_list[config.freqs[2]][0],
-						freq_list[config.freqs[2]][1]);
-	} else
-		power_set_clock(freq_list[config.freqs[1]][0],
-						freq_list[config.freqs[1]][1]);
+		{
+			// 中等频率
+			dbg_printf(d, "scene_power_save: cpu: %d bus: %d",
+					   freq_list[config.freqs[1]][0],
+					   freq_list[config.freqs[1]][1]);
+			power_set_clock(freq_list[config.freqs[1]][0],
+							freq_list[config.freqs[1]][1]);
+		}
+	}
 }
 
 extern const char *scene_appdir(void)

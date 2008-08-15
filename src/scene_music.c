@@ -24,7 +24,8 @@
 #include "charsets.h"
 #include "location.h"
 #ifdef ENABLE_MUSIC
-#include "mp3.h"
+#include "musicmgr.h"
+#include "musicdrv.h"
 #ifdef ENABLE_LYRIC
 #include "lyric.h"
 #endif
@@ -40,6 +41,7 @@
 #include "scene_impl.h"
 #include "pspscreen.h"
 #include "simple_gettext.h"
+#include "charsets.h"
 #include "dbg.h"
 
 extern win_menu_predraw_data g_predraw;
@@ -88,11 +90,11 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 			return win_menu_op_force_redraw;
 		case PSP_CTRL_SQUARE:
 #ifdef ENABLE_MUSIC
-			if (*index < mp3_list_count() - 1) {
+			if (*index < music_maxindex() - 1) {
 				t_win_menuitem sitem;
 				dword mp3i = *index;
 
-				mp3_list_movedown(mp3i);
+				music_movedown(mp3i);
 				memcpy(&sitem, &item[mp3i], sizeof(t_win_menuitem));
 				memcpy(&item[mp3i], &item[mp3i + 1], sizeof(t_win_menuitem));
 				memcpy(&item[mp3i + 1], &sitem, sizeof(t_win_menuitem));
@@ -107,7 +109,7 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 				t_win_menuitem sitem;
 				dword mp3i = *index;
 
-				mp3_list_moveup(mp3i);
+				music_moveup(mp3i);
 				memcpy(&sitem, &item[mp3i], sizeof(t_win_menuitem));
 				memcpy(&item[mp3i], &item[mp3i - 1], sizeof(t_win_menuitem));
 				memcpy(&item[mp3i - 1], &sitem, sizeof(t_win_menuitem));
@@ -121,7 +123,7 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 			if (win_msgbox
 				(_("从歌曲列表移除文件?"), _("是"), _("否"), COLOR_WHITE,
 				 COLOR_WHITE, config.msgbcolor)) {
-				mp3_list_delete(*index);
+				music_del(*index);
 				if (*index < *count - 1)
 					memmove(&item[*index], &item[*index + 1],
 							(*count - *index - 1) * sizeof(t_win_menuitem));
@@ -133,12 +135,16 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 			return win_menu_op_ok;
 		case PSP_CTRL_START:
 #ifdef ENABLE_MUSIC
-			if (mp3_list_get_path(*index) != NULL) {
-				mp3_directplay(mp3_list_get_path(*index), NULL);
-			}
-			return win_menu_op_continue;
+			{
+				struct music_file *p;
+
+				if ((p = music_get(*index)) != NULL) {
+					music_directplay(p->shortpath, p->longpath);
+				}
+				return win_menu_op_continue;
 #endif
-			return win_menu_op_ok;
+				return win_menu_op_ok;
+			}
 		case PSP_CTRL_SELECT:
 			return win_menu_op_cancel;
 	}
@@ -180,7 +186,11 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex,
 	const char *fname;
 
 #ifdef ENABLE_MUSIC
-	fname = mp3_list_get(index);
+	struct music_file *fl = music_get(index);
+
+	if (fl == NULL)
+		return;
+	fname = fl->longpath;
 #else
 	fname = _("音乐已关闭");
 #endif
@@ -221,7 +231,7 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex,
 void scene_mp3_list(void)
 {
 #ifdef ENABLE_MUSIC
-	t_win_menuitem item[mp3_list_count()];
+	t_win_menuitem item[music_maxindex()];
 
 	if (item == NULL)
 		return;
@@ -237,11 +247,15 @@ void scene_mp3_list(void)
 	else
 		g_predraw.max_item_len = WRR * 5;
 
-	for (i = 0; i < mp3_list_count(); i++) {
-		char *rname = strrchr(mp3_list_get(i), '/');
+	for (i = 0; i < music_maxindex(); i++) {
+		struct music_file *fl = music_get(i);
+
+		if (fl == NULL)
+			continue;
+		char *rname = strrchr(fl->longpath, '/');
 
 		if (rname == NULL)
-			rname = (char *) mp3_list_get(i);
+			rname = (char *) music_get(i);
 		else
 			rname++;
 		if (strlen(rname) <= g_predraw.max_item_len - 2)
@@ -273,10 +287,10 @@ void scene_mp3_list(void)
 	while ((index =
 			win_menu(g_predraw.left, g_predraw.upper,
 					 g_predraw.max_item_len, g_predraw.item_count, item,
-					 mp3_list_count(), index, 0, RGB(0x40, 0x40, 0x28),
+					 music_maxindex(), index, 0, RGB(0x40, 0x40, 0x28),
 					 true, scene_mp3_list_predraw, scene_mp3_list_postdraw,
 					 scene_mp3_list_menucb)) != INVALID)
-		if (mp3_list_count() == 0)
+		if (music_maxindex() == 0)
 			break;
 	memcpy(&g_predraw, &prev, sizeof(g_predraw));
 #endif
@@ -341,7 +355,7 @@ static void scene_draw_lyric(void)
 	const char *ly[config.lyricex * 2 + 1];
 	dword ss[config.lyricex * 2 + 1];
 
-	if (lyric_get_cur_lines(mp3_get_lyric(), config.lyricex, ly, ss)) {
+	if (lyric_get_cur_lines(music_get_lyric(), config.lyricex, ly, ss)) {
 		int lidx;
 		dword cpl = 936 / DISP_FONTSIZE;
 
@@ -357,17 +371,23 @@ static void scene_draw_mp3bar_music_staff(void)
 {
 	int bitrate, sample, len, tlen;
 	char infostr[80];
+	struct music_info info = { 0 };
 
 	disp_rectangle(5, 262 - DISP_FONTSIZE * 4, 474, 267, COLOR_WHITE);
 	disp_fillrect(6, 263 - DISP_FONTSIZE * 4, 473, 266,
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  msgbcolor);
-	if (mp3_get_info(&bitrate, &sample, &len, &tlen))
+	info.type = MD_GET_AVGKBPS | MD_GET_FREQ | MD_GET_CURTIME | MD_GET_DURATION;
+	if (musicdrv_get_info(&info) == 0) {
+		bitrate = info.avg_kbps;
+		sample = info.freq;
+		len = (int) info.cur_time;
+		tlen = (int) info.duration;
 		SPRINTF_S(infostr,
 				  "%s   %d kbps   %d Hz   %02d:%02d / %02d:%02d",
 				  conf_get_cyclename(config.mp3cycle), bitrate, sample,
 				  len / 60, len % 60, tlen / 60, tlen % 60);
-	else
+	} else
 		SPRINTF_S(infostr, "%s", conf_get_cyclename(config.mp3cycle));
 	disp_putstring(6 + DISP_FONTSIZE, 265 - DISP_FONTSIZE * 2, COLOR_WHITE,
 				   (const byte *) infostr);
@@ -386,10 +406,39 @@ static void scene_draw_mp3bar_music_staff(void)
 	disp_putstring(6 + DISP_FONTSIZE, 264 - DISP_FONTSIZE * 3, COLOR_WHITE,
 				   (const byte *)
 				   _("○播放/暂停 ×循环 □停止 △曲名编码  L上一首  R下一首"));
-	disp_putnstring(6 + DISP_FONTSIZE, 266 - DISP_FONTSIZE, COLOR_WHITE,
-					(const byte *) mp3_get_tag(),
-					(468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0,
-					DISP_FONTSIZE, 0);
+	info.type = MD_GET_TITLE | MD_GET_ARTIST;
+	if (musicdrv_get_info(&info) == 0) {
+		char tag[512];
+
+		charsets_utf8_conv((const byte *) info.artist, sizeof(info.artist),
+						   (byte *) info.artist, sizeof(info.artist));
+		charsets_utf8_conv((const byte *) info.title, sizeof(info.title),
+						   (byte *) info.title, sizeof(info.title));
+		if (info.artist[0] != '\0' && info.title[0] != '\0')
+			SPRINTF_S(tag, "%s - %s", info.artist, info.title);
+		else if (info.title[0] != '\0')
+			SPRINTF_S(tag, "%s", info.title);
+		else {
+			int i = music_get_current_pos();
+			struct music_file *fl = music_get(i);
+
+			if (fl) {
+				const char *p = strrchr(fl->longpath, '/');
+
+				if (p == NULL || *(p + 1) == '\0') {
+					SPRINTF_S(tag, "%s", fl->longpath);
+				} else {
+					SPRINTF_S(tag, "%s", p + 1);
+				}
+			} else
+				STRCPY_S(tag, "");
+		}
+
+		disp_putnstring(6 + DISP_FONTSIZE, 266 - DISP_FONTSIZE, COLOR_WHITE,
+						(const byte *) tag,
+						(468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0,
+						DISP_FONTSIZE, 0);
+	}
 }
 #endif
 
@@ -469,10 +518,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			break;
 		case PSP_CTRL_CIRCLE:
 #ifdef ENABLE_MUSIC
-			if (mp3_paused())
-				mp3_resume();
-			else
-				mp3_pause();
+			music_list_playorpause();
 #endif
 			break;
 		case PSP_CTRL_CROSS:
@@ -481,12 +527,12 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 				config.mp3cycle = conf_cycle_single;
 			else
 				config.mp3cycle++;
-			mp3_set_cycle(config.mp3cycle);
+			music_set_cycle_mode(config.mp3cycle);
 #endif
 			break;
 		case PSP_CTRL_SQUARE:
 #ifdef ENABLE_MUSIC
-			mp3_restart();
+			music_list_stop();
 			scene_power_save(true);
 #endif
 			break;
@@ -502,32 +548,32 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			config.mp3encode++;
 			if ((dword) config.mp3encode > 4)
 				config.mp3encode = 0;
-			mp3_set_encode(config.mp3encode);
+//          music_set_encode(config.mp3encode);
 #endif
 			break;
 		case PSP_CTRL_LTRIGGER:
 #ifdef ENABLE_MUSIC
-			mp3_prev();
+			music_prev();
 #endif
 			break;
 		case PSP_CTRL_RTRIGGER:
 #ifdef ENABLE_MUSIC
-			mp3_next();
+			music_next();
 #endif
 			break;
 		case PSP_CTRL_LEFT:
 #ifdef ENABLE_MUSIC
-			mp3_backward();
+			musicdrv_fbackward(5);
 #endif
 			break;
 		case PSP_CTRL_RIGHT:
 #ifdef ENABLE_MUSIC
-			mp3_forward();
+			musicdrv_fforward(5);
 #endif
 			break;
 		case PSP_CTRL_SELECT:
 #ifdef ENABLE_MUSIC
-			if (mp3_list_count() == 0)
+			if (music_maxindex() == 0)
 				break;
 			scene_mp3_list();
 #endif

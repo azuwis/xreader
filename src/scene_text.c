@@ -23,7 +23,7 @@
 #include "charsets.h"
 #include "location.h"
 #ifdef ENABLE_MUSIC
-#include "mp3.h"
+#include "musicmgr.h"
 #ifdef ENABLE_LYRIC
 #include "lyric.h"
 #endif
@@ -487,7 +487,7 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 	dword ss[1];
 	int wordspace = 0;
 
-	if (lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss)
+	if (lyric_get_cur_lines(music_get_lyric(), 0, ls, ss)
 		&& ls[0] != NULL) {
 		if (ss[0] > 960 / config.infobar_fontsize)
 			ss[0] = 960 / config.infobar_fontsize;
@@ -552,7 +552,7 @@ static void draw_infobar_lyric(PBookViewData pView, dword selidx, int vertread)
 	dword ss[1];
 	int wordspace = (config.infobar_fontsize == 10 ? 1 : 0);
 
-	if (lyric_get_cur_lines(mp3_get_lyric(), 0, ls, ss)
+	if (lyric_get_cur_lines(music_get_lyric(), 0, ls, ss)
 		&& ls[0] != NULL) {
 		if (ss[0] > 960 / config.infobar_fontsize)
 			ss[0] = 960 / config.infobar_fontsize;
@@ -1721,7 +1721,7 @@ dword scene_readbook(dword selidx)
 			}
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 			if (config.infobar == conf_infobar_lyric
-				&& lyric_check_changed(mp3_get_lyric())) {
+				&& lyric_check_changed(music_get_lyric())) {
 				break;
 			}
 #endif

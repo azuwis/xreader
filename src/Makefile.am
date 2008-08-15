@@ -22,7 +22,7 @@ buffer.c buffer.h charsets.c charsets.h conf.c conf.h copy.c copy.h \
 ctrl.c ctrl.h dbg.c dbg.h dictionary.c dictionary.h display.c display.h \
 fat.c fat.h fs.c fs.h html.c html.h \
 image.c image.h iniparser.c iniparser.h location.c location.h lyric.c lyric.h \
-main.c mp3.c mp3.h mp3info.c mp3info.h \
+main.c musicdrv.c musicdrv.h musicmgr.c musicmgr.h \
 power.c power.h pspscreen.h scene.c scene.h scene_image.c scene_impl.h \
 scene_music.c scene_text.c strsafe.c strsafe.h text.c \
 text.h ttfont.c ttfont.h usb.c usb.h version.h win.c win.h \
@@ -34,6 +34,12 @@ $(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c osk.h \
 exception.c exception.h m33boot.c m33boot.h passwdmgr.c passwdmgr.h \
 archive.c archive.h \
 $(top_srcdir)/xr_rdriver/xr_RDLib.S
+
+xReader_elf_SOURCES += aa3playerME.c id3.c \
+	    id3tag.c mp3player.c mp3playerME.c madmp3drv.c madmp3drv.h \
+	    mpcplayer.c oggplayer.c player.c \
+	    xmp3audiolib.c clock.c mp3info.c
+
 
 if NLS
 xReader_elf_SOURCES += simple_gettext.c sofile.c sofile.h hash.c hash.h
@@ -48,7 +54,9 @@ BUILD_PRX = 1
 PSP_LARGE_MEMORY = 1
 
 libdir = $(top_srcdir)/lib
-LIBS = $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a $(libdir)/libpng.a \
+LIBS = $(libdir)/libFLAC.a $(libdir)/libmpcdec.a $(libdir)/libvorbisidec.a
+LIBS += $(libdir)/libid3tag.a 
+LIBS += $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a $(libdir)/libpng.a \
 	$(libdir)/libgif.a $(libdir)/libjpeg.a $(libdir)/libbmp.a $(libdir)/libtga.a \
 	$(libdir)/libid3tag.a \
 	$(libdir)/libmad.a $(libdir)/libz.a $(libdir)/libfreetype.a $(libdir)/libwmadec.a \

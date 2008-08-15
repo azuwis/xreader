@@ -8,7 +8,7 @@
 #include "power.h"
 #include "simple_gettext.h"
 #include "conf.h"
-#include "mp3.h"
+#include "musicmgr.h"
 #include "fat.h"
 #include "display.h"
 #include "scene.h"
@@ -99,11 +99,19 @@ extern void power_down(void)
 #ifdef ENABLE_TTF
 	if (use_ttf && !config.ttf_load_to_memory) {
 		ttf_lock();
-		disp_ttf_close();
+
+		if (ettf != NULL) {
+			ttf_close(ettf);
+			ettf = NULL;
+		}
+		if (cttf != NULL) {
+			ttf_close(cttf);
+			cttf = NULL;
+		}
 	}
 #endif
 #ifdef ENABLE_MUSIC
-	mp3_powerdown();
+	music_suspend();
 #endif
 	fat_powerdown();
 	scene_power_save(true);
@@ -113,7 +121,7 @@ extern void power_up(void)
 {
 	fat_powerup();
 #ifdef ENABLE_MUSIC
-	mp3_powerup();
+	music_suspend();
 #endif
 #ifdef ENABLE_TTF
 	if (use_ttf && !config.ttf_load_to_memory) {

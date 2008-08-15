@@ -5,7 +5,7 @@
 #include "display.h"
 #include "conf.h"
 #ifdef ENABLE_MUSIC
-#include "mp3.h"
+#include "musicmgr.h"
 #ifdef ENABLE_LYRIC
 #include "lyric.h"
 #endif
@@ -216,7 +216,7 @@ extern dword ctrl_waitlyric(void)
 
 	while ((key = ctrl_read()) == 0) {
 		sceKernelDelayThread(20000);
-		if (lyric_check_changed(mp3_get_lyric()))
+		if (lyric_check_changed(music_get_lyric()))
 			break;
 	}
 	return key;

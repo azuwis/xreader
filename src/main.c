@@ -11,7 +11,7 @@
 #include "avc.h"
 #endif
 #ifdef ENABLE_MUSIC
-#include "mp3.h"
+#include "musicmgr.h"
 #endif
 #include "scene.h"
 #include "conf.h"
@@ -24,6 +24,27 @@ PSP_MAIN_THREAD_PARAMS(45, 256, PSP_THREAD_ATTR_USER);
 PSP_HEAP_SIZE_MAX();
 
 extern t_conf config;
+
+static unsigned int lock_count = 0;
+static unsigned int intr_flags = 0;
+
+void __malloc_lock(struct _reent *ptr)
+{
+	unsigned int flags = pspSdkDisableInterrupts();
+
+	if (lock_count == 0) {
+		intr_flags = flags;
+	}
+
+	lock_count++;
+}
+
+void __malloc_unlock(struct _reent *ptr)
+{
+	if (--lock_count == 0) {
+		pspSdkEnableInterrupts(intr_flags);
+	}
+}
 
 static int power_callback(int arg1, int powerInfo, void *arg)
 {
@@ -43,7 +64,7 @@ static int exit_callback(int arg1, int arg2, void *arg)
 		sceKernelDelayThread(1);
 	}
 #ifdef ENABLE_MUSIC
-	mp3_stop();
+	music_list_stop();
 #endif
 	scene_exit();
 	sceKernelExitGame();
