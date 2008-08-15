@@ -31,7 +31,9 @@ static int DISP_EFONTSIZE, DISP_CFONTSIZE, DISP_CROWSIZE, DISP_EROWSIZE,
 	0, DISP_BOOK_EFONTSIZE, DISP_BOOK_CFONTSIZE, DISP_BOOK_EROWSIZE,
 	DISP_BOOK_CROWSIZE, fbits_book_last = 0, febits_book_last = 0;;
 byte disp_ewidth[0x80];
+#ifdef ENABLE_TTF
 static bool g_ttf_share_two_font = false;
+#endif
 
 #ifdef ENABLE_TTF
 //static byte *cache = NULL;
@@ -223,6 +225,7 @@ extern bool disp_has_font(const char *efont, const char *cfont)
 	return true;
 }
 
+#ifdef ENABLE_TTF
 extern void disp_ttf_close(void)
 {
 	if (ettf != NULL) {
@@ -236,6 +239,7 @@ extern void disp_ttf_close(void)
 		cttf = NULL;
 	}
 }
+#endif
 
 extern void disp_assign_book_font(void)
 {
