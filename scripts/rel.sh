@@ -3,10 +3,10 @@
 AUTHOR=hrimfaxi
 EMAIL=outmatch@gmail.com
 DIRS="msg fonts"
-SRCDIR=/home/liquid/xreader/src
-ROOTDIR=/home/liquid/xreader/PSP/
-DESTDIR=/home/liquid/xreader/PSP/PSP/GAME/xReader
-DESTDIR2=/home/liquid/xreader/PSP/seplugins
+SRCDIR=$HOME/xreader/src
+ROOTDIR=$HOME/xreader/PSP/
+DESTDIR=$HOME/xreader/PSP/PSP/GAME/xReader
+DESTDIR2=$HOME/xreader/PSP/seplugins
 LITE=n
 
 echo "xReader transfer script"
