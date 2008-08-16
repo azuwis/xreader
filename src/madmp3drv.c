@@ -13,6 +13,7 @@
 #include <pspaudio.h>
 #include <limits.h>
 #include "musicdrv.h"
+#include "resample.h"
 
 #define INPUT_BUFFER_SIZE	8*1152
 #define OUTPUT_BUFFER_SIZE	4*1152	/* Must be an integer multiple of 4. */
@@ -35,69 +36,21 @@ static struct mad_synth synth;
 static mad_timer_t timer;
 static int mp3_handle = -1;
 
+static struct OutputPCM
+{
+	unsigned int nsamples;
+	mad_fixed_t const *samples[2];
+} OutputPCM;
+
+enum {
+	MP3_SEEK_NONE,
+	MP3_SEEK_PREV,
+	MP3_SEEK_NEXT
+};
+static int g_mp3_jump = 0;
+static int g_mp3_jump_time = 0;
+
 static void _end(void);
-
-#if 0
-#define AUDIO_DEVICE1      "/dev/sound/dsp"
-#define AUDIO_DEVICE2      "/dev/dsp"
-
-static int oss_fd = -1;
-
-static int audio_oss_init(void)
-{
-	oss_fd = sceIoOpen(AUDIO_DEVICE1, O_WRONLY);
-	if (oss_fd == -1)
-		oss_fd = sceIoOpen(AUDIO_DEVICE2, O_WRONLY);
-
-	if (oss_fd < 0)
-		return oss_fd;
-
-	if (ioctl(oss_fd, SNDCTL_DSP_SYNC, 0) == -1) {
-		return -EBUSY;
-	}
-
-	int channels = 2;
-
-	if (ioctl(oss_fd, SNDCTL_DSP_CHANNELS, &channels) == -1) {
-		return -EINVAL;
-	}
-
-	int format = AFMT_S16_LE;
-
-	if (ioctl(oss_fd, SNDCTL_DSP_SETFMT, &format) == -1) {
-		return -EINVAL;
-	}
-
-	int speed = 44100;
-
-	if (ioctl(oss_fd, SNDCTL_DSP_SPEED, &speed) == -1) {
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
-static int audio_oss_output(unsigned char const *ptr, unsigned int len)
-{
-	while (len) {
-		int wrote;
-
-		wrote = write(oss_fd, ptr, len);
-		if (wrote == -1) {
-			if (errno == EINTR) {
-				continue;
-			} else {
-				return -1;
-			}
-		}
-
-		ptr += wrote;
-		len -= wrote;
-	}
-
-	return 0;
-}
-#endif
 
 static signed short MadFixedToSshort(mad_fixed_t Fixed)
 {
@@ -114,7 +67,6 @@ static int madmp3_decoder_thread(SceSize args, void *argp)
 
 	while (status != ST_UNKNOWN && status != ST_STOPPED) {
 		if (status == ST_PLAYING) {
-//          printf("%s: playing music. [%d frame decoded]\n", __func__, samples_read);
 			if (stream.buffer == NULL || stream.error == MAD_ERROR_BUFLEN) {
 				size_t read_size, remaining = 0, bufsize;
 				uint8_t *read_start;
@@ -156,26 +108,67 @@ static int madmp3_decoder_thread(SceSize args, void *argp)
 			}
 			mad_timer_add(&timer, frame.header.duration);
 			mad_synth_frame(&synth, &frame);
-			for (i = 0; i < synth.pcm.length; i++) {
-				signed short sample;
 
-				/* Left channel */
-				sample = MadFixedToSshort(synth.pcm.samples[0][i]);
-				*(output++) = sample & 0xff;
-				*(output++) = (sample >> 8);
-				sample = MadFixedToSshort(synth.pcm.samples[1][i]);
-				*(output++) = sample & 0xff;
-				*(output++) = (sample >> 8);
+			if (synth.pcm.samplerate == 44100) {
+				OutputPCM.nsamples = synth.pcm.length;
+				OutputPCM.samples[0] = synth.pcm.samples[0];
+				OutputPCM.samples[1] = synth.pcm.samples[1];
+			} else {
+				if (resample_init(&Resample, synth.pcm.samplerate, 44100) == -1)
+					continue;
+				OutputPCM.nsamples =
+					resample_block(&Resample, synth.pcm.length,
+							synth.pcm.samples[0],
+							synth.pcm.samples[1],
+							(*Resampled)[0], (*Resampled)[1]);
+				OutputPCM.samples[0] = (*Resampled)[0];
+				OutputPCM.samples[1] = (*Resampled)[1];
+			}
 
-				if (output == output_end) {
-					sceAudioOutputPannedBlocking
-						(mp3_handle, MAXVOLUME, MAXVOLUME, (char *)
-						 output_buffer[output_buffer_i]
-						);
+			if (MAD_NCHANNELS(&frame.header) == 2) {
+				for (i = 0; i < OutputPCM.nsamples; i++) {
+					signed short sample;
 
-					output_buffer_i = (output_buffer_i + 1) & 0x03;
-					output = (uint8_t *) & output_buffer[output_buffer_i][0];
-					output_end = output + OUTPUT_BUFFER_SIZE;
+					/* Stero Channel */
+					sample = MadFixedToSshort(OutputPCM.samples[0][i]);
+					*(output++) = sample & 0xff;
+					*(output++) = (sample >> 8);
+					sample = MadFixedToSshort(OutputPCM.samples[1][i]);
+					*(output++) = sample & 0xff;
+					*(output++) = (sample >> 8);
+
+					if (output == output_end) {
+						sceAudioOutputPannedBlocking
+							(mp3_handle, MAXVOLUME, MAXVOLUME, (char *)
+							 output_buffer[output_buffer_i]
+							);
+
+						output_buffer_i = (output_buffer_i + 1) & 0x03;
+						output = (uint8_t *) & output_buffer[output_buffer_i][0];
+						output_end = output + OUTPUT_BUFFER_SIZE;
+					}
+				}
+			} else {
+				for (i = 0; i < OutputPCM.nsamples; i++) {
+					signed short sample;
+
+					/* Mono Channel */
+					sample = MadFixedToSshort(OutputPCM.samples[0][i]);
+					*(output++) = sample & 0xff;
+					*(output++) = (sample >> 8);
+					*(output++) = sample & 0xff;
+					*(output++) = (sample >> 8);
+
+					if (output == output_end) {
+						sceAudioOutputPannedBlocking
+							(mp3_handle, MAXVOLUME, MAXVOLUME, (char *)
+							 output_buffer[output_buffer_i]
+							);
+
+						output_buffer_i = (output_buffer_i + 1) & 0x03;
+						output = (uint8_t *) & output_buffer[output_buffer_i][0];
+						output_end = output + OUTPUT_BUFFER_SIZE;
+					}
 				}
 			}
 		} else {
@@ -183,12 +176,14 @@ static int madmp3_decoder_thread(SceSize args, void *argp)
 		}
 	}
 
+	_end();
+	sceKernelExitDeleteThread(0);
+	
 	return 0;
 }
 
 static int madmp3_load(const char *spath, const char *lpath)
 {
-//  printf("%s: loading %s\n", __func__, spath);
 	status = ST_UNKNOWN;
 
 	file_fd = sceIoOpen(spath, PSP_O_RDONLY, 777);
@@ -238,22 +233,16 @@ static int madmp3_load(const char *spath, const char *lpath)
 
 	sceKernelStartThread(decode_thread, 0, NULL);
 
-	// if load fail return -1
-
 	return 0;
 }
 
 static int madmp3_set_opt(const char *key, const char *value)
 {
-//  printf("%s: setting %s to %s\n", __func__, key, value);
-
 	return 0;
 }
 
 static int madmp3_get_info(struct music_info *info)
 {
-//  printf("%s: type: %d\n", __func__, info->type);
-
 	if (status == ST_UNKNOWN) {
 		return -1;
 	}
@@ -319,8 +308,6 @@ static int madmp3_get_info(struct music_info *info)
 
 static int madmp3_play(void)
 {
-//  printf("%s\n", __func__);
-
 	status = ST_PLAYING;
 
 	/* if return error value won't play */
@@ -330,8 +317,6 @@ static int madmp3_play(void)
 
 static int madmp3_pause(void)
 {
-//  printf("%s\n", __func__);
-
 	status = ST_PAUSED;
 
 	return 0;
@@ -340,8 +325,10 @@ static int madmp3_pause(void)
 static void _end(void)
 {
 	status = ST_STOPPED;
-	if (file_fd >= 0)
+	if (file_fd >= 0) {
 		close(file_fd);
+		file_fd = -1;
+	}
 	if (mp3_handle >= 0) {
 		sceAudioChRelease(mp3_handle);
 		mp3_handle = -1;
@@ -350,11 +337,7 @@ static void _end(void)
 
 static int madmp3_end(void)
 {
-//  printf("%s\n", __func__);
-
 	status = ST_STOPPED;
-
-//  pthread_join(decode_thread, NULL);
 
 	_end();
 
@@ -373,30 +356,22 @@ static int madmp3_get_status(void)
 
 static int madmp3_fforward(int i)
 {
-//  printf("%s: sec: %d\n", __func__, i);
-
 	return 0;
 }
 
 static int madmp3_fbackward(int i)
 {
-//  printf("%s: sec: %d\n", __func__, i);
-
 	return 0;
 }
 
 static int madmp3_suspend(void)
 {
-//  printf("%s\n", __func__);
-
 	/* return 0 when successed suspend */
 	return 0;
 }
 
 static int madmp3_resume(const char *filename)
 {
-//  printf("%s\n", __func__);
-
 	/* return 0 when successed resume */
 	return 0;
 }
