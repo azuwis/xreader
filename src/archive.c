@@ -322,10 +322,12 @@ static void extract_chm_file_into_buffer(buffer * buf, const char *archname,
 
 /**
  * 解压档案中文件到内存缓冲
- * @param buffer 缓冲指针指针
+ *
+ * @param buf 缓冲指针指针
  * @param archname 档案文件路径
  * @param archpath 解压文件路径
  * @param filetype 档案文件类型
+ *
  * @note 如果解压失败, *buf = NULL
  */
 extern void extract_archive_file_into_buffer(buffer ** buf,
@@ -481,12 +483,11 @@ static bool test_rar_image_password(t_image_rar * image,
 }
 
 /**
- * 解压档案中文件到内存缓冲
- * @param buffer 缓冲指针指针
+ * 解压档案中文件到图像数据结构
+ *
+ * @param image 图像数据结构指针
  * @param archname 档案文件路径
  * @param archpath 解压文件路径
- * @param filetype 档案文件类型
- * @note 如果解压失败, *buf = NULL
  */
 extern void extract_rar_file_into_image(t_image_rar * image,
 										const char *archname,
@@ -494,6 +495,8 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 {
 	struct RAROpenArchiveData arcdata;
 	int code = 0, ret;
+
+	memset(image, 0, sizeof(*image));
 
 	arcdata.ArcName = (char *) archname;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
@@ -519,11 +522,7 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 			image->idx = 0;
 			if ((image->buf = calloc(1, image->size)) == NULL) {
 				RARCloseArchive(hrar);
-				if (image->buf != NULL) {
-					free(image->buf);
-					image->buf = NULL;
-					image->size = image->idx = 0;
-				}
+				image->size = image->idx = 0;
 				return;
 			}
 			code = RARProcessFile(hrar, RAR_TEST, NULL, NULL);
@@ -538,8 +537,10 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 	}
 
 	if (code != 0) {
-		free(image->buf);
-		image->buf = NULL;
+		if (image->buf) {
+			free(image->buf);
+			image->buf = NULL;
+		}
 		image->size = image->idx = 0;
 	}
 }

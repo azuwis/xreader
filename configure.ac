@@ -2,16 +2,16 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-#m4_include([aclocal/version.m4])
-#AC_PSPSDK_VERSION
-#AC_CONFIG_SRCDIR([tools/bin2c.c])
 AC_INIT([xReader],[1.2.0],[])
+m4_include([aclocal/ac_doxygen.m4])
+m4_include([aclocal/pspdev.m4])
+m4_include([aclocal/version.m4])
 AC_XREADER_VERSION
 AC_XREADER_VERSIONNUM
 AC_CONFIG_HEADER([config.h])
 AC_PSPDEV_PATH
 
-sh ./Revision.sh
+${srcdir}/Revision.sh ${srcdir}
 
 AM_INIT_AUTOMAKE([foreign no-exeext])
 AM_INIT_AUTOMAKE([xReader], [$xReader_version])
@@ -141,26 +141,6 @@ DX_XML_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
 DX_INIT_DOXYGEN(xReader, doxygen.cfg, doc)
-
-# Override the default prefix to point to where the pspdev tools should be installed.
-# The binaries will end up in $prefix/bin, but pspsdk itself will end up in $prefix/$target/sdk.
-# TODO: We should see if the user will ever want to override this.
-prefix="$pspdev"
-psp_targetdir="psp"
-
-# Create the pspsdk installation paths.
-pspsdk_topdir="$psp_targetdir/sdk"
-pspsdk="$prefix/$pspsdk_topdir"
-pspsdk_includedir="$pspsdk/include"
-pspsdk_libdir="$pspsdk/lib"
-PSPSDK="$pspsdk"
-PSPSDK_INCLUDEDIR="$pspsdk_includedir"
-PSPSDK_LIBDIR="$pspsdk_libdir"
-AC_DEFINE_UNQUOTED(PSPSDK_TOPDIR, ["$pspsdk_topdir"],
-          [Toplevel directory where PSPSDK will be installed, relative to $prefix])
-AC_SUBST(PSPSDK)
-AC_SUBST(PSPSDK_INCLUDEDIR)
-AC_SUBST(PSPSDK_LIBDIR)
 
 # CFLAGS and CXXFLAGS used to build pspsdk libraries.
 CFLAGS=""

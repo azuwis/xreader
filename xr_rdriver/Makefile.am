@@ -14,10 +14,9 @@ AM_CFLAGS += -O0 -G0 -g -Wall
 endif
 CCASFLAGS = $(CFLAGS) $(INCLUDES)
 
-LDFLAGS = -mno-crt0 -nostartfiles -L ../lib
+LDFLAGS = -mno-crt0 -nostartfiles -L $(top_srcdir)/lib
 	
-xr_rdriverdir = $(srcdir)/
-xr_rdriver_PROGRAMS= xr_rdriver.elf
+noinst_PROGRAMS= xr_rdriver.elf
 
 xr_rdriver_elf_SOURCES = main.c export.exp
 

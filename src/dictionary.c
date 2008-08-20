@@ -316,7 +316,7 @@ void dictionary_unset(dictionary * d, char *key)
 /**
   @brief	Dump a dictionary to an opened file pointer.
   @param	d	Dictionary to dump
-  @param	f	Opened file pointer.
+  @param	out	Opened file pointer.
   @return	void
 
   Dumps a dictionary onto an opened file pointer. Key pairs are printed out
