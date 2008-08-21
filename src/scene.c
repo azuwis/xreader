@@ -5945,7 +5945,6 @@ extern void scene_power_save(bool save)
 				if (info.psp_freq[0] != 0) {
 					int cpu = info.psp_freq[0] > freq_list[config.freqs[0]][0] ?
 						info.psp_freq[0] : freq_list[config.freqs[0]][0];
-					dbg_printf(d, "scene_power_save: cpu: %d bus: %d", cpu, 0);
 					xrSetCpuClock(cpu, 0);
 				}
 			}
@@ -5953,9 +5952,6 @@ extern void scene_power_save(bool save)
 		} else
 #endif
 		{
-			dbg_printf(d, "scene_power_save: cpu: %d bus: %d",
-					   freq_list[config.freqs[0]][0],
-					   freq_list[config.freqs[0]][1]);
 			// 最低频率
 			power_set_clock(freq_list[config.freqs[0]][0],
 							freq_list[config.freqs[0]][1]);
@@ -5964,9 +5960,6 @@ extern void scene_power_save(bool save)
 #ifdef ENABLE_MUSIC
 		// 音乐正在播放？
 		if (music_curr_playing()) {
-			dbg_printf(d, "scene_power_save: cpu: %d bus: %d",
-					   freq_list[config.freqs[2]][0],
-					   freq_list[config.freqs[2]][1]);
 			// 最高频率
 			power_set_clock(freq_list[config.freqs[2]][0],
 							freq_list[config.freqs[2]][1]);
@@ -5974,9 +5967,6 @@ extern void scene_power_save(bool save)
 #endif
 		{
 			// 中等频率
-			dbg_printf(d, "scene_power_save: cpu: %d bus: %d",
-					   freq_list[config.freqs[1]][0],
-					   freq_list[config.freqs[1]][1]);
 			power_set_clock(freq_list[config.freqs[1]][0],
 							freq_list[config.freqs[1]][1]);
 		}
