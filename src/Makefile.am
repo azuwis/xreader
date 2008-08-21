@@ -34,15 +34,20 @@ ttfont.c ttfont.h usb.c usb.h version.h win.c win.h common/datatype.h \
 common/psp_utils.c common/psp_utils.h common/qsort.c common/qsort.h \
 common/utils.c common/utils.h apetaglib/APETag.c apetaglib/APETag.h \
 apetaglib/TagError.c apetaglib/TagHeader.h apetaglib/TagItem.c \
-apetaglib/TagItem.h $(top_srcdir)/xrPrx/xrPrx.S simple_gettext.h osk.c \
+apetaglib/TagItem.h xrPrx.S simple_gettext.h osk.c \
 osk.h exception.c exception.h m33boot.c m33boot.h passwdmgr.c passwdmgr.h \
-archive.c archive.h resample.c resample.h $(top_srcdir)/xr_rdriver/xr_RDLib.S
+archive.c archive.h resample.c resample.h xr_RDLib.S
+
+xrPrx.o: $(top_builddir)/xrPrx/xrPrx.S
+	$(CC) -I$(PSPSDK)/include -c -o $@ $^
+
+xr_RDLib.o: $(top_builddir)/xr_rdriver/xr_RDLib.S
+	$(CC) -I$(PSPSDK)/include -c -o $@ $^
 
 xReader_elf_SOURCES += \
 aa3playerME.c id3.c id3tag.c mp3player.c mp3playerME.c madmp3drv.c \
 madmp3drv.h mpcplayer.c oggplayer.c player.c xmp3audiolib.c \
 clock.c mp3info.c
-
 
 if NLS
 xReader_elf_SOURCES += simple_gettext.c sofile.c sofile.h hash.c hash.h

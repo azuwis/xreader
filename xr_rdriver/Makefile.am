@@ -40,3 +40,6 @@ include $(PSPSDK)/lib/build.mak
 all: xr_RDLib.S
 xr_RDLib.S: exports.exp
 	psp-build-exports -s $^
+
+clean-local:
+	$(RM) xr_rdriver.prx xr_RDLib.S

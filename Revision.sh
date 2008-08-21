@@ -19,15 +19,15 @@
 
 #!/bin/sh
 
-test "$1" && extra="-$1"
+test "$1" && srcdir="$1/"
 
 svn_revision=`LC_ALL=C svn info 2> /dev/null | grep Revision | cut -d' ' -f2`
-test $svn_revision || svn_revision=`grep revision .svn/entries 2>/dev/null | cut -d '"' -f2`
-test $svn_revision || svn_revision=`sed -n -e '/^dir$/{n;p;q;}' .svn/entries 2>/dev/null`
+test $svn_revision || svn_revision=`grep revision ${srcdir}.svn/entries 2>/dev/null | cut -d '"' -f2`
+test $svn_revision || svn_revision=`sed -n -e '/^dir$/{n;p;q;}' ${srcdir}.svn/entries 2>/dev/null`
 test $svn_revision || svn_revision=UNKNOWN
 
 NEW_REVISION="#define REVISION \"${svn_revision}\""
-OLD_REVISION=`cat ./Main/Revision.h 2> /dev/null`
+OLD_REVISION=`cat ./Revision.h 2> /dev/null`
 
 # Update version.h only on revision changes to avoid spurious rebuilds
 if test "$NEW_REVISION" != "$OLD_REVISION"; then

@@ -38,3 +38,6 @@ include $(PSPSDK)/lib/build.mak
 all: xrPrx.S
 xrPrx.S: exports.exp
 	psp-build-exports -s $^
+
+clean-local:
+	$(RM) xrPrx.prx xrPrx.S

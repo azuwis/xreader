@@ -20,7 +20,10 @@ EXTRA_DIST =			\
 	lib \
 	resource \
 	scripts \
-	$(DX_CONFIG)		
+	$(DX_CONFIG)
 
 dist-hook:
 	rm -rf `find $(distdir)/* -name .svn -o -name CVS`
+
+clean-local:
+	$(RM) Revision.h
