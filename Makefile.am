@@ -23,7 +23,7 @@ EXTRA_DIST =			\
 	$(DX_CONFIG)
 
 dist-hook:
-	rm -rf `find $(distdir)/* -name .svn -o -name CVS`
+	rm -rf `find $(distdir)/* -name .svn -o -name CVS -o -name .git`
 
 clean-local:
 	$(RM) Revision.h
