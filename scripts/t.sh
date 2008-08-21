@@ -3,6 +3,7 @@
 AUTHOR=hrimfaxi
 EMAIL=outmatch@gmail.com
 DIRS="msg fonts"
+BUILDDIR=./src
 SRCDIR=$HOME/xreader/src
 DESTDIR=/media/disk/PSP/game/xReader
 DESTDRIVE=/media/disk
@@ -30,15 +31,15 @@ echo "OK, now we copy files"
 
 echo "\tCopy files"
 echo "\t\tEBOOT.PBP"
-cp -u "$SRCDIR/EBOOT.PBP" "$DESTDIR/"
+cp -u "$BUILDDIR/EBOOT.PBP" "$DESTDIR/"
 if [ x"$DEBUG" = xy ]; then
 	echo "\t\txReader.prx"
-	cp -u "$SRCDIR/xReader.prx" "$DESTDIR/"
+	cp -u "$BUILDDIR/xReader.prx" "$DESTDIR/"
 fi
 echo "\t\txrPrx.prx"
-cp -u "$SRCDIR/../xrPrx/xrPrx.prx" "$DESTDIR/"
+cp -u "$BUILDDIR/../xrPrx/xrPrx.prx" "$DESTDIR/"
 #echo "\t\txr_rdriver.prx"
-#cp -u "$SRCDIR/../xr_rdriver/xr_rdriver.prx" "$DESTDIR/"
+#cp -u "$BUILDDIR/../xr_rdriver/xr_rdriver.prx" "$DESTDIR/"
 echo "\t\tfonts.zip"
 cp -u "$SRCDIR/../fonts/fonts.zip" "$DESTDIR/"
 echo "\t\tReadme.txt"

@@ -1,22 +1,22 @@
-å¦‚ä½•ç¼–è¯‘xReader
+ÈçºÎ±àÒëxReader
 
-è¦æ±‚:
-æ­£ç¡®å®‰è£…pspdev.orgçš„PSPToolchainå¹¶æ›´æ–°åˆ°æœ€æ–°çš„svnç‰ˆæœ¬(svn://svn.ps2dev.org/psp/trunk/pspsdk)ã€‚å®‰è£…automake(>=0.10)å’Œautoconf(>=2.59)ï¼Œ
+ÒªÇó:
+ÕıÈ·°²×°pspdev.orgµÄPSPToolchain²¢¸üĞÂµ½×îĞÂµÄsvn°æ±¾(svn://svn.ps2dev.org/psp/trunk/pspsdk)¡£°²×°automake(>=0.10)ºÍautoconf(>=2.59)£¬
 
-è¾“å…¥: 
+ÊäÈë: 
 
-aclocal && autoheader && automake && autoconf 
+aclocal && autoheader && automake --add-missing && autoconf 
 
-ç„¶å:
+È»ºó:
 
 ./configure && make
 
-å°±èƒ½ç¼–è¯‘xReaderã€‚
+¾ÍÄÜ±àÒëxReader¡£
 
-ä½ ä¹Ÿå¯ä»¥åœ¨ä¸€ä¸ªå•ç‹¬çš„ç›®å½•é‡Œç¼–è¯‘xReader:
+ÄãÒ²¿ÉÒÔÔÚÒ»¸öµ¥¶ÀµÄÄ¿Â¼Àï±àÒëxReader:
 
 mkdir ~/build
 cd ~/build
 /xreader/dir/configure && make
 
-è¿™æ ·ä¼šåœ¨buildç›®å½•é‡Œç”ŸæˆxReaderç¨‹åºï¼Œè€Œä¸ä¼šå¼„è„xReaderæºä»£ç ç›®å½•ã€‚
+ÕâÑù»áÔÚbuildÄ¿Â¼ÀïÉú³ÉxReader³ÌĞò£¬¶ø²»»áÅªÔàxReaderÔ´´úÂëÄ¿Â¼¡£
