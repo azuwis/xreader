@@ -14,4 +14,6 @@ extern dword utils_del_dir(const char *dir);
 bool utils_is_file_exists(const char *filename);
 void *safe_realloc(void *ptr, size_t size);
 
+#define UNUSED(x) ((void)(x))
+
 #endif

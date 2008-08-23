@@ -7,7 +7,7 @@ mad_fixed_t(*Resampled)[2][MAX_NSAMPLES];
 struct resample_state Resample;
 
 int resample_init(struct resample_state *state, unsigned int oldrate,
-						   unsigned int newrate)
+				  unsigned int newrate)
 {
 	mad_fixed_t ratio;
 
@@ -27,10 +27,10 @@ int resample_init(struct resample_state *state, unsigned int oldrate,
 }
 
 unsigned int resample_block(struct resample_state *state,
-									 unsigned int nsamples,
-									 mad_fixed_t const *old0,
-									 mad_fixed_t const *old1,
-									 mad_fixed_t * new0, mad_fixed_t * new1)
+							unsigned int nsamples,
+							mad_fixed_t const *old0,
+							mad_fixed_t const *old1,
+							mad_fixed_t * new0, mad_fixed_t * new1)
 {
 	mad_fixed_t const *end, *begin;
 
@@ -91,4 +91,3 @@ unsigned int resample_block(struct resample_state *state,
 
 	return new0 - begin;
 }
-

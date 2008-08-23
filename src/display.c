@@ -31,6 +31,7 @@ static int DISP_EFONTSIZE, DISP_CFONTSIZE, DISP_CROWSIZE, DISP_EROWSIZE,
 	0, DISP_BOOK_EFONTSIZE, DISP_BOOK_CFONTSIZE, DISP_BOOK_EROWSIZE,
 	DISP_BOOK_CROWSIZE, fbits_book_last = 0, febits_book_last = 0;;
 byte disp_ewidth[0x80];
+
 #ifdef ENABLE_TTF
 static bool g_ttf_share_two_font = false;
 #endif

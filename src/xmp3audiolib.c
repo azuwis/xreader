@@ -85,7 +85,7 @@ int xMP3AudioOutBlocking(unsigned int channel, unsigned int vol1,
 	return audioOutpuBlocking(vol1, buf);
 }
 
-static SceUID play_sema;
+static SceUID play_sema = -1;
 
 static int AudioChannelThread(int args, void *argp)
 {
@@ -155,7 +155,9 @@ int xMP3AudioInit()
 	audio_ready = 0;
 	memset(audio_sndbuf, 0, sizeof(audio_sndbuf));
 
-	play_sema = sceKernelCreateSema("play_sema", 6, 1, 1, 0);
+	if (play_sema < 0) {
+		play_sema = sceKernelCreateSema("play_sema", 6, 1, 1, 0);
+	}
 	for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
 		AudioStatus[i].handle = -1;
 		AudioStatus[i].threadhandle = -1;
@@ -247,5 +249,8 @@ void xMP3AudioEnd()
 			AudioStatus[i].handle = -1;
 		}
 	}
-	sceKernelDeleteSema(play_sema);
+	if (play_sema >= 0) {
+		sceKernelDeleteSema(play_sema);
+		play_sema = -1;
+	}
 }

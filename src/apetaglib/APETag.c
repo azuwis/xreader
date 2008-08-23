@@ -122,8 +122,13 @@ static int searchForAPETag(FILE * fp, APETag * tag)
 
 	if ((ret = ReadAPETag(fp, tag)) == 0)
 		return 0;
-	// 如果没有找到，搜索文件头是否有APE标签
 	if (ret == -2) {
+		fseek(fp, -32, SEEK_END);
+		if (ReadAPETag(fp, tag) == 0) {
+			tag->is_header_or_footer = APE_HEADER;
+			return 0;
+		}
+		// 如果没有找到，搜索文件头是否有APE标签
 		fseek(fp, 0, SEEK_SET);
 		if (ReadAPETag(fp, tag) == 0) {
 			tag->is_header_or_footer = APE_HEADER;

@@ -160,7 +160,8 @@ int music_stop(void)
 	if (ret < 0)
 		return ret;
 
-	if (ret == ST_PLAYING || ret == ST_PAUSED || ret == ST_LOADED) {
+	if (ret == ST_PLAYING || ret == ST_PAUSED || ret == ST_LOADED
+		|| ret == ST_STOPPED) {
 		ret = musicdrv_end();
 		scene_power_save(true);
 	} else
@@ -220,7 +221,7 @@ static int music_setupdriver(const char *spath, const char *lpath)
 	struct music_ops *dev = 0;
 
 	if (!stricmp(ext, "mp3"))
-		dev = set_musicdrv("mp3");
+		dev = set_musicdrv("madmp3");
 	else if (!stricmp(ext, "mpc"))
 		dev = set_musicdrv("musepack");
 
@@ -581,8 +582,7 @@ int music_init(void)
 	mpc_init();
 	madmp3_init();
 
-	// set default drv to mp3
-	set_musicdrv("mp3");
+	set_musicdrv("musepack");
 
 	g_music_thread = sceKernelCreateThread("Music Thread",
 										   music_thread,

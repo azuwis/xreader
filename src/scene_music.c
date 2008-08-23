@@ -434,6 +434,19 @@ static void scene_draw_mp3bar_music_staff(void)
 				STRCPY_S(tag, "");
 		}
 
+		{
+			struct music_info info;
+
+			memset(&info, 0, sizeof(info));
+			info.type = MD_GET_DECODERNAME | MD_GET_ENCODEMSG;
+			if (musicdrv_get_info(&info) == 0) {
+				if (!strcmp(info.decoder_name, "musepack")) {
+					STRCAT_S(tag, " ");
+					STRCAT_S(tag, info.encode_msg);
+				}
+			}
+		}
+
 		disp_putnstring(6 + DISP_FONTSIZE, 266 - DISP_FONTSIZE, COLOR_WHITE,
 						(const byte *) tag,
 						(468 - DISP_FONTSIZE * 2) * 2 / DISP_FONTSIZE, 0, 0,

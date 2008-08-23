@@ -48,7 +48,8 @@ enum
 	ST_STOPPED = 3,				/* In this status the alloctated resources were freed */
 	ST_FFOWARD = 4,
 	ST_FBACKWARD = 5,
-	ST_UNKNOWN = 6
+	ST_SUSPENDED = 6,
+	ST_UNKNOWN = 7
 };
 
 struct music_ops

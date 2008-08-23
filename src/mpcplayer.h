@@ -25,4 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * Musepack驱动注册
+ * 
+ * @return 成功时返回0
+ */
 int mpc_init(void);

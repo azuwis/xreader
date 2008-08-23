@@ -42,7 +42,8 @@ static struct OutputPCM
 	mad_fixed_t const *samples[2];
 } OutputPCM;
 
-enum {
+enum
+{
 	MP3_SEEK_NONE,
 	MP3_SEEK_PREV,
 	MP3_SEEK_NEXT
@@ -118,9 +119,9 @@ static int madmp3_decoder_thread(SceSize args, void *argp)
 					continue;
 				OutputPCM.nsamples =
 					resample_block(&Resample, synth.pcm.length,
-							synth.pcm.samples[0],
-							synth.pcm.samples[1],
-							(*Resampled)[0], (*Resampled)[1]);
+								   synth.pcm.samples[0],
+								   synth.pcm.samples[1],
+								   (*Resampled)[0], (*Resampled)[1]);
 				OutputPCM.samples[0] = (*Resampled)[0];
 				OutputPCM.samples[1] = (*Resampled)[1];
 			}
@@ -144,7 +145,8 @@ static int madmp3_decoder_thread(SceSize args, void *argp)
 							);
 
 						output_buffer_i = (output_buffer_i + 1) & 0x03;
-						output = (uint8_t *) & output_buffer[output_buffer_i][0];
+						output =
+							(uint8_t *) & output_buffer[output_buffer_i][0];
 						output_end = output + OUTPUT_BUFFER_SIZE;
 					}
 				}
@@ -166,7 +168,8 @@ static int madmp3_decoder_thread(SceSize args, void *argp)
 							);
 
 						output_buffer_i = (output_buffer_i + 1) & 0x03;
-						output = (uint8_t *) & output_buffer[output_buffer_i][0];
+						output =
+							(uint8_t *) & output_buffer[output_buffer_i][0];
 						output_end = output + OUTPUT_BUFFER_SIZE;
 					}
 				}
@@ -178,7 +181,7 @@ static int madmp3_decoder_thread(SceSize args, void *argp)
 
 	_end();
 	sceKernelExitDeleteThread(0);
-	
+
 	return 0;
 }
 
