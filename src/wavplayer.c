@@ -310,7 +310,8 @@ static int __init(void)
 
 	g_duration = g_play_time = 0.;
 
-	g_wav_data_offset = g_wav_bitrate = g_wav_sample_freq = g_wav_channels = 0;
+	g_wav_frames_decoded = g_wav_frames = g_wav_data_offset = g_wav_bitrate =
+		g_wav_sample_freq = g_wav_channels = 0;
 
 	memset(&g_taginfo, 0, sizeof(g_taginfo));
 
