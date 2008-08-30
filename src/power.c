@@ -121,7 +121,7 @@ extern void power_up(void)
 {
 	fat_powerup();
 #ifdef ENABLE_MUSIC
-	music_suspend();
+	music_resume();
 #endif
 #ifdef ENABLE_TTF
 	if (use_ttf && !config.ttf_load_to_memory) {

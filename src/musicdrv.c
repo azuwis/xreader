@@ -169,12 +169,12 @@ int musicdrv_suspend(void)
 		return -ENOSYS;
 }
 
-int musicdrv_resume(const char *filename)
+int musicdrv_resume(const char *spath, const char *lpath)
 {
 	if (cur_musicdrv == NULL)
 		return -EBUSY;
 	if (cur_musicdrv->resume)
-		return cur_musicdrv->resume(filename);
+		return cur_musicdrv->resume(spath, lpath);
 	else
 		return -ENOSYS;
 }

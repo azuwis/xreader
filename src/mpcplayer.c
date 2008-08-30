@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <mpcdec/mpcdec.h>
 #include <assert.h>
+#include "scene.h"
 #include "xmp3audiolib.h"
 #include "musicmgr.h"
 #include "musicdrv.h"
@@ -75,7 +76,7 @@ static int g_status;
 /**
  * 休眠前播放状态
  */
-static int g_resume_statue;
+static int g_suspend_status;
 
 /**
  * Musepack音乐播放缓冲
@@ -111,6 +112,11 @@ static double g_play_time;
  * Musepack音乐快进、退秒数
  */
 static int g_seek_seconds;
+
+/**
+ * Musepack音乐休眠时播放时间
+ */
+static double g_suspend_playing_time;
 
 typedef struct _MPC_taginfo_t
 {
@@ -190,7 +196,7 @@ static void send_to_sndbuf(void *buf, MPC_SAMPLE_FORMAT * srcbuf, int frames,
 	signed short *p = buf;
 	int clip_min = -1 << (bps - 1), clip_max = (1 << (bps - 1)) - 1;
 
-	if (frames == 0)
+	if (frames <= 0)
 		return;
 
 #ifndef MPC_FIXED_POINT
@@ -247,6 +253,7 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
 			mpc_lock();
 			g_status = ST_PLAYING;
+			scene_power_save(true);
 			mpc_unlock();
 		} else if (g_status == ST_FBACKWARD) {
 			g_play_time -= g_seek_seconds;
@@ -256,6 +263,7 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
 			mpc_lock();
 			g_status = ST_PLAYING;
+			scene_power_save(true);
 			mpc_unlock();
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
@@ -280,6 +288,11 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += avail_frame * 2;
 
 			ret = mpc_decoder_decode(&decoder, g_buff, 0, 0);
+			if (ret == -1 || ret == 0) {
+				__end();
+				return;
+			}
+
 			g_buff_frame_size = ret;
 			g_buff_frame_start = 0;
 
@@ -287,11 +300,6 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				(double) (MPC_DECODER_BUFFER_LENGTH / 2 / info.channels) /
 				info.sample_freq;
 			g_play_time += incr;
-
-			if (ret == -1 || ret == 0) {
-				__end();
-				return;
-			}
 		}
 	}
 }
@@ -306,7 +314,7 @@ static int __init(void)
 	g_status_sema = sceKernelCreateSema("Musepack Sema", 0, 1, 1, NULL);
 
 	mpc_lock();
-	g_resume_statue = g_status = ST_UNKNOWN;
+	g_status = ST_UNKNOWN;
 	mpc_unlock();
 
 	memset(g_buff, 0, sizeof(g_buff));
@@ -550,26 +558,38 @@ static int mpc_fbackward(int sec)
  */
 static int mpc_suspend(void)
 {
-	mpc_lock();
-	g_resume_statue = g_status;
-	g_status = ST_SUSPENDED;
-	mpc_unlock();
+	g_suspend_status = g_status;
+	g_suspend_playing_time = g_play_time;
+	mpc_end();
 
 	return 0;
 }
 
 /**
- *  PSP准备从休眠时恢复的Musepack的操作
+ * PSP准备从休眠时恢复的Musepack的操作
  *
  * @param filename 当前播放音乐名
  *
  * @return 成功时返回0
  */
-static int mpc_resume(const char *filename)
+static int mpc_resume(const char *spath, const char *lpath)
 {
+	int ret;
+
+	ret = mpc_load(spath, lpath);
+	if (ret != 0) {
+		dbg_printf(d, "%s: mpc_load failed %d", __func__, ret);
+		return -1;
+	}
+
+	g_play_time = g_suspend_playing_time;
+	mpc_decoder_seek_seconds(&decoder, g_play_time);
+	g_suspend_playing_time = 0;
+
 	mpc_lock();
-	g_status = g_resume_statue;
+	g_status = g_suspend_status;
 	mpc_unlock();
+	g_suspend_status = ST_LOADED;
 
 	return 0;
 }

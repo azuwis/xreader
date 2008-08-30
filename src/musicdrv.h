@@ -64,7 +64,7 @@ struct music_ops
 	int (*get_status) (void);
 	int (*get_info) (struct music_info *);
 	int (*suspend) (void);
-	int (*resume) (const char *filename);
+	int (*resume) (const char *spath, const char *lpath);
 	int (*end) (void);
 
 	struct music_ops *next;
@@ -84,5 +84,5 @@ int musicdrv_fforward(int);
 int musicdrv_fbackward(int);
 int musicdrv_get_status(void);
 int musicdrv_suspend(void);
-int musicdrv_resume(const char *filename);
+int musicdrv_resume(const char *spath, const char *lpath);
 int musicdrv_get_info(struct music_info *info);

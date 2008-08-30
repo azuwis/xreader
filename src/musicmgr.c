@@ -527,6 +527,13 @@ static int music_thread(SceSize arg, void *argp)
 
 			if (ret == ST_STOPPED || ret == ST_UNKNOWN) {
 				g_current_pos = g_next_pos;
+				if (g_current_pos < 0) {
+					g_current_pos = 0;
+					get_next_pos(true, false, true);
+					g_music_list_is_playing = 0;
+					goto next;
+				}
+
 				ret = music_play(g_current_pos);
 				int i = get_next_music(true, false, true);
 
@@ -537,6 +544,7 @@ static int music_thread(SceSize arg, void *argp)
 					g_music_list_is_playing = 0;
 				}
 			}
+		  next:
 			music_unlock();
 			sceKernelDelayThread(100000);
 		} else {
@@ -904,39 +912,32 @@ int music_suspend(void)
 	int ret;
 
 	music_lock();
-	ret = musicdrv_get_status();
-	if (ret != ST_STOPPED && ret != ST_UNKNOWN) {
-		ret = musicdrv_suspend();
-		if (ret < 0) {
-			music_unlock();
-			return ret;
-		}
+	ret = musicdrv_suspend();
+	if (ret < 0) {
+		music_unlock();
+		return ret;
 	}
 
 	prev_is_playing = g_music_list_is_playing;
 	g_music_list_is_playing = 0;
 	music_unlock();
+
 	return 0;
 }
 
 int music_resume(void)
 {
+	struct music_file *fl = music_get(g_current_pos);
 	int ret;
 
-	music_lock();
-	ret = musicdrv_get_status();
-	if (ret != ST_STOPPED && ret != ST_UNKNOWN) {
-		struct music_file *fl = music_get(g_current_pos);
-
-		if (fl == NULL) {
-			music_unlock();
-			return -1;
-		}
-		ret = musicdrv_resume(fl->shortpath);
-		if (ret < 0) {
-			music_unlock();
-			return ret;
-		}
+	if (fl == NULL) {
+		music_unlock();
+		return -1;
+	}
+	ret = musicdrv_resume(fl->shortpath, fl->longpath);
+	if (ret < 0) {
+		music_unlock();
+		return ret;
 	}
 
 	g_music_list_is_playing = prev_is_playing;
