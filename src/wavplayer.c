@@ -34,7 +34,7 @@ static int g_suspend_status;
 /**
  * WaveÒôÀÖ²¥·Å»º³å
  */
-static short g_buff[PSP_NUM_AUDIO_SAMPLES];
+static short g_buff[95 * 1024];
 
 /**
  * WaveÒôÀÖ²¥·Å»º³å´óÐ¡£¬ÒÔÖ¡Êý¼Æ
@@ -194,6 +194,7 @@ static int wav_seek_seconds(double seconds)
 				   g_wav_byte_per_frame, SEEK_SET);
 
 	if (ret >= 0) {
+		g_buff_frame_size = g_buff_frame_start = 0;
 		g_play_time = seconds;
 		g_wav_frames_decoded = (uint32_t) (seconds * g_wav_sample_freq);
 		return 0;
@@ -259,6 +260,8 @@ static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 						   snd_buf_frame_size, g_wav_channels);
 			g_buff_frame_start += snd_buf_frame_size;
 			audio_buf += snd_buf_frame_size * 2;
+			incr = (double) (snd_buf_frame_size) / g_wav_sample_freq;
+			g_play_time += incr;
 			snd_buf_frame_size = 0;
 		} else {
 			send_to_sndbuf(audio_buf,
@@ -272,7 +275,6 @@ static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				return;
 			}
 			ret = sceIoRead(data.fd, g_buff, sizeof(g_buff));
-//          ret = wav_decoder_decode(&decoder, g_buff, 0, 0);
 			if (ret <= 0) {
 				__end();
 				return;
@@ -282,11 +284,6 @@ static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_buff_frame_start = 0;
 
 			g_wav_frames_decoded += g_buff_frame_size;
-
-			incr =
-				(double) (PSP_NUM_AUDIO_SAMPLES / 2 / g_wav_channels) /
-				g_wav_sample_freq;
-			g_play_time += incr;
 		}
 	}
 }
