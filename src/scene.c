@@ -4054,6 +4054,8 @@ int scene_single_file_ops_draw(p_win_menuitem item, dword selidx)
 			break;
 #ifdef ENABLE_MUSIC
 		case fs_filetype_mp3:
+		case fs_filetype_mpc:
+		case fs_filetype_wave:
 		case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 		case fs_filetype_wma:
@@ -4270,6 +4272,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 						}
 						break;
 					case fs_filetype_mp3:
+					case fs_filetype_mpc:
+					case fs_filetype_wave:
 					case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 					case fs_filetype_wma:
@@ -4360,6 +4364,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 								break;
 #ifdef ENABLE_MUSIC
 							case fs_filetype_mp3:
+							case fs_filetype_mpc:
+							case fs_filetype_wave:
 							case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 							case fs_filetype_wma:
@@ -4446,6 +4452,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 								break;
 #ifdef ENABLE_MUSIC
 							case fs_filetype_mp3:
+							case fs_filetype_mpc:
+							case fs_filetype_wave:
 							case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 							case fs_filetype_wma:
@@ -4677,6 +4685,8 @@ static t_win_menu_op scene_fileops(p_win_menuitem item, dword * index)
 					break;
 #ifdef ENABLE_MUSIC
 				case fs_filetype_mp3:
+				case fs_filetype_mpc:
+				case fs_filetype_wave:
 				case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 				case fs_filetype_wma:
@@ -5551,6 +5561,7 @@ void scene_filelist(void)
 #ifdef ENABLE_MUSIC
 			case fs_filetype_mp3:
 			case fs_filetype_mpc:
+			case fs_filetype_wave:
 			case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 			case fs_filetype_wma:

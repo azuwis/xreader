@@ -16,6 +16,7 @@
 #include "conf.h"
 #include "mp3playerME.h"
 #include "mpcplayer.h"
+#include "wavplayer.h"
 #include "madmp3drv.h"
 #include "dbg.h"
 #include "config.h"
@@ -224,6 +225,10 @@ static int music_setupdriver(const char *spath, const char *lpath)
 		dev = set_musicdrv("madmp3");
 	else if (!stricmp(ext, "mpc"))
 		dev = set_musicdrv("musepack");
+	else if (!stricmp(ext, "mpc"))
+		dev = set_musicdrv("musepack");
+	else if (!stricmp(ext, "wav") || !stricmp(ext, "wave"))
+		dev = set_musicdrv("wave");
 
 	return dev ? 0 : -ENODEV;
 }
@@ -588,6 +593,7 @@ int music_init(void)
 
 	mp3_init();
 	mpc_init();
+	wav_init();
 	madmp3_init();
 
 	set_musicdrv("musepack");
