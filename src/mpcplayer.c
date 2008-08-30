@@ -250,21 +250,21 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				__end();
 				return;
 			}
-			mpc_decoder_seek_seconds(&decoder, g_play_time);
 			mpc_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
 			mpc_unlock();
+			mpc_decoder_seek_seconds(&decoder, g_play_time);
 		} else if (g_status == ST_FBACKWARD) {
 			g_play_time -= g_seek_seconds;
 			if (g_play_time < 0.) {
 				g_play_time = 0.;
 			}
-			mpc_decoder_seek_seconds(&decoder, g_play_time);
 			mpc_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
 			mpc_unlock();
+			mpc_decoder_seek_seconds(&decoder, g_play_time);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
 		return;
