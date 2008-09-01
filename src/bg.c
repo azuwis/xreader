@@ -11,8 +11,6 @@
 #include "config.h"
 #include "scene.h"
 
-extern t_conf config;
-
 static pixel *bg_start =
 	(pixel *) (0x44000000 +
 			   PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES * 2);

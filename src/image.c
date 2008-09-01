@@ -27,8 +27,6 @@
 #include "osk.h"
 #include "scene.h"
 
-extern t_conf config;
-
 ExifData *exif_data = NULL;
 buffer_array *exif_array = 0;
 

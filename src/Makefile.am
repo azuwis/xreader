@@ -45,7 +45,10 @@ xr_RDLib.o: $(top_builddir)/xr_rdriver/xr_RDLib.S
 	$(CC) -I$(PSPSDK)/include -c -o $@ $^
 
 xReader_elf_SOURCES += \
-madmp3drv.c madmp3drv.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h xmp3audiolib.c \
+tta/filter.h tta/ttadec.h tta/ttadec.c tta/ttalib.h
+
+xReader_elf_SOURCES += \
+madmp3drv.c madmp3drv.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h xmp3audiolib.c \
 clock.c mp3info.c
 
 if NLS

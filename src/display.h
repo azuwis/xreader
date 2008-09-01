@@ -4,13 +4,15 @@
 #include <pspgu.h>
 #include <pspdisplay.h>
 #include "common/datatype.h"
+
+typedef dword pixel;
+
 #include "ttfont.h"
 
 extern int DISP_FONTSIZE, DISP_BOOK_FONTSIZE, HRR, WRR;
 extern byte disp_ewidth[0x80];
 
 // R,G,B color to word value color
-typedef dword pixel;
 
 #define PIXEL_BYTES 4
 #define COLOR_MAX 255
@@ -34,26 +36,144 @@ extern pixel *vram_draw;
 
 #define disp_get_vaddr(x, y) (vram_draw + (x) + ((y) << 9))
 
+/**
+ * 画点
+ *
+ * @param x
+ * @param y
+ * @param color
+ */
 extern void disp_putpixel(int x, int y, pixel color);
+
+/**
+ * 初始化显示
+ *
+ * @note 设置显示缓存、页面、模式
+ *
+ */
 extern void disp_init(void);
+
+/**
+ * 初始化Graphics Unit
+ */
 extern void init_gu(void);
+
+/**
+ * 设置系统菜单字体大小
+ *
+ * @param fontsize
+ */
 extern void disp_set_fontsize(int fontsize);
+
+/**
+ * 设置文本显示字体大小
+ *
+ * @note 如果字体大小<=10，将自动把字间距设置为1以免字符显示过密
+ *
+ * @param fontsize
+ */
 extern void disp_set_book_fontsize(int fontsize);
+
+/**
+ * 检测ZIP文件中是否有对应的字体
+ *
+ * @param zipfile
+ * @param efont
+ * @param cfont
+ *
+ * @return
+ */
 extern bool disp_has_zipped_font(const char *zipfile, const char *efont,
 								 const char *cfont);
+
+/**
+ * 从ZIP文件中装载系统点阵字体
+ *
+ * @param zipfile
+ * @param efont
+ * @param cfont
+ *
+ * @return
+ */
 extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 								  const char *cfont);
+
+/**
+ * 从ZIP文件中装载文本点阵字体
+ *
+ * @param zipfile
+ * @param efont
+ * @param cfont
+ *
+ * @return
+ */
 extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 									   const char *cfont);
+
+/**
+ * 装载TTF字体作为文本字体
+ *
+ * @param ettffile
+ * @param cttffile
+ * @param size
+ *
+ * @return
+ */
 extern bool disp_load_truetype_book_font(const char *ettffile,
 										 const char *cttffile, int size);
+
+/**
+ * 从ZIP档案中读取文件作为文本TTF字体
+ *
+ * @note 如果同上次装载的文件相同就不重复装载，只改变字体大小
+ *
+ * @param ezipfile
+ * @param czipfile
+ * @param ettffile
+ * @param cttffile
+ * @param size
+ *
+ * @return
+ */
 extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 												const char *czipfile,
 												const char *ettffile,
 												const char *cttffile, int size);
+
+/**
+ * 检查中英文字体文件是否都存在
+ *
+ * @param efont
+ * @param cfont
+ *
+ * @return 
+ */
 extern bool disp_has_font(const char *efont, const char *cfont);
+
+/**
+ * 装载中英文系统点阵字体文件
+ *
+ * @note 装载后文本点阵字体被设置为与系统点阵字体共享同一地址
+ *
+ * @param efont
+ * @param cfont
+ *
+ * @return 
+ */
 extern bool disp_load_font(const char *efont, const char *cfont);
+
+/**
+ * 装载中英文文本点阵字体文件
+ *
+ * @note 
+ *
+ * @param efont
+ * @param cfont
+ *
+ * @return 
+ */
 extern bool disp_load_book_font(const char *efont, const char *cfont);
+
 extern void disp_assign_book_font(void);
 extern void disp_free_font(void);
 extern void disp_flip(void);
@@ -129,24 +249,6 @@ extern void disp_fillvram(pixel color);
 extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color);
 extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color);
 extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color);
-
-extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
-										  pixel color, const byte * str,
-										  int count, dword wordspace, int top,
-										  int height, int bot);
-extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
-											  int y, pixel color,
-											  const byte * str, int count,
-											  dword wordspace, int top,
-											  int height, int bot);
-extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
-										   pixel color, const byte * str,
-										   int count, dword wordspace, int top,
-										   int height, int bot);
-extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
-										   pixel color, const byte * str,
-										   int count, dword wordspace, int top,
-										   int height, int bot);
 extern bool check_range(int x, int y);
 extern void disp_fix_osk(void *buffer);
 pixel *disp_swizzle_image(pixel * buf, int width, int height);

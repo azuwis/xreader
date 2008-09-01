@@ -240,4 +240,6 @@ extern const char *conf_get_imgpagingname(t_conf_imgpaging imgpaging);
 extern const char *conf_get_thumbname(t_conf_thumb thumb);
 extern const char *conf_get_infobarname(t_conf_infobar infobar);
 
+extern t_conf config;
+
 #endif

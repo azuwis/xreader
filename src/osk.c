@@ -12,8 +12,6 @@
 #include "common/datatype.h"
 #include "conf.h"
 
-extern t_conf config;
-
 static void ClearScreen(pixel * saveimage)
 {
 	if (saveimage) {

@@ -23,8 +23,6 @@ PSP_MODULE_INFO("XREADER", 0x0200, 1, 6);
 PSP_MAIN_THREAD_PARAMS(45, 256, PSP_THREAD_ATTR_USER);
 PSP_HEAP_SIZE_MAX();
 
-extern t_conf config;
-
 static unsigned int lock_count = 0;
 static unsigned int intr_flags = 0;
 

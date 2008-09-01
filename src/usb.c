@@ -11,8 +11,6 @@
 #include "usb.h"
 #include "conf.h"
 
-extern t_conf config;
-
 static bool is_usb_inited = false;
 
 extern bool usb_open(void)

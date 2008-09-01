@@ -16,8 +16,6 @@
 #include "archive.h"
 #include "dbg.h"
 
-extern t_conf config;
-
 static bool auto_inc_wordspace_on_small_font = false;
 static pixel *vram_disp = NULL;
 pixel *vram_draw = NULL;

@@ -21,9 +21,13 @@
 #include "archive.h"
 #include "conf.h"
 
-extern t_conf config;
 extern int use_ttf;
 
+/**
+ * 计算电子书内容所对应GI值
+ *
+ * @param txt 电子书结构指针
+ */
 static void calc_gi(p_text txt)
 {
 	int offset, i;
@@ -37,6 +41,12 @@ static void calc_gi(p_text txt)
 	}
 }
 
+/**
+ * 根据编码encode解码电子书
+ *
+ * @param txt 电子书数据结构指针
+ * @param encode 文本编码类型
+ */
 static void text_decode(p_text txt, t_conf_encode encode)
 {
 	if (txt->size < 2)
@@ -113,9 +123,6 @@ bool bytetable[256] = {
 extern p_ttf ettf, cttf;
 #endif
 
-/*
- * 得到文本长度，以像素计，系统使用
- */
 int text_get_string_width_sys(const byte * pos, size_t size, dword wordspace)
 {
 	int width = 0;
@@ -140,9 +147,19 @@ int text_get_string_width_sys(const byte * pos, size_t size, dword wordspace)
 }
 
 /*
- * 得到文本长度，以像素计，显示文本使用
+ * 得到文本当前行的显示长度，以像素计，文本显示使用
+ *
+ * @note 结果将满足最大显示宽度要求
+ *
+ * @param pos 文本起始位置
+ * @param posend 文件结束位置
+ * @param maxpixel 允许的最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param count 字节数指针
+ *
+ * @return 显示宽度，以像素计
  */
-int text_get_string_width(const char *pos, const char *posend, dword maxpixel,
+static int text_get_string_width(const char *pos, const char *posend, dword maxpixel,
 						  dword wordspace, dword * count)
 {
 	int width = 0;
@@ -172,7 +189,7 @@ int text_get_string_width(const char *pos, const char *posend, dword maxpixel,
 	return width;
 }
 
-bool is_scrollable_char(char ch)
+bool is_untruncateable_chars(char ch)
 {
 	static char charlist[] = {
 		'~', '!', '@', '#', '$', '^', '&', '*', '(', ')', '_', '+', '{', '}',
@@ -190,11 +207,20 @@ bool is_scrollable_char(char ch)
 	return false;
 }
 
-/*
+/**
  * 得到文本长度，以像素计，显示文本使用
+ *
  * @note: 这个版本会将不截断英文单词
+ *
+ * @param pos 文本起始位置
+ * @param posend 文件结束位置
+ * @param maxpixel 允许的最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param count 字节数指针
+ *
+ * @return 显示宽度，以像素计
  */
-int text_get_string_width_english(const char *pos, const char *posend,
+static int text_get_string_width_english(const char *pos, const char *posend,
 								  dword maxpixel, dword wordspace,
 								  dword * count)
 {
@@ -213,11 +239,11 @@ int text_get_string_width_english(const char *pos, const char *posend,
 		} else {
 			int j;
 
-			if (is_scrollable_char(*pos)) {
+			if (is_untruncateable_chars(*pos)) {
 				if (word_start == NULL) {
 					// search for next English word
 					word_end = word_start = pos;
-					while (word_end <= posend && is_scrollable_char(*word_end)) {
+					while (word_end <= posend && is_untruncateable_chars(*word_end)) {
 						word_end++;
 					}
 					dword cnt;
@@ -248,7 +274,7 @@ int text_get_string_width_english(const char *pos, const char *posend,
 	return width;
 }
 
-extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
+extern bool text_format(p_text txt, dword max_pixels, dword wordspace,
 						bool ttf_mode)
 {
 	char *pos = txt->buf, *posend = pos + txt->size;
@@ -276,22 +302,22 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 			if (config.englishtruncate)
 				pos +=
 					ttf_get_string_width_english(cttf, ettf, (const byte *) pos,
-												 rowpixels, posend - pos,
+												 max_pixels, posend - pos,
 												 wordspace);
 			else
 				pos +=
 					ttf_get_string_width(cttf, ettf, (const byte *) pos,
-										 rowpixels, posend - pos, wordspace);
+										 max_pixels, posend - pos, wordspace);
 		} else
 #endif
 		{
 			dword count = 0;
 
 			if (config.englishtruncate)
-				text_get_string_width_english(pos, posend, rowpixels, wordspace,
+				text_get_string_width_english(pos, posend, max_pixels, wordspace,
 											  &count);
 			else
-				text_get_string_width(pos, posend, rowpixels, wordspace,
+				text_get_string_width(pos, posend, max_pixels, wordspace,
 									  &count);
 			pos += count;
 		}
@@ -310,9 +336,21 @@ extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
 	return true;
 }
 
-int min_ratio = 20;
+/**
+ * 决定是否应合并文本段落的最小比率
+ *
+ * @note 如果当前文件行长大于平均行长的(1 - 1 / min_ratio) * 100%的话，就应合并
+ */
+static int min_ratio = 20;
 
-/** 计算平均行长 */
+/**
+ * 计算平均行长 
+ *
+ * @param txtBuf 文本起始地址
+ * @param txtLen 文本大小，以字节计
+ *
+ * @return 平均每行的长度，以字节计
+ */
 static size_t getTxtAvgLength(char *txtBuf, size_t txtLen)
 {
 	int linesize = 0, linecnt = 0;
@@ -333,11 +371,16 @@ static size_t getTxtAvgLength(char *txtBuf, size_t txtLen)
 }
 
 /**
- * 合并文本段落，不分配内存版本，速度慢
- * @param txtbuf 输入TXT指针指针
- * @param txtlen 输入TXT大小
- * @return 新文件大小
+ * 合并文本段落
+ *
  * @note 能够合并段落
+ * @note 不会改变txtbuf指向
+ * @note 速度慢
+ *
+ * @param txtbuf 输入TXT指针的指针
+ * @param txtlen 输入TXT大小，以字节计
+ *
+ * @return 新文件大小，以字节计
  */
 static size_t text_paragraph_join_without_memory(char **txtbuf, size_t txtlen)
 {
@@ -349,18 +392,14 @@ static size_t text_paragraph_join_without_memory(char **txtbuf, size_t txtlen)
 	// 计算平均行长
 	size_t avgLength = getTxtAvgLength(*txtbuf, txtlen);
 
-	int numOfLineSize = 0, numOfLine = 0;
+	int nlinesz = 0, nol = 0;
 
 	int cnt = txtlen;
 
 	while (cnt-- > 0) {
 		if (*src == '\n') {
-			numOfLine++;
-			if (numOfLineSize < avgLength - avgLength * 1.0 / min_ratio) {
-//              char fmt[80];
-//              sprintf(fmt, "发现段落结束行：%%.%ds %%d/%%d\n", numOfLineSize);
-//              printf(fmt, src-numOfLineSize, numOfLine, numOfLineSize);
-			} else {
+			nol++;
+			if (nlinesz >= avgLength - avgLength * 1.0 / min_ratio) {
 				// 将本行和下一行合并
 				if (*(src - 1) == '\r') {
 					if (txtlen > src - *txtbuf) {
@@ -374,9 +413,9 @@ static size_t text_paragraph_join_without_memory(char **txtbuf, size_t txtlen)
 					}
 				}
 			}
-			numOfLineSize = 0;
+			nlinesz = 0;
 		} else if (*src != '\r') {
-			numOfLineSize++;
+			nlinesz++;
 		}
 		src++;
 	}
@@ -386,55 +425,51 @@ static size_t text_paragraph_join_without_memory(char **txtbuf, size_t txtlen)
 
 /**
  * 合并文本段落，分配内存版本，速度快
- * @param txtbuf 输入TXT指针指针
- * @param txtlen 输入TXT大小
- * @return 新文件大小
+ *
  * @note 能够合并段落
- * <br> *txtbuf指向一段被malloc分配的TXT数据
+ * @note txtbuf可能将指向一段新的被malloc分配的TXT数据
+ * @note 如果不能分配足够的内存，将自动使用text_paragraph_join_without_memory
+ *
+ * @param txtbuf 输入TXT指针的指针，必须指向一段在堆上分配的内存
+ * @param txtlen 输入TXT大小，以字节计
+ *
+ * @return 新文件大小
  */
 static size_t text_paragraph_join_alloc_memory(char **txtbuf, size_t txtlen)
 {
+	char *p;
+	int nlinesz, nol;
+	int cnt;
+	size_t avgLength;
+	char *src, *dst;
+	
 	if (txtlen == 0 || txtbuf == NULL || *txtbuf == NULL)
 		return 0;
 
 	// 计算平均行长
-	size_t avgLength = getTxtAvgLength(*txtbuf, txtlen);
-
-	char *src = *txtbuf, *dst = NULL;
+	avgLength = getTxtAvgLength(*txtbuf, txtlen);
+	src = *txtbuf, dst = NULL;
 
 	if ((dst = calloc(1, txtlen)) == NULL) {
 		return text_paragraph_join_without_memory(txtbuf, txtlen);
 	}
 
-	char *p = dst;
-
-	int numOfLineSize = 0, numOfLine = 0;
-
-	int cnt = txtlen;
+	p = dst;
+	nlinesz = 0, nol = 0;
+	cnt = txtlen;
 
 	while (cnt-- > 0) {
 		if (*src == '\n') {
-			numOfLine++;
-			if (numOfLineSize < avgLength - avgLength * 1.0 / min_ratio) {
+			nol++;
+			if (nlinesz < avgLength - avgLength * 1.0 / min_ratio) {
 				if (*(src - 1) == '\r') {
-					*p++ = *(src - 1);
+					*p++ = '\r';
 				}
 				*p++ = '\n';
-				/*
-				   // 插入段落开始‘　’字符
-				   size_t pos = p - dst;
-				   dst = safe_realloc(dst, txtlen+strlen("    "));
-				   p = pos + dst;
-				   memcpy((char*)p, "    ", strlen("    "));
-				   p += strlen("    ");
-				   txtlen += strlen("    ");
-				 */
-			} else {
-				// 将本行和下一行合并
 			}
-			numOfLineSize = 0;
+			nlinesz = 0;
 		} else if (*src != '\r') {
-			numOfLineSize++;
+			nlinesz++;
 			*p++ = *src;
 		}
 		src++;
@@ -442,9 +477,20 @@ static size_t text_paragraph_join_alloc_memory(char **txtbuf, size_t txtlen)
 
 	free(*txtbuf);
 	*txtbuf = dst;
+
 	return p - dst;
 }
 
+/**
+ * 重新编排文本
+ *
+ * @note 将删除空行
+ *
+ * @param string 文本开始地址
+ * @param size 文本大小
+ *
+ * @return 新文本大小
+ */
 static dword text_reorder(char *string, dword size)
 {
 	int i;
@@ -502,7 +548,19 @@ static dword text_reorder(char *string, dword size)
 	return wtxt - string;
 }
 
-extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
+/**
+ * 打开文本文件
+ *
+ * @param filename 文件路径
+ * @param ft 文件类型
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param encode 文本编码类型
+ * @param reorder 文本是否重新编排
+ *
+ * @return 新的电子书结构指针
+ */
+static p_text text_open(const char *filename, t_fs_filetype ft, dword max_pixels,
 						dword wordspace, t_conf_encode encode, bool reorder)
 {
 	int fd;
@@ -532,7 +590,7 @@ extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -541,7 +599,15 @@ extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
 	return txt;
 }
 
-extern p_text text_open_binary(const char *filename, bool vert)
+/*
+ * 以十六进制打开文本文件
+ *
+ * @param filename 文件路径
+ * @param vert 是否为垂直（左向、右向）显示方式
+ *
+ * @return 新的电子书结构指针
+ */
+static p_text text_open_binary(const char *filename, bool vert)
 {
 	int fd;
 	p_text txt = calloc(1, sizeof(*txt));
@@ -644,8 +710,21 @@ extern p_text text_open_binary(const char *filename, bool vert)
 	return txt;
 }
 
-extern p_text text_open_in_gz(const char *gzfile, const char *filename,
-							  t_fs_filetype ft, dword rowpixels,
+/**
+ * 打开GZIP压缩的文本文件
+ *
+ * @param gzfile GZ档案名
+ * @param filename 显示用文件名
+ * @param ft 文件类型
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param encode 文本编码类型
+ * @param reorder 文本是否重新编排
+ *
+ * @return 新的电子书结构指针
+ */
+static p_text text_open_in_gz(const char *gzfile, const char *filename,
+							  t_fs_filetype ft, dword max_pixels,
 							  dword wordspace, t_conf_encode encode,
 							  bool reorder)
 {
@@ -692,7 +771,7 @@ extern p_text text_open_in_gz(const char *gzfile, const char *filename,
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
 
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -701,8 +780,22 @@ extern p_text text_open_in_gz(const char *gzfile, const char *filename,
 	return txt;
 }
 
-extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
-									  t_fs_filetype ft, dword rowpixels,
+/**
+ * 以十六进制方式打开ZIP档案里的文本文件
+ *
+ * @param zipfile ZIP档案路径
+ * @param filename ZIP档案中的文件路径
+ * @param ft 文件类型
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param encode 文本编码类型
+ * @param reorder 文本是否重新编排
+ * @param vert 是否为垂直（左向、右向）显示方式
+ *
+ * @return 新的电子书结构指针
+ */
+static p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
+									  t_fs_filetype ft, dword max_pixels,
 									  dword wordspace, t_conf_encode encode,
 									  bool reorder, bool vert)
 {
@@ -810,7 +903,7 @@ extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 }
 
 extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
-							   size_t size, t_fs_filetype ft, dword rowpixels,
+							   size_t size, t_fs_filetype ft, dword max_pixels,
 							   dword wordspace, t_conf_encode encode,
 							   bool reorder)
 {
@@ -840,7 +933,7 @@ extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -849,8 +942,21 @@ extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
 	return txt;
 }
 
-extern p_text text_open_in_zip(const char *zipfile, const char *filename,
-							   t_fs_filetype ft, dword rowpixels,
+/**
+ * 打开ZIP档案里的文本文件
+ *
+ * @param zipfile ZIP档案路径
+ * @param filename ZIP档案中的文件路径
+ * @param ft 文件类型
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param encode 文本编码类型
+ * @param reorder 文本是否重新编排
+ *
+ * @return 新的电子书结构指针
+ */
+static p_text text_open_in_zip(const char *zipfile, const char *filename,
+							   t_fs_filetype ft, dword max_pixels,
 							   dword wordspace, t_conf_encode encode,
 							   bool reorder)
 {
@@ -879,16 +985,31 @@ extern p_text text_open_in_zip(const char *zipfile, const char *filename,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
 	calc_gi(txt);
+
 	return txt;
 }
 
-extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
-									  t_fs_filetype ft, dword rowpixels,
+/**
+ * 以十六进制方式打开RAR档案里的文本文件
+ *
+ * @param rarfile RAR档案路径
+ * @param filename RAR档案中的文件路径
+ * @param ft 文件类型
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param encode 文本编码类型
+ * @param reorder 文本是否重新编排
+ * @param vert 是否为垂直（左向、右向）显示方式
+ *
+ * @return 新的电子书结构指针
+ */
+static p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
+									  t_fs_filetype ft, dword max_pixels,
 									  dword wordspace, t_conf_encode encode,
 									  bool reorder, bool vert)
 {
@@ -994,8 +1115,21 @@ extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 	return txt;
 }
 
-extern p_text text_open_in_rar(const char *rarfile, const char *filename,
-							   t_fs_filetype ft, dword rowpixels,
+/**
+ * 打开RAR档案里的文本文件
+ *
+ * @param rarfile RAR档案路径
+ * @param filename RAR档案中的文件路径
+ * @param ft 文件类型
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param encode 文本编码类型
+ * @param reorder 文本是否重新编排
+ *
+ * @return 新的电子书结构指针
+ */
+static p_text text_open_in_rar(const char *rarfile, const char *filename,
+							   t_fs_filetype ft, dword max_pixels,
 							   dword wordspace, t_conf_encode encode,
 							   bool reorder)
 {
@@ -1023,7 +1157,7 @@ extern p_text text_open_in_rar(const char *rarfile, const char *filename,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -1031,8 +1165,21 @@ extern p_text text_open_in_rar(const char *rarfile, const char *filename,
 	return txt;
 }
 
-extern p_text text_open_in_chm(const char *chmfile, const char *filename,
-							   t_fs_filetype ft, dword rowpixels,
+/**
+ * 打开CHM档案里的文本文件
+ *
+ * @param chmfile CHM档案路径
+ * @param filename CHM档案中的文件路径
+ * @param ft 文件类型
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param encode 文本编码类型
+ * @param reorder 文本是否重新编排
+ *
+ * @return 新的电子书结构指针
+ */
+static p_text text_open_in_chm(const char *chmfile, const char *filename,
+							   t_fs_filetype ft, dword max_pixels,
 							   dword wordspace, t_conf_encode encode,
 							   bool reorder)
 {
@@ -1060,7 +1207,7 @@ extern p_text text_open_in_chm(const char *chmfile, const char *filename,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -1081,24 +1228,10 @@ extern void text_close(p_text fstext)
 	}
 }
 
-/**
- * 打开文本文件，可用于档案文件
- * @param filename 文件路径
- * @param archname 档案路径
- * @param filetype 文本文件类型
- * @param rowpixels 
- * @param wordspace 字距
- * @param encode 文本文件编码
- * @param reorder 是否重新编排
- * @param where 档案类型
- * @param vertread 显示方式
- * @return 文本指针
- * - NULL 失败
- */
 extern p_text text_open_archive(const char *filename,
 								const char *archname,
 								t_fs_filetype filetype,
-								dword rowpixels,
+								dword max_pixels,
 								dword wordspace,
 								t_conf_encode encode,
 								bool reorder, int where, int vertread)
@@ -1117,11 +1250,11 @@ extern p_text text_open_archive(const char *filename,
 		case scene_in_dir:
 			if (ext && stricmp(ext, "gz") == 0)
 				pText = text_open_in_gz(archname, archname,
-										filetype, rowpixels,
+										filetype, max_pixels,
 										wordspace, encode, reorder);
 			else if (filetype != fs_filetype_unknown)
 				pText = text_open(archname, filetype,
-								  rowpixels, wordspace, encode, reorder);
+								  max_pixels, wordspace, encode, reorder);
 			else {
 				pText =
 					text_open_binary(archname,
@@ -1132,17 +1265,17 @@ extern p_text text_open_archive(const char *filename,
 			break;
 		case scene_in_chm:
 			pText = text_open_in_chm(archname, filename,
-									 filetype, rowpixels,
+									 filetype, max_pixels,
 									 wordspace, encode, reorder);
 			break;
 		case scene_in_zip:
 			if (filetype == fs_filetype_txt || filetype == fs_filetype_html)
 				pText = text_open_in_zip(archname, filename,
-										 filetype, rowpixels,
+										 filetype, max_pixels,
 										 wordspace, encode, reorder);
 			else
 				pText = text_open_binary_in_zip(archname, filename,
-												filetype, rowpixels,
+												filetype, max_pixels,
 												wordspace, encode,
 												reorder,
 												(vertread ==
@@ -1153,11 +1286,11 @@ extern p_text text_open_archive(const char *filename,
 		case scene_in_rar:
 			if (filetype == fs_filetype_txt || filetype == fs_filetype_html)
 				pText = text_open_in_rar(archname, filename,
-										 filetype, rowpixels,
+										 filetype, max_pixels,
 										 wordspace, encode, reorder);
 			else
 				pText = text_open_binary_in_rar(archname, filename,
-												filetype, rowpixels,
+												filetype, max_pixels,
 												wordspace, encode,
 												reorder,
 												(vertread ==

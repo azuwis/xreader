@@ -261,8 +261,6 @@ extern bool lyric_check_changed(p_lyric l)
 	return false;
 }
 
-extern t_conf config;
-
 void lyric_decode(const char *lrcsrc, char *lrcdst, dword * size)
 {
 	t_conf_encode enc = config.lyricencode;

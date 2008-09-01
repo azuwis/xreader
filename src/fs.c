@@ -23,8 +23,6 @@
 #include "archive.h"
 #include "dbg.h"
 
-extern t_conf config;
-
 typedef struct
 {
 	const char *ext;
@@ -110,6 +108,7 @@ t_fs_filetype_entry ft_table[] = {
 	{"aa3", fs_filetype_aa3},
 	{"wav", fs_filetype_wave},
 	{"wave", fs_filetype_wave},
+	{"tta", fs_filetype_tta},
 #ifdef ENABLE_WMA
 	{"wma", fs_filetype_wma},
 #endif

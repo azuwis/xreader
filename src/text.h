@@ -13,60 +13,128 @@ typedef struct
 
 typedef struct
 {
+	/** 文件路径名 */
 	char filename[PATH_MAX];
+
 	dword crow;
+
 	dword size;
+
 	char *buf;
+
+	/** 文本的Unicode编码模式
+	 *
+	 * @note 0 - 非Unicode编码
+	 * @note 1 - UCS
+	 * @note 2 - UTF-8
+	 */
 	int ucs;
+
+	/** 行数 */
 	dword row_count;
+
+	/** 行结构指针数组 */
 	p_textrow rows[1024];
 } t_text, *p_text;
 
-extern bool text_format(p_text txt, dword rowpixels, dword wordspace,
+/**
+ * 格式化文本
+ *
+ * @note 按显示模式将文本拆分为行
+ *
+ * @param txt 电子书结构指针
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param ttf_mode 是否为TTF显示模式
+ *
+ * @return 是否成功
+ */
+extern bool text_format(p_text txt, dword max_pixels, dword wordspace,
 						bool ttf_mode);
-extern p_text text_open(const char *filename, t_fs_filetype ft, dword rowpixels,
-						dword wordspace, t_conf_encode encode, bool reorder);
-extern p_text text_open_binary(const char *filename, bool vert);
-extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
-							   size_t size, t_fs_filetype ft, dword rowpixels,
-							   dword wordspace, t_conf_encode encode,
-							   bool reorder);
-extern p_text text_open_in_zip(const char *zipfile, const char *filename,
-							   t_fs_filetype ft, dword rowpixels,
-							   dword wordspace, t_conf_encode encode,
-							   bool reorder);
-extern p_text text_open_in_gz(const char *gzfile, const char *filename,
-							  t_fs_filetype ft, dword rowpixels,
-							  dword wordspace, t_conf_encode encode,
-							  bool reorder);
-extern p_text text_open_in_rar(const char *rarfile, const char *filename,
-							   t_fs_filetype ft, dword rowpixels,
-							   dword wordspace, t_conf_encode encode,
-							   bool reorder);
-extern p_text text_open_in_chm(const char *chmfile, const char *filename,
-							   t_fs_filetype ft, dword rowpixels,
-							   dword wordspace, t_conf_encode encode,
-							   bool reorder);
-extern p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
-									  t_fs_filetype ft, dword rowpixels,
-									  dword wordspace, t_conf_encode encode,
-									  bool reorder, bool vert);
-extern p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
-									  t_fs_filetype ft, dword rowpixels,
-									  dword wordspace, t_conf_encode encode,
-									  bool reorder, bool vert);
-extern void text_close(p_text fstext);
 
+/**
+ * 打开内存中一段数据做为文本
+ *
+ * @note 内存数据将被复制
+ *
+ * @param filename 无用途
+ * @param data
+ * @param size
+ * @param ft 文件类型
+ * @param max_pixels 最大显示宽度，以像素计
+ * @param wordspace 字间距
+ * @param encode 文本编码类型
+ * @param reorder 文本是否重新编排
+ *
+ * @return 新的电子书结构指针
+ */
+extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
+							   size_t size, t_fs_filetype ft, dword max_pixels,
+							   dword wordspace, t_conf_encode encode,
+							   bool reorder);
+
+/**
+ * 打开文本文件，可用于档案文件
+ * 
+ * @note 支持GZ,CHM,RAR,ZIP以及TXT
+ *
+ * @param filename 文件路径
+ * @param archname 档案路径
+ * @param filetype 文本文件类型
+ * @param max_pixels 最大显示宽度，以像素计 
+ * @param wordspace 字距
+ * @param encode 文本文件编码
+ * @param reorder 是否重新编排
+ * @param where 档案类型
+ * @param vertread 显示方式
+ *
+ * @return 新的电子书结构指针
+ * - NULL 失败
+ */
 extern p_text text_open_archive(const char *filename,
 								const char *archname,
 								t_fs_filetype filetype,
-								dword rowpixels,
+								dword max_pixels,
 								dword wordspace,
 								t_conf_encode encode,
 								bool reorder, int where, int vertread);
+
+/**
+ * 关闭文本
+ *
+ * @param fstext
+ */
+extern void text_close(p_text fstext);
+
+/*
+ * 得到文本当前行的显示长度，以像素计，系统菜单使用
+ *
+ * @param pos 文本起始位置
+ * @param size 文件大小，以字节计
+ * @param wordspace 字间距
+ *
+ * @return 显示长度，以像素计
+ */
 int text_get_string_width_sys(const byte * pos, size_t size, dword wordspace);
-int text_get_string_width(const char *pos, const char *posend, dword maxpixel,
-						  dword wordspace, dword * count);
-bool is_scrollable_char(char ch);
+
+/**
+ * 是否为不能截断字符
+ *
+ * @note 在显示英文判断单词是否应换行用到
+ *
+ * @param ch 字符
+ *
+ * @return 是否为不能截断字符
+ */
+bool is_untruncateable_chars(char ch);
+
+/**
+ * 字节表，根据表查值得到状态
+ *
+ * @note 0 - 字符不必换行
+ * @note 1 - 字符使本行结束
+ * @note 2 - 字符为空格，TAB
+ */
+extern bool bytetable[256];
 
 #endif

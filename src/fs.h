@@ -30,6 +30,7 @@ typedef enum
 	fs_filetype_mp3,
 	fs_filetype_mpc,
 	fs_filetype_wave,
+	fs_filetype_tta,
 	fs_filetype_aa3,
 #ifdef ENABLE_WMA
 	fs_filetype_wma,

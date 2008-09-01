@@ -90,7 +90,6 @@ extern const char *power_get_battery_charging(void)
 	return status_str;
 }
 
-extern t_conf config;
 extern int use_ttf;
 extern p_ttf cttf, ettf;
 

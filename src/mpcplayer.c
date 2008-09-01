@@ -255,6 +255,7 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			scene_power_save(true);
 			mpc_unlock();
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
+			g_buff_frame_size = g_buff_frame_start = 0;
 		} else if (g_status == ST_FBACKWARD) {
 			g_play_time -= g_seek_seconds;
 			if (g_play_time < 0.) {
@@ -265,6 +266,7 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			scene_power_save(true);
 			mpc_unlock();
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
+			g_buff_frame_size = g_buff_frame_start = 0;
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
 		return;
@@ -568,7 +570,8 @@ static int mpc_suspend(void)
 /**
  * PSP准备从休眠时恢复的Musepack的操作
  *
- * @param filename 当前播放音乐名
+ * @param spath 当前播放音乐名，8.3路径形式
+ * @param lpath 当前播放音乐名，长文件名形式
  *
  * @return 成功时返回0
  */
@@ -597,7 +600,7 @@ static int mpc_resume(const char *spath, const char *lpath)
 /**
  * 得到Musepack音乐文件相关信息
  *
- * @param info 信息结构体指针
+ * @param pinfo 信息结构体指针
  *
  * @return
  */
@@ -620,7 +623,7 @@ static int mpc_get_info(struct music_info *pinfo)
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] =
-			66 + (120 - 66) * info.average_bitrate / 1024 / 320;
+			66 + (120 - 66) * info.average_bitrate / 1000 / 320;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_FREQ) {
@@ -630,7 +633,7 @@ static int mpc_get_info(struct music_info *pinfo)
 		pinfo->channels = info.channels;
 	}
 	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = info.average_bitrate / 1024;
+		pinfo->avg_kbps = info.average_bitrate / 1000;
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "musepack");

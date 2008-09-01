@@ -20,8 +20,6 @@
 
 static volatile int secticks = 0;
 
-extern t_conf config;
-
 extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item,
 									dword * count, dword max_height,
 									dword * topindex, dword * index)

@@ -31,10 +31,12 @@ static int g_status;
  */
 static int g_suspend_status;
 
+#define WAVE_BUFFER_SIZE (1024 * 95)
+
 /**
  * Wave音乐播放缓冲
  */
-static short g_buff[95 * 1024];
+static short *g_buff = NULL;
 
 /**
  * Wave音乐播放缓冲大小，以帧数计
@@ -274,7 +276,8 @@ static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				__end();
 				return;
 			}
-			ret = sceIoRead(data.fd, g_buff, sizeof(g_buff));
+			ret =
+				sceIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
 			if (ret <= 0) {
 				__end();
 				return;
@@ -301,7 +304,6 @@ static int __init(void)
 	g_status = ST_UNKNOWN;
 	wav_unlock();
 
-	memset(g_buff, 0, sizeof(g_buff));
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
 
@@ -353,6 +355,16 @@ static int wave_skip_n_bytes(SceUID fd, int n)
 static int wav_load(const char *spath, const char *lpath)
 {
 	__init();
+
+	if (g_buff != NULL) {
+		free(g_buff);
+		g_buff = NULL;
+	}
+	g_buff = calloc(WAVE_BUFFER_SIZE, sizeof(*g_buff));
+	if (g_buff == NULL) {
+		__end();
+		return -1;
+	}
 
 	APETag *tag = loadAPETag(spath);
 
@@ -436,8 +448,13 @@ static int wav_load(const char *spath, const char *lpath)
 		__end();
 		return -1;
 	}
-	// Format tag
-	if (wave_skip_n_bytes(data.fd, 2) != 0) {
+	// Format tag: 1 if PCM
+	temp = 0;
+	if (wave_get_16(data.fd, (uint16_t *) & temp) != 0) {
+		__end();
+		return -1;
+	}
+	if (temp != 1) {
 		__end();
 		return -1;
 	}
@@ -591,6 +608,11 @@ static int wav_end(void)
 
 	xMP3AudioEnd();
 
+	if (g_buff != NULL) {
+		free(g_buff);
+		g_buff = NULL;
+	}
+
 	g_status = ST_STOPPED;
 
 	return 0;
@@ -661,7 +683,8 @@ static int wav_suspend(void)
 /**
  * PSP准备从休眠时恢复的Wave的操作
  *
- * @param filename 当前播放音乐名
+ * @param spath 当前播放音乐名，8.3路径形式
+ * @param lpath 当前播放音乐名，长文件或形式
  *
  * @return 成功时返回0
  */
@@ -690,7 +713,7 @@ static int wav_resume(const char *spath, const char *lpath)
 /**
  * 得到Wave音乐文件相关信息
  *
- * @param info 信息结构体指针
+ * @param pinfo 信息结构体指针
  *
  * @return
  */
@@ -722,7 +745,7 @@ static int wav_get_info(struct music_info *pinfo)
 		pinfo->channels = g_wav_channels;
 	}
 	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = g_wav_bitrate / 1024;
+		pinfo->avg_kbps = g_wav_bitrate / 1000;
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "wave");

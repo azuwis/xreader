@@ -10,8 +10,8 @@
 #include FT_SYNTHESIS_H
 #include "freetype/ftlcdfil.h"
 #include "charsets.h"
-#include "ttfont.h"
 #include "display.h"
+#include "ttfont.h"
 #include "charsets.h"
 #include "pspscreen.h"
 #include "conf.h"
@@ -21,79 +21,21 @@
 #include "text.h"
 #include "power.h"
 
-extern t_conf config;
-
 static SceUID ttf_sema = -1;
 
-static p_ttf ttf_open_file_to_memory(const char *filename, int size,
-									 const char *ttfname)
-{
-	p_ttf ttf;
-	byte *buf;
-	int fd, fileSize;
-
-	if (filename == NULL || size == 0)
-		return NULL;
-
-	fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
-
-	if (fd < 0) {
-		return NULL;
-	}
-
-	fileSize = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	buf = malloc(fileSize);
-
-	if (buf == NULL) {
-		sceIoClose(fd);
-		return NULL;
-	}
-
-	sceIoRead(fd, buf, fileSize);
-	sceIoClose(fd);
-
-	ttf = ttf_open_buffer(buf, fileSize, size, ttfname);
-
-	if (ttf == NULL) {
-		free(buf);
-	}
-
-	return ttf;
-}
-
 /**
- * 打开TTF字体
- * @param filename TTF文件名
- * @param size 预设的字体大小
- * @param load2mem 是否加载到内存
- * @return 描述TTF的指针
- * - NULL 失败
- */
-extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
-{
-	p_ttf ttf;
-
-	if (filename == NULL || size == 0)
-		return NULL;
-
-	if (load2mem)
-		ttf = ttf_open_file_to_memory(filename, size, filename);
-	else
-		ttf = ttf_open_file(filename, size, filename);
-
-	return ttf;
-}
-
-/**
- * 打开TTF字体数据
+ * 打开TTF字体文件
+ *
+ * @note 不会把TTF装载入内存
+ *
  * @param ttfpath TTF字体路径
  * @param pixelSize 预设的字体大小
  * @param ttfName TTF字体名
+ *
  * @return 描述TTF的指针
  * - NULL 失败
  */
-extern p_ttf ttf_open_file(const char *ttfpath, int pixelSize,
+static p_ttf ttf_open_file(const char *ttfpath, int pixelSize,
 						   const char *ttfName)
 {
 	int i;
@@ -139,14 +81,66 @@ extern p_ttf ttf_open_file(const char *ttfpath, int pixelSize,
 }
 
 /**
- * 打开TTF字体数据
- * @param ttfBuf TTF字体数据
- * @param ttfLength TTF字体数据大小，以字节计
- * @param pixelSize 预设的字体大小
- * @param ttfName TTF字体名
- * @return 描述TTF的指针
- * - NULL 失败
+ * 打开TTF字体文件，并将TTF字体载入内存
+ *
+ * @param filename
+ * @param size
+ * @param ttfname
+ *
+ * @return
  */
+static p_ttf ttf_open_file_to_memory(const char *filename, int size,
+									 const char *ttfname)
+{
+	p_ttf ttf;
+	byte *buf;
+	int fd, fileSize;
+
+	if (filename == NULL || size == 0)
+		return NULL;
+
+	fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+
+	if (fd < 0) {
+		return NULL;
+	}
+
+	fileSize = sceIoLseek32(fd, 0, PSP_SEEK_END);
+	sceIoLseek32(fd, 0, PSP_SEEK_SET);
+	buf = malloc(fileSize);
+
+	if (buf == NULL) {
+		sceIoClose(fd);
+		return NULL;
+	}
+
+	sceIoRead(fd, buf, fileSize);
+	sceIoClose(fd);
+
+	ttf = ttf_open_buffer(buf, fileSize, size, ttfname);
+
+	if (ttf == NULL) {
+		free(buf);
+	}
+
+	return ttf;
+}
+
+extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
+{
+	p_ttf ttf;
+
+	if (filename == NULL || size == 0)
+		return NULL;
+
+	if (load2mem)
+		ttf = ttf_open_file_to_memory(filename, size, filename);
+	else
+		ttf = ttf_open_file(filename, size, filename);
+
+	return ttf;
+}
+
 extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 							 const char *ttfName)
 {
@@ -196,10 +190,6 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 	return ttf;
 }
 
-/**
- * 关闭TTF结构
- * @param ttf ttf指针
- */
 extern void ttf_close(p_ttf ttf)
 {
 	int i;
@@ -230,12 +220,6 @@ extern void ttf_close(p_ttf ttf)
 	free(ttf);
 }
 
-/**
- * 设置TTF字体大小
- * @param ttf ttf指针
- * @param size 字体大小
- * @return 是否成功
- */
 extern bool ttf_set_pixel_size(p_ttf ttf, int size)
 {
 	if (ttf == NULL)
@@ -249,11 +233,6 @@ extern bool ttf_set_pixel_size(p_ttf ttf, int size)
 	return true;
 }
 
-/**
- * 设置TTF是否启用抗锯齿效果
- * @param ttf ttf指针
- * @param aa 是否启用抗锯齿效果
- */
 extern void ttf_set_anti_alias(p_ttf ttf, bool aa)
 {
 	if (ttf == NULL)
@@ -262,11 +241,6 @@ extern void ttf_set_anti_alias(p_ttf ttf, bool aa)
 	ttf->antiAlias = aa;
 }
 
-/**
- * 设置TTF是否启用ClearType(Sub-Pixel LCD优化效果)
- * @param ttf ttf指针
- * @param cleartype 是否启用cleartype
- */
 extern void ttf_set_cleartype(p_ttf ttf, bool cleartype)
 {
 	if (ttf == NULL)
@@ -277,11 +251,6 @@ extern void ttf_set_cleartype(p_ttf ttf, bool cleartype)
 	ttf->cleartype = cleartype;
 }
 
-/**
- * 设置TTF是否启用字体加粗
- * @param ttf ttf指针
- * @param embolden 是否启用字体加粗
- */
 extern void ttf_set_embolden(p_ttf ttf, bool embolden)
 {
 	if (ttf == NULL)
@@ -292,6 +261,15 @@ extern void ttf_set_embolden(p_ttf ttf, bool embolden)
 
 /**
  * 添加字形到ttf字型缓存
+ *
+ * @param ttf
+ * @param ucsCode
+ * @param glyphIndex
+ * @param bitmap
+ * @param left
+ * @param top
+ * @param xadvance
+ * @param yadvance
  */
 static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 						 FT_Bitmap * bitmap, int left, int top, int xadvance,
@@ -343,6 +321,12 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 
 /**
  * 在TTF字形缓存中查找字形 
+ *
+ * @param ttf
+ * @param ucsCode
+ * @param format
+ *
+ * @return
  */
 static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode,
 									int format)
@@ -362,6 +346,14 @@ static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode,
 	return NULL;
 }
 
+/*
+ * 得到当前渲染模式
+ *
+ * @param ttf
+ * @param isVertical
+ * 
+ * @return
+ */
 static FT_Render_Mode get_render_mode(p_ttf ttf, bool isVertical)
 {
 	if (ttf->cleartype && isVertical)
@@ -374,6 +366,13 @@ static FT_Render_Mode get_render_mode(p_ttf ttf, bool isVertical)
 	return FT_RENDER_MODE_MONO;
 }
 
+/**
+ * 得到当前字体输出格式
+ *
+ * @param mode
+ * 
+ * @return
+ */
 static FT_Pixel_Mode get_pixel_mode(FT_Render_Mode mode)
 {
 	switch (mode) {
@@ -394,10 +393,12 @@ static FT_Pixel_Mode get_pixel_mode(FT_Render_Mode mode)
 
 /**
  * 8位单通道alpha混合算法
+ *
+ * @note 目的颜色 = 目的颜色 * alpha + ( 1 - alpha ) * 源颜色
+ *
  * @param wpSrc 源颜色指针
  * @param wpDes 目的颜色指针
  * @param wAlpha alpha值(0-255)
- * @note 目的颜色 = 目的颜色 * alpha + ( 1 - alpha ) * 源颜色
  */
 static inline void MakeAlpha(byte * wpSrc, byte * wpDes, byte wAlpha)
 {
@@ -416,6 +417,9 @@ static inline void MakeAlpha(byte * wpSrc, byte * wpDes, byte wAlpha)
 
 /** 
  * 绘制TTF字型到屏幕，水平版本
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ *
  * @param buffer 字型位图数据
  * @param format 格式
  * @param width 位图宽度
@@ -426,7 +430,6 @@ static inline void MakeAlpha(byte * wpSrc, byte * wpDes, byte wAlpha)
  * @param scr_width 绘图区最大宽度
  * @param scr_height 绘图区最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static void _drawBitmap_horz(byte * buffer, int format, int width, int height,
 							 int pitch, FT_Int x, FT_Int y,
@@ -527,13 +530,15 @@ static void _drawBitmap_horz(byte * buffer, int format, int width, int height,
 
 /** 
  * 绘制TTF字型缓存到屏幕，水平版本
- * @param bitmap 字型位图
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ *
+ * @param sbt 缓存字型位图
  * @param x 屏幕x坐标
  * @param y 屏幕y坐标
  * @param width 最大宽度
  * @param height 最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static void drawCachedBitmap_horz(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
 								  int width, int height, pixel color)
@@ -544,12 +549,15 @@ static void drawCachedBitmap_horz(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
 
 /** 
  * 绘制TTF字型到屏幕，水平版本
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ *
  * @param bitmap 字型位图
  * @param x 屏幕x坐标
  * @param y 屏幕y坐标
+ * @param width 字体宽度
  * @param height 最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static void drawBitmap_horz(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 							int width, int height, pixel color)
@@ -565,6 +573,10 @@ static void drawBitmap_horz(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 
 /**
  * 从*str中取出一个字（汉字/英文字母）进行绘制，水平版本
+ *
+ * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
+ * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
+ *
  * @param ttf 使用的TTF字体
  * @param *x 指向X坐标的指针
  * @param *y 指向Y坐标的指针 
@@ -578,8 +590,6 @@ static void drawBitmap_horz(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
  * @param bot 最大绘制高度
  * @param previous 指向上一个同类字符指针
  * @param is_hanzi 是否为汉字
- * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
- * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
  */
 static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 									 const byte ** str, int *count,
@@ -664,19 +674,6 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 	}
 }
 
-extern bool bytetable[256];
-
-/**
- * 得到字符串所能显示在maxpixels中的长度
- * @param cttf 中文TTF字体
- * @param ettf 英文TTF字体
- * @param str 字符串
- * @param maxpixels 最大长度
- * @param wordspace 字间距（以像素点计）
- * @note 如果遇到换行，则字符串计数停止累加。
- * <br>  如果字符串绘制长度＞maxpixels，则字符串计数停止累加。
- * <br>  这个版本速度极慢，不要使用
- */
 extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 									 dword maxpixels, dword wordspace)
 {
@@ -905,20 +902,6 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 	return x;
 }
 
-/**
- * 得到字符串所能显示在maxpixels中的长度
- * @param cttf 中文TTF字体
- * @param ettf 英文TTF字体
- * @param str 字符串
- * @param maxpixels 最大象素长度
- * @param maxbytes 最大字符长度，以字节计
- * @param wordspace 字间距（以像素点计）
- * @return 字符串个数计数，以字节计
- * @note 如果遇到换行，则字符串计数停止累加。
- * <br>  如果字符串绘制长度＞maxpixels，则字符串计数停止累加。
- * <br>  这个版本速度快，但对于英文字母可能有出界问题
- * <br>  这个版本为英文回绕版本
- */
 extern int ttf_get_string_width_english(p_ttf cttf, p_ttf ettf,
 										const byte * str, dword maxpixels,
 										dword maxbytes, dword wordspace)
@@ -952,7 +935,7 @@ extern int ttf_get_string_width_english(p_ttf cttf, p_ttf ettf,
 			str++;
 			word_end = word_start = NULL;
 		} else {
-			if (is_scrollable_char(*str)) {
+			if (is_untruncateable_chars(*str)) {
 				if (word_start == NULL) {
 					int ret;
 
@@ -960,7 +943,7 @@ extern int ttf_get_string_width_english(p_ttf cttf, p_ttf ettf,
 					word_end = word_start = str;
 					ret = 0;
 					while (word_end <= ostr + maxbytes
-						   && is_scrollable_char(*word_end)) {
+						   && is_untruncateable_chars(*word_end)) {
 						ret += disp_ewidth[*word_end];
 						ret += wordspace;
 						word_end++;
@@ -990,19 +973,6 @@ extern int ttf_get_string_width_english(p_ttf cttf, p_ttf ettf,
 	return str - ostr;
 }
 
-/**
- * 得到字符串所能显示在maxpixels中的长度
- * @param cttf 中文TTF字体
- * @param ettf 英文TTF字体
- * @param str 字符串
- * @param maxpixels 最大象素长度
- * @param maxbytes 最大字符长度，以字节计
- * @param wordspace 字间距（以像素点计）
- * @return 字符串个数计数，以字节计
- * @note 如果遇到换行，则字符串计数停止累加。
- * <br>  如果字符串绘制长度＞maxpixels，则字符串计数停止累加。
- * <br>  这个版本速度快，但对于英文字母可能有出界问题
- */
 extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 								dword maxpixels, dword maxbytes,
 								dword wordspace)
@@ -1104,9 +1074,6 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	scene_power_save(true);
 }
 
-/**
- * 得到英文字母宽度信息
- */
 extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 {
 	if (ttf == NULL || ewidth == NULL || size == 0)
@@ -1165,6 +1132,9 @@ extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 
 /** 
  * 绘制TTF字型到屏幕，颠倒版本
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ * 
  * @param buffer 字型位图数据
  * @param format 格式
  * @param width 位图宽度
@@ -1175,7 +1145,6 @@ extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
  * @param scr_width 绘图区最大宽度
  * @param scr_height 绘图区最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static void _drawBitmap_reversal(byte * buffer, int format, int width,
 								 int height, int pitch, FT_Int x, FT_Int y,
@@ -1280,13 +1249,15 @@ static void _drawBitmap_reversal(byte * buffer, int format, int width,
 
 /** 
  * 绘制TTF字型缓存到屏幕，颠倒版本
- * @param bitmap 字型位图
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ *
+ * @param sbt 缓存字型位图
  * @param x 屏幕x坐标
  * @param y 屏幕y坐标
  * @param width 最大宽度
  * @param height 最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static void drawCachedBitmap_reversal(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
 									  int width, int height, pixel color)
@@ -1297,13 +1268,15 @@ static void drawCachedBitmap_reversal(Cache_Bitmap * sbt, FT_Int x, FT_Int y,
 
 /** 
  * 绘制TTF字型到屏幕，颠倒版本
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ *
  * @param bitmap 字型位图
  * @param x 屏幕x坐标
  * @param y 屏幕y坐标
  * @param width 最大宽度
  * @param height 最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static void drawBitmap_reversal(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 								int width, int height, pixel color)
@@ -1318,6 +1291,10 @@ static void drawBitmap_reversal(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 
 /**
  * 从*str中取出一个字（汉字/英文字母）进行绘制，颠倒版本
+ *
+ * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
+ * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
+ *
  * @param ttf 使用的TTF字体
  * @param *x 指向X坐标的指针
  * @param *y 指向Y坐标的指针 
@@ -1331,8 +1308,6 @@ static void drawBitmap_reversal(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
  * @param bot 最大绘制高度
  * @param previous 指向上一个同类字符指针
  * @param is_hanzi 是否为汉字
- * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
- * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
  */
 static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 										 const byte ** str, int *count,
@@ -1479,6 +1454,9 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 
 /** 
  * 绘制TTF字型到屏幕，左向版本
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ * 
  * @param buffer 字型位图数据
  * @param format 格式
  * @param width 位图宽度
@@ -1489,7 +1467,6 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
  * @param scr_width 绘图区最大宽度
  * @param scr_height 绘图区最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static void _drawBitmap_lvert(byte * buffer, int format, int width, int height,
 							  int pitch, FT_Int x, FT_Int y, int scr_width,
@@ -1590,13 +1567,15 @@ static void _drawBitmap_lvert(byte * buffer, int format, int width, int height,
 
 /** 
  * 绘制TTF字型缓存到屏幕，左向版本
- * @param bitmap 字型位图
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ *
+ * @param sbt 缓存字型位图
  * @param x 屏幕x坐标
  * @param y 屏幕y坐标
  * @param width 最大宽度
  * @param height 最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static inline void drawCachedBitmap_lvert(Cache_Bitmap * sbt, FT_Int x,
 										  FT_Int y, int width, int height,
@@ -1608,13 +1587,15 @@ static inline void drawCachedBitmap_lvert(Cache_Bitmap * sbt, FT_Int x,
 
 /** 
  * 绘制TTF字型到屏幕，左向版本
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ * 
  * @param bitmap 字型位图
  * @param x 屏幕x坐标
  * @param y 屏幕y坐标
  * @param width 最大宽度
  * @param height 最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static inline void drawBitmap_lvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 									int width, int height, pixel color)
@@ -1625,6 +1606,10 @@ static inline void drawBitmap_lvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 
 /**
  * 从*str中取出一个字（汉字/英文字母）进行绘制，左向版本
+ *
+ * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
+ * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
+ * 
  * @param ttf 使用的TTF字体
  * @param *x 指向X坐标的指针
  * @param *y 指向Y坐标的指针 
@@ -1638,8 +1623,6 @@ static inline void drawBitmap_lvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
  * @param bot 最大绘制高度
  * @param previous 指向上一个同类字符指针
  * @param is_hanzi 是否为汉字
- * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
- * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
  */
 static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 									  const byte ** str, int *count,
@@ -1783,6 +1766,9 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 
 /** 
  * 绘制TTF字型到屏幕，右向版本
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ * 
  * @param buffer 字型位图数据
  * @param format 格式
  * @param width 位图宽度
@@ -1793,7 +1779,6 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
  * @param scr_width 绘图区最大宽度
  * @param scr_height 绘图区最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static void _drawBitmap_rvert(byte * buffer, int format, int width, int height,
 							  int pitch, FT_Int x, FT_Int y, int scr_width,
@@ -1897,13 +1882,15 @@ static void _drawBitmap_rvert(byte * buffer, int format, int width, int height,
 
 /** 
  * 绘制TTF字型缓存到屏幕，右向版本
- * @param bitmap 字型位图
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ *
+ * @param sbt 缓存字型位图
  * @param x 屏幕x坐标
  * @param y 屏幕y坐标
  * @param width 最大宽度
  * @param height 最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static inline void drawCachedBitmap_rvert(Cache_Bitmap * sbt, FT_Int x,
 										  FT_Int y, int width, int height,
@@ -1915,17 +1902,18 @@ static inline void drawCachedBitmap_rvert(Cache_Bitmap * sbt, FT_Int x,
 
 /** 
  * 绘制TTF字型到屏幕，右向版本
+ *
+ * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
+ *
  * @param bitmap 字型位图
  * @param x 屏幕x坐标
  * @param y 屏幕y坐标
- * @param width 最大宽度
+ * @param width 字体宽度
  * @param height 最大高度
  * @param color 颜色
- * @note 坐标(x,y)为字体显示的左上角，不包括字形中"空白"部分
  */
 static inline void drawBitmap_rvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
-									int width, int height, pixel color,
-									int space)
+									int width, int height, pixel color)
 {
 	_drawBitmap_rvert(bitmap->buffer, bitmap->pixel_mode, bitmap->width,
 					  bitmap->rows, bitmap->pitch, x, y, width, height, color);
@@ -1933,6 +1921,10 @@ static inline void drawBitmap_rvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 
 /**
  * 从*str中取出一个字（汉字/英文字母）进行绘制，右向版本
+ *
+ * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
+ * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
+ * 
  * @param ttf 使用的TTF字体
  * @param *x 指向X坐标的指针
  * @param *y 指向Y坐标的指针 
@@ -1946,8 +1938,6 @@ static inline void drawBitmap_rvert(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
  * @param bot 最大绘制高度
  * @param previous 指向上一个同类字符指针
  * @param is_hanzi 是否为汉字
- * @note 如果绘制了一个字型，则*x, *y, *count, *str都会被更新
- * <br> 如果是在绘制第一行，bot = 0，如果在绘制其它行，bot = 最大绘制高度
  */
 static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 									  const byte ** str, int *count,
@@ -2017,8 +2007,7 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 						 slot->bitmap_top : *x - height +
 						 slot->bitmap_top, *y + slot->bitmap_left,
 						 bot ? PSP_SCREEN_WIDTH -
-						 bot : PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT,
-						 color, DISP_BOOK_FONTSIZE - slot->bitmap_top);
+						 bot : PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, color);
 		*y += slot->advance.x >> 6;
 		*previous = glyphIndex;
 
@@ -2088,7 +2077,6 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	}
 	scene_power_save(true);
 }
-
 #endif
 
 extern void ttf_lock(void)
