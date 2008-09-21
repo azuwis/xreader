@@ -5012,7 +5012,7 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 			char outstr[256];
 
 			SPRINTF_S(outstr, _("文件大小: %s 字节\n"),
-					  (unsigned int) item[index].data3);
+					  item[index].shortname->ptr);
 			if (index - topindex < HRR) {
 				disp_rectangle(239 - (WRR - 2) * DISP_FONTSIZE,
 							   135 + (HRR -
