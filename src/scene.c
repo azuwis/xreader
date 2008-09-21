@@ -305,7 +305,7 @@ t_win_menu_op scene_flkey_menucb(dword key, p_win_menuitem item, dword * count,
 				key = key2;
 				sceCtrlReadBufferPositive(&ctl, 1);
 				key2 = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
-				sceKernelDelayThread(20000);
+				sceKernelDelayThread(50000);
 			}
 			if (config.flkey[*index] == key || config.flkey2[*index] == key)
 				return win_menu_op_force_redraw;
@@ -2848,10 +2848,10 @@ static int scene_locname_to_itemname(char *dst, size_t dstsize, const char *src,
 		if (strlen(src) > srcsize - 4) {
 			mbcsncpy_s((byte *) dst, srcsize - 4 + 1, (const byte *) src, -1);
 			strcat_s(dst, dstsize, "...");
-			strcat_s(dst, dstsize, "*");
 		} else {
 			strcpy_s(dst, dstsize, src);
 		}
+		strcat_s(dst, dstsize, "*");
 	} else {
 		if (strlen(src) > srcsize - 3) {
 			mbcsncpy_s((byte *) dst, srcsize - 3 + 1, (const byte *) src, -1);
@@ -5011,8 +5011,8 @@ void scene_filelist_postdraw(p_win_menuitem item, dword index, dword topindex,
 		} else {
 			char outstr[256];
 
-			SPRINTF_S(outstr, _("文件大小: %s 字节\n"),
-					  item[index].shortname->ptr);
+			SPRINTF_S(outstr, _("文件大小: %u 字节\n"),
+					  (unsigned int) item[index].data3);
 			if (index - topindex < HRR) {
 				disp_rectangle(239 - (WRR - 2) * DISP_FONTSIZE,
 							   135 + (HRR -

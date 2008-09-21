@@ -56,5 +56,7 @@ echo "\t\tmsg/en_US.so"
 cp -u "$SRCDIR/../msg/en_US.so" "$DESTDIR/msg"
 
 touch "$DESTDIR"
-sync
 sudo umount $DESTDRIVE
+while test ! $? -eq 0; do
+	sudo umount $DESTDRIVE
+done

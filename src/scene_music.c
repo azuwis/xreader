@@ -649,7 +649,7 @@ void scene_mp3bar(void)
 			scePowerRequestSuspend();
 			secticks = 0;
 		}
-		sceKernelDelayThread(20000);
+		sceKernelDelayThread(50000);
 		scene_mp3bar_delay_action();
 	}
 }

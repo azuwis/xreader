@@ -74,6 +74,7 @@ static void text_decode(p_text txt, t_conf_encode encode)
 				txt->size =
 					charsets_big5_conv((const byte *) txt->buf, txt->size,
 									   (byte *) txt->buf, txt->size);
+				txt->ucs = 0;
 				break;
 			case conf_encode_sjis:
 				{
@@ -87,16 +88,27 @@ static void text_decode(p_text txt, t_conf_encode encode)
 						free(orgbuf);
 					else
 						txt->buf = orgbuf;
+					txt->ucs = 0;
+				}
+				break;
+			case conf_encode_ucs:
+				{
+					txt->size =
+						charsets_ucs_conv((const byte *) txt->buf, txt->size,
+										  (byte *) txt->buf, txt->size);
+					txt->ucs = 1;
 				}
 				break;
 			case conf_encode_utf8:
-				txt->size =
-					charsets_utf8_conv((const byte *) txt->buf, txt->size,
-									   (byte *) txt->buf, txt->size);
+				{
+					txt->size =
+						charsets_utf8_conv((const byte *) txt->buf, txt->size,
+										   (byte *) txt->buf, txt->size);
+					txt->ucs = 2;
+				}
 				break;
 			default:;
 		}
-		txt->ucs = 0;
 	}
 }
 
@@ -159,8 +171,8 @@ int text_get_string_width_sys(const byte * pos, size_t size, dword wordspace)
  *
  * @return 显示宽度，以像素计
  */
-static int text_get_string_width(const char *pos, const char *posend, dword maxpixel,
-						  dword wordspace, dword * count)
+static int text_get_string_width(const char *pos, const char *posend,
+								 dword maxpixel, dword wordspace, dword * count)
 {
 	int width = 0;
 	const char *posstart = pos;
@@ -221,8 +233,8 @@ bool is_untruncateable_chars(char ch)
  * @return 显示宽度，以像素计
  */
 static int text_get_string_width_english(const char *pos, const char *posend,
-								  dword maxpixel, dword wordspace,
-								  dword * count)
+										 dword maxpixel, dword wordspace,
+										 dword * count)
 {
 	int width = 0;
 	const char *posstart = pos;
@@ -243,7 +255,8 @@ static int text_get_string_width_english(const char *pos, const char *posend,
 				if (word_start == NULL) {
 					// search for next English word
 					word_end = word_start = pos;
-					while (word_end <= posend && is_untruncateable_chars(*word_end)) {
+					while (word_end <= posend
+						   && is_untruncateable_chars(*word_end)) {
 						word_end++;
 					}
 					dword cnt;
@@ -307,15 +320,16 @@ extern bool text_format(p_text txt, dword max_pixels, dword wordspace,
 			else
 				pos +=
 					ttf_get_string_width(cttf, ettf, (const byte *) pos,
-										 max_pixels, posend - pos, wordspace);
+										 max_pixels, posend - pos, wordspace,
+										 NULL);
 		} else
 #endif
 		{
 			dword count = 0;
 
 			if (config.englishtruncate)
-				text_get_string_width_english(pos, posend, max_pixels, wordspace,
-											  &count);
+				text_get_string_width_english(pos, posend, max_pixels,
+											  wordspace, &count);
 			else
 				text_get_string_width(pos, posend, max_pixels, wordspace,
 									  &count);
@@ -442,7 +456,7 @@ static size_t text_paragraph_join_alloc_memory(char **txtbuf, size_t txtlen)
 	int cnt;
 	size_t avgLength;
 	char *src, *dst;
-	
+
 	if (txtlen == 0 || txtbuf == NULL || *txtbuf == NULL)
 		return 0;
 
@@ -560,8 +574,9 @@ static dword text_reorder(char *string, dword size)
  *
  * @return 新的电子书结构指针
  */
-static p_text text_open(const char *filename, t_fs_filetype ft, dword max_pixels,
-						dword wordspace, t_conf_encode encode, bool reorder)
+static p_text text_open(const char *filename, t_fs_filetype ft,
+						dword max_pixels, dword wordspace, t_conf_encode encode,
+						bool reorder)
 {
 	int fd;
 	p_text txt = calloc(1, sizeof(*txt));

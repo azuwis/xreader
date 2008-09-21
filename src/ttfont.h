@@ -158,12 +158,13 @@ extern int ttf_get_string_width_english(p_ttf cttf, p_ttf ettf,
  * @param maxpixels 最大象素长度
  * @param maxbytes 最大字符长度，以字节计
  * @param wordspace 字间距（以像素点计）
+ * @param pwidth 最终字符串长度指针（以像素点计）
  *
  * @return 字符串个数计数，以字节计
  */
 extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 								dword maxpixels, dword maxbytes,
-								dword wordspace);
+								dword wordspace, dword * pwidth);
 
 /**
  * 得到字符串所能显示在maxpixels中的长度

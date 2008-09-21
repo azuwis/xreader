@@ -259,6 +259,8 @@ static void conf_default(p_conf conf)
 	conf->englishtruncate = true;
 	conf->image_scroll_chgn_speed = true;
 	conf->ttf_haste_up = true;
+	conf->linenum_style = false;
+	conf->infobar_align = conf_align_left;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -786,6 +788,47 @@ static t_conf_rotate stringToRotate(char *str)
 	return conf_rotate_0;
 }
 
+static char *alignToString(char *str, int size, t_conf_align align)
+{
+	if (str == NULL || size == 0)
+		return NULL;
+
+	switch (align) {
+		case conf_align_left:
+			snprintf_s(str, size, "left");
+			break;
+		case conf_align_right:
+			snprintf_s(str, size, "right");
+			break;
+		case conf_align_center:
+			snprintf_s(str, size, "center");
+			break;
+		default:
+			snprintf_s(str, size, "");
+			break;
+	}
+
+	return str;
+}
+
+static t_conf_align stringToAlign(char *str)
+{
+	if (stricmp(str, "left") == 0) {
+		return conf_align_left;
+	}
+	if (stricmp(str, "right") == 0) {
+		return conf_align_right;
+	}
+	if (stricmp(str, "center") == 0) {
+		return conf_align_center;
+	}
+	if (stricmp(str, "middle") == 0) {
+		return conf_align_center;
+	}
+
+	return conf_align_left;
+}
+
 static void check_empty_imgkey(t_conf * conf)
 {
 	if (conf->confver >= XREADER_VERSION_NUM)
@@ -1081,6 +1124,12 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->ttf_haste_up =
 		iniparser_getboolean(dict, "Text:ttf_haste_up", conf->ttf_haste_up);
 
+	conf->linenum_style =
+		iniparser_getboolean(dict, "Text:linenum_style", conf->linenum_style);
+
+	conf->infobar_align =
+		stringToAlign(iniparser_getstring(dict, "Text:infobar_align", ""));
+
 	dictionary_del(dict);
 
 	return true;
@@ -1367,6 +1416,12 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "Text:ttf_haste_up",
 						booleanToString(buf, sizeof(buf), conf->ttf_haste_up));
+
+	iniparser_setstring(dict, "Text:linenum_style",
+						booleanToString(buf, sizeof(buf), conf->linenum_style));
+
+	iniparser_setstring(dict, "Text:infobar_align",
+						alignToString(buf, sizeof(buf), conf->infobar_align));
 
 	iniparser_dump_ini(dict, fp);
 

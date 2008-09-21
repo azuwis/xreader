@@ -91,6 +91,13 @@ typedef enum
 	conf_vertread_reversal = 3
 } t_conf_vertread;
 
+typedef enum
+{
+	conf_align_left = 0,
+	conf_align_right = 1,
+	conf_align_center = 2
+} t_conf_align;
+
 typedef struct
 {
 	char path[PATH_MAX];
@@ -196,6 +203,15 @@ typedef struct
 	bool englishtruncate;
 	bool image_scroll_chgn_speed;
 	bool ttf_haste_up;
+	bool linenum_style;
+	/**
+	 * 状态栏对齐
+	 *
+	 * 0 - 左
+	 * 1 - 右
+	 * 2 - 中
+	 */
+	t_conf_align infobar_align;
 } t_conf, *p_conf;
 
 /* txt key:

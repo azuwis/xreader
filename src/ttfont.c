@@ -975,7 +975,7 @@ extern int ttf_get_string_width_english(p_ttf cttf, p_ttf ettf,
 
 extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 								dword maxpixels, dword maxbytes,
-								dword wordspace)
+								dword wordspace, dword * pwidth)
 {
 	dword width = 0;
 	const byte *ostr = str;
@@ -1016,6 +1016,9 @@ extern int ttf_get_string_width(p_ttf cttf, p_ttf ettf, const byte * str,
 		}
 		bytes++;
 	}
+
+	if (pwidth != NULL)
+		*pwidth = width;
 
 	return str - ostr;
 }

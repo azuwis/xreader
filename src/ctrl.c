@@ -172,7 +172,7 @@ extern int ctrl_waitreleasekey(dword key)
 
 	sceCtrlReadBufferPositive(&pad, 1);
 	while (pad.Buttons == key) {
-		sceKernelDelayThread(20000);
+		sceKernelDelayThread(50000);
 		sceCtrlReadBufferPositive(&pad, 1);
 	}
 
@@ -184,7 +184,7 @@ extern dword ctrl_waitany(void)
 	dword key;
 
 	while ((key = ctrl_read()) == 0) {
-		sceKernelDelayThread(20000);
+		sceKernelDelayThread(50000);
 	}
 	return key;
 }
@@ -194,7 +194,7 @@ extern dword ctrl_waitkey(dword keymask)
 	dword key;
 
 	while ((key = ctrl_read()) != key) {
-		sceKernelDelayThread(20000);
+		sceKernelDelayThread(50000);
 	}
 	return key;
 }
@@ -204,7 +204,7 @@ extern dword ctrl_waitmask(dword keymask)
 	dword key;
 
 	while (((key = ctrl_read()) & keymask) == 0) {
-		sceKernelDelayThread(20000);
+		sceKernelDelayThread(50000);
 	}
 	return key;
 }
@@ -215,7 +215,7 @@ extern dword ctrl_waitlyric(void)
 	dword key;
 
 	while ((key = ctrl_read()) == 0) {
-		sceKernelDelayThread(20000);
+		sceKernelDelayThread(50000);
 		if (lyric_check_changed(music_get_lyric()))
 			break;
 	}
@@ -258,7 +258,7 @@ extern dword ctrl_waittime(dword t)
 	time_t t1 = time(NULL);
 
 	while ((key = ctrl_read()) == 0) {
-		sceKernelDelayThread(20000);
+		sceKernelDelayThread(50000);
 		if (time(NULL) - t1 >= t)
 			return 0;
 	}
