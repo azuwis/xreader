@@ -130,6 +130,14 @@ static t_fs_filetype get_archive_type(const char *path)
 		&& stricmp(path + strlen(path) - strlen(".chm"), ".chm") == 0)
 		return fs_filetype_chm;
 
+	if (strlen(path) >= strlen(".umd")
+		&& stricmp(path + strlen(path) - strlen(".umd"), ".umd") == 0)
+		return fs_filetype_umd;
+
+	if (strlen(path) >= strlen(".pdb")
+		&& stricmp(path + strlen(path) - strlen(".pdb"), ".pdb") == 0)
+		return fs_filetype_pdb;
+
 	return fs_filetype_unknown;
 }
 

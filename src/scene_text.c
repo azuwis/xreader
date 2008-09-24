@@ -720,7 +720,8 @@ PBookViewData new_book_view(PBookViewData p)
 
 int scene_book_reload(PBookViewData pView, dword selidx)
 {
-	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar) {
+	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_umd
+		|| where == scene_in_rar) {
 		STRCPY_S(pView->filename, filelist[selidx].compname->ptr);
 		STRCPY_S(pView->archname, config.shortpath);
 		if (sceKernelDevkitVersion() <= 0x03070110) {
@@ -762,19 +763,37 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	scene_power_save(false);
 
 	extern bool g_force_text_view_mode;
+	extern p_umd_chapter p_umdchapter;
 
-	if (g_force_text_view_mode == false)
-		fs = text_open_archive(pView->filename, pView->archname,
-							   (t_fs_filetype) filelist[selidx].data,
-							   pixelsperrow, config.wordspace,
-							   config.encode, config.reordertxt, where,
-							   config.vertread);
-	else
-		fs = text_open_archive(pView->filename, pView->archname,
-							   fs_filetype_txt,
-							   pixelsperrow, config.wordspace,
-							   config.encode, config.reordertxt, where,
-							   config.vertread);
+	if (g_force_text_view_mode == false) {
+		if (scene_in_umd == where && p_umdchapter) {
+			fs = chapter_open_in_umd(pView->filename, pView->archname,
+									 selidx, pixelsperrow, config.wordspace,
+									 config.encode, config.reordertxt);
+		} else {
+			fs = text_open_archive(pView->filename, pView->archname,
+								   (t_fs_filetype) filelist[selidx].data,
+								   pixelsperrow, config.wordspace,
+								   config.encode, config.reordertxt, where,
+								   config.vertread);
+		}
+	} else {
+		const char *ext = utils_fileext(pView->filename);
+
+		if (ext && !stricmp(ext, "umd")) {
+			fs = text_open_archive(pView->filename, pView->archname,
+								   fs_filetype_umd,
+								   pixelsperrow, config.wordspace,
+								   config.encode, config.reordertxt, where,
+								   config.vertread);
+		} else {
+			fs = text_open_archive(pView->filename, pView->archname,
+								   fs_filetype_txt,
+								   pixelsperrow, config.wordspace,
+								   config.encode, config.reordertxt, where,
+								   config.vertread);
+		}
+	}
 
 	if (fs == NULL) {
 		win_msg(_("文件打开失败"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);

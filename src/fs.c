@@ -22,7 +22,6 @@
 #include "image.h"
 #include "archive.h"
 #include "dbg.h"
-
 typedef struct
 {
 	const char *ext;
@@ -99,6 +98,8 @@ t_fs_filetype_entry ft_table[] = {
 #endif
 	{"zip", fs_filetype_zip},
 	{"gz", fs_filetype_gz},
+	{"umd", fs_filetype_umd},
+	{"pdb", fs_filetype_pdb},
 	{"chm", fs_filetype_chm},
 	{"rar", fs_filetype_rar},
 	{"pbp", fs_filetype_prog},
@@ -142,6 +143,7 @@ t_fs_specfiletype_entry ft_spec_table[] = {
 
 int MAX_ITEM_NAME_LEN = 40;
 int DIR_INC_SIZE = 256;
+p_umd_chapter p_umdchapter = NULL;
 
 void filename_to_itemname(p_win_menuitem item, int cur_count,
 						  const char *filename)
@@ -234,7 +236,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		scene_power_save(true);
 		return 0;
 	}
-//  if(stricmp(dir, "ms0:/") == 0)
+	//  if(stricmp(dir, "ms0:/") == 0)
 	{
 		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 		if (*mitem == NULL) {
@@ -698,7 +700,8 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 
 	t_fs_filetype ft = fs_file_get_type(ui->path);
 
-	if (ft == fs_filetype_chm || ft == fs_filetype_zip || ft == fs_filetype_rar)
+	if (ft == fs_filetype_chm || ft == fs_filetype_zip || ft == fs_filetype_rar
+		|| ft == fs_filetype_umd || ft == fs_filetype_pdb)
 		return CHM_ENUMERATOR_CONTINUE;
 
 	dword cur_count = ((p_fs_chm_enum) context)->cur_count;
@@ -791,6 +794,113 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 	chm_close(chm);
 	scene_power_save(true);
 	return cenum.cur_count;
+}
+
+extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
+							dword icolor, dword selicolor, dword selrcolor,
+							dword selbcolor)
+{
+	buffer *pbuf = NULL;
+	extern dword filecount;
+
+	win_item_destroy(mitem, &filecount);
+
+	scene_power_save(false);
+	p_win_menuitem item = NULL;
+
+	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
+	if (*mitem == NULL) {
+		scene_power_save(true);
+		return 0;
+	}
+	item = *mitem;
+	dword cur_count = 1;
+
+	STRCPY_S(item[0].name, "<..>");
+	buffer_copy_string(item[0].compname, "..");
+	item[0].data = (void *) fs_filetype_dir;
+	item[0].width = 4;
+	item[0].selected = false;
+	item[0].icolor = icolor;
+	item[0].selicolor = selicolor;
+	item[0].selrcolor = selrcolor;
+	item[0].selbcolor = selbcolor;
+
+	do {
+		if (!p_umdchapter
+			|| (p_umdchapter->umdfile->ptr
+				&& strcmp(p_umdchapter->umdfile->ptr, umdfile))) {
+			if (p_umdchapter)
+				umd_chapter_reset(p_umdchapter);
+			p_umdchapter = umd_chapter_init();
+			if (!p_umdchapter)
+				break;
+			buffer_copy_string(p_umdchapter->umdfile, umdfile);
+			cur_count = parse_umd_chapters(umdfile, &p_umdchapter);
+		} else
+			cur_count = p_umdchapter->chapter_count + 1;
+
+		if (cur_count > 1) {
+			if (cur_count > DIR_INC_SIZE) {
+				*mitem = win_realloc_items(*mitem, DIR_INC_SIZE, cur_count);
+				if (*mitem == NULL)
+					break;
+				item = *mitem;
+			}
+
+			u_int i = 1;
+			struct t_chapter *p = p_umdchapter->pchapters;
+			size_t stlen = 0;
+
+			pbuf = buffer_init();
+			if (!pbuf || buffer_prepare_copy(pbuf, 256) < 0)
+				break;
+			char pos[20] = { 0 };
+			for (i = 1; i < cur_count; i++) {
+				stlen = p[i - 1].name->used - 1;
+				stlen =
+					charsets_ucs_conv((const byte *) p[i - 1].name->ptr, stlen,
+									  (byte *) pbuf->ptr, pbuf->size);
+				SPRINTF_S(pos, "%d", p[i - 1].length);
+				buffer_copy_string_len(item[i].shortname, pos, 20);
+				buffer_copy_string_len(item[i].compname, pbuf->ptr,
+									   (stlen > 256) ? 256 : stlen);
+				filename_to_itemname(item, i, item[i].compname->ptr);
+				if (1 != p_umdchapter->umd_type) {
+					if (0 == p_umdchapter->umd_mode)
+						item[i].data = (void *) fs_filetype_bmp;
+					else if (1 == p_umdchapter->umd_mode)
+						item[i].data = (void *) fs_filetype_jpg;
+					else
+						item[i].data = (void *) fs_filetype_gif;
+				} else
+					item[i].data = (void *) fs_filetype_txt;
+				item[i].data2[0] = p[i - 1].chunk_pos & 0xFFFF;
+				item[i].data2[1] = (p[i - 1].chunk_pos >> 16) & 0xFFFF;
+				item[i].data2[2] = p[i - 1].chunk_offset & 0xFFFF;
+				item[i].data2[3] = (p[i - 1].chunk_offset >> 16) & 0xFFFF;
+				printf("%d pos:%d,%d,%d-%d,%d\n", i, p[i - 1].chunk_pos,
+					   item[i].data2[0], item[i].data2[1], item[i].data2[2],
+					   item[i].data2[3]);
+				item[i].selected = false;
+				item[i].icolor = icolor;
+				item[i].selicolor = selicolor;
+				item[i].selrcolor = selrcolor;
+				item[i].selbcolor = selbcolor;
+				//buffer_free(p[i - 1].name);
+			}
+#if 0
+			printf("%s umd file:%s type:%d,mode:%d,chapter count:%ld\n",
+				   __func__, umdfile, p_umdchapter->umd_type,
+				   p_umdchapter->umd_mode, cur_count);
+#endif
+		}
+	} while (false);
+	if (pbuf)
+		buffer_free(pbuf);
+	scene_power_save(true);
+#define MAX_CHAP_LEN 500
+	return (cur_count > 1 && cur_count < MAX_CHAP_LEN) ? cur_count : 1;
 }
 
 extern t_fs_filetype fs_file_get_type(const char *filename)

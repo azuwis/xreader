@@ -69,10 +69,18 @@ static int open_image(dword selidx)
 	bool shareimg = (imgshow == imgdata) ? true : false;
 	int result;
 
-	result =
-		image_open_archive(filename, config.shortpath,
-						   (t_fs_filetype) filelist[selidx].data, &width,
-						   &height, &imgdata, &bgcolor, where);
+	if (scene_in_umd == where) {
+		size_t pos = filelist[selidx].data2[1] << 16;
+
+		pos += filelist[selidx].data2[0];
+		result = image_open_umd(filename, config.shortpath,
+								(t_fs_filetype) filelist[selidx].data, pos, 0,
+								&width, &height, &imgdata, &bgcolor);
+	} else
+		result =
+			image_open_archive(filename, config.shortpath,
+							   (t_fs_filetype) filelist[selidx].data, &width,
+							   &height, &imgdata, &bgcolor, where);
 	if (imgdata == NULL && shareimg) {
 		imgshow = NULL;
 	}

@@ -5,10 +5,14 @@
 #include "conf.h"
 #include "win.h"
 #include "buffer.h"
+#include "unumd.h"
+#include "depdb.h"
 
 typedef enum
 {
 	fs_filetype_dir = 0,
+	fs_filetype_umd,
+	fs_filetype_pdb,
 	fs_filetype_chm,
 	fs_filetype_gz,
 	fs_filetype_zip,
@@ -43,7 +47,7 @@ typedef enum
 		, fs_filetype_font
 #endif
 } t_fs_filetype;
-
+extern p_umd_chapter p_umdchapter;
 extern dword fs_list_device(const char *dir, const char *sdir,
 							p_win_menuitem * mitem, dword icolor,
 							dword selicolor, dword selrcolor, dword selbcolor);
@@ -61,6 +65,9 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 							dword icolor, dword selicolor, dword selrcolor,
 							dword selbcolor);
 extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
+							dword icolor, dword selicolor, dword selrcolor,
+							dword selbcolor);
+extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 							dword icolor, dword selicolor, dword selrcolor,
 							dword selbcolor);
 p_win_menuitem fs_empty_dir(dword * filecount, dword icolor,

@@ -32,6 +32,9 @@ extern int image_readgif_in_zip(const char *zipfile, const char *filename,
 extern int image_readgif_in_chm(const char *chmfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor);
+extern int image_readgif_in_umd(const char *umdfile, size_t file_pos,
+								size_t length, dword * pwidth, dword * pheight,
+								pixel ** image_data, pixel * bgcolor);
 extern int image_readgif_in_rar(const char *rarfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor);
@@ -42,6 +45,9 @@ extern int image_readjpg_in_zip(const char *zipfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor);
 extern int image_readjpg_in_chm(const char *chmfile, const char *filename,
 								dword * pwidth, dword * pheight,
+								pixel ** image_data, pixel * bgcolor);
+extern int image_readjpg_in_umd(const char *umdfile, size_t file_pos,
+								size_t length, dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor);
 extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
 								dword * pwidth, dword * pheight,
@@ -54,6 +60,9 @@ extern int exif_readjpg_in_zip(const char *zipfile, const char *filename,
 extern int exif_readjpg_in_chm(const char *chmfile, const char *filename,
 							   dword * pwidth, dword * pheight,
 							   pixel ** image_data, pixel * bgcolor);
+extern int exif_readjpg_in_umd(const char *umdfile, size_t file_pos,
+							   size_t length, dword * pwidth, dword * pheight,
+							   pixel ** image_data, pixel * bgcolor);
 extern int exif_readjpg_in_rar(const char *rarfile, const char *filename,
 							   dword * pwidth, dword * pheight,
 							   pixel ** image_data, pixel * bgcolor);
@@ -64,6 +73,9 @@ extern int image_readbmp_in_zip(const char *zipfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor);
 extern int image_readbmp_in_chm(const char *chmfile, const char *filename,
 								dword * pwidth, dword * pheight,
+								pixel ** image_data, pixel * bgcolor);
+extern int image_readbmp_in_umd(const char *umdfile, size_t file_pos,
+								size_t length, dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor);
 extern int image_readbmp_in_rar(const char *rarfile, const char *filename,
 								dword * pwidth, dword * pheight,
@@ -79,14 +91,16 @@ extern int image_readtga_in_chm(const char *chmfile, const char *filename,
 extern int image_readtga_in_rar(const char *rarfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor);
-extern int image_open_normal(const char *filename,
-							 t_fs_filetype ft,
+extern int image_open_normal(const char *filename, t_fs_filetype ft,
 							 dword * pWidth, dword * pHeight,
 							 pixel ** ppImageData, pixel * pBgColor);
+extern int image_open_umd(const char *chaptername, const char *umdfile,
+						  t_fs_filetype ft, size_t file_pos, size_t length,
+						  dword * pWidth, dword * pHeight, pixel ** ppImageData,
+						  pixel * pBgColor);
 int image_open_archive(const char *filename, const char *archname,
-					   t_fs_filetype ft, dword * pWidth,
-					   dword * pHeight, pixel ** ppImageData,
-					   pixel * pBgColor, int where);
+					   t_fs_filetype ft, dword * pWidth, dword * pHeight,
+					   pixel ** ppImageData, pixel * pBgColor, int where);
 extern void exif_entry_viewer(ExifEntry * pentry, void *user_data);
 extern void exif_context_viewer(ExifContent * pcontext, void *user_data);
 extern void exif_viewer(ExifData * data);

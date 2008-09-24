@@ -340,6 +340,35 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 	free(newdata);
 }
 
+static unsigned image_umd_fread(void *buf, unsigned r, unsigned n, void *stream)
+{
+	FILE **fp = (FILE **) stream;
+
+	if (!buf || !fp || !(*fp))
+		return 0;
+	int size = fread(buf, r, n, (FILE *) (*fp));
+
+	if (size < 0)
+		return 0;
+	else
+		return n;
+}
+
+#if 0
+static int image_umd_fseek(void *stream, long offset, int origin)
+{
+	if (origin != SEEK_SET)
+		return 0;
+	fseek((FILE *) stream, offset, origin);
+	return 0;
+}
+
+static long image_umd_ftell(void *stream)
+{
+	return ftell((FILE *) stream);
+}
+#endif
+
 static unsigned image_zip_fread(void *buf, unsigned r, unsigned n, void *stream)
 {
 	int size = unzReadCurrentFile((unzFile) stream, buf, r * n);
@@ -979,6 +1008,22 @@ extern int image_readgif_in_chm(const char *chmfile, const char *filename,
 	return result;
 }
 
+extern int image_readgif_in_umd(const char *umdfile, size_t file_pos,
+								size_t length, dword * pwidth, dword * pheight,
+								pixel ** image_data, pixel * bgcolor)
+{
+	FILE *fp = NULL;
+	int result = locate_umd_img(umdfile, file_pos, &fp);
+
+	if (0 > result)
+		return result;
+	result =
+		image_readgif2((FILE *) & fp, pwidth, pheight, image_data, bgcolor,
+					   image_gif_read);
+	fclose(fp);
+	return result;
+}
+
 extern int image_readgif_in_rar(const char *rarfile, const char *filename,
 								dword * pwidth, dword * pheight,
 								pixel ** image_data, pixel * bgcolor)
@@ -1198,6 +1243,31 @@ extern int image_readjpg_in_chm(const char *chmfile, const char *filename,
 		exif_viewer(exif_data);
 	}
 	chm_close(chm.chm);
+	return result;
+}
+
+extern int exif_readjpg_in_umd(const char *umdfile, size_t file_pos,
+							   size_t length, dword * pwidth, dword * pheight,
+							   pixel ** image_data, pixel * bgcolor)
+{
+	return -1;
+}
+
+extern int image_readjpg_in_umd(const char *umdfile, size_t file_pos,
+								size_t length, dword * pwidth, dword * pheight,
+								pixel ** image_data, pixel * bgcolor)
+{
+	FILE *fp = NULL;
+	int result = locate_umd_img(umdfile, file_pos, &fp);
+
+	if (0 > result)
+		return result;
+	FILE *fpp = fp;
+
+	result =
+		image_readjpg2((FILE *) & fpp, pwidth, pheight, image_data, bgcolor,
+					   image_umd_fread);
+	fclose(fp);
 	return result;
 }
 
@@ -1426,6 +1496,22 @@ extern int image_readbmp_in_chm(const char *chmfile, const char *filename,
 					   image_chm_fread);
 
 	chm_close(chm.chm);
+	return result;
+}
+
+extern int image_readbmp_in_umd(const char *umdfile, size_t file_pos,
+								size_t length, dword * pwidth, dword * pheight,
+								pixel ** image_data, pixel * bgcolor)
+{
+	FILE *fp = NULL;
+	int result = locate_umd_img(umdfile, file_pos, &fp);
+
+	if (0 > result)
+		return result;
+	result =
+		image_readbmp2((FILE *) & fp, pwidth, pheight, image_data, bgcolor,
+					   image_umd_fread);
+	fclose(fp);
 	return result;
 }
 
@@ -1839,6 +1925,60 @@ int image_open_archive(const char *filename, const char *archname,
 											 pHeight, ppImageData, pBgColor);
 					break;
 			}
+			break;
+		default:
+			result = -1;
+	}
+
+	return result;
+}
+
+/**
+ * 解压图像文件，档案文件版本
+ * @param filename 文件路径
+ * @param archname 档案路径
+ * @param ft 文件类型
+ * @param file_pos 图像起始偏移量
+ * @param length 图像大小
+ * @param pWidth [out] 图像宽度
+ * @param pHeight [out] 图像高度
+ * @param ppImageData [out] 图像数据指针
+ * @note  如果执行成功，*ppImageData将指向分配的内存
+ * @param pBgColor [out] 图像背景颜色
+ * @return 
+ * - !=0 失败
+ * - =0 成功
+ * @note 如果文件为a.umd中的b章节，则filename为b, archname为a.umd
+ */
+extern int image_open_umd(const char *chaptername, const char *umdfile,
+						  t_fs_filetype ft, size_t file_pos, size_t length,
+						  dword * pWidth, dword * pHeight, pixel ** ppImageData,
+						  pixel * pBgColor)
+{
+	int result = -1;
+
+	// archname may be NULL 
+	if (chaptername == NULL || umdfile == NULL || pWidth == NULL
+		|| pHeight == NULL || pBgColor == NULL || file_pos < 0 || length < 0)
+		return -1;
+
+	*ppImageData = NULL;
+
+	switch (ft) {
+		case fs_filetype_gif:
+			result =
+				image_readgif_in_umd(umdfile, file_pos, length, pWidth,
+									 pHeight, ppImageData, pBgColor);
+			break;
+		case fs_filetype_jpg:
+			result =
+				image_readjpg_in_umd(umdfile, file_pos, length, pWidth,
+									 pHeight, ppImageData, pBgColor);
+			break;
+		case fs_filetype_bmp:
+			result =
+				image_readbmp_in_umd(umdfile, file_pos, length, pWidth,
+									 pHeight, ppImageData, pBgColor);
 			break;
 		default:
 			result = -1;

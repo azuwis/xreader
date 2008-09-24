@@ -99,6 +99,10 @@ extern p_text text_open_archive(const char *filename,
 								t_conf_encode encode,
 								bool reorder, int where, int vertread);
 
+extern p_text chapter_open_in_umd(const char *umdfile, const char *chaptername,
+								  u_int index, dword rowpixels, dword wordspace,
+								  t_conf_encode encode, bool reorder);
+
 /**
  * ¹Ø±ÕÎÄ±¾
  *

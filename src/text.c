@@ -20,6 +20,8 @@
 #include "scene.h"
 #include "archive.h"
 #include "conf.h"
+#include "unumd.h"
+#include "depdb.h"
 
 extern int use_ttf;
 
@@ -597,7 +599,6 @@ static p_text text_open(const char *filename, t_fs_filetype ft,
 	sceIoLseek32(fd, 0, PSP_SEEK_SET);
 	sceIoRead(fd, txt->buf, txt->size);
 	sceIoClose(fd);
-	txt->buf[txt->size] = 0;
 	text_decode(txt, encode);
 	if (ft == fs_filetype_html)
 		txt->size = html_to_text(txt->buf, txt->size, true);
@@ -606,6 +607,208 @@ static p_text text_open(const char *filename, t_fs_filetype ft,
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
 	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
+		text_close(txt);
+		return NULL;
+	}
+
+	calc_gi(txt);
+	return txt;
+}
+
+static int fix_symbian_crlf(unsigned char *pos, unsigned char *posend)
+{
+	while (pos < posend) {
+		if (pos < posend - 1 && *pos == 0xa1 && *(pos + 1) == 0xf6) {
+			*pos = '\r';
+			*(pos + 1) = '\n';
+			pos += 2;
+		} else {
+			pos++;
+		}
+	}
+
+	return 0;
+}
+
+extern p_text chapter_open_in_umd(const char *umdfile, const char *chaptername,
+								  u_int index, dword rowpixels, dword wordspace,
+								  t_conf_encode encode, bool reorder)
+{
+	extern p_umd_chapter p_umdchapter;
+	buffer *pbuf = buffer_init();
+
+	if (pbuf == NULL) {
+		return NULL;
+	}
+	if (index < 1 || !p_umdchapter
+		|| 0 > read_umd_chapter_content(chaptername, index - 1, p_umdchapter,
+										&pbuf)) {
+		buffer_free(pbuf);
+		return NULL;
+	}
+
+	p_text txt = calloc(1, sizeof(*txt));
+
+	if (txt == NULL) {
+		buffer_free(pbuf);
+		return NULL;
+	}
+
+	STRCPY_S(txt->filename, umdfile);
+	if ((txt->buf = (char *) calloc(1, pbuf->used + 1)) == NULL) {
+		buffer_free(pbuf);
+		text_close(txt);
+		return NULL;
+	}
+
+	txt->size = pbuf->used;
+	memcpy(txt->buf, pbuf->ptr, txt->size);
+	text_decode(txt, conf_encode_ucs);
+	fix_symbian_crlf((unsigned char *) txt->buf,
+					 (unsigned char *) txt->buf + txt->size);
+	buffer_free(pbuf);
+	dbg_printf(d, "%s: after conv file length: %ld", __func__, txt->size);
+	/* if (ft == fs_filetype_html)
+	   txt->size = html_to_text(txt->buf, txt->size, true); */
+	if (reorder) {
+		txt->size = text_reorder(txt->buf, txt->size);
+		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+	}
+	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+		text_close(txt);
+		return NULL;
+	}
+
+	calc_gi(txt);
+	return txt;
+}
+
+extern p_text text_open_in_umd(const char *umdfile, const char *chaptername,
+							   t_fs_filetype ft, dword rowpixels,
+							   dword wordspace, t_conf_encode encode,
+							   bool reorder)
+{
+	int fd;
+	SceIoStat state;
+	size_t filesize;
+	buffer *pRaw, *pbuf;
+	p_text txt;
+	char *p;
+
+	if (sceIoGetstat(umdfile, &state) < 0) {
+		return NULL;
+	}
+	if ((fd = sceIoOpen(umdfile, PSP_O_RDONLY, 0777)) < 0) {
+		return NULL;
+	}
+	filesize = state.st_size;
+	pRaw = buffer_init();
+	if (pRaw == NULL) {
+		return NULL;
+	}
+	buffer_prepare_copy(pRaw, filesize);
+	sceIoRead(fd, pRaw->ptr, filesize);
+	sceIoClose(fd);
+	p = pRaw->ptr;
+	if (*(int *) p != 0xde9a9b89) {
+		dbg_printf(d,
+				   "%s: not start with 0xde9a9b89, that umd must be corrupted.",
+				   __func__);
+		buffer_free(pRaw);
+		return NULL;
+	}
+	p += sizeof(int);
+	while (*p != '#') {
+		p++;
+	}
+	pbuf = buffer_init();
+	if (pbuf == NULL) {
+		buffer_free(pRaw);
+		return NULL;
+	}
+	umd_readdata(&p, &pbuf);
+	dbg_printf(d, "%s: parse file length: %d", __func__, pbuf->size);
+	buffer_free(pRaw);
+	txt = calloc(1, sizeof(*txt));
+	if (txt == NULL) {
+		buffer_free(pbuf);
+		return NULL;
+	}
+	STRCPY_S(txt->filename, umdfile);
+	if ((txt->buf = (char *) calloc(1, pbuf->used + 1)) == NULL) {
+		buffer_free(pbuf);
+		text_close(txt);
+		return NULL;
+	}
+	txt->size = pbuf->used;
+	memcpy(txt->buf, pbuf->ptr, txt->size);
+	text_decode(txt, conf_encode_ucs);
+	buffer_free(pbuf);
+	dbg_printf(d, "%s: after conv file length %ld", __func__, txt->size);
+	fix_symbian_crlf((unsigned char *) txt->buf,
+					 (unsigned char *) txt->buf + txt->size);
+	if (ft == fs_filetype_html)
+		txt->size = html_to_text(txt->buf, txt->size, true);
+	if (reorder) {
+		txt->size = text_reorder(txt->buf, txt->size);
+		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+	}
+	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+		text_close(txt);
+		return NULL;
+	}
+
+	calc_gi(txt);
+	return txt;
+}
+
+extern p_text text_open_in_pdb(const char *pdbfile, const char *chaptername,
+							   t_fs_filetype ft, dword rowpixels,
+							   dword wordspace, t_conf_encode encode,
+							   bool reorder)
+{
+	SceIoStat state;
+
+	if (sceIoGetstat(pdbfile, &state) < 0) {
+		return NULL;
+	}
+	size_t filesize = state.st_size;
+
+	buffer *pbuf = calloc(1, sizeof(*pbuf));
+
+	if (pbuf == NULL)
+		return NULL;
+	buffer_prepare_copy(pbuf, filesize);
+	if (0 > read_pdb_data(pdbfile, &pbuf)) {
+		buffer_free(pbuf);
+		return NULL;
+	}
+
+	dbg_printf(d, "%s parse file length:%d!", __func__, pbuf->size);
+	p_text txt = calloc(1, sizeof(*txt));
+
+	if (txt == NULL) {
+		buffer_free(pbuf);
+		return NULL;
+
+	}
+	STRCPY_S(txt->filename, pdbfile);
+	if ((txt->buf = (char *) calloc(1, pbuf->used + 1)) == NULL) {
+		buffer_free(pbuf);
+		text_close(txt);
+		return NULL;
+	}
+
+	txt->size = pbuf->used;
+	memcpy(txt->buf, pbuf->ptr, txt->size);
+	buffer_free(pbuf);
+	txt->ucs = 0;
+
+	if (reorder) {
+		txt->size = text_reorder(txt->buf, txt->size);
+		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
+	}
+	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -1263,20 +1466,33 @@ extern p_text text_open_archive(const char *filename,
 
 	switch (where) {
 		case scene_in_dir:
-			if (ext && stricmp(ext, "gz") == 0)
+			if (ext && stricmp(ext, "gz") == 0) {
 				pText = text_open_in_gz(archname, archname,
 										filetype, max_pixels,
 										wordspace, encode, reorder);
-			else if (filetype != fs_filetype_unknown)
+			} else if (filetype == fs_filetype_umd) {
+				pText = text_open_in_umd(archname, filename,
+										 filetype, max_pixels,
+										 wordspace, encode, reorder);
+			} else if (filetype == fs_filetype_pdb) {
+				pText = text_open_in_pdb(archname, filename,
+										 filetype, max_pixels, wordspace,
+										 encode, reorder);
+			} else if (filetype != fs_filetype_unknown) {
 				pText = text_open(archname, filetype,
 								  max_pixels, wordspace, encode, reorder);
-			else {
+			} else {
 				pText =
 					text_open_binary(archname,
 									 (vertread == conf_vertread_lvert
 									  || vertread == conf_vertread_rvert)
 					);
 			}
+			break;
+		case scene_in_umd:
+			pText = text_open_in_umd(archname, filename,
+									 filetype, max_pixels,
+									 wordspace, encode, reorder);
 			break;
 		case scene_in_chm:
 			pText = text_open_in_chm(archname, filename,

@@ -3036,6 +3036,16 @@ static void scene_open_dir_or_archive(dword * idx)
 								   usedyncolor ? get_bgcolor_by_time() :
 								   config.menubcolor, config.selbcolor);
 				break;
+			case fs_filetype_umd:
+				where = scene_in_umd;
+				filecount =
+					fs_umd_to_menu(config.shortpath, &filelist,
+								   config.menutextcolor,
+								   config.selicolor,
+								   config.
+								   usedyncolor ? get_bgcolor_by_time() :
+								   config.menubcolor, config.selbcolor);
+				break;
 			case fs_filetype_rar:
 				where = scene_in_rar;
 				filecount =
@@ -4040,6 +4050,7 @@ int scene_single_file_ops_draw(p_win_menuitem item, dword selidx)
 			}
 			break;
 #endif
+		case fs_filetype_umd:
 		case fs_filetype_chm:
 		case fs_filetype_zip:
 		case fs_filetype_rar:
@@ -4188,6 +4199,27 @@ static void scene_fileops_menu_draw(int selcount, p_win_menuitem item,
 	}
 }
 
+static void scene_open_text(dword * idx)
+{
+#ifdef ENABLE_USB
+	usb_deactivate();
+#endif
+	config.isreading = true;
+	STRCPY_S(prev_path, config.path);
+	STRCPY_S(prev_shortpath, config.shortpath);
+	STRCPY_S(prev_lastfile, filelist[*idx].compname->ptr);
+	prev_where = where;
+	*idx = scene_readbook(*idx);
+	g_force_text_view_mode = false;
+	config.isreading = false;
+#ifdef ENABLE_USB
+	if (config.enableusb)
+		usb_activate();
+	else
+		usb_deactivate();
+#endif
+}
+
 static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 												t_win_menu_op * retop,
 												p_win_menuitem item,
@@ -4315,6 +4347,17 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 						}
 						break;
 #endif
+					case fs_filetype_umd:
+						{
+							if (scene_in_dir == where) {
+								g_force_text_view_mode = true;
+								scene_open_text(&sidx);
+								*retop = win_menu_op_cancel;
+							} else {
+								*retop = win_menu_op_ok;
+							}
+						}
+						break;
 					default:
 						g_force_text_view_mode = true;
 						*retop = win_menu_op_ok;
@@ -4624,6 +4667,12 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 												filename, &width,
 												&height, &imgdata, &bgcolor);
 						break;
+						/*case scene_in_umd:
+						   result =
+						   exif_readjpg_in_umd(config.shortpath,
+						   filename, &width,
+						   &height, &imgdata, &bgcolor);
+						 */
 					case scene_in_rar:
 						result =
 							exif_readjpg_in_rar(config.shortpath,
@@ -5194,7 +5243,7 @@ static void scene_enter_dir(dword * idx)
 }
 
 enum ArchiveType
-{ ZIP, RAR, CHM };
+{ ZIP, RAR, CHM, UMD };
 
 static void scene_enter_archive(dword * idx, enum ArchiveType type)
 {
@@ -5207,6 +5256,9 @@ static void scene_enter_archive(dword * idx, enum ArchiveType type)
 			break;
 		case CHM:
 			where = scene_in_chm;
+			break;
+		case UMD:
+			where = scene_in_umd;
 			break;
 	}
 	STRCAT_S(config.path, filelist[*idx].compname->ptr);
@@ -5237,12 +5289,21 @@ static void scene_enter_archive(dword * idx, enum ArchiveType type)
 							   usedyncolor ? get_bgcolor_by_time() : config.
 							   menubcolor, config.selbcolor);
 			break;
+		case UMD:
+			filecount =
+				fs_umd_to_menu(config.shortpath, &filelist,
+							   config.menutextcolor, config.selicolor,
+							   config.
+							   usedyncolor ? get_bgcolor_by_time() : config.
+							   menubcolor, config.selbcolor);
+			break;
 	}
-	quicksort(filelist,
-			  (filecount > 0
-			   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
-			  filecount - 1, sizeof(t_win_menuitem),
-			  compare_func[(int) config.arrange]);
+	if (UMD != type)
+		quicksort(filelist,
+				  (filecount > 0
+				   && filelist[0].compname->ptr[0] == '.') ? 1 : 0,
+				  filecount - 1, sizeof(t_win_menuitem),
+				  compare_func[(int) config.arrange]);
 }
 
 #ifdef ENABLE_IMAGE
@@ -5292,27 +5353,6 @@ static void scene_open_music(dword * idx)
 	music_directplay(fn, lfn);
 }
 #endif
-
-static void scene_open_text(dword * idx)
-{
-#ifdef ENABLE_USB
-	usb_deactivate();
-#endif
-	config.isreading = true;
-	STRCPY_S(prev_path, config.path);
-	STRCPY_S(prev_shortpath, config.shortpath);
-	STRCPY_S(prev_lastfile, filelist[*idx].compname->ptr);
-	prev_where = where;
-	*idx = scene_readbook(*idx);
-	g_force_text_view_mode = false;
-	config.isreading = false;
-#ifdef ENABLE_USB
-	if (config.enableusb)
-		usb_activate();
-	else
-		usb_deactivate();
-#endif
-}
 
 static void scene_open_ebm(dword * idx)
 {
@@ -5387,6 +5427,8 @@ void scene_filelist(void)
 	else
 		usb_deactivate();
 #endif
+	if (p_umdchapter)
+		p_umdchapter = NULL;
 	while (1) {
 		if (!config.isreading && !locreading) {
 			if (filelist == 0 || filecount == 0) {
@@ -5454,6 +5496,16 @@ void scene_filelist(void)
 		}
 		if (idx == INVALID) {
 			switch (where) {
+				case scene_in_umd:
+					filecount =
+						fs_umd_to_menu(config.shortpath, &filelist,
+									   config.menutextcolor,
+									   config.selicolor,
+									   config.
+									   usedyncolor ?
+									   get_bgcolor_by_time() :
+									   config.menubcolor, config.selbcolor);
+					break;
 				case scene_in_zip:
 					filecount =
 						fs_zip_to_menu(config.shortpath, &filelist,
@@ -5537,6 +5589,9 @@ void scene_filelist(void)
 			case fs_filetype_dir:
 				scene_enter_dir(&idx);
 				break;
+			case fs_filetype_umd:
+				scene_enter_archive(&idx, UMD);
+				break;
 			case fs_filetype_zip:
 				scene_enter_archive(&idx, ZIP);
 				break;
@@ -5588,6 +5643,11 @@ void scene_filelist(void)
 		if (config.dis_scrsave)
 			scePowerTick(0);
 	}
+	if (p_umdchapter) {
+		umd_chapter_free(p_umdchapter);
+		p_umdchapter = NULL;
+	}
+
 	if (filelist != NULL) {
 		win_item_destroy(&filelist, &filecount);
 	}
