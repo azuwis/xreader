@@ -94,8 +94,14 @@ void ExceptionHandler(PspDebugRegBlock * regs)
 			char timestr[80];
 			pspTime tm;
 
-			SPRINTF_S(testo, "%-21s: %s\r\n", "xReader version",
-					  XREADER_VERSION_LONG);
+			SPRINTF_S(testo, "%-21s: %s %s\r\n", "xReader version",
+					  XREADER_VERSION_LONG,
+#ifdef ENABLE_LITE
+					  "lite"
+#else
+					  ""
+#endif
+				);
 			fwrite(testo, 1, strlen(testo), log);
 			SPRINTF_S(testo, "%-21s: %08X\r\n", "PSP firmware version",
 					  sceKernelDevkitVersion());

@@ -346,7 +346,7 @@ static unsigned image_umd_fread(void *buf, unsigned r, unsigned n, void *stream)
 
 	if (!buf || !fp || !(*fp))
 		return 0;
-	int size = fread(buf, r, n, (FILE *) (*fp));
+	int size = fread(buf, r, n, (*fp));
 
 	if (size < 0)
 		return 0;

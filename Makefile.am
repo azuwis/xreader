@@ -24,6 +24,3 @@ EXTRA_DIST =			\
 
 dist-hook:
 	rm -rf `find $(distdir)/* -name .svn -o -name CVS -o -name .git`
-
-clean-local:
-	$(RM) Revision.h
