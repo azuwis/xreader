@@ -357,7 +357,7 @@ static void fat_get_shortname(p_fat_entry entry, char *shortnamestr)
 	*shortnamestr = 0;
 }
 
-extern bool fat_locate(const char *name, char *sname, u32 clus,
+extern bool fat_locate(const char *name, char *sname, dword clus,
 					   p_fat_entry info)
 {
 	u32 count;
@@ -492,7 +492,7 @@ static u32 fat_dir_clus(const char *dir, char *shortdir)
 	return clus;
 }
 
-extern u32 fat_readdir(const char *dir, char *sdir, p_fat_info * info)
+extern dword fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 {
 	fat_lock();
 	if (!fat_load_table() || fatfd < 0) {
