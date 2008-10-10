@@ -31,7 +31,7 @@
 #include "musicdrv.h"
 #include "xmp3audiolib.h"
 #include "dbg.h"
-#include "power.h"
+#include "scene.h"
 
 #define LB_CONV(x)	\
     (((x) & 0xff)<<24) |  \
@@ -211,36 +211,74 @@ static int madmp3_seek_seconds_offset(double offset)
 	int is_forward = offset > 0 ? 1 : -1;
 	int orig_pos = lseek(data.fd, 0, SEEK_CUR);
 	int new_pos = orig_pos + is_forward * (int) target_frame;
+	int ret;
 
 	if (new_pos < 0) {
 		new_pos = 0;
 	}
-	int ret = lseek(data.fd, new_pos, SEEK_SET);
-	int bufsize;
+
+	ret = lseek(data.fd, new_pos, SEEK_SET);
+
+	mad_stream_finish(&stream);
+	mad_stream_init(&stream);
 
 	if (ret >= 0) {
-		bufsize = read(data.fd, g_input_buff, BUFF_SIZE);
+		int cnt = 0;
 
-		if (bufsize <= 0) {
-			__end();
-			return -1;
-		}
+		do {
+			cnt++;
+			if (stream.buffer == NULL || stream.error == MAD_ERROR_BUFLEN) {
+				size_t read_size, remaining = 0;
+				uint8_t *read_start;
+				int bufsize;
+
+				if (stream.next_frame != NULL) {
+					remaining = stream.bufend - stream.next_frame;
+					memmove(g_input_buff, stream.next_frame, remaining);
+					read_start = g_input_buff + remaining;
+					read_size = BUFF_SIZE - remaining;
+				} else {
+					read_size = BUFF_SIZE;
+					read_start = g_input_buff;
+					remaining = 0;
+				}
+
+				bufsize = read(data.fd, read_start, read_size);
+
+				if (bufsize <= 0) {
+					__end();
+					return -1;
+				}
+
+				if (bufsize < read_size) {
+					uint8_t *guard = read_start + read_size;
+
+					memset(guard, 0, MAD_BUFFER_GUARD);
+					read_size += MAD_BUFFER_GUARD;
+				}
+
+				mad_stream_buffer(&stream, g_input_buff, read_size + remaining);
+				stream.error = 0;
+			}
+
+			ret = mad_frame_decode(&frame, &stream);
+
+			if (ret == -1) {
+				if (stream.error == MAD_ERROR_BUFLEN) {
+					continue;
+				}
+
+				if (MAD_RECOVERABLE(stream.error)) {
+					mad_stream_skip(&stream, 1);
+				} else {
+					__end();
+					return -1;
+				}
+			}
+		} while (!(ret == 0 && stream.error == 0));
+		dbg_printf(d, "%s: tried %d times", __func__, cnt);
 
 		g_play_time += offset;
-		if (g_play_time < 0) {
-			g_play_time = 0;
-		}
-		mad_stream_buffer(&stream, g_input_buff, BUFF_SIZE);
-		mad_stream_sync(&stream);
-		ret = mad_frame_decode(&frame, &stream);
-		if (ret == MAD_ERROR_LOSTSYNC) {
-			if (stream.next_frame != NULL
-				&& stream.next_frame != stream.this_frame) {
-				mad_stream_skip(&stream, stream.next_frame - stream.this_frame);
-			} else {
-				mad_stream_skip(&stream, stream.bufend - stream.this_frame);
-			}
-		}
 		return 0;
 	}
 
