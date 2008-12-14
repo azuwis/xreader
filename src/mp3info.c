@@ -930,7 +930,7 @@ static inline int parse_frame(uint8_t *h, int *lv, int *br, struct MP3Info * inf
 	return framelenbyte;
 }
 
-static int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data *data)
+int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data *data)
 {
 	uint32_t off;
 	int size, br = 0, dcount = 0;

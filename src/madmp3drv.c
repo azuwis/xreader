@@ -435,9 +435,16 @@ static int madmp3_load(const char *spath, const char *lpath)
 	mad_frame_init(&frame);
 	mad_synth_init(&synth);
 
-	if (read_mp3_info(&mp3info, &data) < 0) {
-		__end();
-		return -1;
+	if (mp3info.use_brute_method) {
+		if (read_mp3_info_brute(&mp3info, &data) < 0) {
+			__end();
+			return -1;
+		}
+	} else {
+		if (read_mp3_info(&mp3info, &data) < 0) {
+			__end();
+			return -1;
+		}
 	}
 
 	broadcast_output("[%d channel(s), %d Hz, %.2f kbps, %02d:%02d]\n",
@@ -476,6 +483,14 @@ static int madmp3_load(const char *spath, const char *lpath)
 static int madmp3_set_opt(const char *key, const char *value)
 {
 	broadcast_output("%s: setting %s to %s\n", __func__, key, value);
+
+	if (!stricmp(key, "mp3_brute_mode")) {
+		if (!stricmp(value, "on")) {
+			mp3info.use_brute_method = true;
+		} else {
+			mp3info.use_brute_method = false;
+		}
+	}
 
 	return 0;
 }
