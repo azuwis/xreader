@@ -1,4 +1,4 @@
- /*
+/*
  * This file is part of xReader.
  *
  * Copyright (C) 2008 hrimfaxi (outmatch@gmail.com)
@@ -66,7 +66,7 @@ void __malloc_unlock(struct _reent *ptr)
 
 static int power_callback(int arg1, int powerInfo, void *arg)
 {
-	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY | PSP_POWER_CB_SUSPENDING )) > 0) {
+	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0) {
 		power_down();
 	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
 		power_up();
