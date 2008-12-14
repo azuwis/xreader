@@ -473,11 +473,12 @@ int music_directplay(const char *spath, const char *lpath)
 	int pos;
 	int ret;
 
-	music_lock();
 	music_add(spath, lpath);
+	music_lock();
 	pos = music_find(spath, lpath);
 	g_list.curr_pos = pos;
 	ret = music_play(pos);
+
 	if (ret == 0) {
 		g_list.is_list_playing = true;
 		rebuild_shuffle_data();
