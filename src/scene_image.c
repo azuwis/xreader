@@ -1407,22 +1407,26 @@ dword scene_readimage(dword selidx)
 			key = ctrl_read_cont();
 		}
 		if (slideshow) {
-			scePowerTick(0);
-			if (config.imgpaging == conf_imgpaging_direct ||
-				config.imgpaging == conf_imgpaging_updown ||
-				config.imgpaging == conf_imgpaging_leftright) {
-				if (now - lasttime >= config.slideinterval) {
-					key = CTRL_FORWARD;
-					lasttime = now;
-				}
+			if (key == PSP_CTRL_CIRCLE) {
+				key = 0;
 			} else {
-				sceRtcGetCurrentTick(&slide_end);
-				if (pspDiffTime(&slide_end, &slide_start) >= 0.1) {
-					sceRtcGetCurrentTick(&slide_start);
-					key = ctrl_read_cont();
+				scePowerTick(0);
+				if (config.imgpaging == conf_imgpaging_direct ||
+						config.imgpaging == conf_imgpaging_updown ||
+						config.imgpaging == conf_imgpaging_leftright) {
+					if (now - lasttime >= config.slideinterval) {
+						key = CTRL_FORWARD;
+						lasttime = now;
+					}
 				} else {
-					key = CTRL_FORWARD;
-					lasttime = now;
+					sceRtcGetCurrentTick(&slide_end);
+					if (pspDiffTime(&slide_end, &slide_start) >= 0.1) {
+						sceRtcGetCurrentTick(&slide_start);
+						key = ctrl_read_cont();
+					} else {
+						key = CTRL_FORWARD;
+						lasttime = now;
+					}
 				}
 			}
 		}
