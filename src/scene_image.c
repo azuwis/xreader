@@ -190,6 +190,10 @@ static int scene_reloadimage(dword selidx)
 		recalc_brightness();
 	}
 	STRCPY_S(config.lastfile, filelist[selidx].compname->ptr);
+	STRCPY_S(prev_path, config.path);
+	STRCPY_S(prev_shortpath, config.shortpath);
+	STRCPY_S(prev_lastfile, filelist[selidx].compname->ptr);
+	prev_where = where;
 	oldangle = 0;
 	scene_power_save(true);
 	return 0;

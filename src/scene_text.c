@@ -854,6 +854,10 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs->crow = (fs->row_count > 0) ? fs->row_count - 1 : 0;
 
 	STRCPY_S(config.lastfile, filelist[selidx].compname->ptr);
+	STRCPY_S(prev_path, config.path);
+	STRCPY_S(prev_shortpath, config.shortpath);
+	STRCPY_S(prev_lastfile, filelist[selidx].compname->ptr);
+	prev_where = where;
 	scene_power_save(true);
 	return 0;
 }

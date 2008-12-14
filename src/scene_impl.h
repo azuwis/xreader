@@ -82,4 +82,8 @@ typedef struct _BookViewData
 
 extern BookViewData cur_book_view, prev_book_view;
 
+extern char prev_path[PATH_MAX], prev_shortpath[PATH_MAX];
+extern char prev_lastfile[PATH_MAX];
+extern int prev_where;
+
 #endif
