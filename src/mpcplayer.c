@@ -623,12 +623,15 @@ static int mpc_resume(const char *spath, const char *lpath)
 static int mpc_get_info(struct music_info *pinfo)
 {
 	if (pinfo->type & MD_GET_TITLE) {
+		pinfo->encode = conf_encode_utf8;
 		STRCPY_S(pinfo->title, g_taginfo.title);
 	}
 	if (pinfo->type & MD_GET_ARTIST) {
+		pinfo->encode = conf_encode_utf8;
 		STRCPY_S(pinfo->artist, g_taginfo.artist);
 	}
 	if (pinfo->type & MD_GET_COMMENT) {
+		pinfo->encode = conf_encode_utf8;
 		STRCPY_S(pinfo->comment, "");
 	}
 	if (pinfo->type & MD_GET_CURTIME) {
