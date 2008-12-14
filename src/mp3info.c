@@ -512,7 +512,35 @@ static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 			}
 			*q = '\0';
 			break;
+		case 1:
+			/*
+			   UTF-16 [UTF-16] encoded Unicode [UNICODE] with BOM. All
+			   strings in the same frame SHALL have the same byteorder.
+			   Terminated with $00 00.
+			   */
+			{
+				uint8_t *buf = malloc(taglen);
 
+				if (buf == NULL)
+					return;
+
+				if (sceIoRead(data->fd, buf, taglen) != taglen) {
+					free(buf);
+					return;
+				}
+
+				if (buf[0] != 0xff || buf[1] != 0xfe) {
+					free(buf);
+					return;
+				}
+
+				info->tag.encode = conf_encode_ucs;
+				len = FFMIN(taglen - 2, dstlen - 1);
+				memcpy(dst, buf + 2, len);
+				dst[len] = 0;
+				free(buf);
+				break;
+			}
 		case 3:				/* UTF-8 */
 			info->tag.encode = conf_encode_utf8;
 			len = FFMIN(taglen, dstlen - 1);
