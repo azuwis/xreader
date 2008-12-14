@@ -15,40 +15,26 @@
  *
  */
 
-#ifndef MP3INFO_H
-#define MP3INFO_H
+#ifndef MUSICTAG_H
+#define MUSICTAG_H
 
-#include "musictag.h"
-
-#define LB_CONV(x)	\
-    (((x) & 0xff)<<24) |  \
-    (((x>>8) & 0xff)<<16) |  \
-    (((x>>16) & 0xff)<< 8) |  \
-    (((x>>24) & 0xff)    )
-
-#define MKBETAG(a,b,c,d) (d | (c << 8) | (b << 16) | (a << 24))
-
-#define UNUSED(x) ((void)(x))
-#define MODE_EXT_I_STEREO   1
-#define MODE_EXT_MS_STEREO   2
-#define MPA_MONO   3
-
-typedef struct reader_data_t
-{
-	SceUID fd;
-	long size;
-} mp3_reader_data;
-
-struct MP3Info {
-	bool is_mpeg1or2;
-	uint32_t frames;
-	int channels;
-	int sample_freq;
-	double duration;
-	double average_bitrate;
-	struct MusicTag tag;
+enum {
+	NONE,
+	ID3V1,
+	ID3V2,
+	APETAG
 };
 
-int read_mp3_info(struct MP3Info *info, mp3_reader_data* data);
+struct MusicTag {
+	int type;
+	char title[512];
+	char author[512];
+	char copyright[512];
+	char comment[512];
+	char album[512];
+	int year;  
+	int track; 
+	char genre[32]; 
+};
 
 #endif

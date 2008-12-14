@@ -32,6 +32,7 @@
 #include "xmp3audiolib.h"
 #include "dbg.h"
 #include "scene.h"
+#include "mp3info.h"
 
 #define LB_CONV(x)	\
     (((x) & 0xff)<<24) |  \
@@ -41,28 +42,8 @@
 
 #define UNUSED(x) ((void)(x))
 #define BUFF_SIZE	8*1152
-#define MODE_EXT_I_STEREO   1
-#define MODE_EXT_MS_STEREO   2
-#define MPA_MONO   3
 
-#define open sceIoOpen
-#define read sceIoRead
-#define close sceIoClose
-#define lseek sceIoLseek
-
-#define SEEK_CUR PSP_SEEK_CUR
-#define SEEK_SET PSP_SEEK_SET
-#define SEEK_END PSP_SEEK_END
-
-#define O_RDONLY PSP_O_RDONLY
-
-typedef struct reader_data_t
-{
-	SceUID fd;
-	long size;
-} reader_data;
-
-static reader_data data;
+static mp3_reader_data data;
 
 static int __end(void);
 
@@ -101,9 +82,9 @@ static int g_buff_frame_start;
 static SceUID g_status_sema;;
 
 /**
- * MP3音乐文件长度，以秒数
+ * MP3文件信息
  */
-static double g_duration;
+static struct MP3Info mp3info;
 
 /**
  * 当前播放时间，以秒数计
@@ -116,39 +97,14 @@ static double g_play_time;
 static int g_seek_seconds;
 
 /**
- * MP3音乐声道数
- */
-static int g_madmp3_channels;
-
-/**
- * MP3音乐声道数
- */
-static int g_madmp3_sample_freq;
-
-/**
- * MP3音乐比特率
- */
-static int g_madmp3_bitrate;
-
-/**
  * MP3音乐休眠时播放时间
  */
 static double g_suspend_playing_time;
 
 /**
- * MP3平均比特率
- */
-static double g_average_bitrate;
-
-/**
  * 休眠前播放状态
  */
 static int g_suspend_status;
-
-/**
- * 是MPEG1or2层?
- */
-static bool g_is_mpeg1or2;
 
 /**
  * 加锁
@@ -207,9 +163,9 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 static int madmp3_seek_seconds_offset(double offset)
 {
-	uint32_t target_frame = abs(offset) * g_average_bitrate / 8;
+	uint32_t target_frame = abs(offset) * mp3info.average_bitrate / 8;
 	int is_forward = offset > 0 ? 1 : -1;
-	int orig_pos = lseek(data.fd, 0, SEEK_CUR);
+	int orig_pos = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
 	int new_pos = orig_pos + is_forward * (int) target_frame;
 	int ret;
 
@@ -217,7 +173,7 @@ static int madmp3_seek_seconds_offset(double offset)
 		new_pos = 0;
 	}
 
-	ret = lseek(data.fd, new_pos, SEEK_SET);
+	ret = sceIoLseek(data.fd, new_pos, PSP_SEEK_SET);
 
 	mad_stream_finish(&stream);
 	mad_stream_init(&stream);
@@ -243,7 +199,7 @@ static int madmp3_seek_seconds_offset(double offset)
 					remaining = 0;
 				}
 
-				bufsize = read(data.fd, read_start, read_size);
+				bufsize = sceIoRead(data.fd, read_start, read_size);
 
 				if (bufsize <= 0) {
 					__end();
@@ -360,7 +316,7 @@ static void madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 					read_start = g_input_buff;
 					remaining = 0;
 				}
-				bufsize = read(data.fd, read_start, read_size);
+				bufsize = sceIoRead(data.fd, read_start, read_size);
 				if (bufsize <= 0) {
 					__end();
 					return;
@@ -443,304 +399,9 @@ static int __init(void)
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
 
-	g_duration = g_play_time = 0.;
+	mp3info.duration = g_play_time = 0.;
 
-	g_madmp3_bitrate = g_madmp3_sample_freq = g_madmp3_channels = 0;
-	g_average_bitrate = 0;
-	g_is_mpeg1or2 = false;
-
-//  memset(&g_taginfo, 0, sizeof(g_taginfo));
-
-	return 0;
-}
-
-/* fast header check for resync */
-static inline int ff_mpa_check_header(uint32_t header)
-{
-	/* header */
-	if ((header & 0xffe00000) != 0xffe00000)
-		return -1;
-	/* layer check */
-	if ((header & (3 << 17)) == 0)
-		return -1;
-	/* bit rate */
-	if ((header & (0xf << 12)) == 0xf << 12)
-		return -1;
-	/* frequency */
-	if ((header & (3 << 10)) == 3 << 10)
-		return -1;
-	return 0;
-}
-
-const uint16_t ff_mpa_freq_tab[3] = { 44100, 48000, 32000 };
-
-const uint16_t ff_mpa_bitrate_tab[2][3][15] = {
-	{{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448},
-	 {0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384},
-	 {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320}},
-	{{0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256},
-	 {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160},
-	 {0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160}
-	 }
-};
-
-typedef struct MPADecodeContext
-{
-//    DECLARE_ALIGNED_8(uint8_t, last_buf[2*BACKSTEP_SIZE + EXTRABYTES]);
-	int last_buf_size;
-	int frame_size;
-	/* next header (used in free format parsing) */
-	uint32_t free_format_next_header;
-	int error_protection;
-	int layer;
-	int sample_rate;
-	int sample_rate_index;		/* between 0 and 8 */
-	int bit_rate;
-//    GetBitContext gb;
-//    GetBitContext in_gb;
-	int nb_channels;
-	int mode;
-	int mode_ext;
-	int lsf;
-//    DECLARE_ALIGNED_16(MPA_INT, synth_buf[MPA_MAX_CHANNELS][512 * 2]);
-//    int synth_buf_offset[MPA_MAX_CHANNELS];
-//    DECLARE_ALIGNED_16(int32_t, sb_samples[MPA_MAX_CHANNELS][36][SBLIMIT]);
-//    int32_t mdct_buf[MPA_MAX_CHANNELS][SBLIMIT * 18]; /* previous samples, for layer 3 MDCT */
-#ifdef DEBUG
-	int frame_count;
-#endif
-//    void (*compute_antialias)(struct MPADecodeContext *s, struct GranuleDef *g);
-	int adu_mode;
-	int dither_state;
-	int error_recognition;
-//    AVCodecContext* avctx;
-} MPADecodeContext;
-
-int ff_mpegaudio_decode_header(MPADecodeContext * s, uint32_t header)
-{
-	int sample_rate, frame_size, mpeg25, padding;
-	int sample_rate_index, bitrate_index;
-
-	if (header & (1 << 20)) {
-		s->lsf = (header & (1 << 19)) ? 0 : 1;
-		mpeg25 = 0;
-	} else {
-		s->lsf = 1;
-		mpeg25 = 1;
-	}
-
-	s->layer = 4 - ((header >> 17) & 3);
-	/* extract frequency */
-	sample_rate_index = (header >> 10) & 3;
-	sample_rate = ff_mpa_freq_tab[sample_rate_index] >> (s->lsf + mpeg25);
-	sample_rate_index += 3 * (s->lsf + mpeg25);
-	s->sample_rate_index = sample_rate_index;
-	s->error_protection = ((header >> 16) & 1) ^ 1;
-	s->sample_rate = sample_rate;
-
-	bitrate_index = (header >> 12) & 0xf;
-	padding = (header >> 9) & 1;
-	//extension = (header >> 8) & 1;
-	s->mode = (header >> 6) & 3;
-	s->mode_ext = (header >> 4) & 3;
-	//copyright = (header >> 3) & 1;
-	//original = (header >> 2) & 1;
-	//emphasis = header & 3;
-
-	if (s->mode == MPA_MONO)
-		s->nb_channels = 1;
-	else
-		s->nb_channels = 2;
-
-	if (bitrate_index != 0) {
-		frame_size = ff_mpa_bitrate_tab[s->lsf][s->layer - 1][bitrate_index];
-		s->bit_rate = frame_size * 1000;
-		switch (s->layer) {
-			case 1:
-				frame_size = (frame_size * 12000) / sample_rate;
-				frame_size = (frame_size + padding) * 4;
-				break;
-			case 2:
-				frame_size = (frame_size * 144000) / sample_rate;
-				frame_size += padding;
-				break;
-			default:
-			case 3:
-				frame_size = (frame_size * 144000) / (sample_rate << s->lsf);
-				frame_size += padding;
-				break;
-		}
-		s->frame_size = frame_size;
-	} else {
-		/* if no frame size computed, signal it */
-		return 1;
-	}
-
-#if 0
-	printf("layer%d, %d Hz, %d kbits/s, ",
-		   s->layer, s->sample_rate, s->bit_rate);
-	if (s->nb_channels == 2) {
-		if (s->layer == 3) {
-			if (s->mode_ext & MODE_EXT_MS_STEREO)
-				printf("ms-");
-			if (s->mode_ext & MODE_EXT_I_STEREO)
-				printf("i-");
-		}
-		printf("stereo");
-	} else {
-		printf("mono");
-	}
-	printf("\n");
-#endif
-	return 0;
-}
-
-#define MKBETAG(a,b,c,d) (d | (c << 8) | (b << 16) | (a << 24))
-
-static int mp3_parse_vbr_tags(uint32_t off)
-{
-	const uint32_t xing_offtbl[2][2] = { {32, 17}, {17, 9} };
-	uint32_t b, frames;
-	MPADecodeContext ctx;
-
-	if (read(data.fd, &b, sizeof(b)) != sizeof(b)) {
-		return -1;
-	}
-
-	b = LB_CONV(b);
-
-	if (ff_mpa_check_header(b) < 0)
-		return -1;
-
-	ff_mpegaudio_decode_header(&ctx, b);
-	if (ctx.layer != 3)
-		return -1;
-
-	lseek(data.fd, xing_offtbl[ctx.lsf == 1][ctx.nb_channels == 1], SEEK_CUR);
-
-	if (read(data.fd, &b, sizeof(b)) != sizeof(b)) {
-		return -1;
-	}
-	b = LB_CONV(b);
-
-	if (b == MKBETAG('X', 'i', 'n', 'g') || b == MKBETAG('I', 'n', 'f', 'o')) {
-		if (read(data.fd, &b, sizeof(b)) != sizeof(b)) {
-			return -1;
-		}
-		b = LB_CONV(b);
-		if (b & 0x1) {
-			if (read(data.fd, &frames, sizeof(frames)) != sizeof(frames)) {
-				return -1;
-			}
-			frames = LB_CONV(frames);
-		}
-	}
-
-	/* Check for VBRI tag (always 32 bytes after end of mpegaudio header) */
-	lseek(data.fd, off + 4 + 32, SEEK_SET);
-	if (read(data.fd, &b, sizeof(b)) != sizeof(b)) {
-		return -1;
-	}
-	b = LB_CONV(b);
-	if (b == MKBETAG('V', 'B', 'R', 'I')) {
-		uint16_t t;
-
-		/* Check tag version */
-		if (read(data.fd, &t, sizeof(t)) != sizeof(t)) {
-			return -1;
-		}
-		t = ((t & 0xff) << 8) | (t >> 8);
-
-		if (t == 1) {
-			/* skip delay, quality and total bytes */
-			lseek(data.fd, 8, SEEK_CUR);
-			if (read(data.fd, &frames, sizeof(frames)) != sizeof(frames)) {
-				return -1;
-			}
-			frames = LB_CONV(frames);
-		}
-	}
-
-	if ((int) frames < 0)
-		return -1;
-
-	return frames;
-}
-
-static int id3v2_match(const uint8_t * buf)
-{
-	return buf[0] == 'I' &&
-		buf[1] == 'D' &&
-		buf[2] == '3' &&
-		buf[3] != 0xff &&
-		buf[4] != 0xff &&
-		(buf[6] & 0x80) == 0 &&
-		(buf[7] & 0x80) == 0 && (buf[8] & 0x80) == 0 && (buf[9] & 0x80) == 0;
-}
-
-static int read_mp3_info(void)
-{
-	uint32_t b;
-
-	lseek(data.fd, 0, SEEK_SET);
-
-	if (read(data.fd, &b, sizeof(b)) < 4) {
-		return -1;
-	}
-
-	b = LB_CONV(b);
-
-	if (ff_mpa_check_header(b) < 0)
-		return -1;
-
-	MPADecodeContext ctx;
-
-	ff_mpegaudio_decode_header(&ctx, b);
-
-	g_madmp3_channels = ctx.nb_channels;
-	g_madmp3_sample_freq = ctx.sample_rate;
-
-	lseek(data.fd, 0, SEEK_SET);
-
-	if (ctx.layer != 3) {
-		g_is_mpeg1or2 = true;
-		return 0;
-	}
-
-	/* skip ID3v2 header if exists */
-#define ID3v2_HEADER_SIZE 10
-	uint8_t buf[ID3v2_HEADER_SIZE];
-
-	if (read(data.fd, buf, sizeof(buf)) != sizeof(buf)) {
-		return -1;
-	}
-
-	int len;
-	uint32_t off;
-
-	if (id3v2_match(buf)) {
-		/* parse ID3v2 header */
-		len = ((buf[6] & 0x7f) << 21) |
-			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
-
-		/* TODO: read ID3v2 tag */
-
-		lseek(data.fd, len, SEEK_CUR);
-	} else {
-		lseek(data.fd, 0, SEEK_SET);
-	}
-
-	off = lseek(data.fd, 0, SEEK_CUR);
-	int frames = mp3_parse_vbr_tags(off);
-	int spf;
-
-	spf = ctx.lsf ? 576 : 1152;	/* Samples per frame, layer 3 */
-
-	g_duration = (double) frames *spf / g_madmp3_sample_freq;
-
-	g_average_bitrate = (double) data.size * 8 / g_duration;
-
-	lseek(data.fd, 0, SEEK_SET);
+	memset(&mp3info, 0, sizeof(mp3info));
 
 	return 0;
 }
@@ -758,31 +419,32 @@ static int madmp3_load(const char *spath, const char *lpath)
 	broadcast_output("%s: loading %s\n", __func__, spath);
 	g_status = ST_UNKNOWN;
 
-	data.fd = open(lpath, O_RDONLY, 777);
+	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 777);
 
 	if (data.fd < 0) {
 		return data.fd;
 	}
 	// TODO: read tag
 
-	data.size = lseek(data.fd, 0, SEEK_END);
+	data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
 	if (data.size < 0)
 		return data.size;
-	lseek(data.fd, 0, SEEK_SET);
+	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
 
 	mad_stream_init(&stream);
 	mad_frame_init(&frame);
 	mad_synth_init(&synth);
 
-	if (read_mp3_info() < 0) {
+	if (read_mp3_info(&mp3info, &data) < 0) {
 		__end();
 		return -1;
 	}
 
 	broadcast_output("[%d channel(s), %d Hz, %.2f kbps, %02d:%02d]\n",
-					 g_madmp3_channels, g_madmp3_sample_freq,
-					 g_average_bitrate / 1000, (int) (g_duration / 60),
-					 (int) g_duration % 60);
+					 mp3info.channels, mp3info.sample_freq,
+					 mp3info.average_bitrate / 1000,
+					 (int) (mp3info.duration / 60),
+					 (int) mp3info.duration % 60);
 	ret = xMP3AudioInit();
 
 	if (ret < 0) {
@@ -790,7 +452,7 @@ static int madmp3_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	ret = xMP3AudioSetFrequency(g_madmp3_sample_freq);
+	ret = xMP3AudioSetFrequency(mp3info.sample_freq);
 	if (ret < 0) {
 		__end();
 		return -1;
@@ -799,7 +461,7 @@ static int madmp3_load(const char *spath, const char *lpath)
 	xMP3AudioSetChannelCallback(0, madmp3_audiocallback, NULL);
 
 	if (ret < 0) {
-		close(data.fd);
+		sceIoClose(data.fd);
 		g_status = ST_UNKNOWN;
 		return -1;
 	}
@@ -826,32 +488,31 @@ static int madmp3_get_info(struct music_info *info)
 		return -1;
 	}
 
-/*
 	if (info->type & MD_GET_TITLE) {
-		STRCPY_S(info->title, "default title");
+		STRCPY_S(info->title, mp3info.tag.title);
 	}
 	if (info->type & MD_GET_ARTIST) {
-		STRCPY_S(info->artist, "default artist");
+		STRCPY_S(info->artist, mp3info.tag.author);
 	}
 	if (info->type & MD_GET_COMMENT) {
-		STRCPY_S(info->comment, "default comment");
+		STRCPY_S(info->comment, mp3info.tag.comment);
 	}
-	*/
 	if (info->type & MD_GET_CURTIME) {
 		info->cur_time = g_play_time;
 	}
 	if (info->type & MD_GET_DURATION) {
-		info->duration = g_duration;
+		info->duration = mp3info.duration;
 	}
 	if (info->type & MD_GET_CPUFREQ) {
-		info->psp_freq[0] = 66 + (133 - 66) * g_average_bitrate / 1000 / 320;
+		info->psp_freq[0] =
+			66 + (133 - 66) * mp3info.average_bitrate / 1000 / 320;
 		info->psp_freq[1] = 111;
 	}
 	if (info->type & MD_GET_FREQ) {
-		info->freq = g_madmp3_sample_freq;
+		info->freq = mp3info.sample_freq;
 	}
 	if (info->type & MD_GET_CHANNELS) {
-		info->channels = g_madmp3_channels;
+		info->channels = mp3info.channels;
 	}
 	if (info->type & MD_GET_DECODERNAME) {
 		STRCPY_S(info->decoder_name, "madmp3");
@@ -862,7 +523,7 @@ static int madmp3_get_info(struct music_info *info)
 	   }
 	 */
 	if (info->type & MD_GET_AVGKBPS) {
-		info->avg_kbps = g_average_bitrate / 1000;
+		info->avg_kbps = mp3info.average_bitrate / 1000;
 	}
 	if (info->type & MD_GET_INSKBPS) {
 		info->ins_kbps = frame.header.bitrate / 1000;
@@ -931,7 +592,7 @@ static int madmp3_get_status(void)
 
 static int madmp3_fforward(int sec)
 {
-	if (g_is_mpeg1or2)
+	if (mp3info.is_mpeg1or2)
 		return -1;
 
 	broadcast_output("%s: sec: %d\n", __func__, sec);
@@ -948,7 +609,7 @@ static int madmp3_fforward(int sec)
 
 static int madmp3_fbackward(int sec)
 {
-	if (g_is_mpeg1or2)
+	if (mp3info.is_mpeg1or2)
 		return -1;
 
 	broadcast_output("%s: sec: %d\n", __func__, sec);
@@ -1042,7 +703,7 @@ static int __end(void)
 	xMP3AudioEndPre();
 
 	if (data.fd >= 0) {
-		close(data.fd);
+		sceIoClose(data.fd);
 		data.fd = -1;
 	}
 

@@ -4,303 +4,787 @@
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
- * for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
 #include "config.h"
-
-#ifdef ENABLE_MUSIC
-
-#include <pspkernel.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "common/utils.h"
-#include "charsets.h"
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <pspkernel.h>
+#include "strsafe.h"
+#include "musicdrv.h"
+#include "common/datatype.h"
 #include "mp3info.h"
-#include "libid3tag/id3tag.h"
-#include "apetaglib/APETag.h"
-#include "dbg.h"
 
-static int _bitrate[9][16] = {
-	{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448,
-	 0},
-	{0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 0},
-	{0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0},
-	{0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256, 0},
-	{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0},
-	{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0},
-	{0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256, 0},
-	{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0},
-	{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0}
-};
+#define ID3v2_HEADER_SIZE 10
 
-static int _samplerate[3][4] = {
-	{44100, 48000, 32000, 0},
-	{22050, 24000, 16000, 0},
-	{11025, 12000, 8000, 0}
-};
-
-int g_libid3tag_found_id3v2 = 0;
-
-__inline int calc_framesize(byte h1, byte h2, int *mpl, int *br, int *sr)
+typedef struct MPADecodeContext
 {
-	int mpv;
+	//    DECLARE_ALIGNED_8(uint8_t, last_buf[2*BACKSTEP_SIZE + EXTRABYTES]);
+	int last_buf_size;
+	int frame_size;
+	/* next header (used in free format parsing) */
+	uint32_t free_format_next_header;
+	int error_protection;
+	int layer;
+	int sample_rate;
+	int sample_rate_index;		/* between 0 and 8 */
+	int bit_rate;
+	//    GetBitContext gb;
+	//    GetBitContext in_gb;
+	int nb_channels;
+	int mode;
+	int mode_ext;
+	int lsf;
+	//    DECLARE_ALIGNED_16(MPA_INT, synth_buf[MPA_MAX_CHANNELS][512 * 2]);
+	//    int synth_buf_offset[MPA_MAX_CHANNELS];
+	//    DECLARE_ALIGNED_16(int32_t, sb_samples[MPA_MAX_CHANNELS][36][SBLIMIT]);
+	//    int32_t mdct_buf[MPA_MAX_CHANNELS][SBLIMIT * 18]; /* previous samples, for layer 3 MDCT */
+#ifdef DEBUG
+	int frame_count;
+#endif
+	//    void (*compute_antialias)(struct MPADecodeContext *s, struct GranuleDef *g);
+	int adu_mode;
+	int dither_state;
+	int error_recognition;
+	//    AVCodecContext* avctx;
+} MPADecodeContext;
 
-	switch ((h1 >> 3) & 0x03) {
-		case 0:
-			mpv = 2;			// MPEG 2.5
-			break;
-		case 2:
-			mpv = 1;			// MPEG 2
-			break;
-		case 3:
-			mpv = 0;			// MPEG 1
-			break;
-		default:
-			return 0;
+#define ID3v1_GENRE_MAX 125 
+
+static const char * const id3v1_genre_str[ID3v1_GENRE_MAX + 1] = {
+	[0] = "Blues",
+	[1] = "Classic Rock",
+	[2] = "Country",
+	[3] = "Dance",
+	[4] = "Disco",
+	[5] = "Funk",
+	[6] = "Grunge",
+	[7] = "Hip-Hop",
+	[8] = "Jazz",
+	[9] = "Metal",
+	[10] = "New Age",
+	[11] = "Oldies",
+	[12] = "Other",
+	[13] = "Pop",
+	[14] = "R&B",
+	[15] = "Rap",
+	[16] = "Reggae",
+	[17] = "Rock",
+	[18] = "Techno",
+	[19] = "Industrial",
+	[20] = "Alternative",
+	[21] = "Ska",
+	[22] = "Death Metal",
+	[23] = "Pranks",
+	[24] = "Soundtrack",
+	[25] = "Euro-Techno",
+	[26] = "Ambient",
+	[27] = "Trip-Hop",
+	[28] = "Vocal",
+	[29] = "Jazz+Funk",
+	[30] = "Fusion",
+	[31] = "Trance",
+	[32] = "Classical",
+	[33] = "Instrumental",
+	[34] = "Acid",
+	[35] = "House",
+	[36] = "Game",
+	[37] = "Sound Clip",
+	[38] = "Gospel",
+	[39] = "Noise",
+	[40] = "AlternRock",
+	[41] = "Bass",
+	[42] = "Soul",
+	[43] = "Punk",
+	[44] = "Space",
+	[45] = "Meditative",
+	[46] = "Instrumental Pop",
+	[47] = "Instrumental Rock",
+	[48] = "Ethnic",
+	[49] = "Gothic",
+	[50] = "Darkwave",
+	[51] = "Techno-Industrial",
+	[52] = "Electronic",
+	[53] = "Pop-Folk",
+	[54] = "Eurodance",
+	[55] = "Dream",
+	[56] = "Southern Rock",
+	[57] = "Comedy",
+	[58] = "Cult",
+	[59] = "Gangsta",
+	[60] = "Top 40",
+	[61] = "Christian Rap",
+	[62] = "Pop/Funk",
+	[63] = "Jungle",
+	[64] = "Native American",
+	[65] = "Cabaret",
+	[66] = "New Wave",
+	[67] = "Psychadelic",
+	[68] = "Rave",
+	[69] = "Showtunes",
+	[70] = "Trailer",
+	[71] = "Lo-Fi",
+	[72] = "Tribal",
+	[73] = "Acid Punk",
+	[74] = "Acid Jazz",
+	[75] = "Polka",
+	[76] = "Retro",
+	[77] = "Musical",
+	[78] = "Rock & Roll",
+	[79] = "Hard Rock",
+	[80] = "Folk",
+	[81] = "Folk-Rock",
+	[82] = "National Folk",
+	[83] = "Swing",
+	[84] = "Fast Fusion",
+	[85] = "Bebob",
+	[86] = "Latin",
+	[87] = "Revival",
+	[88] = "Celtic",
+	[89] = "Bluegrass",
+	[90] = "Avantgarde",
+	[91] = "Gothic Rock",
+	[92] = "Progressive Rock",
+	[93] = "Psychedelic Rock",
+	[94] = "Symphonic Rock",
+	[95] = "Slow Rock",
+	[96] = "Big Band",
+	[97] = "Chorus",
+	[98] = "Easy Listening",
+	[99] = "Acoustic",
+	[100] = "Humour",
+	[101] = "Speech",
+	[102] = "Chanson",
+	[103] = "Opera",
+	[104] = "Chamber Music",
+	[105] = "Sonata",
+	[106] = "Symphony",
+	[107] = "Booty Bass",
+	[108] = "Primus",
+	[109] = "Porn Groove",
+	[110] = "Satire",
+	[111] = "Slow Jam",
+	[112] = "Club",
+	[113] = "Tango",
+	[114] = "Samba",
+	[115] = "Folklore",
+	[116] = "Ballad",
+	[117] = "Power Ballad",
+	[118] = "Rhythmic Soul",
+	[119] = "Freestyle",
+	[120] = "Duet",
+	[121] = "Punk Rock",
+	[122] = "Drum Solo",
+	[123] = "A capella",
+	[124] = "Euro-House",
+	[125] = "Dance Hall",
+};
+
+static const uint16_t ff_mpa_freq_tab[3] = { 44100, 48000, 32000 };
+
+static const uint16_t ff_mpa_bitrate_tab[2][3][15] = {
+	{{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448},
+		{0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384},
+		{0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320}},
+	{{0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256},
+		{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160},
+		{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160}
 	}
-	if (*mpl == 0) {
-		*mpl = 3 - ((h1 >> 1) & 0x03);
-		if (*mpl == 3)
-			return 0;
-	} else if (*mpl != 3 - ((h1 >> 1) & 0x03))
-		return 0;
-	*br = _bitrate[mpv * 3 + *mpl][h2 >> 4];
-	if (*sr == 0)
-		*sr = _samplerate[mpv][(h2 >> 2) & 0x03];
-	else if (*sr != _samplerate[mpv][(h2 >> 2) & 0x03])
-		return 0;
-	if (*br > 0 && *sr > 0) {
-		if (*mpl == 0)
-			return (12000 * *br / *sr + (int) ((h2 >> 1) & 0x01)) * 4;
-		else
-			return 144000 * *br / *sr + (int) ((h2 >> 1) & 0x01);
-	}
+};
+
+static inline void av_log()
+{
+}
+
+/* fast header check for resync */
+static inline int ff_mpa_check_header(uint32_t header)
+{
+	/* header */
+	if ((header & 0xffe00000) != 0xffe00000)
+		return -1;
+	/* layer check */
+	if ((header & (3 << 17)) == 0)
+		return -1;
+	/* bit rate */
+	if ((header & (0xf << 12)) == 0xf << 12)
+		return -1;
+	/* frequency */
+	if ((header & (3 << 10)) == 3 << 10)
+		return -1;
 	return 0;
 }
 
-extern void mp3info_init(p_mp3info info)
+static int ff_mpegaudio_decode_header(MPADecodeContext * s, uint32_t header)
 {
-	memset(info, 0, sizeof(t_mp3info));
-}
+	int sample_rate, frame_size, mpeg25, padding;
+	int sample_rate_index, bitrate_index;
 
-void GetTagInfo(struct id3_tag *pTag, const char *key, char *dest, int size)
-{
-	struct id3_frame *frame = id3_tag_findframe(pTag, key, 0);
-
-	if (frame == 0) {
-//      dbg_printf(d, "%s: Frame \"%s\" not found!", __func__, key);
-		return;
-	}
-
-	/*
-	   dbg_printf(d, "%s: id: %s desc: %s flags: 0x%08x group_id: %d "
-	   "encryption_method: %d",
-	   __func__, frame->id, frame->description, frame->flags,
-	   frame->group_id, frame->encryption_method);
-	 */
-
-	int i;
-	union id3_field *field;
-
-	for (i = 0; i < frame->nfields; i++) {
-//      dbg_printf(d, "field %d in frame", i);
-		field = id3_frame_field(frame, i);
-		if (field == NULL) {
-//          dbg_printf(d, "continue1");
-			continue;
-		}
-//      dbg_printf(d, "Type: %u", field->type);
-		id3_ucs4_t const *str = id3_field_getstrings(field, 0);
-
-		if (str == NULL) {
-//          dbg_printf(d, "continue2");
-			continue;
-		}
-		id3_utf8_t *pUTF8Str = id3_ucs4_utf8duplicate(str);
-
-		if (pUTF8Str == NULL) {
-//          dbg_printf(d, "continue3");
-			continue;
-		}
-//      dbg_printf(d, "%s: Get UTF8 String: %s", __func__, pUTF8Str);
-		strcpy_s(dest, size, (const char *) pUTF8Str);
-		//          char *pChinese = ConvertUTF8toGB2312(pUTF8Str, -1);
-		//          dbg_printf(d, "标题：%s", pChinese);
-		//          free(pChinese);
-		free(pUTF8Str);
-	}
-}
-
-/// 使用ID3Taglib读取艺术家名和音乐名到mp3info.artist, mp3info.title
-/// 设置字ftruncate符编码为UTF8
-/// 如果ID3原始编码为LATIN1，使用config.mp3encode设置值进行编码
-extern void readID3Tag(p_mp3info pInfo, const char *filename)
-{
-	if (filename == NULL)
-		return;
-
-	STRCPY_S(pInfo->title, "");
-	STRCPY_S(pInfo->artist, "");
-
-	g_libid3tag_found_id3v2 = 0;
-
-	struct id3_file *pFile = id3_file_open(filename, ID3_FILE_MODE_READONLY);
-
-	if (pFile == NULL) {
-		return;
-	}
-
-	struct id3_tag *pTag = id3_file_tag(pFile);
-
-	if (pTag == NULL) {
-		id3_file_close(pFile);
-		return;
-	}
-
-	/*
-	   dbg_printf(d,
-	   "%s: version: 0x%08x flags: 0x%08x extendedflags: 0x%08x restrictions: 0x%08x options: 0x%08x",
-	   __func__, pTag->version, pTag->flags, pTag->extendedflags,
-	   pTag->restrictions, pTag->options);
-	 */
-	if (g_libid3tag_found_id3v2 == 0) {
-		/*
-		   dbg_printf(d,
-		   "no ID3tagv2 found, don't use libid3tag to decode, aborting");
-		 */
-		id3_file_close(pFile);
-		return;
-	}
-
-	GetTagInfo(pTag, ID3_FRAME_TITLE, pInfo->title, sizeof(pInfo->title));
-	GetTagInfo(pTag, ID3_FRAME_ARTIST, pInfo->artist, sizeof(pInfo->title));
-
-	id3_file_close(pFile);
-
-	pInfo->found_id3v2 = true;
-}
-
-extern void readAPETag(p_mp3info pInfo, const char *filename)
-{
-	APETag *tag = loadAPETag(filename);
-
-	if (tag == NULL) {
-		pInfo->found_apetag = false;
+	if (header & (1 << 20)) {
+		s->lsf = (header & (1 << 19)) ? 0 : 1;
+		mpeg25 = 0;
 	} else {
-		char *sTitle = APETag_SimpleGet(tag, "Title");
-		char *sArtist = APETag_SimpleGet(tag, "Artist");
-		char *sArtist2 = APETag_SimpleGet(tag, "Album artist");
-
-		STRCPY_S(pInfo->title, sTitle);
-		if (sArtist)
-			STRCPY_S(pInfo->artist, sArtist);
-		else if (sArtist2)
-			STRCPY_S(pInfo->artist, sArtist2);
-
-		if (sTitle)
-			free(sTitle);
-		if (sArtist)
-			free(sArtist);
-		if (sArtist2)
-			free(sArtist2);
-
-		freeAPETag(tag);
-		pInfo->found_apetag = true;
+		s->lsf = 1;
+		mpeg25 = 1;
 	}
-}
 
-extern bool mp3info_read(p_mp3info info, int fd)
-{
-	if (fd < 0)
-		return false;
-	static byte buf[65538];
+	s->layer = 4 - ((header >> 17) & 3);
+	/* extract frequency */
+	sample_rate_index = (header >> 10) & 3;
+	sample_rate = ff_mpa_freq_tab[sample_rate_index] >> (s->lsf + mpeg25);
+	sample_rate_index += 3 * (s->lsf + mpeg25);
+	s->sample_rate_index = sample_rate_index;
+	s->error_protection = ((header >> 16) & 1) ^ 1;
+	s->sample_rate = sample_rate;
 
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	dword off;
-	int size, br = 0, dcount = 0;
-	int end;
+	bitrate_index = (header >> 12) & 0xf;
+	padding = (header >> 9) & 1;
+	//extension = (header >> 8) & 1;
+	s->mode = (header >> 6) & 3;
+	s->mode_ext = (header >> 4) & 3;
+	//copyright = (header >> 3) & 1;
+	//original = (header >> 2) & 1;
+	//emphasis = header & 3;
 
-	sceIoRead(fd, buf, 2);
-	off = 0;
-	while ((end = sceIoRead(fd, &buf[2], 65536)) > 0) {
-		while (off < end) {
-			int brate = 0;
+	if (s->mode == MPA_MONO)
+		s->nb_channels = 1;
+	else
+		s->nb_channels = 2;
 
-			if (buf[off] == 0xFF && (buf[off + 1] & 0xE0) == 0xE0
-				&& (size =
-					calc_framesize(buf[off + 1], buf[off + 2],
-								   &info->level, &brate,
-								   &info->samplerate)) > 0) {
-				br += brate;
-				if (info->framecount >= 0) {
-					if (info->framecount == 0)
-						info->frameoff = malloc(sizeof(dword) * 1024);
-					else
-						info->frameoff =
-							safe_realloc(info->frameoff,
-										 sizeof(dword) *
-										 (info->framecount + 1024));
-					if (info->frameoff == NULL)
-						info->framecount = -1;
-					else
-						info->frameoff[info->
-									   framecount++] = dcount * 65536 + off;
-				}
-				off += size;
-			} else
-				off++;
+	if (bitrate_index != 0) {
+		frame_size = ff_mpa_bitrate_tab[s->lsf][s->layer - 1][bitrate_index];
+		s->bit_rate = frame_size * 1000;
+		switch (s->layer) {
+			case 1:
+				frame_size = (frame_size * 12000) / sample_rate;
+				frame_size = (frame_size + padding) * 4;
+				break;
+			case 2:
+				frame_size = (frame_size * 144000) / sample_rate;
+				frame_size += padding;
+				break;
+			default:
+			case 3:
+				frame_size = (frame_size * 144000) / (sample_rate << s->lsf);
+				frame_size += padding;
+				break;
 		}
-		off -= end;
-		memmove(buf, &buf[end], 2);
-		dcount++;
+		s->frame_size = frame_size;
+	} else {
+		/* if no frame size computed, signal it */
+		return 1;
 	}
-	if (!info->found_id3v2 && !info->found_apetag) {
-		if ((dcount > 1 || off >= 128)
-			&& (info->artist[0] == 0 || info->title[0] == 0)) {
-			sceIoLseek32(fd, -128, PSP_SEEK_END);
-			sceIoRead(fd, buf, 128);
-			if (buf[0] == 'T' && buf[1] == 'A' && buf[2] == 'G') {
-				if (info->artist[0] == 0) {
-					memcpy(info->artist, &buf[33], 30);
-				}
-				if (info->title[0] == 0) {
-					memcpy(info->title, &buf[3], 30);
-				}
-				info->found_id3v1 = true;
-			}
-		}
-	}
-	if (info->framecount > 0) {
-		sceIoLseek32(fd, info->frameoff[0], PSP_SEEK_SET);
-		info->bitrate = (br * 2 + info->framecount) / info->framecount / 2;
-		if (info->level == 0) {
-			info->framelen = 384.0 / (double) info->samplerate;
-			info->length = 384 * info->framecount / info->samplerate;
-		} else {
-			info->framelen = 1152.0 / (double) info->samplerate;
-			info->length = 1152 * info->framecount / info->samplerate;
-		}
-	} else
-		sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	return true;
-}
 
-extern void mp3info_free(p_mp3info info)
-{
-	if (info->frameoff != NULL) {
-		free(info->frameoff);
-		info->frameoff = NULL;
+#if 0
+	printf("layer%d, %d Hz, %d kbits/s, ",
+			s->layer, s->sample_rate, s->bit_rate);
+	if (s->nb_channels == 2) {
+		if (s->layer == 3) {
+			if (s->mode_ext & MODE_EXT_MS_STEREO)
+				printf("ms-");
+			if (s->mode_ext & MODE_EXT_I_STEREO)
+				printf("i-");
+		}
+		printf("stereo");
+	} else {
+		printf("mono");
 	}
-	memset(info, 0, sizeof(t_mp3info));
-}
-
+	printf("\n");
 #endif
+	return 0;
+}
+
+static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
+		uint32_t off)
+{
+	const uint32_t xing_offtbl[2][2] = { {32, 17}, {17, 9} };
+	uint32_t b, frames;
+	MPADecodeContext ctx;
+
+	if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+		return -1;
+	}
+
+	b = LB_CONV(b);
+
+	if (ff_mpa_check_header(b) < 0)
+		return -1;
+
+	ff_mpegaudio_decode_header(&ctx, b);
+
+	if (ctx.layer != 3) {
+		info->is_mpeg1or2 = true;
+		return 0;
+	}
+	if (ctx.layer != 3)
+		return -1;
+
+	info->channels = ctx.nb_channels;
+	info->sample_freq = ctx.sample_rate;
+
+	sceIoLseek(data->fd, xing_offtbl[ctx.lsf == 1][ctx.nb_channels == 1], PSP_SEEK_CUR);
+
+	if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+		return -1;
+	}
+	b = LB_CONV(b);
+
+	if (b == MKBETAG('X', 'i', 'n', 'g') || b == MKBETAG('I', 'n', 'f', 'o')) {
+		if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+			return -1;
+		}
+		b = LB_CONV(b);
+		if (b & 0x1) {
+			if (sceIoRead(data->fd, &frames, sizeof(frames)) != sizeof(frames)) {
+				return -1;
+			}
+			frames = LB_CONV(frames);
+		}
+	}
+
+	/* Check for VBRI tag (always 32 bytes after end of mpegaudio header) */
+	sceIoLseek(data->fd, off + 4 + 32, SEEK_SET);
+	if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+		return -1;
+	}
+	b = LB_CONV(b);
+	if (b == MKBETAG('V', 'B', 'R', 'I')) {
+		uint16_t t;
+
+		/* Check tag version */
+		if (sceIoRead(data->fd, &t, sizeof(t)) != sizeof(t)) {
+			return -1;
+		}
+		t = ((t & 0xff) << 8) | (t >> 8);
+
+		if (t == 1) {
+			/* skip delay, quality and total bytes */
+			sceIoLseek(data->fd, 8, PSP_SEEK_CUR);
+			if (sceIoRead(data->fd, &frames, sizeof(frames)) != sizeof(frames)) {
+				return -1;
+			}
+			frames = LB_CONV(frames);
+		}
+	}
+
+	if ((int) frames < 0)
+		return -1;
+
+	int spf;
+
+	spf = ctx.lsf ? 576 : 1152;	/* Samples per frame, layer 3 */
+	info->frames = frames;
+	info->duration = (double) frames *spf / info->sample_freq;
+	info->average_bitrate = (double) data->size * 8 / info->duration;
+
+	return frames;
+}
+
+static int id3v2_match(const uint8_t * buf)
+{
+	return buf[0] == 'I' &&
+		buf[1] == 'D' &&
+		buf[2] == '3' &&
+		buf[3] != 0xff &&
+		buf[4] != 0xff &&
+		(buf[6] & 0x80) == 0 &&
+		(buf[7] & 0x80) == 0 && (buf[8] & 0x80) == 0 && (buf[9] & 0x80) == 0;
+}
+
+static const uint8_t ff_log2_tab[256] = {
+	0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+	4, 4, 4, 4, 4, 4, 4,
+	5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+	5, 5, 5, 5, 5, 5, 5,
+	6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+	6, 6, 6, 6, 6, 6, 6,
+	6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+	6, 6, 6, 6, 6, 6, 6,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+	7, 7, 7, 7, 7, 7, 7
+};
+
+static inline int av_log2(unsigned int v)
+{
+	int n = 0;
+
+	if (v & 0xffff0000) {
+		v >>= 16;
+		n += 16;
+	}
+	if (v & 0xff00) {
+		v >>= 8;
+		n += 8;
+	}
+	n += ff_log2_tab[v];
+
+	return n;
+}
+
+#define FFMIN(a,b) ((a) > (b) ? (b) : (a))
+
+#define GET_UTF8(val, GET_BYTE, ERROR)\
+	val= GET_BYTE;\
+{\
+	int ones= 7 - av_log2(val ^ 255);\
+	if(ones==1)\
+	ERROR\
+	val&= 127>>ones;\
+	while(--ones > 0){\
+		int tmp= GET_BYTE - 128;\
+		if(tmp>>6)\
+		ERROR\
+		val= (val<<6) + tmp;\
+	}\
+}
+
+#define PUT_UTF8(val, tmp, PUT_BYTE)\
+{\
+	int bytes, shift;\
+	uint32_t in = val;\
+	if (in < 0x80) {\
+		tmp = in;\
+		PUT_BYTE\
+	} else {\
+		bytes = (av_log2(in) + 4) / 5;\
+		shift = (bytes - 1) * 6;\
+		tmp = (256 - (256 >> bytes)) | (in >> shift);\
+		PUT_BYTE\
+		while (shift >= 6) {\
+			shift -= 6;\
+			tmp = 0x80 | ((in >> shift) & 0x3f);\
+			PUT_BYTE\
+		}\
+	}\
+}
+static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
+		int dstlen)
+{
+	char *q;
+	int len;
+
+	if (dstlen > 0)
+		dst[0] = 0;
+	if (taglen < 1)
+		return;
+
+	taglen--;					/* account for encoding type byte */
+	dstlen--;					/* Leave space for zero terminator */
+
+	uint8_t b;
+
+	if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+		return;
+	}
+
+	switch (b) {				/* encoding type */
+		case 0:				/* ISO-8859-1 (0 - 255 maps directly into unicode) */
+			q = dst;
+			while (taglen--) {
+				uint8_t tmp;
+
+				if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+					return;
+				}
+
+				// TODO: Chinese hack???
+				PUT_UTF8(b, tmp, if (q - dst < dstlen - 1) * q++ = tmp;)
+			}
+			*q = '\0';
+			break;
+
+		case 3:				/* UTF-8 */
+			len = FFMIN(taglen, dstlen - 1);
+			if (sceIoRead(data->fd, dst, len) < 0) {
+				return;
+			}
+			dst[len] = 0;
+			break;
+	}
+}
+
+typedef int64_t offset_t;
+
+static unsigned int id3v2_get_size(mp3_reader_data * data, int len)
+{
+	int v = 0;
+	uint8_t b;
+
+	while (len--) {
+		sceIoRead(data->fd, &b, sizeof(b));
+		v = (v << 7) + (b & 0x7F);
+	}
+	return v;
+}
+
+static unsigned int get_be16(mp3_reader_data * data)
+{
+	uint16_t val;
+
+	sceIoRead(data->fd, &val, sizeof(val));
+	val = ((val & 0xff) << 8) | (val >> 8);
+	return val;
+}
+
+static unsigned int get_be32(mp3_reader_data * data)
+{
+	uint32_t val;
+
+	sceIoRead(data->fd, &val, sizeof(val));
+	val = LB_CONV(val);
+	return val;
+}
+
+static uint8_t get_byte(mp3_reader_data * data)
+{
+	uint8_t val;
+
+	sceIoRead(data->fd, &val, sizeof(val));
+	return val;
+}
+
+static unsigned int get_be24(mp3_reader_data * data)
+{
+	uint32_t val;
+
+	val = get_be16(data) << 8;
+	val |= get_byte(data);
+	return val;
+}
+
+static void id3v2_parse(mp3_reader_data * data, struct MP3Info *info,
+						int len, uint8_t version, uint8_t flags)
+{
+	int isv34, tlen;
+	uint32_t tag;
+	offset_t next;
+	char tmp[16];
+	int taghdrlen;
+	const char *reason;
+
+	switch (version) {
+		case 2:
+			if (flags & 0x40) {
+				reason = "compression";
+				goto error;
+			}
+			isv34 = 0;
+			taghdrlen = 6;
+			break;
+
+		case 3:
+		case 4:
+			isv34 = 1;
+			taghdrlen = 10;
+			break;
+
+		default:
+			reason = "version";
+			goto error;
+	}
+
+#if 0
+	if (flags & 0x80) {
+		reason = "unsynchronization";
+		goto error;
+	}
+#endif
+
+	if (isv34 && flags & 0x40) {	/* Extended header present, just skip over it */
+		sceIoLseek(data->fd, id3v2_get_size(data, 4), PSP_SEEK_CUR);
+	}
+
+	while (len >= taghdrlen) {
+		if (isv34) {
+			tag = get_be32(data);
+			tlen = id3v2_get_size(data, 4);
+			get_be16(data);	/* flags */
+		} else {
+			tag = get_be24(data);
+			tlen = id3v2_get_size(data, 3);
+		}
+		len -= taghdrlen + tlen;
+
+		if (len < 0)
+			break;
+
+		next = sceIoLseek(data->fd, 0, PSP_SEEK_CUR) + tlen;
+
+		switch (tag) {
+			case MKBETAG('T', 'I', 'T', '2'):
+			case MKBETAG(0, 'T', 'T', '2'):
+				id3v2_read_ttag(data, tlen, info->tag.title,
+						sizeof(info->tag.title));
+				break;
+			case MKBETAG('T', 'P', 'E', '1'):
+			case MKBETAG(0, 'T', 'P', '1'):
+				id3v2_read_ttag(data, tlen, info->tag.author,
+						sizeof(info->tag.author));
+				break;
+			case MKBETAG('T', 'A', 'L', 'B'):
+			case MKBETAG(0, 'T', 'A', 'L'):
+				id3v2_read_ttag(data, tlen, info->tag.album,
+						sizeof(info->tag.album));
+				break;
+#if 0
+			case MKBETAG('C', 'O', 'M', 'M'):
+				id3v2_read_ttag(data, tlen, info->tag.comment,
+						sizeof(info->tag.comment));
+				break;
+#endif
+			case MKBETAG('T', 'C', 'O', 'N'):
+			case MKBETAG(0, 'T', 'C', 'O'):
+				id3v2_read_ttag(data, tlen, info->tag.genre,
+						sizeof(info->tag.genre));
+				break;
+			case MKBETAG('T', 'C', 'O', 'P'):
+			case MKBETAG(0, 'T', 'C', 'R'):
+				id3v2_read_ttag(data, tlen, info->tag.copyright,
+						sizeof(info->tag.copyright));
+				break;
+			case MKBETAG('T', 'R', 'C', 'K'):
+			case MKBETAG(0, 'T', 'R', 'K'):
+				id3v2_read_ttag(data, tlen, tmp, sizeof(tmp));
+				info->tag.track = atoi(tmp);
+				break;
+			case MKBETAG('T', 'D', 'R', 'C'):
+			case MKBETAG('T', 'Y', 'E', 'R'):
+				id3v2_read_ttag(data, tlen, tmp, sizeof(tmp));
+				info->tag.year = atoi(tmp);
+				break;
+			case 0:
+				/* padding, skip to end */
+				sceIoLseek(data->fd, len, PSP_SEEK_CUR);
+				len = 0;
+				continue;
+		}
+		/* Skip to end of tag */
+		sceIoLseek(data->fd, next, SEEK_SET);
+	}
+
+	info->tag.type = ID3V2;
+
+	if (version == 4 && flags & 0x10)	/* Footer preset, always 10 bytes, skip over it */
+		sceIoLseek(data->fd, 10, PSP_SEEK_CUR);
+	return;
+
+error:
+	sceIoLseek(data->fd, len, PSP_SEEK_CUR);
+}
+
+#define ID3v1_TAG_SIZE 128
+
+static void id3v1_get_string(char *str, int str_size,
+							 const uint8_t *buf, int buf_size)
+{
+	int i, c;
+	char *q;
+
+	q = str;
+
+	for(i = 0; i < buf_size; i++) {
+		c = buf[i];
+		if (c == '\0')
+			break;
+		if ((q - str) >= str_size - 1)
+			break;
+		*q++ = c;
+	}
+
+	*q = '\0';
+}
+
+static int id3v1_parse_tag(mp3_reader_data *data, struct MP3Info *info, const uint8_t *buf)
+{
+	char str[5];
+	int genre;
+
+	if (!(buf[0] == 'T' &&
+		  buf[1] == 'A' &&
+		  buf[2] == 'G'))
+		return -1;
+
+	info->tag.type = ID3V1;
+
+	id3v1_get_string(info->tag.title, sizeof(info->tag.title), buf + 3, 30);
+	id3v1_get_string(info->tag.author, sizeof(info->tag.author), buf + 33, 30);
+	id3v1_get_string(info->tag.album, sizeof(info->tag.album), buf + 63, 30);
+	id3v1_get_string(str, sizeof(str), buf + 93, 4);
+	info->tag.year = atoi(str);
+	id3v1_get_string(info->tag.comment, sizeof(info->tag.comment), buf + 97, 30);
+
+	if (buf[125] == 0 && buf[126] != 0)
+		info->tag.track = buf[126];
+
+	genre = buf[127];
+
+	if (genre <= ID3v1_GENRE_MAX)
+		STRCPY_S(info->tag.genre, id3v1_genre_str[genre]);
+
+	return 0;
+}
+
+int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
+{
+	int ret;
+
+	// TODO: get id3v1
+	if (data->size > 128) {
+		uint8_t buf[ID3v1_TAG_SIZE];
+
+		sceIoLseek(data->fd, data->size - 128, SEEK_SET);
+		ret = sceIoRead(data->fd, buf, ID3v1_TAG_SIZE);
+		if (ret == ID3v1_TAG_SIZE) {
+			id3v1_parse_tag(data, info, buf);
+		}
+	}
+
+	sceIoLseek(data->fd, 0, SEEK_SET);
+
+	/* skip ID3v2 header if exists */
+	uint8_t buf[ID3v2_HEADER_SIZE];
+
+	if (sceIoRead(data->fd, buf, sizeof(buf)) != sizeof(buf)) {
+		return -1;
+	}
+
+	int len;
+	uint32_t off;
+
+	if (id3v2_match(buf)) {
+		/* parse ID3v2 header */
+		len = ((buf[6] & 0x7f) << 21) |
+			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] &
+				0x7f);
+		id3v2_parse(data, info, len, buf[3], buf[5]);
+	} else {
+		sceIoLseek(data->fd, 0, SEEK_SET);
+	}
+
+	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+	if (mp3_parse_vbr_tags(data, info, off) < 0) {
+		// TODO: No Xing header found, use brute force search method
+//		info->sample_freq = 44100;
+//		info->channels = 2;
+	}
+	sceIoLseek(data->fd, off, SEEK_SET);
+	return 0;
+}
