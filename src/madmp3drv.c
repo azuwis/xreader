@@ -504,12 +504,15 @@ static int madmp3_get_info(struct music_info *info)
 	}
 
 	if (info->type & MD_GET_TITLE) {
+		info->encode = mp3info.tag.encode;
 		STRCPY_S(info->title, mp3info.tag.title);
 	}
 	if (info->type & MD_GET_ARTIST) {
+		info->encode = mp3info.tag.encode;
 		STRCPY_S(info->artist, mp3info.tag.author);
 	}
 	if (info->type & MD_GET_COMMENT) {
+		info->encode = mp3info.tag.encode;
 		STRCPY_S(info->comment, mp3info.tag.comment);
 	}
 	if (info->type & MD_GET_CURTIME) {

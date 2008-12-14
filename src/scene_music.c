@@ -426,10 +426,47 @@ static void scene_draw_mp3bar_music_staff(void)
 	if (musicdrv_get_info(&info) == 0) {
 		char tag[512];
 
-		charsets_utf8_conv((const byte *) info.artist, sizeof(info.artist),
-						   (byte *) info.artist, sizeof(info.artist));
-		charsets_utf8_conv((const byte *) info.title, sizeof(info.title),
-						   (byte *) info.title, sizeof(info.title));
+		switch (info.encode) {
+			case conf_encode_utf8:
+				charsets_utf8_conv((const byte *) info.artist,
+								   sizeof(info.artist), (byte *) info.artist,
+								   sizeof(info.artist));
+				charsets_utf8_conv((const byte *) info.title,
+								   sizeof(info.title), (byte *) info.title,
+								   sizeof(info.title));
+				break;
+			case conf_encode_big5:
+				charsets_big5_conv((const byte *) info.artist,
+								   sizeof(info.artist), (byte *) info.artist,
+								   sizeof(info.artist));
+				charsets_big5_conv((const byte *) info.title,
+								   sizeof(info.title), (byte *) info.title,
+								   sizeof(info.title));
+				break;
+			case conf_encode_sjis:
+				{
+					byte *temp;
+					dword size;
+
+					temp = NULL, size = strlen(info.artist);
+					charsets_sjis_conv((const byte *) info.artist,
+									   (byte **) & temp, (dword *) & size);
+					strncpy_s(info.artist, sizeof(info.artist),
+							  (const char *) temp, size);
+					free(temp);
+					temp = NULL, size = strlen(info.title);
+					charsets_sjis_conv((const byte *) info.title,
+									   (byte **) & temp, (dword *) & size);
+					strncpy_s(info.title, sizeof(info.title),
+							  (const char *) temp, size);
+					free(temp);
+				}
+				break;
+			case conf_encode_gbk:
+				break;
+			default:
+				break;
+		}
 		if (info.artist[0] != '\0' && info.title[0] != '\0')
 			SPRINTF_S(tag, "%s - %s", info.artist, info.title);
 		else if (info.title[0] != '\0')

@@ -477,7 +477,7 @@ static inline int av_log2(unsigned int v)
 	}\
 }
 static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
-		int dstlen)
+		int dstlen, struct MP3Info *info)
 {
 	char *q;
 	int len;
@@ -497,7 +497,9 @@ static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 	}
 
 	switch (b) {				/* encoding type */
+		// TODO: non-standard hack...
 		case 0:				/* ISO-8859-1 (0 - 255 maps directly into unicode) */
+			info->tag.encode = conf_encode_utf8;
 			q = dst;
 			while (taglen--) {
 				uint8_t tmp;
@@ -506,13 +508,13 @@ static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 					return;
 				}
 
-				// TODO: Chinese hack???
 				PUT_UTF8(b, tmp, if (q - dst < dstlen - 1) * q++ = tmp;)
 			}
 			*q = '\0';
 			break;
 
 		case 3:				/* UTF-8 */
+			info->tag.encode = conf_encode_utf8;
 			len = FFMIN(taglen, dstlen - 1);
 			if (sceIoRead(data->fd, dst, len) < 0) {
 				return;
@@ -631,17 +633,17 @@ static void id3v2_parse(mp3_reader_data * data, struct MP3Info *info,
 			case MKBETAG('T', 'I', 'T', '2'):
 			case MKBETAG(0, 'T', 'T', '2'):
 				id3v2_read_ttag(data, tlen, info->tag.title,
-						sizeof(info->tag.title));
+						sizeof(info->tag.title), info);
 				break;
 			case MKBETAG('T', 'P', 'E', '1'):
 			case MKBETAG(0, 'T', 'P', '1'):
 				id3v2_read_ttag(data, tlen, info->tag.author,
-						sizeof(info->tag.author));
+						sizeof(info->tag.author), info);
 				break;
 			case MKBETAG('T', 'A', 'L', 'B'):
 			case MKBETAG(0, 'T', 'A', 'L'):
 				id3v2_read_ttag(data, tlen, info->tag.album,
-						sizeof(info->tag.album));
+						sizeof(info->tag.album), info);
 				break;
 #if 0
 			case MKBETAG('C', 'O', 'M', 'M'):
@@ -652,21 +654,21 @@ static void id3v2_parse(mp3_reader_data * data, struct MP3Info *info,
 			case MKBETAG('T', 'C', 'O', 'N'):
 			case MKBETAG(0, 'T', 'C', 'O'):
 				id3v2_read_ttag(data, tlen, info->tag.genre,
-						sizeof(info->tag.genre));
+						sizeof(info->tag.genre), info);
 				break;
 			case MKBETAG('T', 'C', 'O', 'P'):
 			case MKBETAG(0, 'T', 'C', 'R'):
 				id3v2_read_ttag(data, tlen, info->tag.copyright,
-						sizeof(info->tag.copyright));
+						sizeof(info->tag.copyright), info);
 				break;
 			case MKBETAG('T', 'R', 'C', 'K'):
 			case MKBETAG(0, 'T', 'R', 'K'):
-				id3v2_read_ttag(data, tlen, tmp, sizeof(tmp));
+				id3v2_read_ttag(data, tlen, tmp, sizeof(tmp), info);
 				info->tag.track = atoi(tmp);
 				break;
 			case MKBETAG('T', 'D', 'R', 'C'):
 			case MKBETAG('T', 'Y', 'E', 'R'):
-				id3v2_read_ttag(data, tlen, tmp, sizeof(tmp));
+				id3v2_read_ttag(data, tlen, tmp, sizeof(tmp), info);
 				info->tag.year = atoi(tmp);
 				break;
 			case 0:
@@ -737,6 +739,8 @@ static int id3v1_parse_tag(mp3_reader_data *data, struct MP3Info *info, const ui
 
 	if (genre <= ID3v1_GENRE_MAX)
 		STRCPY_S(info->tag.genre, id3v1_genre_str[genre]);
+
+	info->tag.encode = config.mp3encode;
 
 	return 0;
 }

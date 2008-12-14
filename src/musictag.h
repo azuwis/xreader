@@ -18,23 +18,29 @@
 #ifndef MUSICTAG_H
 #define MUSICTAG_H
 
-enum {
+#include "conf.h"
+
+enum
+{
 	NONE,
 	ID3V1,
 	ID3V2,
 	APETAG
 };
 
-struct MusicTag {
+struct MusicTag
+{
 	int type;
+	t_conf_encode encode;
+
 	char title[512];
 	char author[512];
 	char copyright[512];
 	char comment[512];
 	char album[512];
-	int year;  
-	int track; 
-	char genre[32]; 
+	int year;
+	int track;
+	char genre[32];
 };
 
 #endif

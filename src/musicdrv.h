@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "conf.h"
+
 #define MD_GET_TITLE       (1 << 0)
 #define MD_GET_ARTIST      (1 << 1)
 #define MD_GET_COMMENT     (1 << 3)
@@ -36,6 +38,7 @@
 struct music_info
 {
 	int type;
+	t_conf_encode encode;
 
 	char title[INFO_STR_SIZE];
 	char artist[INFO_STR_SIZE];
