@@ -452,8 +452,8 @@ static int music_load_config(void)
 {
 	const struct music_ops *drv = get_musicdrv(NULL);
 
-	if (!strcmp(drv->name, "mp3")) {
-		musicdrv_set_opt("use_media_engine", "1");
+	if (!strcmp(drv->name, "madmp3")) {
+		musicdrv_set_opt("use_me", "on");
 		return 0;
 	}
 

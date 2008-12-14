@@ -45,12 +45,14 @@ typedef struct reader_data_t
 struct MP3Info {
 	bool is_mpeg1or2;
 	uint32_t frames;
+	int spf;
 	int channels;
 	int sample_freq;
 	double duration;
 	double average_bitrate;
 	struct MusicTag tag;
 	bool use_brute_method;
+	bool use_me;
 };
 
 int read_mp3_info(struct MP3Info *info, mp3_reader_data* data);

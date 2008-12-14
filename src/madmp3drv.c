@@ -27,9 +27,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <pspsdk.h>
 #include <pspkernel.h>
 #include <pspaudio.h>
 #include <pspaudio.h>
+#include <pspaudiocodec.h>
+#include <pspmpeg.h>
 #include <limits.h>
 #include "strsafe.h"
 #include "musicdrv.h"
@@ -109,6 +112,15 @@ static double g_suspend_playing_time;
  * 休眠前播放状态
  */
 static int g_suspend_status;
+
+/**
+ * Media Engine buffer缓存
+ */
+unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
+
+short mp3_mix_buffer[1152 * 2] __attribute__ ((aligned(64)));
+
+bool mp3_getEDRAM;
 
 /**
  * 加锁
@@ -414,6 +426,71 @@ static inline void broadcast_output()
 {
 }
 
+static int me_init()
+{
+	int ret;
+
+	ret =
+		pspSdkLoadStartModule("flash0:/kd/me_for_vsh.prx",
+							  PSP_MEMORY_PARTITION_KERNEL);
+
+	if (ret < 0)
+		return ret;
+
+	ret =
+		pspSdkLoadStartModule("flash0:/kd/videocodec.prx",
+							  PSP_MEMORY_PARTITION_KERNEL);
+
+	if (ret < 0)
+		return ret;
+
+	ret =
+		pspSdkLoadStartModule("flash0:/kd/audiocodec.prx",
+							  PSP_MEMORY_PARTITION_KERNEL);
+
+	if (ret < 0)
+		return ret;
+
+	ret =
+		pspSdkLoadStartModule("flash0:/kd/mpegbase.prx",
+							  PSP_MEMORY_PARTITION_KERNEL);
+
+	if (ret < 0)
+		return ret;
+
+	ret =
+		pspSdkLoadStartModule("flash0:/kd/mpeg_vsh.prx",
+							  PSP_MEMORY_PARTITION_USER);
+
+	if (ret < 0)
+		return ret;
+
+	ret = sceMpegInit();
+
+	if (ret < 0)
+		return ret;
+
+	memset(mp3_codec_buffer, 0, sizeof(mp3_codec_buffer));
+	ret = sceAudiocodecCheckNeedMem(mp3_codec_buffer, 0x1002);
+
+	if (ret < 0)
+		return ret;
+
+	ret = sceAudiocodecGetEDRAM(mp3_codec_buffer, 0x1002);
+
+	if (ret < 0)
+		return ret;
+
+	mp3_getEDRAM = 1;
+
+	ret = sceAudiocodecInit(mp3_codec_buffer, 0x1002);
+
+	if (ret < 0)
+		return ret;
+
+	return 0;
+}
+
 static int madmp3_load(const char *spath, const char *lpath)
 {
 	int ret;
@@ -438,6 +515,13 @@ static int madmp3_load(const char *spath, const char *lpath)
 	mad_stream_init(&stream);
 	mad_frame_init(&frame);
 	mad_synth_init(&synth);
+
+	if (mp3info.use_me) {
+		if (me_init() < 0) {
+			__end();
+			return -1;
+		}
+	}
 
 	if (mp3info.use_brute_method) {
 		if (read_mp3_info_brute(&mp3info, &data) < 0) {
@@ -493,6 +577,14 @@ static int madmp3_set_opt(const char *key, const char *value)
 			mp3info.use_brute_method = true;
 		} else {
 			mp3info.use_brute_method = false;
+		}
+	}
+
+	if (!stricmp(key, "mp3_use_me")) {
+		if (!stricmp(value, "on")) {
+			mp3info.use_me = true;
+		} else {
+			mp3info.use_me = false;
 		}
 	}
 
@@ -737,6 +829,11 @@ static int __end(void)
 	madmp3_lock();
 	g_status = ST_STOPPED;
 	madmp3_unlock();
+
+	if (mp3info.use_me) {
+		if (mp3_getEDRAM)
+			sceAudiocodecReleaseEDRAM(mp3_codec_buffer);
+	}
 
 	return 0;
 }
