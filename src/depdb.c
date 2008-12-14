@@ -1,4 +1,8 @@
 /*
+ * This file is part of xReader.
+ *
+ * Copyright (C) 2008 hrimfaxi (outmatch@gmail.com)
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -19,12 +23,12 @@
  *
  * Description: 
  *
- *
  * Author: tyzam,<tyzam@foxmail.com>,, (C) 2008
  *
  * Copyright: See COPYING file that comes with this distribution
  *
  */
+
 #include <pspiofilemgr.h>
 #include <string.h>
 #include <malloc.h>

@@ -1,4 +1,8 @@
 /*
+ * This file is part of xReader.
+ *
+ * Copyright (C) 2008 hrimfaxi (outmatch@gmail.com)
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,33 +17,6 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-
-//    Copyright (C) 2008 Hrimfaxi
-//    outmatch@gmail.com
-//
-//    This program is free software; you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation; either version 2 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program; if not, write to the Free Software
-//    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-//
-//    CREDITS:
-//    This file contains functions to play aa3 files through the PSP's Media Engine.
-//    This code is based upon this sample code from ps2dev.org
-//    http://forums.ps2dev.org/viewtopic.php?t=8469
-//    and the source code of Music prx by joek2100
-
-//
-//    $Id: aa3playerME.c 52 2008-02-16 06:33:43Z hrimfaxi $
-//
 
 #include <string.h>
 #include <stdio.h>
