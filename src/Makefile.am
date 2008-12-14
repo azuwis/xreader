@@ -37,7 +37,7 @@ apetaglib/TagError.c apetaglib/TagHeader.h apetaglib/TagItem.c \
 apetaglib/TagItem.h simple_gettext.h osk.c \
 osk.h exception.c exception.h m33boot.c m33boot.h passwdmgr.c passwdmgr.h \
 archive.c archive.h resample.c resample.h xrPrx.S xr_RDLib.S \
-depdb.c depdb.h unumd.c unumd.h
+depdb.c depdb.h unumd.c unumd.h crc16.c crc16.h
 
 xrPrx.o: $(top_builddir)/xrPrx/xrPrx.S
 	$(CC) -I$(PSPSDK)/include -c -o $@ $^
