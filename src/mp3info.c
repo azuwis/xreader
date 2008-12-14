@@ -28,7 +28,6 @@
 #include "strsafe.h"
 #include "musicdrv.h"
 #include "mp3info.h"
-#include "crc16.h"
 
 #define ID3v2_HEADER_SIZE 10
 
