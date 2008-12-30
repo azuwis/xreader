@@ -754,10 +754,13 @@ int music_free(void)
 
 	music_lock();
 
-	do {
+	ret = -1;
+
+	while (ret != 0) {
 		ret = music_stop();
-		sceKernelDelayThread(500000);
-	} while (ret != 0);
+		if (ret != 0)
+			sceKernelDelayThread(100000);
+	}
 
 	g_list.is_list_playing = 0;
 	g_thread_actived = 0;
