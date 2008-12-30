@@ -25,24 +25,30 @@
 #include "common/utils.h"
 #include "html.h"
 
-static char *html_skip_spaces(char *string)
+static char *html_skip_spaces(char *string, size_t size)
 {
 	char *res = string;
 
-	while (*res == '\r' || *res == '\n' || *res == ' ' || *res == '\t')
+	while (size > 0
+		   && (*res == '\r' || *res == '\n' || *res == ' ' || *res == '\t')) {
 		res++;
+		size--;
+	}
+
 	return res;
 }
 
-static char *html_find_next_tag(char *string, char **tag, char **property,
-								bool * istag, bool stripeol)
+static char *html_find_next_tag(char *string, size_t size, char **tag,
+								char **property, bool * istag, bool stripeol)
 {
 	char *res = string;
 	bool inquote = false;
 	char quote = ' ';
+	char *old;
 
 	*property = NULL;
-	while (*res != 0 && *res != '<' && *res != '&') {
+
+	while (size > 0 && *res != '\0' && *res != '<' && *res != '&') {
 		if (stripeol
 			&& (*res == ' ' || *res == '\t' || *res == '\r' || *res == '\n')) {
 			if (res > string && *(res - 1) == ' ')
@@ -50,86 +56,182 @@ static char *html_find_next_tag(char *string, char **tag, char **property,
 			else
 				*res = ' ';
 		}
+
 		res++;
+		size--;
 	}
+
+	if (size == 0)
+		return res;
+
 	if (*res == 0)
 		return NULL;
+
 	if (*res == '<') {
 		*res++ = 0;
-		res = html_skip_spaces(res);
+		size--;
+
+		if (size == 0)
+			return res;
+
+		old = res;
+		res = html_skip_spaces(res, size);
+		size -= res - old;
+
+		if (size == 0)
+			return res;
+
 		*tag = res;
-		while (inquote || (*res != 0 && *res != '>')) {
-			if (*res == '"' || *res == '\'') {
+
+		while (size > 0 && (inquote || (*res != '\0' && *res != '>'))) {
+			if (*res == '\"' || *res == '\'') {
 				if (!inquote) {
 					inquote = true;
 					quote = *res;
 				} else if (quote == *res)
 					inquote = false;
+
 				res++;
+				size--;
+
+				if (size == 0)
+					return res;
+
 			} else if (!inquote
 					   && (*res == ' ' || *res == '\t'
 						   || *res == '\r' || *res == '\n')) {
 				*res = 0;
 				res++;
-				res = html_skip_spaces(res);
+				size--;
+
+				if (size == 0)
+					return res;
+
+				old = res;
+				res = html_skip_spaces(res, size);
+				size -= res - old;
+
+				if (size == 0)
+					return res;
+
 				if (*res != '>')
 					*property = res;
-			} else
+			} else {
 				res++;
+				size--;
+
+				if (size == 0)
+					return res;
+			}
 		}
+
 		if (*res == 0)
 			return NULL;
+
 		*res++ = 0;
-		res = html_skip_spaces(res);
+		size--;
+
+		if (size == 0)
+			return res;
+
+		old = res;
+		res = html_skip_spaces(res, size);
+		size -= res - old;
+
+		if (size == 0)
+			return res;
+
 		*istag = true;
 	} else {
 		*res++ = 0;
+		size--;
+
+		if (size == 0)
+			return res;
+
 		*tag = res;
-		while (*res != 0 && *res != ' ' && *res != ';' && *res != '<'
-			   && *res != '&')
+
+		while (size > 0 && *res != '\0' && *res != ' ' && *res != ';'
+			   && *res != '<' && *res != '&') {
 			res++;
+			size--;
+		}
+
+		if (size == 0)
+			return res;
+
 		if (*res == 0)
 			return NULL;
-		if (*res == ' ' || *res == ';')
+
+		if (*res == ' ' || *res == ';') {
 			*res++ = 0;
-		else
+			size--;
+
+			if (size == 0)
+				return res;
+		} else
 			*(res - 1) = 0;
+
 		*istag = false;
 	}
+
 	return res;
 }
 
-static char *html_skip_close_tag(char *string, char *tag)
+static char *html_skip_close_tag(char *string, size_t size, char *tag)
 {
 	char *res = string, *sstart;
-	int len = strlen(tag) + 1;
+	int len = strnlen(tag, size) + 1;
 	char ttag[len + 1];
 
 	snprintf_s(ttag, len + 1, "/%s", tag);
+
 	do {
-		while (*res != 0 && *res != '<')
+		while (size > 0 && *res != 0 && *res != '<') {
 			res++;
+			size--;
+		}
+
+		if (size == 0)
+			return res;
+
 		if (*res == 0)
 			return NULL;
+
 		sstart = res;
 		res++;
-		res = html_skip_spaces(res);
+		size--;
+
+		if (size == 0)
+			return res;
+
+		res = html_skip_spaces(res, size);
+
 		if (strncmp(ttag, res, len) == 0)
 			res += len;
 		else
 			continue;
-		res = html_skip_spaces(res);
+
+		res = html_skip_spaces(res, size);
 		if (*res == 0)
 			return NULL;
 	} while (*res != '>');
+
 	*sstart = *res++ = 0;
+
+	size--;
+
+	if (size == 0)
+		return res;
+
 	return res;
 }
 
 extern dword html_to_text(char *string, dword size, bool stripeol)
 {
-	char *nstr, *ntag, *cstr = string, *str = string, *prop;
-	bool istag;
+	char *nstr = NULL, *ntag = string, *cstr = string, *str = string, *prop =
+		NULL;
+	bool istag = false;
 
 	if (size > 0) {
 		char *cur, *end;
@@ -138,23 +240,29 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 			if (*cur == 0)
 				*cur = 1;
 	}
+
 	while (str != NULL
 		   && (nstr =
-			   html_find_next_tag(str, &ntag, &prop, &istag,
+			   html_find_next_tag(str, size, &ntag, &prop, &istag,
 								  stripeol)) != NULL) {
 		int len = (int) ntag - (int) str - 1;
 
 		if (len > 0) {
 			if (str != cstr) {
-				strncpy(cstr, str, len);
-				cstr[len] = '\0';
+				memmove(cstr, str, len);
 			}
 			cstr += len;
+			size -= len;
+
+			if (size == 0) {
+				return cstr - string;
+			}
 		}
+
 		if (istag) {
 			if (stricmp(ntag, "head") == 0
 				|| stricmp(ntag, "style") == 0 || stricmp(ntag, "title") == 0) {
-				char *pstr = html_skip_close_tag(nstr, ntag);
+				char *pstr = html_skip_close_tag(nstr, size, ntag);
 
 				if (pstr != NULL)
 					str = pstr;
@@ -163,7 +271,7 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 			} else if (stricmp(ntag, "script") == 0) {
 				char *kstr = nstr;
 
-				str = html_skip_close_tag(nstr, ntag);
+				str = html_skip_close_tag(nstr, size, ntag);
 				while ((kstr = strstr(kstr, "document.write(")) != NULL) {
 					kstr += 15;
 					while (*kstr == ' ' || *kstr == '\t')
@@ -180,19 +288,29 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 						if (*dstr == qt) {
 							strncpy(cstr, kstr, dstr - kstr);
 							cstr[dstr - kstr] = '\0';
-							cstr += html_to_text(cstr, 0, true);
+							cstr += html_to_text(cstr, dstr - kstr, true);
+							size -= dstr - kstr;
+
+							if (size == 0) {
+								return cstr - string;
+							}
 						}
 						kstr = dstr;
 					}
 				}
 			} else if (stricmp(ntag, "pre") == 0) {
-				char *pstr = html_skip_close_tag(nstr, "pre");
+				char *pstr = html_skip_close_tag(nstr, size, "pre");
 
 				if (pstr != NULL) {
 					len = pstr - nstr - 6;
 					strncpy(cstr, nstr, len);
 					cstr[len] = '\0';
-					cstr += html_to_text(cstr, 0, false);
+					cstr += html_to_text(cstr, len, false);
+					size -= len;
+
+					if (size == 0) {
+						return cstr - string;
+					}
 				}
 				str = pstr;
 			} else {
@@ -207,9 +325,14 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 					if (prop != NULL) {
 						char *v = strchr(prop, '=');
 
-						if (v == NULL)
+						if (v == NULL) {
 							*cstr++ = '\n';
-						else {
+							size--;
+
+							if (size == 0) {
+								return cstr - string;
+							}
+						} else {
 							char *t = v - 1;
 
 							*v = 0;
@@ -221,13 +344,18 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 							*(t + 1) = 0;
 							if (stricmp(prop, "style") == 0) {
 								v++;
-								v = html_skip_spaces(v);
+								v = html_skip_spaces(v, size);
 								if (*v == '"' || *v == '\'') {
 									char *rq = strchr(v + 1,
 													  *v);
 
 									if (rq == NULL) {
 										*cstr++ = '\n';
+										size--;
+
+										if (size == 0) {
+											return cstr - string;
+										}
 										v = NULL;
 									} else {
 										*rq = 0;
@@ -235,46 +363,116 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 									}
 								}
 								if (v != NULL) {
-									if (stricmp(v, "display:none") != 0)
+									if (stricmp(v, "display:none") != 0) {
 										*cstr++ = '\n';
-									else {
+										size--;
+
+										if (size == 0) {
+											return cstr - string;
+										}
+									} else {
 										char *pstr =
-											html_skip_close_tag(nstr, ntag);
+											html_skip_close_tag(nstr, size,
+																ntag);
+
 										if (pstr != NULL)
 											nstr = pstr;
 									}
 								}
 							}
 						}
-					} else
+					} else {
 						*cstr++ = '\n';
-				} else if (stricmp(ntag, "th") == 0 || stricmp(ntag, "td") == 0)
+						size--;
+
+						if (size == 0) {
+							return cstr - string;
+						}
+					}
+				} else if (stricmp(ntag, "th") == 0 || stricmp(ntag, "td") == 0) {
 					*cstr++ = ' ';
+					size--;
+
+					if (size == 0) {
+						return cstr - string;
+					}
+				}
 				str = nstr;
 			}
 		} else {
-			if (stricmp(ntag, "nbsp") == 0)
+			if (stricmp(ntag, "nbsp") == 0) {
 				*cstr++ = ' ';
-			else if (stricmp(ntag, "gt") == 0)
+				size--;
+
+				if (size == 0) {
+					return cstr - string;
+				}
+
+			} else if (stricmp(ntag, "gt") == 0) {
 				*cstr++ = '>';
-			else if (stricmp(ntag, "lt") == 0)
+				size--;
+
+				if (size == 0) {
+					return cstr - string;
+				}
+
+			} else if (stricmp(ntag, "lt") == 0) {
 				*cstr++ = '<';
-			else if (stricmp(ntag, "amp") == 0)
+				size--;
+
+				if (size == 0) {
+					return cstr - string;
+				}
+
+			} else if (stricmp(ntag, "amp") == 0) {
 				*cstr++ = '&';
-			else if (stricmp(ntag, "quote") == 0)
+				size--;
+
+				if (size == 0) {
+					return cstr - string;
+				}
+
+			} else if (stricmp(ntag, "quote") == 0) {
 				*cstr++ = '\'';
-			else if (stricmp(ntag, "copy") == 0) {
+				size--;
+
+				if (size == 0) {
+					return cstr - string;
+				}
+
+			} else if (stricmp(ntag, "copy") == 0) {
 				*cstr++ = '(';
+				size--;
+
+				if (size == 0) {
+					return cstr - string;
+				}
+
 				*cstr++ = 'C';
+				size--;
+
+				if (size == 0) {
+					return cstr - string;
+				}
+
 				*cstr++ = ')';
+				size--;
+
+				if (size == 0) {
+					return cstr - string;
+				}
+
 			}
 			str = nstr;
 		}
 	}
-	int slen = strlen(str);
 
-	strncpy(cstr, str, slen);
-	cstr[slen] = '\0';
-	cstr += slen;
+	if (str != NULL) {
+		int slen = strnlen(str, size);
+
+		memmove(cstr, str, slen);
+		cstr += slen;
+	}
+
 	return cstr - string;
 }
