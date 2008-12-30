@@ -241,4 +241,3 @@ bool opt_is_on(const char *str)
 
 	return false;
 }
-
