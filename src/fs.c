@@ -105,9 +105,6 @@ t_fs_filetype_entry ft_table[] = {
 	{"html", fs_filetype_html},
 	{"htm", fs_filetype_html},
 	{"shtml", fs_filetype_html},
-#ifdef ENABLE_PMPAVC
-	{"pmp", fs_filetype_pmp},
-#endif
 #ifdef ENABLE_IMAGE
 	{"png", fs_filetype_png},
 	{"gif", fs_filetype_gif},

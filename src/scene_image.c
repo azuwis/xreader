@@ -46,9 +46,6 @@
 #include "text.h"
 #include "bg.h"
 #include "copy.h"
-#ifdef ENABLE_PMPAVC
-#include "avc.h"
-#endif
 #include "common/qsort.h"
 #include "common/utils.h"
 #include "scene_impl.h"

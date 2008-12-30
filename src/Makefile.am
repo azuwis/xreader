@@ -22,7 +22,7 @@ CCASFLAGS = $(CFLAGS) $(INCLUDES)
 noinst_PROGRAMS = xReader.elf
 
 xReader_elf_SOURCES = \
-array.c array.h avc.c avc.h bg.c bg.h bookmark.c bookmark.h \
+array.c array.h bg.c bg.h bookmark.c bookmark.h \
 buffer.c buffer.h charsets.c charsets.h conf.c conf.h copy.c \
 copy.h ctrl.c ctrl.h dbg.c dbg.h dictionary.c dictionary.h \
 display.c display.h fat.c fat.h fs.c fs.h html.c html.h image.c \

@@ -27,9 +27,6 @@
 #include <pspdisplay.h>
 #include "fat.h"
 #include "conf.h"
-#ifdef ENABLE_PMPAVC
-#include "avc.h"
-#endif
 #ifdef ENABLE_MUSIC
 #include "musicmgr.h"
 #endif
@@ -130,9 +127,6 @@ static int main_thread(unsigned int args, void *argp)
 int main(int argc, char *argv[])
 {
 	SetupCallbacks();
-#ifdef ENABLE_PMPAVC
-	avc_init();
-#endif
 
 	int thid = sceKernelCreateThread("User Thread", main_thread, 45, 0x40000,
 									 PSP_THREAD_ATTR_USER, NULL);

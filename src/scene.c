@@ -56,9 +56,6 @@
 #include "text.h"
 #include "bg.h"
 #include "copy.h"
-#ifdef ENABLE_PMPAVC
-#include "avc.h"
-#endif
 #include "version.h"
 #include "common/qsort.h"
 #include "common/utils.h"
@@ -74,9 +71,6 @@
 #include "clock.h"
 #include "musicdrv.h"
 
-#ifdef ENABLE_PMPAVC
-bool pmp_restart = false;
-#endif
 char appdir[PATH_MAX], copydir[PATH_MAX], cutdir[PATH_MAX];
 bool copy_archmode = false;
 int copy_where = scene_in_dir;
@@ -4058,18 +4052,6 @@ int scene_single_file_ops_draw(p_win_menuitem item, dword selidx)
 							   (const byte *) _("□  添加音乐"));
 #endif
 			break;
-#ifdef ENABLE_PMPAVC
-		case fs_filetype_pmp:
-			if (where == scene_in_dir) {
-				disp_putstring(240 - DISP_FONTSIZE * 3,
-							   136 - DISP_FONTSIZE * 2, COLOR_WHITE,
-							   (const byte *) _("○  继续播放"));
-				disp_putstring(240 - DISP_FONTSIZE * 3,
-							   136 - DISP_FONTSIZE, COLOR_WHITE,
-							   (const byte *) _("□  从头播放"));
-			}
-			break;
-#endif
 		case fs_filetype_umd:
 		case fs_filetype_chm:
 		case fs_filetype_zip:
@@ -4345,14 +4327,6 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							music_add(mp3name, mp3longname);
 							win_msg(_("已添加歌曲到列表!"),
 									COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
-						}
-						break;
-#endif
-#ifdef ENABLE_PMPAVC
-					case fs_filetype_pmp:
-						if (where == scene_in_dir) {
-							pmp_restart = true;
-							*retop = win_menu_op_ok;
 						}
 						break;
 #endif
@@ -5348,19 +5322,6 @@ static void scene_open_image(dword * idx)
 }
 #endif
 
-#ifdef ENABLE_PMPAVC
-static void scene_open_pmp(dword * idx)
-{
-	char pmpname[PATH_MAX];
-
-	STRCPY_S(pmpname, config.shortpath);
-	STRCAT_S(pmpname, filelist[*idx].shortname->ptr);
-	avc_start();
-	pmp_play(pmpname, !pmp_restart);
-	avc_end();
-}
-#endif
-
 #ifdef ENABLE_MUSIC
 static void scene_open_music(dword * idx)
 {
@@ -5621,11 +5582,6 @@ void scene_filelist(void)
 			case fs_filetype_rar:
 				scene_enter_archive(&idx, RAR);
 				break;
-#ifdef ENABLE_PMPAVC
-			case fs_filetype_pmp:
-				scene_open_pmp(&idx);
-				break;
-#endif
 #ifdef ENABLE_IMAGE
 			case fs_filetype_png:
 			case fs_filetype_gif:
@@ -6008,9 +5964,6 @@ extern void scene_exit(void)
 
 	fat_free();
 	disp_free_font();
-#ifdef ENABLE_PMPAVC
-	avc_free();
-#endif
 #ifdef ENABLE_USB
 	usb_close();
 #endif

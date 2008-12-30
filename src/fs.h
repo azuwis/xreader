@@ -40,9 +40,6 @@ typedef enum
 	fs_filetype_txt,
 	fs_filetype_html,
 	fs_filetype_prog,
-#ifdef ENABLE_PMPAVC
-	fs_filetype_pmp,
-#endif
 #if defined(ENABLE_IMAGE) || defined(ENABLE_BG)
 	fs_filetype_bmp,
 	fs_filetype_gif,
