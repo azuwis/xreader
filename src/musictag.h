@@ -41,6 +41,7 @@ struct MusicTag
 	char copyright[512];
 	char comment[512];
 	char album[512];
+	char encoder[512];
 	int year;
 	int track;
 	char genre[32];

@@ -126,6 +126,11 @@ static bool use_brute_method = false;
 static bool use_me = false;
 
 /**
+ * 显示编码器信息
+ */
+static bool show_encoder_msg = false;
+
+/**
  * Media Engine buffer缓存
  */
 unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
@@ -299,7 +304,14 @@ static int madmp3_seek_seconds_offset(double offset)
 		} while (!(ret == 0 && stream.error == 0));
 		dbg_printf(d, "%s: tried %d times", __func__, cnt);
 
-		g_play_time += offset;
+		if (data.size > 0) {
+			long cur_pos;
+
+			cur_pos = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
+			g_play_time = mp3info.duration * cur_pos / data.size;
+		} else {
+			g_play_time += offset;
+		}
 
 		if (g_play_time < 0)
 			g_play_time = 0;
@@ -685,6 +697,14 @@ static int madmp3_set_opt(const char *unused, const char *values)
 			} else {
 				use_me = false;
 			}
+		} else if (!strncasecmp
+				   (argv[i], "show_encoder_msg",
+					sizeof("show_encoder_msg") - 1)) {
+			if (opt_is_on(argv[i])) {
+				show_encoder_msg = true;
+			} else {
+				show_encoder_msg = false;
+			}
 		}
 	}
 
@@ -736,6 +756,13 @@ static int madmp3_get_info(struct music_info *info)
 	}
 	if (info->type & MD_GET_DECODERNAME) {
 		STRCPY_S(info->decoder_name, "madmp3");
+	}
+	if (info->type & MD_GET_ENCODEMSG) {
+		if (show_encoder_msg) {
+			STRCPY_S(info->encode_msg, mp3info.tag.encoder);
+		} else {
+			info->encode_msg[0] = '\0';
+		}
 	}
 	if (info->type & MD_GET_AVGKBPS) {
 		info->avg_kbps = mp3info.average_bitrate / 1000;

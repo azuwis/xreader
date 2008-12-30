@@ -51,7 +51,7 @@ static mpc_decoder decoder;
 static mpc_reader reader;
 static mpc_streaminfo info;
 
-static bool show_mpc_profile = false;
+static bool show_encoder_msg = false;
 
 /*
   Our implementations of the mpc_reader callback functions.
@@ -185,16 +185,16 @@ static int mpc_set_opt(const char *unused, const char *values)
 
 	for (i = 0; i < argc; ++i) {
 		if (!strncasecmp
-			(argv[i], "mpc_show_profile", sizeof("mpc_show_profile") - 1)) {
+			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
 			if (opt_is_on(argv[i])) {
-				show_mpc_profile = true;
+				show_encoder_msg = true;
 			} else {
-				show_mpc_profile = false;
+				show_encoder_msg = false;
 			}
 		}
 	}
 
-	dbg_printf(d, "%s: %d", __func__, show_mpc_profile);
+	dbg_printf(d, "%s: %d", __func__, show_encoder_msg);
 
 	clean_args(argc, argv);
 
@@ -691,7 +691,7 @@ static int mpc_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "musepack");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		if (show_mpc_profile) {
+		if (show_encoder_msg) {
 			SPRINTF_S(pinfo->encode_msg,
 					  "SV %lu.%lu, Profile %s (%s)", info.stream_version & 15,
 					  info.stream_version >> 4, info.profile_name,

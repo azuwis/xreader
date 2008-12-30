@@ -423,7 +423,7 @@ static void scene_draw_mp3bar_music_staff(void)
 	disp_putstring(6 + DISP_FONTSIZE, 264 - DISP_FONTSIZE * 3, COLOR_WHITE,
 				   (const byte *)
 				   _("○播放/暂停 ×循环 □停止 △曲名编码  L上一首  R下一首"));
-	info.type = MD_GET_TITLE | MD_GET_ARTIST;
+	info.type = MD_GET_TITLE | MD_GET_ARTIST | MD_GET_ALBUM;
 	if (musicdrv_get_info(&info) == 0) {
 		char tag[512];
 
@@ -435,6 +435,9 @@ static void scene_draw_mp3bar_music_staff(void)
 				charsets_utf8_conv((const byte *) info.title,
 								   sizeof(info.title), (byte *) info.title,
 								   sizeof(info.title));
+				charsets_utf8_conv((const byte *) info.album,
+								   sizeof(info.album), (byte *) info.album,
+								   sizeof(info.album));
 				break;
 			case conf_encode_big5:
 				charsets_big5_conv((const byte *) info.artist,
@@ -443,6 +446,9 @@ static void scene_draw_mp3bar_music_staff(void)
 				charsets_big5_conv((const byte *) info.title,
 								   sizeof(info.title), (byte *) info.title,
 								   sizeof(info.title));
+				charsets_big5_conv((const byte *) info.album,
+								   sizeof(info.album), (byte *) info.album,
+								   sizeof(info.album));
 				break;
 			case conf_encode_sjis:
 				{
@@ -459,6 +465,12 @@ static void scene_draw_mp3bar_music_staff(void)
 					charsets_sjis_conv((const byte *) info.title,
 									   (byte **) & temp, (dword *) & size);
 					strncpy_s(info.title, sizeof(info.title),
+							  (const char *) temp, size);
+					free(temp);
+					temp = NULL, size = strlen(info.album);
+					charsets_sjis_conv((const byte *) info.album,
+									   (byte **) & temp, (dword *) & size);
+					strncpy_s(info.album, sizeof(info.album),
 							  (const char *) temp, size);
 					free(temp);
 				}
@@ -500,8 +512,9 @@ static void scene_draw_mp3bar_music_staff(void)
 			memset(&info, 0, sizeof(info));
 			info.type = MD_GET_DECODERNAME | MD_GET_ENCODEMSG;
 			if (musicdrv_get_info(&info) == 0) {
-				if (!strcmp(info.decoder_name, "musepack")) {
+				if (info.encode_msg[0] != '\0') {
 					STRCAT_S(tag, " ");
+					STRCAT_S(tag, _("编码: "));
 					STRCAT_S(tag, info.encode_msg);
 				}
 			}

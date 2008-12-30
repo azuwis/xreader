@@ -510,7 +510,7 @@ static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 					return;
 				}
 
-				info->tag.encode = conf_encode_utf8;
+				info->tag.encode = conf_encode_gbk;
 				len = FFMIN(taglen - 2, dstlen - 1);
 				memcpy(dst, buf + 2, len);
 				dst[len] = 0;
@@ -538,8 +538,9 @@ static unsigned int id3v2_get_size(mp3_reader_data * data, int len)
 
 	while (len--) {
 		sceIoRead(data->fd, &b, sizeof(b));
-		v = (v << 7) + (b & 0x7F);
+		v = (v << 8) + (b);
 	}
+
 	return v;
 }
 
@@ -641,6 +642,11 @@ static void id3v2_parse(mp3_reader_data * data, struct MP3Info *info,
 			case MKBETAG(0, 'T', 'T', '2'):
 				id3v2_read_ttag(data, tlen, info->tag.title,
 								sizeof(info->tag.title), info);
+				break;
+			case MKBETAG('T', 'E', 'N', 'C'):
+			case MKBETAG(0, 'T', 'E', 'N'):
+				id3v2_read_ttag(data, tlen, info->tag.encoder,
+								sizeof(info->tag.encoder), info);
 				break;
 			case MKBETAG('T', 'P', 'E', '1'):
 			case MKBETAG(0, 'T', 'P', '1'):
