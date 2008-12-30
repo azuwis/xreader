@@ -782,6 +782,41 @@ static int check_bc_combination(int bitrate, uint8_t channel_mode)
 	return -1;
 }
 
+#define CRC16_POLYNOMIAL 0x8005
+
+// Pass length (<32) bits of data through the CRC-16 polynomial with initial state crc
+static void crc16(unsigned data, unsigned char length, unsigned short *crc)
+{
+	bool carry, data_bit;
+	unsigned mask;
+
+	mask = 1 << length;
+	while (mask >>= 1) {
+		data_bit = (data & mask) != 0;	// mask off data bit and convert to boolean
+		carry = (*crc & 0x8000) != 0;	// mask off carry bit and convert to boolean
+		*crc <<= 1;				// shift in LSB
+		if (carry ^ data_bit)	// if not, we'd be XOR'ing with 0...
+			*crc ^= CRC16_POLYNOMIAL;
+	}
+}
+
+static int calc_crc(int fd, size_t nbit, uint16_t *crc_value)
+{
+	int i;
+	uint16_t word;
+
+	for(i=0; i<nbit / 16; ++i) {
+		if (sceIoRead(fd, &word, sizeof(word)) != sizeof(word)) {
+			return -1;
+		}
+
+		word = (word & 0xff) << 8 | word >> 8;
+		crc16(word, 16, crc_value);
+	}
+
+	return 0;
+}
+
 static inline int parse_frame(uint8_t * h, int *lv, int *br,
 							  struct MP3Info *info, mp3_reader_data * data,
 							  offset_t start)
@@ -860,70 +895,74 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 		framelenbyte = 144000 * bitrate / freq + pad;
 
 	if (crc) {
-#if 0
-#define sceIoLseek lseek
-#define PSP_SEEK_CUR SEEK_CUR
-#define PSP_SEEK_SET SEEK_SET
-		offset_t offset = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
-		uint8_t *buf = malloc(framelenbyte);
+		uint16_t crc_value, crc_frame;
+		offset_t offset;
+		uint16_t word;
 
-		if (buf == NULL)
-			return -1;
-
+		crc_value = 0xffff;
+		offset = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
 		sceIoLseek(data->fd, start, PSP_SEEK_SET);
-		if (sceIoRead(data->fd, buf, framelenbyte) != framelenbyte) {
-			free(buf);
+		word = h[2] << 8 | h[3];
+		crc16(word, 16, &crc_value);
+		sceIoLseek(data->fd, 4, PSP_SEEK_CUR);
+
+		if (sceIoRead(data->fd, &crc_frame, sizeof(crc_frame)) != sizeof(crc_frame)) {
+			sceIoLseek(data->fd, offset, PSP_SEEK_SET);
 			return -1;
 		}
 
-		printf("Checking crc : offset: 0x%08x target: 0x%04x\n",
-			   (unsigned) start, *(uint16_t *) & buf[4]);
-		uint16_t crcvalue;
+		crc_frame = crc_frame >> 8 | crc_frame << 8;
 
-		crcvalue = 0xffff;
-		crcvalue = crc16(crcvalue, buf + 2, 2);
 		switch (layer) {
 			case 1:
-				if (channel_mode == 3)
-					crcvalue = crc16(crcvalue, buf + 6, 128 / 8);
-				else
-					crcvalue = crc16(crcvalue, buf + 6, 256 / 8);
+				if (channel_mode == 3) {
+					if (calc_crc(data->fd, 128, &crc_value) < 0) {
+						sceIoLseek(data->fd, offset, PSP_SEEK_SET);
+						return -1;
+					}
+				}
+				else {
+					if (calc_crc(data->fd, 256, &crc_value) < 0) {
+						sceIoLseek(data->fd, offset, PSP_SEEK_SET);
+						return -1;
+					}
+				}
 				break;
 			case 2:
 				// TODO
-				assert(0);
+				sceIoLseek(data->fd, offset, PSP_SEEK_SET);
+				return -1;
 				break;
 			case 3:
-				if (channel_mode == 3)
-					crcvalue = crc16(crcvalue, buf + 6, 136 / 8);
-				else
-					crcvalue = crc16(crcvalue, buf + 6, 256 / 8);
+				if (channel_mode == 3) {
+					if (calc_crc(data->fd, 136, &crc_value) < 0) {
+						sceIoLseek(data->fd, offset, PSP_SEEK_SET);
+						return -1;
+					}
+				}
+				else {
+					if (calc_crc(data->fd, 256, &crc_value) < 0) {
+						sceIoLseek(data->fd, offset, PSP_SEEK_SET);
+						return -1;
+					}
+				}
 				break;
 		}
 
-		if (crcvalue != *(uint16_t *) & buf[4]) {
-			printf("Checking crc failed: 0x%04x 0x%04x\n", crcvalue,
-				   *(uint16_t *) & buf[4]);
-			free(buf);
-			return -1;
+		if (crc_value == crc_frame) {
+			dbg_printf(d, "Checking crc OK: 0x%04x 0x%04x", crc_value, crc_frame);
 		} else {
-			free(buf);
-			printf("OK!!\n");
-			return 0;
+			dbg_printf(d, "Checking crc failed: 0x%04x 0x%04x", crc_value, crc_frame);
+			return -1;
 		}
 
 		sceIoLseek(data->fd, offset, PSP_SEEK_SET);
-
-		free(buf);
-#endif
 	}
 
 	if (*lv == 0)
 		*lv = layer;
 
-//  if (*br == 0) {
 	*br = bitrate;
-//  }   
 
 	if (info->sample_freq == 0)
 		info->sample_freq = freq;
@@ -1074,7 +1113,6 @@ int free_mp3_info(struct MP3Info *info)
 		free(info->frameoff);
 		info->frameoff = NULL;
 	}
-
 //	memset(info, 0, sizeof(*info));
 
 	return 0;

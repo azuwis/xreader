@@ -55,7 +55,7 @@ int music_list_load(const char *path);
 p_lyric music_get_lyric(void);
 struct music_info;
 int music_get_info(struct music_info *info);
-int music_loadonly(int i);
+int music_load(int i);
 bool music_curr_playing();
 int music_get_current_pos(void);
 int music_set_hprm(bool enable);

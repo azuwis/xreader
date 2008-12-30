@@ -5890,7 +5890,7 @@ extern void scene_init(void)
 				   pspDiffTime(&dbgnow, &dbglasttick));
 	}
 	sceRtcGetCurrentTick(&dbglasttick);
-	music_loadonly(0);
+	music_load(0);
 #ifdef ENABLE_HPRM
 	music_set_hprm(!config.hprmctrl);
 #endif

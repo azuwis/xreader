@@ -41,6 +41,7 @@
 #include "dbg.h"
 #include "scene.h"
 #include "mp3info.h"
+#include "apetaglib/APETag.h"
 
 #define LB_CONV(x)	\
     (((x) & 0xff)<<24) |  \
@@ -542,6 +543,42 @@ static int me_init()
 	return 0;
 }
 
+void readMP3ApeTag(const char* spath)
+{
+	APETag *tag = loadAPETag(spath);
+
+	if (tag != NULL) {
+		char *title = APETag_SimpleGet(tag, "Title");
+		char *artist = APETag_SimpleGet(tag, "Artist");
+		char *album = APETag_SimpleGet(tag, "Album");
+
+		if (title) {
+			STRCPY_S(mp3info.tag.title, title);
+			free(title);
+			title = NULL;
+		}
+		if (artist) {
+			STRCPY_S(mp3info.tag.author, artist);
+			free(artist);
+			artist = NULL;
+		} else {
+			artist = APETag_SimpleGet(tag, "Album artist");
+			if (artist) {
+				STRCPY_S(mp3info.tag.author, artist);
+				free(artist);
+				artist = NULL;
+			}
+		}
+		if (album) {
+			STRCPY_S(mp3info.tag.album, album);
+			free(album);
+			album = NULL;
+		}
+
+		freeAPETag(tag);
+	}
+}
+
 static int madmp3_load(const char *spath, const char *lpath)
 {
 	int ret;
@@ -550,13 +587,11 @@ static int madmp3_load(const char *spath, const char *lpath)
 
 	dbg_printf(d, "%s: loading %s", __func__, spath);
 	g_status = ST_UNKNOWN;
-
 	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 777);
 
 	if (data.fd < 0) {
 		return data.fd;
 	}
-	// TODO: read tag
 
 	data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
 	if (data.size < 0)
@@ -575,6 +610,9 @@ static int madmp3_load(const char *spath, const char *lpath)
 	}
 
 	if (use_brute_method) {
+		// read ID3 tag first
+		read_mp3_info(&mp3info, &data);
+
 		if (read_mp3_info_brute(&mp3info, &data) < 0) {
 			__end();
 			return -1;
@@ -585,6 +623,9 @@ static int madmp3_load(const char *spath, const char *lpath)
 			return -1;
 		}
 	}
+
+	if (config.apetagorder || mp3info.tag.title[0] == '\0')
+		readMP3ApeTag(spath);
 
 	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%s]",
 			   mp3info.channels, mp3info.sample_freq,

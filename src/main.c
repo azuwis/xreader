@@ -89,6 +89,7 @@ static int exit_callback(int arg1, int arg2, void *arg)
 #endif
 
 	scene_exit();
+	scePowerUnregisterCallback(0);
 	sceKernelExitGame();
 
 	return 0;
@@ -112,7 +113,7 @@ static int SetupCallbacks(void)
 {
 	int thid = sceKernelCreateThread("Callback Thread", CallbackThread, 0x11,
 									 0x3F40,
-									 PSP_THREAD_ATTR_USER, 0);
+									 0, 0);
 
 	if (thid >= 0) {
 		sceKernelStartThread(thid, 0, 0);

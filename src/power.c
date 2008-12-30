@@ -113,8 +113,15 @@ extern const char *power_get_battery_charging(void)
 extern int use_ttf;
 extern p_ttf cttf, ettf;
 
+static bool has_run_suspend = false;
+
 extern void power_down(void)
 {
+	if (!has_run_suspend)
+		has_run_suspend = true;
+	else
+		return;
+
 #ifdef ENABLE_TTF
 	if (use_ttf && !config.ttf_load_to_memory) {
 		ttf_lock();
@@ -138,6 +145,7 @@ extern void power_down(void)
 
 extern void power_up(void)
 {
+	has_run_suspend = false;
 	fat_powerup();
 #ifdef ENABLE_MUSIC
 	music_resume();
