@@ -34,7 +34,6 @@
 #include "strsafe.h"
 #include "common/utils.h"
 #include "conf.h"
-#include "mp3playerME.h"
 #include "mpcplayer.h"
 #include "wavplayer.h"
 #include "ttaplayer.h"
@@ -758,7 +757,6 @@ int music_init(void)
 
 	music_sema = sceKernelCreateSema("Music Sema", 0, 1, 1, NULL);
 
-	mp3_init();
 	mpc_init();
 	wav_init();
 	tta_init();

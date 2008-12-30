@@ -36,7 +36,7 @@ common/utils.c common/utils.h apetaglib/APETag.c apetaglib/APETag.h \
 apetaglib/TagError.c apetaglib/TagHeader.h apetaglib/TagItem.c \
 apetaglib/TagItem.h simple_gettext.h osk.c \
 osk.h exception.c exception.h m33boot.c m33boot.h passwdmgr.c passwdmgr.h \
-archive.c archive.h resample.c resample.h xrPrx.S xr_RDLib.S \
+archive.c archive.h xrPrx.S xr_RDLib.S \
 depdb.c depdb.h unumd.c unumd.h ssv.c ssv.h
 
 xrPrx.o: $(top_builddir)/xrPrx/xrPrx.S
@@ -65,16 +65,12 @@ BUILD_PRX = 1
 PSP_LARGE_MEMORY = 1
 
 libdir = $(top_srcdir)/lib
-LIBS = $(libdir)/libFLAC.a $(libdir)/libmpcdec.a $(libdir)/libvorbisidec.a
-LIBS += $(libdir)/libid3tag.a 
+LIBS = $(libdir)/libmpcdec.a
 LIBS += \
 -L$(libdir) $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a \
 $(libdir)/libpng.a $(libdir)/libgif.a $(libdir)/libjpeg.a $(libdir)/libbmp.a \
 $(libdir)/libtga.a $(libdir)/libid3tag.a $(libdir)/libmad.a $(libdir)/libz.a \
-$(libdir)/libfreetype.a $(libdir)/libwmadec.a $(libdir)/pmpmodavc/pmpmodavclib.a \
-$(libdir)/pmpmodavc/libavformat.a $(libdir)/pmpmodavc/libavcodec.a \
-$(libdir)/pmpmodavc/libavutil.a $(libdir)/pmpmodavc/libpspmpeg.a \
-$(libdir)/pmpmodavc/pmpmodavclib.a  -lexif -lm -lpspkubridge -lpspsystemctrl_user \
+$(libdir)/libfreetype.a -lexif -lm -lpspkubridge -lpspsystemctrl_user \
 -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc -lpspusb \
 -lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg -lpsputility 
 
