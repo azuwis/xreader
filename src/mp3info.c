@@ -319,6 +319,8 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 	uint32_t b, frames;
 	MPADecodeContext ctx;
 
+	frames = -1;
+
 	if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
 		return -1;
 	}
@@ -1054,12 +1056,15 @@ int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 	}
 
 	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+
 	if (mp3_parse_vbr_tags(data, info, off) < 0) {
 		dbg_printf(d, "%s: No Xing header found, use brute force search method",
 				   __func__);
 		return read_mp3_info_brute(info, data);
 	}
+
 	sceIoLseek(data->fd, off, PSP_SEEK_SET);
+
 	return 0;
 }
 

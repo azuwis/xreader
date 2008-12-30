@@ -211,13 +211,13 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 
 	ret = sceIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
 
-	mad_stream_finish(&stream);
-	mad_stream_init(&stream);
-
 	if (ret < 0)
 		return -1;
 
-	if (pos == 0)
+	mad_stream_finish(&stream);
+	mad_stream_init(&stream);
+
+	if (pos <= 0)
 		g_play_time = 0.0;
 	else
 		g_play_time += offset;
@@ -299,6 +299,10 @@ static int madmp3_seek_seconds_offset(double offset)
 		dbg_printf(d, "%s: tried %d times", __func__, cnt);
 
 		g_play_time += offset;
+
+		if (g_play_time < 0)
+			g_play_time = 0;
+
 		return 0;
 	}
 
@@ -308,7 +312,7 @@ static int madmp3_seek_seconds_offset(double offset)
 
 static int madmp3_seek_seconds(double npt)
 {
-	if (use_brute_method && mp3info.frameoff && mp3info.frames > 0) {
+	if (mp3info.frameoff && mp3info.frames > 0) {
 		return madmp3_seek_seconds_offset_brute(npt - g_play_time);
 	} else {
 		return madmp3_seek_seconds_offset(npt - g_play_time);
