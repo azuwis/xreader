@@ -71,6 +71,7 @@ static int power_callback(int arg1, int powerInfo, void *arg)
 	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
 		power_up();
 	}
+
 	return 0;
 }
 
@@ -81,9 +82,12 @@ static int exit_callback(int arg1, int arg2, void *arg)
 	while (xreader_scene_inited == false) {
 		sceKernelDelayThread(1);
 	}
+
 #ifdef ENABLE_MUSIC
+	music_stop();
 	music_list_stop();
 #endif
+
 	scene_exit();
 	sceKernelExitGame();
 
@@ -98,7 +102,6 @@ static int CallbackThread(unsigned int args, void *argp)
 	sceKernelRegisterExitCallback(cbid);
 	cbid = sceKernelCreateCallback("Power Callback", power_callback, NULL);
 	scePowerRegisterCallback(0, cbid);
-
 	sceKernelSleepThreadCB();
 
 	return 0;
@@ -114,6 +117,7 @@ static int SetupCallbacks(void)
 	if (thid >= 0) {
 		sceKernelStartThread(thid, 0, 0);
 	}
+
 	return thid;
 }
 
@@ -135,8 +139,9 @@ int main(int argc, char *argv[])
 
 	if (thid < 0)
 		sceKernelSleepThread();
-	sceKernelStartThread(thid, 0, NULL);
 
+	sceKernelStartThread(thid, 0, NULL);
 	sceKernelSleepThread();
+
 	return 0;
 }
