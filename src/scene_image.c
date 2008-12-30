@@ -80,6 +80,7 @@ static int g_imgpaging_count = 0;
 static int g_current_spd = 0;
 static int destx = 0, desty = 0, srcx = 0, srcy = 0;
 static bool in_move_z_mode = false;
+static int z_mode_cnt = 0;
 
 static int open_image(dword selidx)
 {
@@ -832,7 +833,6 @@ static bool is_need_delay(void)
 
 static bool splashz(void)
 {
-	static int z_mode_cnt = 0;
 	static u64 start, end;
 	double s, t, t2;
 
@@ -1153,6 +1153,9 @@ static void next_image(dword * selidx, bool * should_exit)
 
 	if (*selidx != orgidx)
 		img_needrf = img_needrc = img_needrp = true;
+
+	in_move_z_mode = false;
+	z_mode_cnt = 0;
 }
 
 static void prev_image(dword * selidx)
@@ -1168,6 +1171,9 @@ static void prev_image(dword * selidx)
 
 	if (*selidx != orgidx)
 		img_needrf = img_needrc = img_needrp = true;
+
+	in_move_z_mode = false;
+	z_mode_cnt = 0;
 }
 
 static int image_handle_input(dword * selidx, dword key)
