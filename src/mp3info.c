@@ -30,6 +30,8 @@
 #include "mp3info.h"
 #include "mp3info_marco.h"
 #include "common/utils.h"
+#include "crc16.h"
+#include "charsets.h"
 #include "dbg.h"
 
 #define ID3v2_HEADER_SIZE 10
@@ -449,7 +451,6 @@ static inline int av_log2(unsigned int v)
 static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 							int dstlen, struct MP3Info *info)
 {
-	char *q;
 	int len;
 
 	if (dstlen > 0)
@@ -469,18 +470,23 @@ static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 	switch (b) {				/* encoding type */
 			// TODO: non-standard hack...
 		case 0:				/* ISO-8859-1 (0 - 255 maps directly into unicode) */
-			info->tag.encode = conf_encode_utf8;
-			q = dst;
-			while (taglen--) {
-				uint8_t tmp;
+			info->tag.encode = config.mp3encode;
+			{
+				char *p = malloc(taglen);
 
-				if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+				if (p == NULL) {
 					return;
 				}
 
-				PUT_UTF8(b, tmp, if (q - dst < dstlen - 1) * q++ = tmp;);
+				if (sceIoRead(data->fd, p, taglen) != taglen) {
+					free(p);
+					return;
+				}
+
+				strncpy_s(dst, dstlen, p, taglen);
+				free(p);
 			}
-			*q = '\0';
+
 			break;
 		case 1:
 			/*
@@ -504,10 +510,13 @@ static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 					return;
 				}
 
-				info->tag.encode = conf_encode_ucs;
+				info->tag.encode = conf_encode_utf8;
 				len = FFMIN(taglen - 2, dstlen - 1);
 				memcpy(dst, buf + 2, len);
 				dst[len] = 0;
+				dbg_hexdump(d, (const uint8_t *) dst, len);
+				charsets_ucs_conv((const byte *) dst, len, (byte *) dst, len);
+				dbg_hexdump(d, (const uint8_t *) dst, len);
 				free(buf);
 				break;
 			}
@@ -643,12 +652,10 @@ static void id3v2_parse(mp3_reader_data * data, struct MP3Info *info,
 				id3v2_read_ttag(data, tlen, info->tag.album,
 								sizeof(info->tag.album), info);
 				break;
-#if 0
 			case MKBETAG('C', 'O', 'M', 'M'):
 				id3v2_read_ttag(data, tlen, info->tag.comment,
-								sizeof(info->tag.comment));
+								sizeof(info->tag.comment), info);
 				break;
-#endif
 			case MKBETAG('T', 'C', 'O', 'N'):
 			case MKBETAG(0, 'T', 'C', 'O'):
 				id3v2_read_ttag(data, tlen, info->tag.genre,
@@ -782,37 +789,22 @@ static int check_bc_combination(int bitrate, uint8_t channel_mode)
 	return -1;
 }
 
-#define CRC16_POLYNOMIAL 0x8005
-
-// Pass length (<32) bits of data through the CRC-16 polynomial with initial state crc
-static void crc16(unsigned data, unsigned char length, unsigned short *crc)
+static int calc_crc(int fd, size_t nbytes, uint16_t * crc_value)
 {
-	bool carry, data_bit;
-	unsigned mask;
+	uint8_t *bytes;
 
-	mask = 1 << length;
-	while (mask >>= 1) {
-		data_bit = (data & mask) != 0;	// mask off data bit and convert to boolean
-		carry = (*crc & 0x8000) != 0;	// mask off carry bit and convert to boolean
-		*crc <<= 1;				// shift in LSB
-		if (carry ^ data_bit)	// if not, we'd be XOR'ing with 0...
-			*crc ^= CRC16_POLYNOMIAL;
+	bytes = malloc(nbytes);
+
+	if (bytes == NULL)
+		return -1;
+
+	if (sceIoRead(fd, bytes, nbytes) != nbytes) {
+		free(bytes);
+		return -1;
 	}
-}
 
-static int calc_crc(int fd, size_t nbit, uint16_t *crc_value)
-{
-	int i;
-	uint16_t word;
-
-	for(i=0; i<nbit / 16; ++i) {
-		if (sceIoRead(fd, &word, sizeof(word)) != sizeof(word)) {
-			return -1;
-		}
-
-		word = (word & 0xff) << 8 | word >> 8;
-		crc16(word, 16, crc_value);
-	}
+	crc16(bytes, nbytes, crc_value);
+	free(bytes);
 
 	return 0;
 }
@@ -897,16 +889,15 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 	if (crc) {
 		uint16_t crc_value, crc_frame;
 		offset_t offset;
-		uint16_t word;
 
 		crc_value = 0xffff;
 		offset = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
 		sceIoLseek(data->fd, start, PSP_SEEK_SET);
-		word = h[2] << 8 | h[3];
-		crc16(word, 16, &crc_value);
+		crc16((uint8_t *) & h[2], 2, &crc_value);
 		sceIoLseek(data->fd, 4, PSP_SEEK_CUR);
 
-		if (sceIoRead(data->fd, &crc_frame, sizeof(crc_frame)) != sizeof(crc_frame)) {
+		if (sceIoRead(data->fd, &crc_frame, sizeof(crc_frame)) !=
+			sizeof(crc_frame)) {
 			sceIoLseek(data->fd, offset, PSP_SEEK_SET);
 			return -1;
 		}
@@ -916,43 +907,37 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 		switch (layer) {
 			case 1:
 				if (channel_mode == 3) {
-					if (calc_crc(data->fd, 128, &crc_value) < 0) {
-						sceIoLseek(data->fd, offset, PSP_SEEK_SET);
-						return -1;
+					if (calc_crc(data->fd, 128 / 8, &crc_value) < 0) {
+						goto failed;
 					}
-				}
-				else {
-					if (calc_crc(data->fd, 256, &crc_value) < 0) {
-						sceIoLseek(data->fd, offset, PSP_SEEK_SET);
-						return -1;
+				} else {
+					if (calc_crc(data->fd, 256 / 8, &crc_value) < 0) {
+						goto failed;
 					}
 				}
 				break;
 			case 2:
 				// TODO
-				sceIoLseek(data->fd, offset, PSP_SEEK_SET);
-				return -1;
+				goto failed;
 				break;
 			case 3:
 				if (channel_mode == 3) {
-					if (calc_crc(data->fd, 136, &crc_value) < 0) {
-						sceIoLseek(data->fd, offset, PSP_SEEK_SET);
-						return -1;
+					if (calc_crc(data->fd, 136 / 8, &crc_value) < 0) {
+						goto failed;
 					}
-				}
-				else {
-					if (calc_crc(data->fd, 256, &crc_value) < 0) {
-						sceIoLseek(data->fd, offset, PSP_SEEK_SET);
-						return -1;
+				} else {
+					if (calc_crc(data->fd, 256 / 8, &crc_value) < 0) {
+						goto failed;
 					}
 				}
 				break;
 		}
 
-		if (crc_value == crc_frame) {
-			dbg_printf(d, "Checking crc OK: 0x%04x 0x%04x", crc_value, crc_frame);
-		} else {
-			dbg_printf(d, "Checking crc failed: 0x%04x 0x%04x", crc_value, crc_frame);
+		if (crc_value != crc_frame) {
+			dbg_printf(d, "Checking crc failed: 0x%04x 0x%04x", crc_value,
+					   crc_frame);
+		  failed:
+			sceIoLseek(data->fd, offset, PSP_SEEK_SET);
 			return -1;
 		}
 
@@ -1113,7 +1098,7 @@ int free_mp3_info(struct MP3Info *info)
 		free(info->frameoff);
 		info->frameoff = NULL;
 	}
-//	memset(info, 0, sizeof(*info));
+//  memset(info, 0, sizeof(*info));
 
 	return 0;
 }
