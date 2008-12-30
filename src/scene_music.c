@@ -468,18 +468,16 @@ static void scene_draw_mp3bar_music_staff(void)
 				break;
 			case conf_encode_gbk:
 				break;
-			case conf_encode_ucs:
-				charsets_ucs_conv((const byte *) info.artist,
-								  sizeof(info.artist), (byte *) info.artist,
-								  sizeof(info.artist));
-				charsets_ucs_conv((const byte *) info.title,
-								  sizeof(info.title), (byte *) info.title,
-								  sizeof(info.title));
-				break;
 			default:
 				break;
 		}
-		if (info.artist[0] != '\0' && info.title[0] != '\0')
+
+		if (info.artist[0] != '\0' && info.album[0] != '\0'
+			&& info.title[0] != '\0')
+			SPRINTF_S(tag, "%s - %s - %s", info.artist, info.album, info.title);
+		else if (info.album[0] != '\0' && info.title[0] != '\0')
+			SPRINTF_S(tag, "%s - %s", info.album, info.title);
+		else if (info.artist[0] != '\0' && info.title[0] != '\0')
 			SPRINTF_S(tag, "%s - %s", info.artist, info.title);
 		else if (info.title[0] != '\0')
 			SPRINTF_S(tag, "%s", info.title);

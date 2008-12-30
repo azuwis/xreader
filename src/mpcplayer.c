@@ -655,6 +655,10 @@ static int mpc_get_info(struct music_info *pinfo)
 		pinfo->encode = conf_encode_utf8;
 		STRCPY_S(pinfo->title, g_taginfo.title);
 	}
+	if (pinfo->type & MD_GET_ALBUM) {
+		pinfo->encode = conf_encode_utf8;
+		STRCPY_S(pinfo->album, g_taginfo.album);
+	}
 	if (pinfo->type & MD_GET_ARTIST) {
 		pinfo->encode = conf_encode_utf8;
 		STRCPY_S(pinfo->artist, g_taginfo.artist);
@@ -690,7 +694,8 @@ static int mpc_get_info(struct music_info *pinfo)
 		if (show_mpc_profile) {
 			SPRINTF_S(pinfo->encode_msg,
 					  "SV %lu.%lu, Profile %s (%s)", info.stream_version & 15,
-					  info.stream_version >> 4, info.profile_name, info.encoder);
+					  info.stream_version >> 4, info.profile_name,
+					  info.encoder);
 		} else {
 			pinfo->encode_msg[0] = '\0';
 		}

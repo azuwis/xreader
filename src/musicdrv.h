@@ -23,7 +23,8 @@
 #include "conf.h"
 
 #define MD_GET_TITLE       (1 << 0)
-#define MD_GET_ARTIST      (1 << 1)
+#define MD_GET_ALBUM       (1 << 1)
+#define MD_GET_ARTIST      (1 << 2)
 #define MD_GET_COMMENT     (1 << 3)
 #define MD_GET_CURTIME     (1 << 4)
 #define MD_GET_DURATION    (1 << 5)
@@ -45,6 +46,7 @@ struct music_info
 	t_conf_encode encode;
 
 	char title[INFO_STR_SIZE];
+	char album[INFO_STR_SIZE];
 	char artist[INFO_STR_SIZE];
 	char comment[INFO_STR_SIZE];
 	char decoder_name[INFO_STR_SIZE];
@@ -111,4 +113,3 @@ int musicdrv_resume(const char *spath, const char *lpath);
 int musicdrv_get_info(struct music_info *info);
 
 bool opt_is_on(const char *str);
-

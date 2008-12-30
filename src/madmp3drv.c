@@ -203,7 +203,7 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 
 	dbg_printf(d, "%s: jumping to %d frame, offset %08x", __func__, pos,
 			   (int) mp3info.frameoff[pos]);
-	dbg_printf(d, "%s: frame range (0~%ld)", __func__, mp3info.frames);
+	dbg_printf(d, "%s: frame range (0~%u)", __func__, mp3info.frames);
 
 	if (pos >= mp3info.frames) {
 		__end();
@@ -543,7 +543,7 @@ static int me_init()
 	return 0;
 }
 
-void readMP3ApeTag(const char* spath)
+void readMP3ApeTag(const char *spath)
 {
 	APETag *tag = loadAPETag(spath);
 
@@ -576,6 +576,7 @@ void readMP3ApeTag(const char* spath)
 		}
 
 		freeAPETag(tag);
+		mp3info.tag.encode = conf_encode_utf8;
 	}
 }
 
@@ -703,6 +704,10 @@ static int madmp3_get_info(struct music_info *info)
 	if (info->type & MD_GET_TITLE) {
 		info->encode = mp3info.tag.encode;
 		STRCPY_S(info->title, mp3info.tag.title);
+	}
+	if (info->type & MD_GET_ALBUM) {
+		info->encode = mp3info.tag.encode;
+		STRCPY_S(info->album, mp3info.tag.album);
 	}
 	if (info->type & MD_GET_ARTIST) {
 		info->encode = mp3info.tag.encode;
