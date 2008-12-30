@@ -329,12 +329,14 @@ static void extract_chm_file_into_buffer(buffer * buf, const char *archname,
 		return;
 	}
 
-	buffer_prepare_copy(buf, ui.length);
+	buffer_prepare_copy(buf, ui.length + 1);
 
 	if (buf->ptr == NULL) {
 		chm_close(chm);
 		return;
 	}
+
+	memset(buf->ptr, 0, ui.length + 1);
 
 	buf->used = chm_retrieve_object(chm, &ui, (byte *) buf->ptr, 0, ui.length);
 	chm_close(chm);
