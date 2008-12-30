@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <mpcdec/mpcdec.h>
 #include <assert.h>
+#include "ssv.h"
 #include "scene.h"
 #include "xmp3audiolib.h"
 #include "musicmgr.h"
@@ -49,6 +50,8 @@ static reader_data data;
 static mpc_decoder decoder;
 static mpc_reader reader;
 static mpc_streaminfo info;
+
+static bool show_mpc_profile = false;
 
 /*
   Our implementations of the mpc_reader callback functions.
@@ -171,8 +174,30 @@ static inline int mpc_unlock(void)
  *
  * @return 成功时返回0
  */
-static int mpc_set_opt(const char *key, const char *value)
+static int mpc_set_opt(const char *unused, const char *values)
 {
+	int argc, i;
+	char **argv;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "mpc_show_profile", sizeof("mpc_show_profile") - 1)) {
+			if (opt_is_on(argv[i])) {
+				show_mpc_profile = true;
+			} else {
+				show_mpc_profile = false;
+			}
+		}
+	}
+
+	dbg_printf(d, "%s: %d", __func__, show_mpc_profile);
+
+	clean_args(argc, argv);
+
 	return 0;
 }
 
@@ -662,9 +687,13 @@ static int mpc_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "musepack");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		SPRINTF_S(pinfo->encode_msg,
-				  "SV %lu.%lu, Profile %s (%s)", info.stream_version & 15,
-				  info.stream_version >> 4, info.profile_name, info.encoder);
+		if (show_mpc_profile) {
+			SPRINTF_S(pinfo->encode_msg,
+					  "SV %lu.%lu, Profile %s (%s)", info.stream_version & 15,
+					  info.stream_version >> 4, info.profile_name, info.encoder);
+		} else {
+			pinfo->encode_msg[0] = '\0';
+		}
 	}
 
 	return 0;

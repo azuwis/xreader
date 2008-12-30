@@ -109,3 +109,6 @@ int musicdrv_get_status(void);
 int musicdrv_suspend(void);
 int musicdrv_resume(const char *spath, const char *lpath);
 int musicdrv_get_info(struct music_info *info);
+
+bool opt_is_on(const char *str);
+

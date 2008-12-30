@@ -565,38 +565,12 @@ static int madmp3_load(const char *spath, const char *lpath)
 	return 0;
 }
 
-static bool opt_is_on(const char *str)
-{
-	size_t slen;
-
-	if (str == NULL)
-		return false;
-
-	slen = strlen(str);
-
-#define CHECK_TAIL(tailstr) \
-	do { \
-		if (slen > (sizeof(tailstr) - 1) \
-				&& !strncmp(&str[slen- (sizeof(tailstr) - 1)], tailstr, (sizeof(tailstr) - 1))) \
-		return true; }\
-	while ( 0 )
-
-	CHECK_TAIL("=y");
-	CHECK_TAIL("=yes");
-	CHECK_TAIL("=1");
-	CHECK_TAIL("=on");
-
-#undef CHECK_TAIL
-
-	return false;
-}
-
 static int madmp3_set_opt(const char *unused, const char *values)
 {
-	dbg_printf(d, "%s: options are %s", __func__, values);
-
 	int argc, i;
 	char **argv;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
 
 	build_args(values, &argc, &argv);
 
@@ -617,6 +591,8 @@ static int madmp3_set_opt(const char *unused, const char *values)
 			}
 		}
 	}
+
+	dbg_printf(d, "%s: %d %d", __func__, mp3info.use_brute_method, mp3info.use_me);
 
 	clean_args(argc, argv);
 
