@@ -1412,8 +1412,8 @@ dword scene_readimage(dword selidx)
 			} else {
 				scePowerTick(0);
 				if (config.imgpaging == conf_imgpaging_direct ||
-						config.imgpaging == conf_imgpaging_updown ||
-						config.imgpaging == conf_imgpaging_leftright) {
+					config.imgpaging == conf_imgpaging_updown ||
+					config.imgpaging == conf_imgpaging_leftright) {
 					if (now - lasttime >= config.slideinterval) {
 						key = CTRL_FORWARD;
 						lasttime = now;

@@ -470,11 +470,11 @@ static void scene_draw_mp3bar_music_staff(void)
 				break;
 			case conf_encode_ucs:
 				charsets_ucs_conv((const byte *) info.artist,
-								   sizeof(info.artist), (byte *) info.artist,
-								   sizeof(info.artist));
+								  sizeof(info.artist), (byte *) info.artist,
+								  sizeof(info.artist));
 				charsets_ucs_conv((const byte *) info.title,
-								   sizeof(info.title), (byte *) info.title,
-								   sizeof(info.title));
+								  sizeof(info.title), (byte *) info.title,
+								  sizeof(info.title));
 				break;
 			default:
 				break;

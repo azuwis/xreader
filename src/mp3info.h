@@ -42,7 +42,8 @@ typedef struct reader_data_t
 	long size;
 } mp3_reader_data;
 
-struct MP3Info {
+struct MP3Info
+{
 	bool is_mpeg1or2;
 	uint32_t frames;
 	int spf;
@@ -55,7 +56,7 @@ struct MP3Info {
 	bool use_me;
 };
 
-int read_mp3_info(struct MP3Info *info, mp3_reader_data* data);
-int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data* data);
+int read_mp3_info(struct MP3Info *info, mp3_reader_data * data);
+int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data);
 
 #endif
