@@ -144,6 +144,7 @@ int build_args(const char *str, int *argc, char ***argv)
 
 				append_str(*p, &(*argv)[*argc - 1]);
 				empty = false;
+				backslash = false;
 			} else {
 				if (quote) {
 					if (endword) {
