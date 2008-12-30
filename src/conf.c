@@ -281,6 +281,7 @@ static void conf_default(p_conf conf)
 	conf->ttf_haste_up = true;
 	conf->linenum_style = false;
 	conf->infobar_align = conf_align_left;
+	STRCPY_S(conf->musicdrv_opts, "mp3_brute_mode=on");
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -1150,6 +1151,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->infobar_align =
 		stringToAlign(iniparser_getstring(dict, "Text:infobar_align", ""));
 
+	STRCPY_S(conf->musicdrv_opts,
+			 iniparser_getstring(dict, "Music:musicdrv_opts",
+								 conf->musicdrv_opts));
+
 	dictionary_del(dict);
 
 	return true;
@@ -1442,6 +1447,8 @@ extern bool ini_conf_save(p_conf conf)
 
 	iniparser_setstring(dict, "Text:infobar_align",
 						alignToString(buf, sizeof(buf), conf->infobar_align));
+
+	iniparser_setstring(dict, "Music:musicdrv_opts", conf->musicdrv_opts);
 
 	iniparser_dump_ini(dict, fp);
 

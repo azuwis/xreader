@@ -34,6 +34,7 @@
 #include <pspaudiocodec.h>
 #include <pspmpeg.h>
 #include <limits.h>
+#include "ssv.h"
 #include "strsafe.h"
 #include "musicdrv.h"
 #include "xmp3audiolib.h"
@@ -416,14 +417,11 @@ static int __init(void)
 	g_seek_seconds = 0;
 
 	mp3info.duration = g_play_time = 0.;
-
 	memset(&mp3info, 0, sizeof(mp3info));
+	mp3info.use_brute_method = false;
+	mp3info.use_me = false;
 
 	return 0;
-}
-
-static inline void broadcast_output()
-{
 }
 
 static int me_init()
@@ -497,7 +495,7 @@ static int madmp3_load(const char *spath, const char *lpath)
 
 	__init();
 
-	broadcast_output("%s: loading %s\n", __func__, spath);
+	dbg_printf(d, "%s: loading %s", __func__, spath);
 	g_status = ST_UNKNOWN;
 
 	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 777);
@@ -535,11 +533,10 @@ static int madmp3_load(const char *spath, const char *lpath)
 		}
 	}
 
-	broadcast_output("[%d channel(s), %d Hz, %.2f kbps, %02d:%02d]\n",
-					 mp3info.channels, mp3info.sample_freq,
-					 mp3info.average_bitrate / 1000,
-					 (int) (mp3info.duration / 60),
-					 (int) mp3info.duration % 60);
+	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d]",
+			   mp3info.channels, mp3info.sample_freq,
+			   mp3info.average_bitrate / 1000,
+			   (int) (mp3info.duration / 60), (int) mp3info.duration % 60);
 	ret = xMP3AudioInit();
 
 	if (ret < 0) {
@@ -568,33 +565,66 @@ static int madmp3_load(const char *spath, const char *lpath)
 	return 0;
 }
 
-static int madmp3_set_opt(const char *key, const char *value)
+static bool opt_is_on(const char *str)
 {
-	broadcast_output("%s: setting %s to %s\n", __func__, key, value);
+	size_t slen;
 
-	if (!stricmp(key, "mp3_brute_mode")) {
-		if (!stricmp(value, "on")) {
-			mp3info.use_brute_method = true;
-		} else {
-			mp3info.use_brute_method = false;
+	if (str == NULL)
+		return false;
+
+	slen = strlen(str);
+
+#define CHECK_TAIL(tailstr) \
+	do { \
+		if (slen > (sizeof(tailstr) - 1) \
+				&& !strncmp(&str[slen- (sizeof(tailstr) - 1)], tailstr, (sizeof(tailstr) - 1))) \
+		return true; }\
+	while ( 0 )
+
+	CHECK_TAIL("=y");
+	CHECK_TAIL("=yes");
+	CHECK_TAIL("=1");
+	CHECK_TAIL("=on");
+
+#undef CHECK_TAIL
+
+	return false;
+}
+
+static int madmp3_set_opt(const char *unused, const char *values)
+{
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	int argc, i;
+	char **argv;
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "mp3_brute_mode", sizeof("mp3_brute_mode") - 1)) {
+			if (opt_is_on(argv[i])) {
+				mp3info.use_brute_method = true;
+			} else {
+				mp3info.use_brute_method = false;
+			}
+		} else
+			if (!strncasecmp(argv[i], "mp3_use_me", sizeof("mp3_use_me") - 1)) {
+			if (opt_is_on(argv[i])) {
+				mp3info.use_me = true;
+			} else {
+				mp3info.use_me = false;
+			}
 		}
 	}
 
-	if (!stricmp(key, "mp3_use_me")) {
-		if (!stricmp(value, "on")) {
-			mp3info.use_me = true;
-		} else {
-			mp3info.use_me = false;
-		}
-	}
+	clean_args(argc, argv);
 
 	return 0;
 }
 
 static int madmp3_get_info(struct music_info *info)
 {
-	broadcast_output("%s: type: %d\n", __func__, info->type);
-
 	if (g_status == ST_UNKNOWN) {
 		return -1;
 	}
@@ -656,7 +686,7 @@ static int madmp3_get_info(struct music_info *info)
 
 static int madmp3_play(void)
 {
-	broadcast_output("%s\n", __func__);
+	dbg_printf(d, "%s", __func__);
 
 	g_status = ST_PLAYING;
 
@@ -667,7 +697,7 @@ static int madmp3_play(void)
 
 static int madmp3_pause(void)
 {
-	broadcast_output("%s\n", __func__);
+	dbg_printf(d, "%s", __func__);
 
 	g_status = ST_PAUSED;
 
@@ -683,7 +713,7 @@ static int madmp3_pause(void)
  */
 static int madmp3_end(void)
 {
-	broadcast_output("%s\n", __func__);
+	dbg_printf(d, "%s", __func__);
 
 	__end();
 
@@ -709,7 +739,7 @@ static int madmp3_fforward(int sec)
 	if (mp3info.is_mpeg1or2)
 		return -1;
 
-	broadcast_output("%s: sec: %d\n", __func__, sec);
+	dbg_printf(d, "%s: sec: %d", __func__, sec);
 
 	madmp3_lock();
 	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
@@ -726,7 +756,7 @@ static int madmp3_fbackward(int sec)
 	if (mp3info.is_mpeg1or2)
 		return -1;
 
-	broadcast_output("%s: sec: %d\n", __func__, sec);
+	dbg_printf(d, "%s: sec: %d", __func__, sec);
 
 	madmp3_lock();
 	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
@@ -745,7 +775,7 @@ static int madmp3_fbackward(int sec)
  */
 static int madmp3_suspend(void)
 {
-	broadcast_output("%s\n", __func__);
+	dbg_printf(d, "%s", __func__);
 
 	g_suspend_status = g_status;
 	g_suspend_playing_time = g_play_time;
@@ -766,7 +796,7 @@ static int madmp3_resume(const char *spath, const char *lpath)
 {
 	int ret;
 
-	broadcast_output("%s\n", __func__);
+	dbg_printf(d, "%s", __func__);
 	ret = madmp3_load(spath, lpath);
 
 	if (ret != 0) {

@@ -232,6 +232,7 @@ typedef struct
 	 * 2 - 中
 	 */
 	t_conf_align infobar_align;
+	char musicdrv_opts[PATH_MAX];
 } t_conf, *p_conf;
 
 /* txt key:

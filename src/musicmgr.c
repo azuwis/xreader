@@ -202,7 +202,7 @@ static int rebuild_shuffle_data(void)
 		STRCAT_S(str, t);
 	}
 
-	broadcast_output("shuffle table: %s\n", str);
+	dbg_printf(d, "shuffle table: %s\n", str);
 #endif
 
 	return 0;
@@ -226,7 +226,7 @@ static int shuffle_next(void)
 			STRCAT_S(str, t);
 		}
 
-		broadcast_output("played stack: %s\n", str);
+		dbg_printf(d, "played stack: %s\n", str);
 #endif
 
 		if (g_shuffle.index == g_shuffle.size ||
@@ -450,12 +450,7 @@ static int music_setupdriver(const char *spath, const char *lpath)
 
 static int music_load_config(void)
 {
-	const struct music_ops *drv = get_musicdrv(NULL);
-
-	if (!strcmp(drv->name, "madmp3")) {
-		musicdrv_set_opt("use_me", "on");
-		return 0;
-	}
+	musicdrv_set_opt("", config.musicdrv_opts);
 
 	return 0;
 }
