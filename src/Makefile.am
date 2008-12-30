@@ -69,7 +69,7 @@ LIBS = $(libdir)/libmpcdec.a
 LIBS += \
 -L$(libdir) $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a \
 $(libdir)/libpng.a $(libdir)/libgif.a $(libdir)/libjpeg.a $(libdir)/libbmp.a \
-$(libdir)/libtga.a $(libdir)/libid3tag.a $(libdir)/libmad.a $(libdir)/libz.a \
+$(libdir)/libtga.a $(libdir)/libmad.a $(libdir)/libz.a \
 $(libdir)/libfreetype.a -lexif -lm -lpspkubridge -lpspsystemctrl_user \
 -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc -lpspusb \
 -lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg -lpsputility 
