@@ -100,7 +100,7 @@ void get_screen_shot(void)
 	const int lineWidth = PSP_SCREEN_SCANLINE;
 	const int height = PSP_SCREEN_HEIGHT;
 	unsigned char lineBuffer[width * 4];
-	u32 *vram = disp_get_vaddr(0, 0);
+	u32 *vram = (u32 *) disp_get_vaddr(0, 0);
 	int x, y;
 	char filename[PATH_MAX];
 	int i = 0;
