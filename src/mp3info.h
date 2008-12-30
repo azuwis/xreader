@@ -52,11 +52,12 @@ struct MP3Info
 	double duration;
 	double average_bitrate;
 	struct MusicTag tag;
-	bool use_brute_method;
-	bool use_me;
+	dword framelen;
+	dword *frameoff;
 };
 
 int read_mp3_info(struct MP3Info *info, mp3_reader_data * data);
 int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data);
+int free_mp3_info(struct MP3Info *info);
 
 #endif

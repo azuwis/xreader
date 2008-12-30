@@ -586,6 +586,16 @@ static void scene_draw_mp3bar(bool * firstdup)
 static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 {
 	switch (key) {
+#ifdef _DEBUG
+		case PSP_CTRL_LTRIGGER | PSP_CTRL_RTRIGGER:
+			if (win_msgbox
+				(_("重启音频系统"), _("是"), _("否"), COLOR_WHITE,
+				 COLOR_WHITE, config.msgbcolor)) {
+				power_down();
+				power_up();
+			}
+			break;
+#endif
 		case (PSP_CTRL_SELECT | PSP_CTRL_START):
 			if (win_msgbox
 				(_("是否退出软件?"), _("是"), _("否"), COLOR_WHITE,

@@ -29,6 +29,8 @@
 #include "musicdrv.h"
 #include "mp3info.h"
 #include "mp3info_marco.h"
+#include "common/utils.h"
+#include "dbg.h"
 
 #define ID3v2_HEADER_SIZE 10
 
@@ -963,6 +965,7 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	uint32_t first_frame = (uint32_t) - 1;
 
 	level = info->sample_freq = info->channels = info->frames = 0;
+	info->frameoff = NULL;
 
 	while ((end = sceIoRead(data->fd, &buf[4], 65536)) > 0) {
 		while (off < end) {
@@ -972,25 +975,21 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 				 parse_frame(&buf[off], &level, &brate, info, data,
 							 dcount * 65536 + off)) > 0) {
 				br += brate;
-				info->frames++;
 				if (first_frame == (uint32_t) - 1)
 					first_frame = dcount * 65536 + off;
-#if 0
-				if (info->framecount >= 0) {
-					if (info->framecount == 0)
+
+				if (info->frames >= 0) {
+					if (info->frames == 0)
 						info->frameoff = malloc(sizeof(dword) * 1024);
 					else
 						info->frameoff =
 							safe_realloc(info->frameoff,
-										 sizeof(dword) *
-										 (info->framecount + 1024));
+										 sizeof(dword) * (info->frames + 1024));
 					if (info->frameoff == NULL)
-						info->framecount = -1;
+						info->frames = -1;
 					else
-						info->frameoff[info->
-									   framecount++] = dcount * 65536 + off;
+						info->frameoff[info->frames++] = dcount * 65536 + off;
 				}
-#endif
 				off += size;
 			} else
 				off++;
@@ -1002,9 +1001,10 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 
 	if (info->frames) {
 		if (level == 1) {
-			info->duration = 384 * info->frames / info->sample_freq;
+			info->duration = 384.0 * info->frames / info->sample_freq;
+			info->framelen = info->duration / info->frames;
 		} else {
-			info->duration = 1152 * info->frames / info->sample_freq;
+			info->duration = 1152.0 * info->frames / info->sample_freq;
 		}
 		info->average_bitrate = (double) data->size * 8 / info->duration;
 	}
@@ -1018,6 +1018,8 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 {
 	int ret;
+
+	info->frameoff = NULL;
 
 	// TODO: get id3v1
 	if (data->size > 128) {
@@ -1053,9 +1055,20 @@ int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 
 	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
 	if (mp3_parse_vbr_tags(data, info, off) < 0) {
-		// No Xing header found, use brute force search method
+		dbg_printf(d, "%s: No Xing header found, use brute force search method",
+				   __func__);
 		return read_mp3_info_brute(info, data);
 	}
 	sceIoLseek(data->fd, off, PSP_SEEK_SET);
+	return 0;
+}
+
+int free_mp3_info(struct MP3Info *info)
+{
+	if (info->frameoff)
+		free(info->frameoff);
+
+	memset(info, 0, sizeof(*info));
+
 	return 0;
 }

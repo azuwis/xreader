@@ -114,6 +114,16 @@ static double g_suspend_playing_time;
  */
 static int g_suspend_status;
 
+/*
+ * 使用暴力
+ */
+static bool use_brute_method = false;
+
+/**
+ * 使用ME
+ */
+static bool use_me = false;
+
 /**
  * Media Engine buffer缓存
  */
@@ -176,6 +186,43 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 		return;
 
 	memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
+}
+
+static int madmp3_seek_seconds_offset_brute(double offset)
+{
+	int pos, ret;
+
+	pos =
+		(int) ((double) mp3info.frames * (g_play_time + offset) /
+			   mp3info.duration);
+
+	if (pos < 0) {
+		pos = 0;
+	}
+
+	dbg_printf(d, "%s: jumping to %d frame, offset %08x", __func__, pos,
+			   (int) mp3info.frameoff[pos]);
+	dbg_printf(d, "%s: frame range (0~%ld)", __func__, mp3info.frames);
+
+	if (pos >= mp3info.frames) {
+		__end();
+		return -1;
+	}
+
+	ret = sceIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
+
+	mad_stream_finish(&stream);
+	mad_stream_init(&stream);
+
+	if (ret < 0)
+		return -1;
+
+	if (pos == 0)
+		g_play_time = 0.0;
+	else
+		g_play_time += offset;
+
+	return 0;
 }
 
 static int madmp3_seek_seconds_offset(double offset)
@@ -261,7 +308,11 @@ static int madmp3_seek_seconds_offset(double offset)
 
 static int madmp3_seek_seconds(double npt)
 {
-	return madmp3_seek_seconds_offset(npt - g_play_time);
+	if (use_brute_method && mp3info.frameoff && mp3info.frames > 0) {
+		return madmp3_seek_seconds_offset_brute(npt - g_play_time);
+	} else {
+		return madmp3_seek_seconds_offset(npt - g_play_time);
+	}
 }
 
 /**
@@ -418,8 +469,6 @@ static int __init(void)
 
 	mp3info.duration = g_play_time = 0.;
 	memset(&mp3info, 0, sizeof(mp3info));
-	mp3info.use_brute_method = false;
-	mp3info.use_me = false;
 
 	return 0;
 }
@@ -514,14 +563,14 @@ static int madmp3_load(const char *spath, const char *lpath)
 	mad_frame_init(&frame);
 	mad_synth_init(&synth);
 
-	if (mp3info.use_me) {
+	if (use_me) {
 		if (me_init() < 0) {
 			__end();
 			return -1;
 		}
 	}
 
-	if (mp3info.use_brute_method) {
+	if (use_brute_method) {
 		if (read_mp3_info_brute(&mp3info, &data) < 0) {
 			__end();
 			return -1;
@@ -533,10 +582,11 @@ static int madmp3_load(const char *spath, const char *lpath)
 		}
 	}
 
-	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d]",
+	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%s]",
 			   mp3info.channels, mp3info.sample_freq,
 			   mp3info.average_bitrate / 1000,
-			   (int) (mp3info.duration / 60), (int) mp3info.duration % 60);
+			   (int) (mp3info.duration / 60), (int) mp3info.duration % 60,
+			   mp3info.frameoff != NULL ? ", frame table" : "");
 	ret = xMP3AudioInit();
 
 	if (ret < 0) {
@@ -578,21 +628,21 @@ static int madmp3_set_opt(const char *unused, const char *values)
 		if (!strncasecmp
 			(argv[i], "mp3_brute_mode", sizeof("mp3_brute_mode") - 1)) {
 			if (opt_is_on(argv[i])) {
-				mp3info.use_brute_method = true;
+				use_brute_method = true;
 			} else {
-				mp3info.use_brute_method = false;
+				use_brute_method = false;
 			}
 		} else
 			if (!strncasecmp(argv[i], "mp3_use_me", sizeof("mp3_use_me") - 1)) {
 			if (opt_is_on(argv[i])) {
-				mp3info.use_me = true;
+				use_me = true;
 			} else {
-				mp3info.use_me = false;
+				use_me = false;
 			}
 		}
 	}
 
-	dbg_printf(d, "%s: %d %d", __func__, mp3info.use_brute_method, mp3info.use_me);
+	dbg_printf(d, "%s: %d %d", __func__, use_brute_method, use_me);
 
 	clean_args(argc, argv);
 
@@ -637,25 +687,12 @@ static int madmp3_get_info(struct music_info *info)
 	if (info->type & MD_GET_DECODERNAME) {
 		STRCPY_S(info->decoder_name, "madmp3");
 	}
-	/*
-	   if (info->type & MD_GET_ENCODEMSG) {
-	   STRCPY_S(info->encode_msg, "320CBR lame 3.90 etc");
-	   }
-	 */
 	if (info->type & MD_GET_AVGKBPS) {
 		info->avg_kbps = mp3info.average_bitrate / 1000;
 	}
 	if (info->type & MD_GET_INSKBPS) {
 		info->ins_kbps = frame.header.bitrate / 1000;
 	}
-	/*
-	   if (info->type & MD_GET_FILEFD) {
-	   info->file_handle = -1;
-	   }
-	   if (info->type & MD_GET_SNDCHL) {
-	   info->channel_handle = -1;
-	   }
-	 */
 
 	return 0;
 }
@@ -836,10 +873,12 @@ static int __end(void)
 	g_status = ST_STOPPED;
 	madmp3_unlock();
 
-	if (mp3info.use_me) {
+	if (use_me) {
 		if (mp3_getEDRAM)
 			sceAudiocodecReleaseEDRAM(mp3_codec_buffer);
 	}
+
+	free_mp3_info(&mp3info);
 
 	return 0;
 }
