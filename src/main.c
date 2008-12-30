@@ -84,8 +84,7 @@ static int exit_callback(int arg1, int arg2, void *arg)
 	}
 
 #ifdef ENABLE_MUSIC
-	music_stop();
-	music_list_stop();
+	music_free();
 #endif
 
 	scene_exit();
