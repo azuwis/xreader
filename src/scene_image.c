@@ -1134,6 +1134,42 @@ static bool image_paging(bool is_forward, t_conf_imgpaging type)
 	return false;
 }
 
+static void next_image(dword * selidx, bool * should_exit)
+{
+	dword orgidx = *selidx;
+
+	do {
+		if (*selidx < filecount - 1)
+			(*selidx)++;
+		else {
+			if (config.img_no_repeat == false) {
+				*selidx = 0;
+			} else {
+				*should_exit = true;
+				return;
+			}
+		}
+	} while (!fs_is_image((t_fs_filetype) filelist[*selidx].data));
+
+	if (*selidx != orgidx)
+		img_needrf = img_needrc = img_needrp = true;
+}
+
+static void prev_image(dword * selidx)
+{
+	dword orgidx = *selidx;
+
+	do {
+		if (*selidx > 0)
+			(*selidx)--;
+		else
+			*selidx = filecount - 1;
+	} while (!fs_is_image((t_fs_filetype) filelist[*selidx].data));
+
+	if (*selidx != orgidx)
+		img_needrf = img_needrc = img_needrp = true;
+}
+
 static int image_handle_input(dword * selidx, dword key)
 {
 	if (key == 0)
@@ -1176,21 +1212,13 @@ static int image_handle_input(dword * selidx, dword key)
 			sceKernelDelayThread(200000);
 		if (!image_paging(true, config.imgpaging))
 			goto next;
-		dword orgidx = *selidx;
+		bool should_exit = false;
 
-		do {
-			if (*selidx < filecount - 1)
-				(*selidx)++;
-			else {
-				if (config.img_no_repeat == false) {
-					*selidx = 0;
-				} else {
-					return *selidx;
-				}
-			}
-		} while (!fs_is_image((t_fs_filetype) filelist[*selidx].data));
-		if (*selidx != orgidx)
-			img_needrf = img_needrc = img_needrp = true;
+		next_image(selidx, &should_exit);
+
+		if (should_exit) {
+			return *selidx;
+		}
 	} else if (key == config.imgkey[0] || key == config.imgkey2[0]
 			   || key == CTRL_BACK) {
 		if (config.imgpaging == conf_imgpaging_updown ||
@@ -1198,16 +1226,7 @@ static int image_handle_input(dword * selidx, dword key)
 			sceKernelDelayThread(200000);
 		if (!image_paging(false, config.imgpaging))
 			goto next;
-		dword orgidx = *selidx;
-
-		do {
-			if (*selidx > 0)
-				(*selidx)--;
-			else
-				*selidx = filecount - 1;
-		} while (!fs_is_image((t_fs_filetype) filelist[*selidx].data));
-		if (*selidx != orgidx)
-			img_needrf = img_needrc = img_needrp = true;
+		prev_image(selidx);
 	}
 #ifdef ENABLE_ANALOG
 	else if (key == CTRL_ANALOG && config.img_enable_analog) {
@@ -1409,6 +1428,16 @@ dword scene_readimage(dword selidx)
 		if (slideshow) {
 			if (key == PSP_CTRL_CIRCLE) {
 				key = 0;
+			} else if (key == PSP_CTRL_RTRIGGER) {
+				bool should_exit = false;
+
+				next_image(&selidx, &should_exit);
+
+				if (should_exit) {
+					return selidx;
+				}
+			} else if (key == PSP_CTRL_LTRIGGER) {
+				prev_image(&selidx);
 			} else {
 				scePowerTick(0);
 				if (config.imgpaging == conf_imgpaging_direct ||
