@@ -27,9 +27,6 @@
 #include <pspdisplay.h>
 #include "fat.h"
 #include "conf.h"
-#ifdef ENABLE_MUSIC
-#include "musicmgr.h"
-#endif
 #include "scene.h"
 #include "conf.h"
 #include "display.h"
@@ -79,10 +76,6 @@ static int exit_callback(int arg1, int arg2, void *arg)
 	while (xreader_scene_inited == false) {
 		sceKernelDelayThread(1);
 	}
-
-#ifdef ENABLE_MUSIC
-	music_free();
-#endif
 
 	scene_exit();
 	scePowerUnregisterCallback(0);

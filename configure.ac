@@ -36,8 +36,8 @@ AC_ARG_ENABLE(analog, [  --enable-analog   Enable analog input option	default is
 analog="$enableval", analog=yes)
 AC_ARG_ENABLE(music, [  --enable-music   Enable music option	default is enabled],
 music="$enableval", music=yes)
-AC_ARG_ENABLE(wma, [  --enable-wma   Enable wma option	default is enabled],
-wma="$enableval", wma=yes)
+AC_ARG_ENABLE(wma, [  --enable-wma   Enable wma option	default is disable],
+wma="$enableval", wma=no)
 AC_ARG_ENABLE(lyric, [  --enable-lyric   Enable lyric option	default is enabled],
 lyric="$enableval", lyric=yes)
 AC_ARG_ENABLE(ttf, [  --enable-ttf   Enable ttf option	default is enabled],

@@ -28,6 +28,8 @@
 static struct music_ops *music_drivers = NULL;
 static struct music_ops *cur_musicdrv = NULL;
 
+bool show_encoder_msg = false;
+
 int register_musicdrv(struct music_ops *drv)
 {
 	struct music_ops **tmp;

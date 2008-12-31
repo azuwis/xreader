@@ -514,7 +514,8 @@ static void scene_draw_mp3bar_music_staff(void)
 			if (musicdrv_get_info(&info) == 0) {
 				if (info.encode_msg[0] != '\0') {
 					STRCAT_S(tag, " ");
-					STRCAT_S(tag, _("±àÂë: "));
+					STRCAT_S(tag, _("±àÂë"));
+					STRCAT_S(tag, _(": "));
 					STRCAT_S(tag, info.encode_msg);
 				}
 			}

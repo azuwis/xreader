@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <mpcdec/mpcdec.h>
 #include <assert.h>
+#include "config.h"
 #include "ssv.h"
 #include "scene.h"
 #include "xmp3audiolib.h"
@@ -50,8 +51,6 @@ static reader_data data;
 static mpc_decoder decoder;
 static mpc_reader reader;
 static mpc_streaminfo info;
-
-static bool show_encoder_msg = false;
 
 /*
   Our implementations of the mpc_reader callback functions.
@@ -482,6 +481,7 @@ static int mpc_load(const char *spath, const char *lpath)
 static int mpc_play(void)
 {
 	mpc_lock();
+	scene_power_playing_music(true);
 	g_status = ST_PLAYING;
 	mpc_unlock();
 
@@ -497,6 +497,7 @@ static int mpc_pause(void)
 {
 	mpc_lock();
 	g_status = ST_PAUSED;
+	scene_power_playing_music(false);
 	mpc_unlock();
 
 	return 0;

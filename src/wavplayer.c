@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include "config.h"
 #include "scene.h"
 #include "xmp3audiolib.h"
 #include "musicmgr.h"
@@ -30,6 +31,7 @@
 #include "common/utils.h"
 #include "apetaglib/APETag.h"
 #include "dbg.h"
+#include "ssv.h"
 
 typedef struct reader_data_t
 {
@@ -161,8 +163,28 @@ static inline int wav_unlock(void)
  *
  * @return 成功时返回0
  */
-static int wav_set_opt(const char *key, const char *value)
+static int wav_set_opt(const char *key, const char *values)
 {
+	int argc, i;
+	char **argv;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
+			if (opt_is_on(argv[i])) {
+				show_encoder_msg = true;
+			} else {
+				show_encoder_msg = false;
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
 	return 0;
 }
 
@@ -565,6 +587,7 @@ static int wav_load(const char *spath, const char *lpath)
 static int wav_play(void)
 {
 	wav_lock();
+	scene_power_playing_music(true);
 	g_status = ST_PLAYING;
 	wav_unlock();
 
@@ -580,6 +603,7 @@ static int wav_pause(void)
 {
 	wav_lock();
 	g_status = ST_PAUSED;
+	scene_power_playing_music(false);
 	wav_unlock();
 
 	return 0;

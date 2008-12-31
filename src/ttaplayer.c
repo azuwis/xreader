@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include "config.h"
 #include "scene.h"
 #include "xmp3audiolib.h"
 #include "musicmgr.h"
@@ -30,6 +31,8 @@
 #include "common/utils.h"
 #include "apetaglib/APETag.h"
 #include "tta/ttalib.h"
+#include "ssv.h"
+#include "simple_gettext.h"
 #include "dbg.h"
 
 static int __end(void);
@@ -130,8 +133,28 @@ static inline int tta_unlock(void)
  *
  * @return 成功时返回0
  */
-static int tta_set_opt(const char *key, const char *value)
+static int tta_set_opt(const char *key, const char *values)
 {
+	int argc, i;
+	char **argv;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
+			if (opt_is_on(argv[i])) {
+				show_encoder_msg = true;
+			} else {
+				show_encoder_msg = false;
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
 	return 0;
 }
 
@@ -363,6 +386,7 @@ static int tta_load(const char *spath, const char *lpath)
 static int tta_play(void)
 {
 	tta_lock();
+	scene_power_playing_music(true);
 	g_status = ST_PLAYING;
 	tta_unlock();
 
@@ -378,6 +402,7 @@ static int tta_pause(void)
 {
 	tta_lock();
 	g_status = ST_PAUSED;
+	scene_power_playing_music(false);
 	tta_unlock();
 
 	return 0;
@@ -405,9 +430,6 @@ static int __end(void)
 
 	g_play_time = 0.;
 
-	player_stop();
-	close_tta_file(&g_info);
-
 	return 0;
 }
 
@@ -428,6 +450,9 @@ static int tta_end(void)
 		free(g_buff);
 		g_buff = NULL;
 	}
+
+	player_stop();
+	close_tta_file(&g_info);
 
 	g_status = ST_STOPPED;
 
@@ -567,8 +592,12 @@ static int tta_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "tta");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		SPRINTF_S(pinfo->encode_msg, "Compression ratio: %.2f",
-				  g_info.COMPRESS);
+		if (show_encoder_msg) {
+			SPRINTF_S(pinfo->encode_msg, "%s: %.2f", _("压缩率"),
+					  g_info.COMPRESS);
+		} else {
+			pinfo->encode_msg[0] = '\0';
+		}
 	}
 
 	return 0;

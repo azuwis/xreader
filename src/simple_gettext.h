@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "config.h"
+
 #ifdef ENABLE_NLS
 typedef struct _TextDomainEntry TextDomainEntry;
 typedef struct _TextDomainEntry *PTextDomainEntry;

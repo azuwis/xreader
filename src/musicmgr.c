@@ -887,7 +887,7 @@ int music_next(void)
 
 bool is_file_music(const char *filename)
 {
-	static char musicext[][5] = { "MP3", "MPC" };
+	static char musicext[][5] = { "MP3", "MPC", "WAV", "TTA" };
 //      { "MP3", "OGG", "AA3", "OMA", "OMG", "FLAC", "WMA", "MPC" };
 	const char *ext = utils_fileext(filename);
 

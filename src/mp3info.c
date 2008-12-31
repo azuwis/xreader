@@ -28,7 +28,6 @@
 #include "strsafe.h"
 #include "musicdrv.h"
 #include "mp3info.h"
-#include "mp3info_marco.h"
 #include "common/utils.h"
 #include "crc16.h"
 #include "charsets.h"
@@ -511,7 +510,7 @@ static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 				}
 
 				info->tag.encode = conf_encode_gbk;
-				len = FFMIN(taglen - 2, dstlen - 1);
+				len = min(taglen - 2, dstlen - 1);
 				memcpy(dst, buf + 2, len);
 				dst[len] = 0;
 				dbg_hexdump(d, (const uint8_t *) dst, len);
@@ -522,7 +521,7 @@ static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 			}
 		case 3:				/* UTF-8 */
 			info->tag.encode = conf_encode_utf8;
-			len = FFMIN(taglen, dstlen - 1);
+			len = min(taglen, dstlen - 1);
 			if (sceIoRead(data->fd, dst, len) < 0) {
 				return;
 			}

@@ -1101,3 +1101,9 @@ msgstr ""
 
 msgid "信息栏字体大小"
 msgstr ""
+
+msgid "编码"
+msgstr ""
+
+msgid "压缩率"
+msgstr ""

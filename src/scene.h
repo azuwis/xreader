@@ -28,6 +28,10 @@ extern void scene_exit(void);
 extern void scene_power_save(bool save);
 extern const char *scene_appdir(void);
 
+#ifdef ENABLE_MUSIC
+extern void scene_power_playing_music(bool is_playing);
+#endif
+
 extern dword get_bgcolor_by_time(void);
 
 enum

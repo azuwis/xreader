@@ -163,3 +163,31 @@ image:image_scroll_chgn_speed
 text:ttf_haste_up
 开启绘制TTF字型时升高CPU频率功能，可能会导致字体闪烁显示，默认为打开
 
+text:linenum_style
+如果设置为真，文本进度显示将使用传统eReader的行数/总行数方式
+
+music:musicdrv_opts
+音乐系统参数，目前支持：
+
+MPC:
+
+show_encoder_msg=on/off
+是否显示编码器信息
+
+MP3:
+show_encoder_msg=y/n
+是否显示编码器信息
+mp3_brute_mode=on/off
+是否使用暴力法解码MP3，如果MP3播放有问题，试试这个
+
+WAV:
+暂无
+
+TTA:
+show_encoder_msg=y/n
+是否显示编码器信息
+
+将它们写成一行，如:
+musicdrv_opts=show_encoder_msg=on mp3_brute_mode=on
+
+将显示MPC、MP3、WAV、TTA的编码器信息，并使用暴力法解码MP3

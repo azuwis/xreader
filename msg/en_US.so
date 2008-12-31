@@ -1169,3 +1169,10 @@ msgstr "Didn't specify Chinese or English TTF font"
 
 msgid "信息栏字体大小"
 msgstr "Infobar font size"
+
+msgid "编码"
+msgstr "Encode"
+
+msgid "压缩率"
+msgstr "Compress ratio"
+

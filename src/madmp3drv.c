@@ -34,6 +34,7 @@
 #include <pspaudiocodec.h>
 #include <pspmpeg.h>
 #include <limits.h>
+#include "config.h"
 #include "ssv.h"
 #include "strsafe.h"
 #include "musicdrv.h"
@@ -137,7 +138,7 @@ unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
 
 short mp3_mix_buffer[1152 * 2] __attribute__ ((aligned(64)));
 
-bool mp3_getEDRAM;
+bool mp3_getEDRAM = false;
 
 /**
  * 加锁
@@ -208,7 +209,8 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 
 	dbg_printf(d, "%s: jumping to %d frame, offset %08x", __func__, pos,
 			   (int) mp3info.frameoff[pos]);
-	dbg_printf(d, "%s: frame range (0~%u)", __func__, mp3info.frames);
+	dbg_printf(d, "%s: frame range (0~%u)", __func__,
+			   (unsigned) mp3info.frames);
 
 	if (pos >= mp3info.frames) {
 		__end();
@@ -422,9 +424,7 @@ static void madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				if (MAD_RECOVERABLE(stream.error)
 					|| stream.error == MAD_ERROR_BUFLEN) {
 					if (stream.error == MAD_ERROR_LOSTSYNC) {
-						// likely to be ID3 Tags, skip it
-						mad_stream_skip(&stream,
-										stream.bufend - stream.this_frame);
+						mad_stream_skip(&stream, 1);
 					}
 					g_buff_frame_size = 0;
 					g_buff_frame_start = 0;
@@ -545,7 +545,7 @@ static int me_init()
 	if (ret < 0)
 		return ret;
 
-	mp3_getEDRAM = 1;
+	mp3_getEDRAM = true;
 
 	ret = sceAudiocodecInit(mp3_codec_buffer, 0x1002);
 
@@ -600,7 +600,7 @@ static int madmp3_load(const char *spath, const char *lpath)
 
 	dbg_printf(d, "%s: loading %s", __func__, spath);
 	g_status = ST_UNKNOWN;
-	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 777);
+	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (data.fd < 0) {
 		return data.fd;
@@ -778,6 +778,7 @@ static int madmp3_play(void)
 {
 	dbg_printf(d, "%s", __func__);
 
+	scene_power_playing_music(true);
 	g_status = ST_PLAYING;
 
 	/* if return error value won't play */
@@ -790,6 +791,7 @@ static int madmp3_pause(void)
 	dbg_printf(d, "%s", __func__);
 
 	g_status = ST_PAUSED;
+	scene_power_playing_music(false);
 
 	return 0;
 }
@@ -810,6 +812,10 @@ static int madmp3_end(void)
 	xMP3AudioEnd();
 
 	g_status = ST_STOPPED;
+
+	mad_stream_finish(&stream);
+	mad_synth_finish(&synth);
+	mad_frame_finish(&frame);
 
 	return 0;
 }
@@ -940,10 +946,6 @@ static int __end(void)
 		sceIoClose(data.fd);
 		data.fd = -1;
 	}
-
-	mad_stream_finish(&stream);
-	mad_synth_finish(&synth);
-	mad_frame_finish(&frame);
 
 	g_play_time = 0.;
 	madmp3_lock();
