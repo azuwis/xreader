@@ -125,29 +125,7 @@ extern void power_down(void)
 #ifdef ENABLE_TTF
 	if (use_ttf && !config.ttf_load_to_memory) {
 		ttf_lock();
-
-		extern bool g_ttf_share_two_font;
-
-		if (g_ttf_share_two_font) {
-			if (ettf != NULL) {
-				ttf_close(ettf);
-				ettf = NULL;
-			}
-
-			cttf = NULL;
-		} else {
-			if (ettf != NULL) {
-				ttf_close(ettf);
-				ettf = NULL;
-			}
-
-			if (cttf != NULL) {
-				ttf_close(cttf);
-				cttf = NULL;
-			}
-		}
-
-		g_ttf_share_two_font = false;
+		disp_ttf_close();
 	}
 #endif
 #ifdef ENABLE_MUSIC
