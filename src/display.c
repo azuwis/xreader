@@ -51,7 +51,7 @@ static int DISP_EFONTSIZE, DISP_CFONTSIZE, DISP_CROWSIZE, DISP_EROWSIZE,
 byte disp_ewidth[0x80];
 
 #ifdef ENABLE_TTF
-bool g_ttf_share_two_font = false;
+static bool g_ttf_share_two_font = false;
 #endif
 
 #ifdef ENABLE_TTF
