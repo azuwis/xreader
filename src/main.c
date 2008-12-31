@@ -97,6 +97,7 @@ static int CallbackThread(unsigned int args, void *argp)
 
 	cbid = sceKernelCreateCallback("Exit Callback", exit_callback, NULL);
 	sceKernelRegisterExitCallback(cbid);
+	scePowerUnregisterCallback(0);
 	cbid = sceKernelCreateCallback("Power Callback", power_callback, NULL);
 	scePowerRegisterCallback(0, cbid);
 	sceKernelSleepThreadCB();
