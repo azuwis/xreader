@@ -159,9 +159,9 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 					music_directplay(p->shortpath, p->longpath);
 				}
 				return win_menu_op_continue;
-#endif
-				return win_menu_op_ok;
 			}
+#endif
+			return win_menu_op_ok;
 		case PSP_CTRL_SELECT:
 			return win_menu_op_cancel;
 	}

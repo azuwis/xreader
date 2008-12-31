@@ -4927,6 +4927,9 @@ void scene_filelist_predraw(p_win_menuitem item, dword index, dword topindex,
 #ifdef _DEBUG
 	STRCAT_S(infomsg, _(" 调试版"));
 #endif
+#ifdef ENABLE_LITE
+	STRCAT_S(infomsg, _(" 精简版"));
+#endif
 	STRCAT_S(infomsg, _(" 2009新年快乐"));
 	disp_putstring(0, 0, COLOR_WHITE, (const byte *) infomsg);
 	disp_line(0, DISP_FONTSIZE, 479, DISP_FONTSIZE, COLOR_WHITE);
