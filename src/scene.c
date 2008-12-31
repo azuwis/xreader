@@ -5856,6 +5856,7 @@ extern void scene_init(void)
 	sceRtcGetCurrentTick(&dbgnow);
 #endif
 
+#ifndef _DEBUG
 	sceRtcGetCurrentTick(&dbglasttick);
 	if (sceKernelDevkitVersion() >= 0x03070100) {
 		char path[PATH_MAX];
@@ -5878,6 +5879,7 @@ extern void scene_init(void)
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "initExceptionHandler(): %.2fs",
 			   pspDiffTime(&dbgnow, &dbglasttick));
+#endif
 
 	sceRtcGetCurrentTick(&end);
 	dbg_printf(d, "Load finished in %.2fs, press any key to continue",
@@ -5988,18 +5990,19 @@ extern void scene_power_playing_music(bool is_playing)
 		if (musicdrv_get_info(&info) == 0) {
 			if (info.psp_freq[0] != 0) {
 				int cpu = max(info.psp_freq[0], freq_list[config.freqs[0]][0]);
+				int bus = max(info.psp_freq[1], freq_list[config.freqs[0]][1]);
 
-				xrSetCpuClock(cpu, 0);
+				power_set_clock(cpu, bus);
 				return;
 			}
 		}
 
 		power_set_clock(freq_list[config.freqs[1]][0],
-				freq_list[config.freqs[1]][1]);
+						freq_list[config.freqs[1]][1]);
 	} else {
 		// ×î¸ßÆµÂÊ
 		power_set_clock(freq_list[config.freqs[0]][0],
-				freq_list[config.freqs[0]][1]);
+						freq_list[config.freqs[0]][1]);
 	}
 }
 #endif

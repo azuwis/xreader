@@ -1348,9 +1348,11 @@ static int scene_autopage(PBookViewData pView, dword * selidx)
 {
 	int key = 0;
 
+	ticks++;
+
 	if (config.autopagetype != 2) {
 		if (config.autopagetype == 1) {
-			if (++ticks >= config.autolinedelay) {
+			if (ticks >= config.autolinedelay) {
 				ticks = 0;
 				move_line_smooth(&cur_book_view, config.autopage);
 				// prevent LCD shut down by setting counter = 0
@@ -1358,7 +1360,7 @@ static int scene_autopage(PBookViewData pView, dword * selidx)
 				return 1;
 			}
 		} else {
-			if (++ticks >= 50 * abs(config.autopage)) {
+			if (ticks >= abs(config.autopage)) {
 				ticks = 0;
 				if (config.autopage > 0)
 					move_page_down(&cur_book_view, key, selidx);
@@ -1767,13 +1769,19 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 		dword key;
 
 		while ((key = ctrl_read()) == 0) {
-			sceKernelDelayThread(50000);
+			sceKernelDelayThread(20000);
 			sceRtcGetCurrentTick(&timer_end);
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
 				sceRtcGetCurrentTick(&timer_start);
 				secticks++;
+
 				if (config.infobar_show_timer) {
 					redraw_infobar(selidx);
+				}
+
+				if (config.autopage) {
+					if (scene_autopage(&cur_book_view, &selidx))
+						goto redraw;
 				}
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
@@ -1782,10 +1790,6 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 				secticks = 0;
 			}
 
-			if (config.autopage) {
-				if (scene_autopage(&cur_book_view, &selidx))
-					goto redraw;
-			}
 			scene_text_delay_action();
 		}
 		dword selidx = 0;
@@ -1839,7 +1843,7 @@ dword scene_readbook(dword selidx)
 		dword key;
 
 		while ((key = ctrl_read()) == 0) {
-			sceKernelDelayThread(50000);
+			sceKernelDelayThread(20000);
 			if (config.infobar_show_timer) {
 				static u64 start, end;
 
@@ -1855,20 +1859,22 @@ dword scene_readbook(dword selidx)
 			}
 #endif
 			sceRtcGetCurrentTick(&timer_end);
+
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
 				sceRtcGetCurrentTick(&timer_start);
 				secticks++;
+				if (config.autopage) {
+					if (scene_autopage(&cur_book_view, &selidx))
+						goto redraw;
+				}
 			}
+
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 				power_down();
 				scePowerRequestSuspend();
 				secticks = 0;
 			}
 
-			if (config.autopage) {
-				if (scene_autopage(&cur_book_view, &selidx))
-					goto redraw;
-			}
 			scene_text_delay_action();
 		}
 		int ret;

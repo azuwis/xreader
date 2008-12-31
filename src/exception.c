@@ -64,7 +64,19 @@ void ExceptionHandler(PspDebugRegBlock * regs)
 	pspDebugScreenSetBackColor(0x00FF0000);
 	pspDebugScreenSetTextColor(0xFFFFFFFF);
 	pspDebugScreenClear();
-	pspDebugScreenPrintf("xReader has just crashed!\n");
+	pspDebugScreenPrintf("%-21s %s has just crashed!\n", XREADER_VERSION_LONG,
+#ifdef ENABLE_LITE
+						 "lite"
+#else
+						 ""
+#endif
+		);
+
+	pspDebugScreenPrintf("%-21s: %08X\r\n", "PSP firmware version",
+						 sceKernelDevkitVersion());
+	pspDebugScreenPrintf("%-21s: %s\r\n\n", "PSP type",
+						 kuKernelGetModel() ==
+						 PSP_MODEL_STANDARD ? "1000(fat)" : "2000(slim)");
 	pspDebugScreenPrintf("Exception details:\n\n");
 
 	pspDebugScreenPrintf("Exception - %s\n", codeTxt[(regs->cause >> 2) & 31]);

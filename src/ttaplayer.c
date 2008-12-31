@@ -401,8 +401,8 @@ static int tta_play(void)
 static int tta_pause(void)
 {
 	tta_lock();
-	g_status = ST_PAUSED;
 	scene_power_playing_music(false);
+	g_status = ST_PAUSED;
 	tta_unlock();
 
 	return 0;

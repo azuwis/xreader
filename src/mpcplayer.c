@@ -496,8 +496,8 @@ static int mpc_play(void)
 static int mpc_pause(void)
 {
 	mpc_lock();
-	g_status = ST_PAUSED;
 	scene_power_playing_music(false);
+	g_status = ST_PAUSED;
 	mpc_unlock();
 
 	return 0;

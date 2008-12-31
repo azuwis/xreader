@@ -602,8 +602,8 @@ static int wav_play(void)
 static int wav_pause(void)
 {
 	wav_lock();
-	g_status = ST_PAUSED;
 	scene_power_playing_music(false);
+	g_status = ST_PAUSED;
 	wav_unlock();
 
 	return 0;

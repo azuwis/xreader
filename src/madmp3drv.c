@@ -127,11 +127,6 @@ static bool use_brute_method = false;
 static bool use_me = false;
 
 /**
- * 显示编码器信息
- */
-static bool show_encoder_msg = false;
-
-/**
  * Media Engine buffer缓存
  */
 unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
@@ -790,8 +785,8 @@ static int madmp3_pause(void)
 {
 	dbg_printf(d, "%s", __func__);
 
-	g_status = ST_PAUSED;
 	scene_power_playing_music(false);
+	g_status = ST_PAUSED;
 
 	return 0;
 }

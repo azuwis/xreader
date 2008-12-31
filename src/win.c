@@ -239,7 +239,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 				scePowerRequestSuspend();
 				secticks = 0;
 			}
-			sceKernelDelayThread(50000);
+			sceKernelDelayThread(20000);
 			win_menu_delay_action();
 		}
 		if (key != 0) {
@@ -259,7 +259,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 					scePowerRequestSuspend();
 					secticks = 0;
 				}
-				sceKernelDelayThread(50000);
+				sceKernelDelayThread(20000);
 				win_menu_delay_action();
 			}
 		}
