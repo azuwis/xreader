@@ -58,7 +58,7 @@ typedef int bool;
 #endif
 
 #ifndef max
-#define max(a,b) (((a)<(b))?(a):(b))
+#define max(a,b) (((a)>(b))?(a):(b))
 #endif
 
 #ifndef INVALID
