@@ -5714,6 +5714,7 @@ extern void scene_init(void)
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "usb_open(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 
+#ifndef _DEBUG
 	sceRtcGetCurrentTick(&dbglasttick);
 	char fontzipfile[PATH_MAX], efontfile[PATH_MAX], cfontfile[PATH_MAX],
 		conffile[PATH_MAX], locconf[PATH_MAX], bmfile[PATH_MAX]
@@ -5831,6 +5832,7 @@ extern void scene_init(void)
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "misc_init(): %.2f second",
 			   pspDiffTime(&dbgnow, &dbglasttick));
+#endif
 
 #ifdef ENABLE_MUSIC
 	sceRtcGetCurrentTick(&dbglasttick);
