@@ -138,6 +138,11 @@ short mp3_mix_buffer[1152 * 2] __attribute__ ((aligned(64)));
 bool mp3_getEDRAM = false;
 
 /**
+ * For ME
+ */
+static dword decode_idx;
+
+/**
  * 加锁
  */
 static inline int madmp3_lock(void)
@@ -216,6 +221,10 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 
 	ret = sceIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
 
+	if (use_me) {
+		decode_idx = pos;
+	}
+
 	if (ret < 0)
 		return -1;
 
@@ -226,6 +235,13 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 		g_play_time = 0.0;
 	else
 		g_play_time += offset;
+
+	if (use_me) {
+		if (mp3info.frames)
+			g_play_time = mp3info.duration * decode_idx / mp3info.frames;
+		else
+			g_play_time = 0;
+	}
 
 	return 0;
 }
@@ -630,7 +646,6 @@ static uint8_t *memp3_input_buf = NULL;
 static uint8_t *memp3_decoded_buf = NULL;
 static dword this_frame, buf_end;
 static bool need_data;
-static dword decode_idx;
 
 /**
  * MP3音乐播放回调函数，ME版本
@@ -935,8 +950,8 @@ static int madmp3_load(const char *spath, const char *lpath)
 		__end();
 		return -1;
 	}
-
-	if (use_me)
+	// ME can't handle mono channel now
+	if (use_me && mp3info.channels == 2)
 		xMP3AudioSetChannelCallback(0, memp3_audiocallback, NULL);
 	else
 		xMP3AudioSetChannelCallback(0, madmp3_audiocallback, NULL);
@@ -1028,9 +1043,14 @@ static int madmp3_get_info(struct music_info *info)
 		info->duration = mp3info.duration;
 	}
 	if (info->type & MD_GET_CPUFREQ) {
-		info->psp_freq[0] =
-			66 + (133 - 66) * mp3info.average_bitrate / 1000 / 320;
-		info->psp_freq[1] = 111;
+		if (use_me) {
+			info->psp_freq[0] = 33;
+			info->psp_freq[1] = 16;
+		} else {
+			info->psp_freq[0] =
+				66 + (133 - 66) * mp3info.average_bitrate / 1000 / 320;
+			info->psp_freq[1] = 111;
+		}
 	}
 	if (info->type & MD_GET_FREQ) {
 		info->freq = mp3info.sample_freq;
@@ -1115,6 +1135,8 @@ static int madmp3_end(void)
 
 		memp3_decoded_buf = NULL;
 	}
+
+	free_mp3_info(&mp3info);
 
 	return 0;
 }
@@ -1250,8 +1272,6 @@ static int __end(void)
 	madmp3_lock();
 	g_status = ST_STOPPED;
 	madmp3_unlock();
-
-	free_mp3_info(&mp3info);
 
 	return 0;
 }

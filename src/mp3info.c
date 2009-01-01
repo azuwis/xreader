@@ -993,6 +993,25 @@ int skip_id3v2_tag(mp3_reader_data * data)
 	return 0;
 }
 
+int skip_valid_frame_me(struct MP3Info *info, mp3_reader_data * data)
+{
+	uint32_t off;
+	int size, br = 0, dcount = 0;
+	int end;
+	int level;
+	static uint8_t *buf;
+	int brate = 0;
+
+	if (data->fd < 0)
+		return -1;
+
+	size =
+		parse_frame(&buf[off], &level, &brate, info, data,
+					dcount * 65536 + off);
+
+	return 0;
+}
+
 int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 {
 	uint32_t off;
