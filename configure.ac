@@ -84,6 +84,7 @@ fi
 if test $music = "yes"; then
 	AC_DEFINE([ENABLE_MUSIC], 1, [Enable music option])
 fi
+AM_CONDITIONAL([MUSIC], [test x$music = "xyes"])
 if test $wma = "yes"; then
 	AC_DEFINE([ENABLE_WMA], 1, [Enable wma option])
 fi
