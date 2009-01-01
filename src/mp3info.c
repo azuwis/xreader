@@ -995,7 +995,7 @@ int skip_id3v2_tag(mp3_reader_data * data)
 
 int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 {
-	uint32_t off, startpos;
+	uint32_t off;
 	int size, br = 0, dcount = 0;
 	int end;
 	int level;
@@ -1015,14 +1015,13 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	if (!buf)
 		return -1;
 
-	startpos = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+	sceIoLseek(data->fd, 0, PSP_SEEK_SET);
 
 	if (sceIoRead(data->fd, buf, 4) != 4) {
 		free(buf);
 		return -1;
 	}
-
-	off = 0;
 
 	uint32_t first_frame = (uint32_t) - 1;
 
@@ -1035,10 +1034,10 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 
 			if ((size =
 				 parse_frame(&buf[off], &level, &brate, info, data,
-							 dcount * 65536 + off + startpos)) > 0) {
+							 dcount * 65536 + off)) > 0) {
 				br += brate;
 				if (first_frame == (uint32_t) - 1)
-					first_frame = dcount * 65536 + off + startpos;
+					first_frame = dcount * 65536 + off;
 
 				if (info->frames >= 0) {
 					if (info->frames == 0)
@@ -1050,8 +1049,7 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 					if (info->frameoff == NULL)
 						info->frames = -1;
 					else
-						info->frameoff[info->frames++] =
-							dcount * 65536 + off + startpos;
+						info->frameoff[info->frames++] = dcount * 65536 + off;
 				}
 				off += size;
 			} else
