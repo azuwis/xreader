@@ -967,6 +967,32 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 	return framelenbyte;
 }
 
+int skip_id3v2_tag(mp3_reader_data * data)
+{
+	int len;
+	uint8_t buf[ID3v2_HEADER_SIZE];
+
+	if (data->fd < 0)
+		return -1;
+
+	if (read(data->fd, buf, sizeof(buf)) != sizeof(buf)) {
+		return -1;
+	}
+
+	if (id3v2_match(buf)) {
+		struct MP3Info info;
+
+		/* parse ID3v2 header */
+		len = ((buf[6] & 0x7f) << 21) |
+			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
+		id3v2_parse(data, &info, len, buf[3], buf[5]);
+	} else {
+		lseek(data->fd, 0, SEEK_SET);
+	}
+
+	return 0;
+}
+
 int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 {
 	uint32_t off;
@@ -977,14 +1003,17 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	if (data->fd < 0)
 		return -1;
 
+	sceIoLseek(data->fd, 0, PSP_SEEK_SET);
+
+	if (skip_id3v2_tag(data) == -1)
+		return -1;
+
 	static uint8_t *buf;
 
 	buf = malloc(65536 + 4);
 
 	if (!buf)
 		return -1;
-
-	sceIoLseek(data->fd, 0, PSP_SEEK_SET);
 
 	if (sceIoRead(data->fd, buf, 4) != 4) {
 		free(buf);
