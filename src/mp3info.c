@@ -975,7 +975,7 @@ int skip_id3v2_tag(mp3_reader_data * data)
 	if (data->fd < 0)
 		return -1;
 
-	if (read(data->fd, buf, sizeof(buf)) != sizeof(buf)) {
+	if (sceIoRead(data->fd, buf, sizeof(buf)) != sizeof(buf)) {
 		return -1;
 	}
 
@@ -987,7 +987,7 @@ int skip_id3v2_tag(mp3_reader_data * data)
 			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
 		id3v2_parse(data, &info, len, buf[3], buf[5]);
 	} else {
-		lseek(data->fd, 0, SEEK_SET);
+		sceIoLseek(data->fd, 0, PSP_SEEK_SET);
 	}
 
 	return 0;
