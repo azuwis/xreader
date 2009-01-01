@@ -133,14 +133,7 @@ static bool use_me = false;
  */
 unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
 
-short mp3_mix_buffer[1152 * 2] __attribute__ ((aligned(64)));
-
 bool mp3_getEDRAM = false;
-
-/**
- * For ME
- */
-static dword decode_idx;
 
 /**
  * 加锁
@@ -221,10 +214,6 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 
 	ret = sceIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
 
-	if (use_me) {
-		decode_idx = pos;
-	}
-
 	if (ret < 0)
 		return -1;
 
@@ -235,13 +224,6 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 		g_play_time = 0.0;
 	else
 		g_play_time += offset;
-
-	if (use_me) {
-		if (mp3info.frames)
-			g_play_time = mp3info.duration * decode_idx / mp3info.frames;
-		else
-			g_play_time = 0;
-	}
 
 	return 0;
 }
@@ -642,8 +624,8 @@ int memp3_decode(void *data, dword data_len, void *pcm_data)
 	return sceAudiocodecDecode(mp3_codec_buffer, 0x1002);
 }
 
-static uint8_t *memp3_input_buf = NULL;
-static uint8_t *memp3_decoded_buf = NULL;
+static uint8_t memp3_input_buf[2889] __attribute__ ((aligned(64)));
+static uint8_t memp3_decoded_buf[2048 * 4] __attribute__ ((aligned(64)));
 static dword this_frame, buf_end;
 static bool need_data;
 
@@ -700,20 +682,14 @@ static void memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-			int frame_size;
+			int frame_size, ret;
 
-			if (decode_idx < mp3info.frames - 1) {
-				frame_size =
-					mp3info.frameoff[decode_idx + 1] -
-					mp3info.frameoff[decode_idx];
-			} else {
-				frame_size = data.size - mp3info.frameoff[decode_idx];
-			}
+			do {
+				if ((frame_size = search_valid_frame_me(&data)) < 0) {
+					__end();
+					return;
+				}
 
-			if (need_data) {
-				int ret;
-
-				sceIoLseek(data.fd, mp3info.frameoff[decode_idx], PSP_SEEK_SET);
 				ret = sceIoRead(data.fd, memp3_input_buf, frame_size);
 
 				if (ret < 0) {
@@ -721,18 +697,8 @@ static void memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 					return;
 				}
 
-				this_frame = 0;
-				buf_end = ret;
-				need_data = false;
-			}
-
-			if (memp3_decode
-				(&memp3_input_buf[this_frame], buf_end - this_frame,
-				 memp3_decoded_buf) < 0) {
-			}
-
-			decode_idx++;
-			need_data = true;
+				ret = memp3_decode(memp3_input_buf, ret, memp3_decoded_buf);
+			} while (ret < 0);
 
 			uint16_t *output = &g_buff[0];
 
@@ -825,24 +791,15 @@ static int me_init()
 
 	ret = sceAudiocodecInit(mp3_codec_buffer, 0x1002);
 
-	if (ret < 0)
+	if (ret < 0) {
+		sceAudiocodecReleaseEDRAM(mp3_codec_buffer);
 		return ret;
-
-	memp3_input_buf = calloc(MP3_FRAME_SIZE, 1);
-
-	if (memp3_input_buf == NULL) {
-		return -1;
 	}
 
-	memp3_decoded_buf = calloc(2048 * 4, 1);
-
-	if (memp3_decoded_buf == NULL) {
-		return -1;
-	}
-
+	memset(memp3_input_buf, 0, sizeof(memp3_input_buf));
+	memset(memp3_decoded_buf, 0, sizeof(memp3_decoded_buf));
 	this_frame = buf_end = 0;
 	need_data = true;
-	decode_idx = 0;
 
 	return 0;
 }
@@ -910,8 +867,7 @@ static int madmp3_load(const char *spath, const char *lpath)
 	if (use_me) {
 		if ((ret = me_init()) < 0) {
 			dbg_printf(d, "me_init failed: %d", ret);
-			__end();
-			return -1;
+			use_me = false;
 		}
 	}
 
@@ -1003,9 +959,6 @@ static int madmp3_set_opt(const char *unused, const char *values)
 			}
 		}
 	}
-
-	if (use_me)
-		use_brute_method = true;
 
 	dbg_printf(d, "%s: %d %d", __func__, use_brute_method, use_me);
 
@@ -1124,16 +1077,6 @@ static int madmp3_end(void)
 	if (use_me) {
 		if (mp3_getEDRAM)
 			sceAudiocodecReleaseEDRAM(mp3_codec_buffer);
-
-		if (memp3_input_buf)
-			free(memp3_input_buf);
-
-		memp3_input_buf = NULL;
-
-		if (memp3_decoded_buf)
-			free(memp3_decoded_buf);
-
-		memp3_decoded_buf = NULL;
 	}
 
 	free_mp3_info(&mp3info);

@@ -59,5 +59,6 @@ struct MP3Info
 int read_mp3_info(struct MP3Info *info, mp3_reader_data * data);
 int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data);
 int free_mp3_info(struct MP3Info *info);
+int search_valid_frame_me(mp3_reader_data * data);
 
 #endif

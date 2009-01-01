@@ -993,23 +993,57 @@ int skip_id3v2_tag(mp3_reader_data * data)
 	return 0;
 }
 
-int skip_valid_frame_me(struct MP3Info *info, mp3_reader_data * data)
+int search_valid_frame_me(mp3_reader_data * data)
 {
-	uint32_t off;
-	int size, br = 0, dcount = 0;
+	uint32_t off, start, dcount = 0;
+	int size = 0;
 	int end;
 	int level;
-	static uint8_t *buf;
+	uint8_t buf[1024 + 4];
 	int brate = 0;
+	struct MP3Info inf, *info;
+
+	info = &inf;
 
 	if (data->fd < 0)
 		return -1;
 
-	size =
-		parse_frame(&buf[off], &level, &brate, info, data,
-					dcount * 65536 + off);
+	level = info->sample_freq = info->channels = info->frames = 0;
+	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
 
-	return 0;
+	if (sceIoRead(data->fd, buf, 4) != 4) {
+		return -1;
+	}
+
+	start = 0;
+	while ((end = sceIoRead(data->fd, &buf[4], sizeof(buf) - 4)) > 0) {
+		while (start < end) {
+			size =
+				parse_frame(buf + start, &level, &brate, info, data,
+							dcount * (sizeof(buf) - 4) + off + start);
+
+			if (size > 0) {
+				goto found;
+				break;
+			}
+
+			start++;
+		}
+
+		start -= end;
+		memmove(buf, &buf[end], 4);
+		dcount++;
+	}
+
+	if (end <= 0) {
+		return -1;
+	}
+
+  found:
+	sceIoLseek(data->fd, dcount * (sizeof(buf) - 4) + off + start,
+			   PSP_SEEK_SET);
+
+	return size;
 }
 
 int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
