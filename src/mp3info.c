@@ -392,7 +392,7 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 	if ((int) frames < 0)
 		return -1;
 
-	info->spf = ctx.lsf ? 576 : 1152;	/* Samples per frame, layer 3 */
+	info->spf = ctx.lsf ? 384 : 1152;	/* Samples per frame, layer 3 */
 	info->duration = (double) frames *info->spf / info->sample_freq;
 
 	info->average_bitrate = (double) data->size * 8 / info->duration;
@@ -995,7 +995,7 @@ int skip_id3v2_tag(mp3_reader_data * data)
 
 int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 {
-	uint32_t off;
+	uint32_t off, startpos;
 	int size, br = 0, dcount = 0;
 	int end;
 	int level;
@@ -1015,6 +1015,8 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	if (!buf)
 		return -1;
 
+	startpos = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+
 	if (sceIoRead(data->fd, buf, 4) != 4) {
 		free(buf);
 		return -1;
@@ -1033,10 +1035,10 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 
 			if ((size =
 				 parse_frame(&buf[off], &level, &brate, info, data,
-							 dcount * 65536 + off)) > 0) {
+							 dcount * 65536 + off + startpos)) > 0) {
 				br += brate;
 				if (first_frame == (uint32_t) - 1)
-					first_frame = dcount * 65536 + off;
+					first_frame = dcount * 65536 + off + startpos;
 
 				if (info->frames >= 0) {
 					if (info->frames == 0)
@@ -1048,7 +1050,8 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 					if (info->frameoff == NULL)
 						info->frames = -1;
 					else
-						info->frameoff[info->frames++] = dcount * 65536 + off;
+						info->frameoff[info->frames++] =
+							dcount * 65536 + off + startpos;
 				}
 				off += size;
 			} else
@@ -1061,11 +1064,13 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 
 	if (info->frames) {
 		if (level == 1) {
-			info->duration = 384.0 * info->frames / info->sample_freq;
-			info->framelen = info->duration / info->frames;
+			info->spf = 384;
 		} else {
-			info->duration = 1152.0 * info->frames / info->sample_freq;
+			info->spf = 1152;
 		}
+
+		info->duration = 1.0 * info->spf * info->frames / info->sample_freq;
+		info->framelen = info->duration / info->frames;
 		info->average_bitrate = (double) data->size * 8 / info->duration;
 	}
 
