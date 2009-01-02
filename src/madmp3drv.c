@@ -907,7 +907,7 @@ static int madmp3_load(const char *spath, const char *lpath)
 		return -1;
 	}
 	// ME can't handle mono channel now
-	if (use_me && mp3info.channels == 2)
+	if (use_me)
 		xMP3AudioSetChannelCallback(0, memp3_audiocallback, NULL);
 	else
 		xMP3AudioSetChannelCallback(0, madmp3_audiocallback, NULL);

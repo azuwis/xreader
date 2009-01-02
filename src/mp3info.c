@@ -392,7 +392,7 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 	if ((int) frames < 0)
 		return -1;
 
-	info->spf = ctx.lsf ? 384 : 1152;	/* Samples per frame, layer 3 */
+	info->spf = ctx.lsf ? 576 : 1152;	/* Samples per frame, layer 3 */
 	info->duration = (double) frames *info->spf / info->sample_freq;
 
 	info->average_bitrate = (double) data->size * 8 / info->duration;
@@ -819,6 +819,7 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 							  offset_t start)
 {
 	uint8_t version_id;
+	uint8_t mp3_version, mp3_level;
 	uint8_t layer;
 	uint8_t crc;
 	uint8_t bitrate_bit;
@@ -828,6 +829,8 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 	uint32_t framelenbyte;
 	int bitrate;
 	int freq;
+	uint16_t mp3_samples_per_frames[9] =
+		{ 384, 1152, 1152, 384, 1152, 576, 384, 1152, 576 };
 
 	if (h[0] != 0xff)
 		return -1;
@@ -839,6 +842,31 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 
 	if (((h[1] >> 1) & 3) == 0)
 		return -1;
+
+	switch ((h[1] >> 3) & 0x03) {
+		case 0:
+			mp3_version = 2;	// MPEG 2.5
+			break;
+		case 2:
+			mp3_version = 1;	// MPEG 2
+			break;
+		case 3:
+			mp3_version = 0;	// MPEG 1
+			break;
+		default:
+			mp3_version = 0;
+			break;
+	}
+
+	// ignore MPEG 2.5
+	if (mp3_version == 2)
+		return -1;
+
+	mp3_level = 3 - ((h[1] >> 1) & 0x03);
+	if (mp3_level == 3)
+		mp3_level--;
+
+	info->spf = mp3_samples_per_frames[mp3_version * 3 + mp3_level];
 
 	layer = 4 - ((h[1] >> 1) & 3);
 
@@ -885,11 +913,6 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 
 	if (layer == 2 && check_bc_combination(bitrate, channel_mode) != 0)
 		return -1;
-
-	if (layer == 1)
-		framelenbyte = (12000 * bitrate / freq + pad) * 4;
-	else
-		framelenbyte = 144000 * bitrate / freq + pad;
 
 	if (crc) {
 		uint16_t crc_value, crc_frame;
@@ -964,6 +987,28 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 			info->channels = 2;
 	}
 
+	/*
+	   if (layer == 1)
+	   framelenbyte = (12000 * bitrate / freq + pad) * 4;
+	   else
+	   framelenbyte = 144000 * bitrate / freq + pad;
+	 */
+
+	if (mp3_version == 0) {
+		// MPEG 1
+		if (layer == 1)
+			framelenbyte = (12000 * bitrate / freq + pad) * 4;
+		else
+			framelenbyte = 144000 * bitrate / freq + pad;
+	} else if (mp3_version == 1) {
+		// MPEG2
+		if (layer == 1) {
+			framelenbyte = 24000 * bitrate / freq + pad;
+		} else {
+			framelenbyte = 72000 * bitrate / freq + pad;
+		}
+	}
+
 	return framelenbyte;
 }
 
@@ -1003,6 +1048,7 @@ int search_valid_frame_me(mp3_reader_data * data)
 	int brate = 0;
 	struct MP3Info inf, *info;
 
+	memset(&inf, 0, sizeof(inf));
 	info = &inf;
 
 	if (data->fd < 0)
@@ -1114,14 +1160,7 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	}
 
 	if (info->frames) {
-		if (level == 1) {
-			info->spf = 384;
-		} else {
-			info->spf = 1152;
-		}
-
 		info->duration = 1.0 * info->spf * info->frames / info->sample_freq;
-		info->framelen = info->duration / info->frames;
 		info->average_bitrate = (double) data->size * 8 / info->duration;
 	}
 

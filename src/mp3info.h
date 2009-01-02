@@ -52,7 +52,6 @@ struct MP3Info
 	double duration;
 	double average_bitrate;
 	struct MusicTag tag;
-	dword framelen;
 	dword *frameoff;
 };
 

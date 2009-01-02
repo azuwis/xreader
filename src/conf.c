@@ -281,7 +281,7 @@ static void conf_default(p_conf conf)
 	conf->ttf_haste_up = true;
 	conf->linenum_style = false;
 	conf->infobar_align = conf_align_left;
-	STRCPY_S(conf->musicdrv_opts, "mp3_brute_mode=off");
+	STRCPY_S(conf->musicdrv_opts, "mp3_brute_mode=off mp3_use_me=on");
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
