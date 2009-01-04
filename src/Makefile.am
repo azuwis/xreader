@@ -51,8 +51,9 @@ tta/filter.h tta/ttadec.h tta/ttadec.c tta/ttalib.h
 if MUSIC
 xReader_elf_SOURCES += \
 musicdrv.c musicdrv.h musicmgr.c musicmgr.h  \
-lyric.c lyric.h clock.c mp3info.c \
-madmp3drv.c madmp3drv.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h xmp3audiolib.c
+lyric.c lyric.h clock.c mp3info.c flacplayer.c flacplayer.h \
+madmp3drv.c madmp3drv.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h \
+xmp3audiolib.c xmp3audiolib.h
 endif
 
 if NLS
@@ -68,7 +69,9 @@ BUILD_PRX = 1
 PSP_LARGE_MEMORY = 1
 
 libdir = $(top_srcdir)/lib
-LIBS = $(libdir)/libmpcdec.a
+if MUSIC
+LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a
+endif
 LIBS += \
 -L$(libdir) $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a \
 $(libdir)/libpng.a $(libdir)/libgif.a $(libdir)/libjpeg.a $(libdir)/libbmp.a \

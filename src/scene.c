@@ -5604,6 +5604,7 @@ void scene_filelist(void)
 			case fs_filetype_wave:
 			case fs_filetype_tta:
 			case fs_filetype_aa3:
+			case fs_filetype_flac:
 #ifdef ENABLE_WMA
 			case fs_filetype_wma:
 #endif
