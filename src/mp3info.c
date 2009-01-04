@@ -987,13 +987,6 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 			info->channels = 2;
 	}
 
-	/*
-	   if (layer == 1)
-	   framelenbyte = (12000 * bitrate / freq + pad) * 4;
-	   else
-	   framelenbyte = 144000 * bitrate / freq + pad;
-	 */
-
 	if (mp3_version == 0) {
 		// MPEG 1
 		if (layer == 1)
