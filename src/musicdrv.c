@@ -27,6 +27,7 @@
 
 static struct music_ops *music_drivers = NULL;
 static struct music_ops *cur_musicdrv = NULL;
+static bool need_stop = false;
 
 bool show_encoder_msg = false;
 
@@ -115,9 +116,13 @@ int musicdrv_load(const char *spath, const char *lpath)
 		return -EINVAL;
 	if (cur_musicdrv == NULL)
 		return -EBUSY;
-	if (cur_musicdrv->load)
-		return cur_musicdrv->load(spath, lpath);
-	else
+	if (cur_musicdrv->load) {
+		int ret = cur_musicdrv->load(spath, lpath);
+
+		need_stop = true;
+
+		return ret;
+	} else
 		return -ENOSYS;
 }
 
@@ -143,6 +148,9 @@ int musicdrv_pause(void)
 
 int musicdrv_end(void)
 {
+	if (!need_stop)
+		return 0;
+
 	if (cur_musicdrv == NULL)
 		return -EBUSY;
 	if (cur_musicdrv->end)

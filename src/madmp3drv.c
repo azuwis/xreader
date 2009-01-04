@@ -912,12 +912,6 @@ static int madmp3_load(const char *spath, const char *lpath)
 	else
 		xMP3AudioSetChannelCallback(0, madmp3_audiocallback, NULL);
 
-	if (ret < 0) {
-		sceIoClose(data.fd);
-		g_status = ST_UNKNOWN;
-		return -1;
-	}
-
 	madmp3_lock();
 	g_status = ST_LOADED;
 	madmp3_unlock();
