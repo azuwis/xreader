@@ -595,7 +595,6 @@ static void scene_draw_mp3bar(bool * firstdup)
 static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 {
 	switch (key) {
-#ifdef _DEBUG
 		case PSP_CTRL_LTRIGGER | PSP_CTRL_RTRIGGER:
 			if (win_msgbox
 				(_("重启音频系统"), _("是"), _("否"), COLOR_WHITE,
@@ -604,7 +603,6 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 				power_up();
 			}
 			break;
-#endif
 		case (PSP_CTRL_SELECT | PSP_CTRL_START):
 			if (win_msgbox
 				(_("是否退出软件?"), _("是"), _("否"), COLOR_WHITE,
@@ -669,7 +667,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 					if (!strcmp(info.decoder_name, "ape")) {
 						musicdrv_fbackward(10);
 					} else {
-						musicdrv_fbackward(10);
+						musicdrv_fbackward(5);
 					}
 				} else {
 					musicdrv_fbackward(5);
@@ -686,9 +684,9 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 				info.type = MD_GET_DECODERNAME;
 				if (musicdrv_get_info(&info) == 0) {
 					if (!strcmp(info.decoder_name, "ape")) {
-						musicdrv_fforward(10);
+						musicdrv_fforward(20);
 					} else {
-						musicdrv_fforward(10);
+						musicdrv_fforward(5);
 					}
 				} else {
 					musicdrv_fforward(5);
