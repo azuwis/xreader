@@ -143,12 +143,12 @@ static flac_taginfo_t g_taginfo;
 /**
  * Flac±àÂëÆ÷Ãû×Ö
  */
-char g_encode_name[80];
+static char g_encode_name[80];
 
 /**
  * FLAC½âÂëÆ÷
  */
-FLAC__StreamDecoder *g_decoder = NULL;
+static FLAC__StreamDecoder *g_decoder = NULL;
 
 /**
  * ¼ÓËø
@@ -276,11 +276,12 @@ static int flac_seek_seconds(double seconds)
 	return 0;
 }
 
-FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
-											  decoder,
-											  const FLAC__Frame * frame,
-											  const FLAC__int32 *
-											  const buffer[], void *client_data)
+static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
+													 decoder,
+													 const FLAC__Frame * frame,
+													 const FLAC__int32 *
+													 const buffer[],
+													 void *client_data)
 {
 	size_t i;
 
@@ -314,8 +315,9 @@ FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 	return FLAC__STREAM_DECODER_WRITE_STATUS_CONTINUE;
 }
 
-void metadata_callback(const FLAC__StreamDecoder * decoder,
-					   const FLAC__StreamMetadata * metadata, void *client_data)
+static void metadata_callback(const FLAC__StreamDecoder * decoder,
+							  const FLAC__StreamMetadata * metadata,
+							  void *client_data)
 {
 	(void) decoder, (void) client_data;
 
@@ -338,8 +340,9 @@ void metadata_callback(const FLAC__StreamDecoder * decoder,
 	}
 }
 
-void error_callback(const FLAC__StreamDecoder * decoder,
-					FLAC__StreamDecoderErrorStatus status, void *client_data)
+static void error_callback(const FLAC__StreamDecoder * decoder,
+						   FLAC__StreamDecoderErrorStatus status,
+						   void *client_data)
 {
 	(void) decoder, (void) client_data;
 
