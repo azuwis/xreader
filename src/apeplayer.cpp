@@ -214,7 +214,7 @@ static void clear_snd_buf(void *buf, int frames)
 static void send_to_sndbuf(void *buf, short *srcbuf, int frames, int channels)
 {
 	int n;
-	signed short *p = (signed short*)buf;
+	signed short *p = (signed short *) buf;
 
 	if (frames <= 0)
 		return;
@@ -245,9 +245,9 @@ static int ape_seek_seconds(double seconds)
 		seconds = 0;
 
 	sample = g_ape_total_samples * seconds / g_duration;
-	
+
 	dbg_printf(d, "Seeking to sample %d.", sample);
-	
+
 	int ret = g_decoder->Seek(sample);
 
 	if (ret == ERROR_SUCCESS) {
@@ -269,13 +269,13 @@ static int ape_seek_seconds(double seconds)
  * @param reqn 缓冲区帧大小
  * @param pdata 用户数据，无用
  */
-static void ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
+static int ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 {
 	int avail_frame;
 	int snd_buf_frame_size = (int) reqn;
 	int ret;
 	double incr;
-	signed short *audio_buf = (signed short*)buf;
+	signed short *audio_buf = (signed short *) buf;
 
 	UNUSED(pdata);
 
@@ -294,7 +294,7 @@ static void ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			ape_seek_seconds(g_play_time - g_seek_seconds);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
-		return;
+		return 0;
 	}
 
 	while (snd_buf_frame_size > 0) {
@@ -315,11 +315,12 @@ static void ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += avail_frame * 2;
 			int block = -1;
 
-			ret = g_decoder->GetData((char*)g_buff, BLOCKS_PER_DECODE, &block);
+			ret =
+				g_decoder->GetData((char *) g_buff, BLOCKS_PER_DECODE, &block);
 
 			if (ret != ERROR_SUCCESS) {
 				__end();
-				return;
+				return -1;
 			}
 
 			g_buff_frame_size = block;
@@ -329,6 +330,8 @@ static void ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_play_time += incr;
 		}
 	}
+
+	return 0;
 }
 
 /**
@@ -404,7 +407,7 @@ static int ape_load(const char *spath, const char *lpath)
 		g_buff = NULL;
 	}
 
-	g_buff = (short int*)calloc(NUM_AUDIO_SAMPLES, sizeof(*g_buff));
+	g_buff = (short int *) calloc(NUM_AUDIO_SAMPLES, sizeof(*g_buff));
 
 	if (g_buff == NULL) {
 		__end();
@@ -422,27 +425,6 @@ static int ape_load(const char *spath, const char *lpath)
 		g_ape_file_size = ape_info.GetInfo(APE_INFO_APE_TOTAL_BYTES);
 		g_ape_bitrate = ape_info.GetInfo(APE_INFO_AVERAGE_BITRATE) * 1000;
 		g_ape_bits_per_sample = ape_info.GetInfo(APE_INFO_BITS_PER_SAMPLE);
-
-		/*
-		CAPETag* tag = (CAPETag* )ape_info.GetInfo(APE_INFO_TAG);
-
-		if(tag != NULL) {
-			int len;
-
-			if (tag->GetHasAPETag()) {
-				printf("Has APETag %d\n", tag->GetAPETagVersion());
-			} else if (tag->GetHasID3Tag()) {
-				printf("Has ID3 Tag\n");
-			}
-
-			len = sizeof(g_taginfo.title);
-			tag->GetFieldString(APE_TAG_FIELD_TITLE, g_taginfo.title, &len, true);
-			len = sizeof(g_taginfo.artist);
-			tag->GetFieldString(APE_TAG_FIELD_ARTIST, g_taginfo.artist, &len, true);
-			len = sizeof(g_taginfo.album);
-			tag->GetFieldString(APE_TAG_FIELD_ALBUM, g_taginfo.album, &len, true);
-		}
-		*/
 
 		if (g_ape_total_samples > 0) {
 			g_duration = 1.0 * g_ape_total_samples / g_ape_sample_freq;
@@ -473,14 +455,14 @@ static int ape_load(const char *spath, const char *lpath)
 			   g_ape_channels, g_ape_sample_freq, g_ape_bitrate / 1000,
 			   (int) (g_duration / 60), (int) g_duration % 60, g_encode_name,
 			   1.0 * g_ape_file_size / (g_ape_total_samples *
-										 g_ape_channels *
-										 (g_ape_bits_per_sample / 8))
+										g_ape_channels *
+										(g_ape_bits_per_sample / 8))
 		);
 
 	dbg_printf(d, "[%s - %s - %s, ape tag]", g_taginfo.artist, g_taginfo.album,
 			   g_taginfo.title);
 
-	g_decoder = (CAPEDecompress*) CreateIAPEDecompress(path, &err);
+	g_decoder = (CAPEDecompress *) CreateIAPEDecompress(path, &err);
 
 	if (err != ERROR_SUCCESS) {
 		__end();
@@ -569,6 +551,7 @@ static int ape_end(void)
 
 	if (g_decoder) {
 		delete g_decoder;
+
 		g_decoder = NULL;
 	}
 
@@ -718,8 +701,8 @@ static int ape_get_info(struct music_info *pinfo)
 		if (show_encoder_msg) {
 			SPRINTF_S(pinfo->encode_msg, "%s Ratio: %.3f", g_encode_name,
 					  1.0 * g_ape_file_size / (g_ape_total_samples *
-												g_ape_channels *
-												(g_ape_bits_per_sample / 8)));
+											   g_ape_channels *
+											   (g_ape_bits_per_sample / 8)));
 		} else {
 			pinfo->encode_msg[0] = '\0';
 		}
@@ -743,7 +726,6 @@ static struct music_ops ape_ops = {
 	ape_end,
 	NULL
 };
-
 
 extern "C" int ape_init(void)
 {

@@ -231,7 +231,7 @@ static int tta_seek_seconds(double seconds)
  * @param reqn 缓冲区帧大小
  * @param pdata 用户数据，无用
  */
-static void tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
+static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 {
 	int avail_frame;
 	int snd_buf_frame_size = (int) reqn;
@@ -246,7 +246,7 @@ static void tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_play_time += g_seek_seconds;
 			if (g_play_time >= g_duration) {
 				__end();
-				return;
+				return -1;
 			}
 			tta_lock();
 			g_status = ST_PLAYING;
@@ -265,7 +265,7 @@ static void tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			tta_seek_seconds(g_play_time);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
-		return;
+		return 0;
 	}
 
 	while (snd_buf_frame_size > 0) {
@@ -287,12 +287,12 @@ static void tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 			if (g_tta_frames_decoded >= g_tta_frames) {
 				__end();
-				return;
+				return -1;
 			}
 			ret = get_samples((byte *) g_buff);
 			if (ret <= 0) {
 				__end();
-				return;
+				return -1;
 			}
 
 			g_buff_frame_size = ret;
@@ -304,6 +304,8 @@ static void tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_tta_frames_decoded += g_buff_frame_size;
 		}
 	}
+
+	return 0;
 }
 
 /**

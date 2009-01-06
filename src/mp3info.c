@@ -818,13 +818,11 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 							  struct MP3Info *info, mp3_reader_data * data,
 							  offset_t start)
 {
-	uint8_t version_id;
 	uint8_t mp3_version, mp3_level;
 	uint8_t layer;
 	uint8_t crc;
 	uint8_t bitrate_bit;
 	uint8_t pad;
-	uint8_t temp;
 	uint8_t channel_mode;
 	uint32_t framelenbyte;
 	int bitrate;
@@ -833,14 +831,6 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 		{ 384, 1152, 1152, 384, 1152, 576, 384, 1152, 576 };
 
 	if (h[0] != 0xff)
-		return -1;
-
-	if (h[1] >> 4 != 0xf)
-		return -1;
-
-	version_id = (h[1] >> 3) & 1;
-
-	if (((h[1] >> 1) & 3) == 0)
 		return -1;
 
 	switch ((h[1] >> 3) & 0x03) {
@@ -858,10 +848,6 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 			break;
 	}
 
-	// ignore MPEG 2.5
-	if (mp3_version == 2)
-		return -1;
-
 	mp3_level = 3 - ((h[1] >> 1) & 0x03);
 	if (mp3_level == 3)
 		mp3_level--;
@@ -875,40 +861,18 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 
 	crc = !(h[1] & 1);
 	bitrate_bit = (h[2] >> 4) & 0xf;
+	bitrate = _bitrate[mp3_version * 3 + mp3_level][bitrate_bit];
 
-	// 0: L1, V1
-	if (version_id == 1 && layer == 1)
-		temp = 0;
-
-	// 1: L1, V2
-	if (version_id == 1 && layer == 2)
-		temp = 1;
-
-	// 2: L1, V3
-	if (version_id == 1 && layer == 3)
-		temp = 2;
-
-	// 3: L2, V1 
-	if (version_id == 0 && layer == 1)
-		temp = 3;
-
-	// 4 L2, V2|3
-	if (version_id == 0 && (layer == 2 || layer == 3))
-		temp = 4;
-
-	bitrate = _bitrate[temp][bitrate_bit];
 	if (bitrate == 0)
 		return -1;
 
-	temp = (h[2] >> 2) & 3;
-	freq = _sample_freq[1 - version_id][temp];
+	freq = _sample_freq[mp3_version][(h[2] >> 2) & 0x03];
 
 	if (freq == 0) {
 		return -1;
 	}
 
 	pad = (h[2] >> 1) & 1;
-
 	channel_mode = (h[3] >> 6) & 3;
 
 	if (layer == 2 && check_bc_combination(bitrate, channel_mode) != 0)
@@ -987,20 +951,10 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 			info->channels = 2;
 	}
 
-	if (mp3_version == 0) {
-		// MPEG 1
-		if (layer == 1)
-			framelenbyte = (12000 * bitrate / freq + pad) * 4;
-		else
-			framelenbyte = 144000 * bitrate / freq + pad;
-	} else if (mp3_version == 1) {
-		// MPEG2
-		if (layer == 1) {
-			framelenbyte = 24000 * bitrate / freq + pad;
-		} else {
-			framelenbyte = 72000 * bitrate / freq + pad;
-		}
-	}
+	if (mp3_level == 0)
+		framelenbyte = ((info->spf / 8 * 1000) * bitrate / freq + pad) << 2;
+	else
+		framelenbyte = (info->spf / 8 * 1000) * bitrate / freq + pad;
 
 	return framelenbyte;
 }

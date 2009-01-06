@@ -258,7 +258,7 @@ static int wav_seek_seconds(double seconds)
  * @param reqn 缓冲区帧大小
  * @param pdata 用户数据，无用
  */
-static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
+static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 {
 	int avail_frame;
 	int snd_buf_frame_size = (int) reqn;
@@ -273,7 +273,7 @@ static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_play_time += g_seek_seconds;
 			if (g_play_time >= g_duration) {
 				__end();
-				return;
+				return -1;
 			}
 			wav_lock();
 			g_status = ST_PLAYING;
@@ -292,7 +292,7 @@ static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			wav_seek_seconds(g_play_time);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
-		return;
+		return 0;
 	}
 
 	while (snd_buf_frame_size > 0) {
@@ -316,13 +316,13 @@ static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 			if (g_wav_frames_decoded >= g_wav_frames) {
 				__end();
-				return;
+				return -1;
 			}
 			ret =
 				sceIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
 			if (ret <= 0) {
 				__end();
-				return;
+				return -1;
 			}
 
 			g_buff_frame_size = ret / g_wav_byte_per_frame;
@@ -331,6 +331,8 @@ static void wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_wav_frames_decoded += g_buff_frame_size;
 		}
 	}
+
+	return 0;
 }
 
 /**

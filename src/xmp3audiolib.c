@@ -119,7 +119,12 @@ static int AudioChannelThread(int args, void *argp)
 
 		callback = AudioStatus[channel].callback;
 		if (callback) {
-			callback(bufptr, PSP_NUM_AUDIO_SAMPLES, AudioStatus[channel].pdata);
+			int ret = callback(bufptr, PSP_NUM_AUDIO_SAMPLES,
+							   AudioStatus[channel].pdata);
+
+			if (ret != 0) {
+				break;
+			}
 		} else {
 			unsigned int *ptr = bufptr;
 			int i;

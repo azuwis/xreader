@@ -277,7 +277,7 @@ static void send_to_sndbuf(void *buf, MPC_SAMPLE_FORMAT * srcbuf, int frames,
  * @param reqn 缓冲区帧大小
  * @param pdata 用户数据，无用
  */
-static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
+static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 {
 	int avail_frame;
 	int snd_buf_frame_size = (int) reqn;
@@ -292,7 +292,7 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_play_time += g_seek_seconds;
 			if (g_play_time >= g_duration) {
 				__end();
-				return;
+				return -1;
 			}
 			mpc_lock();
 			g_status = ST_PLAYING;
@@ -313,7 +313,7 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_buff_frame_size = g_buff_frame_start = 0;
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
-		return;
+		return 0;
 	}
 
 	while (snd_buf_frame_size > 0) {
@@ -336,7 +336,7 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			ret = mpc_decoder_decode(&decoder, g_buff, 0, 0);
 			if (ret == -1 || ret == 0) {
 				__end();
-				return;
+				return -1;
 			}
 
 			g_buff_frame_size = ret;
@@ -348,6 +348,8 @@ static void mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_play_time += incr;
 		}
 	}
+
+	return 0;
 }
 
 /**

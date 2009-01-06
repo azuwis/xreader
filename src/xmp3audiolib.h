@@ -48,8 +48,8 @@ extern "C"
 #define PSP_NUM_AUDIO_SAMPLES 1024*4
 #define PSP_VOLUME_MAX 0x8000
 
-	typedef void (*xMP3AudioCallback_t) (void *buf, unsigned int reqn,
-										 void *pdata);
+	typedef int (*xMP3AudioCallback_t) (void *buf, unsigned int reqn,
+										void *pdata);
 
 	typedef struct
 	{

@@ -360,7 +360,7 @@ static void error_callback(const FLAC__StreamDecoder * decoder,
  * @param reqn 缓冲区帧大小
  * @param pdata 用户数据，无用
  */
-static void flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
+static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 {
 	int avail_frame;
 	int snd_buf_frame_size = (int) reqn;
@@ -384,7 +384,7 @@ static void flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			flac_seek_seconds(g_play_time - g_seek_seconds);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
-		return;
+		return 0;
 	}
 
 	while (snd_buf_frame_size > 0) {
@@ -410,7 +410,7 @@ static void flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 			if (!FLAC__stream_decoder_process_single(g_decoder)) {
 				__end();
-				return;
+				return -1;
 			}
 
 			FLAC__StreamDecoderState state =
@@ -420,7 +420,7 @@ static void flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				|| state == FLAC__STREAM_DECODER_ABORTED
 				|| state == FLAC__STREAM_DECODER_MEMORY_ALLOCATION_ERROR) {
 				__end();
-				return;
+				return -1;
 			}
 
 			g_buff_frame_size = g_decoded_sample_size;
@@ -430,6 +430,8 @@ static void flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_play_time += incr;
 		}
 	}
+
+	return 0;
 }
 
 /**
