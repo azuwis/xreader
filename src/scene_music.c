@@ -63,6 +63,8 @@
 
 extern win_menu_predraw_data g_predraw;
 
+static int g_ins_kbps;
+
 static volatile int secticks = 0;
 
 // 获取PSP剩余内存，单位为Bytes
@@ -394,16 +396,27 @@ static void scene_draw_mp3bar_music_staff(void)
 	disp_fillrect(6, 263 - DISP_FONTSIZE * 4, 473, 266,
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  msgbcolor);
-	info.type = MD_GET_AVGKBPS | MD_GET_FREQ | MD_GET_CURTIME | MD_GET_DURATION;
+	info.type =
+		MD_GET_AVGKBPS | MD_GET_FREQ | MD_GET_CURTIME |
+		MD_GET_DURATION | MD_GET_DECODERNAME;
 	if (musicdrv_get_info(&info) == 0) {
 		bitrate = info.avg_kbps;
 		sample = info.freq;
 		len = (int) info.cur_time;
 		tlen = (int) info.duration;
-		SPRINTF_S(infostr,
-				  "%s   %d kbps   %d Hz   %02d:%02d / %02d:%02d",
-				  conf_get_cyclename(config.mp3cycle), bitrate, sample,
-				  len / 60, len % 60, tlen / 60, tlen % 60);
+
+		if (g_ins_kbps == 0)
+			SPRINTF_S(infostr,
+					  "%s   %4d kbps   %d Hz   %02d:%02d / %02d:%02d   [%s@%dkbps]",
+					  conf_get_cyclename(config.mp3cycle), bitrate, sample,
+					  len / 60, len % 60, tlen / 60, tlen % 60,
+					  info.decoder_name, bitrate);
+		else
+			SPRINTF_S(infostr,
+					  "%s   %4d kbps   %d Hz   %02d:%02d / %02d:%02d   [%s@%dkbps]",
+					  conf_get_cyclename(config.mp3cycle), g_ins_kbps,
+					  sample, len / 60, len % 60, tlen / 60, tlen % 60,
+					  info.decoder_name, bitrate);
 	} else
 		SPRINTF_S(infostr, "%s", conf_get_cyclename(config.mp3cycle));
 	disp_putstring(6 + DISP_FONTSIZE, 265 - DISP_FONTSIZE * 2, COLOR_WHITE,
@@ -738,6 +751,20 @@ void scene_mp3bar(void)
 
 	sceRtcGetCurrentTick(&timer_start);
 	while (1) {
+		sceRtcGetCurrentTick(&timer_end);
+		if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
+			struct music_info info;
+
+			memset(&info, 0, sizeof(info));
+			info.type = MD_GET_INSKBPS;
+			if (musicdrv_get_info(&info) == 0) {
+				g_ins_kbps = info.ins_kbps;
+			}
+
+			sceRtcGetCurrentTick(&timer_start);
+			secticks++;
+		}
+
 		scene_draw_mp3bar(&firstdup);
 		disp_flip();
 		dword key = ctrl_read();
@@ -749,11 +776,6 @@ void scene_mp3bar(void)
 		if (scene_mp3bar_handle_input(key, &saveimage) == 1)
 			return;
 
-		sceRtcGetCurrentTick(&timer_end);
-		if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
-			sceRtcGetCurrentTick(&timer_start);
-			secticks++;
-		}
 		if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 			power_down();
 			scePowerRequestSuspend();

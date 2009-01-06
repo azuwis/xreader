@@ -31,6 +31,11 @@ static bool need_stop = false;
 
 bool show_encoder_msg = false;
 
+/**
+ * MP3动态比特率
+ */
+struct instant_bitrate g_inst_br;
+
 int register_musicdrv(struct music_ops *drv)
 {
 	struct music_ops **tmp;
@@ -250,4 +255,77 @@ bool opt_is_on(const char *str)
 #undef CHECK_TAIL
 
 	return false;
+}
+
+int get_inst_bitrate(struct instant_bitrate *inst)
+{
+	size_t i;
+	int r = 0;
+
+	if (inst == NULL)
+		return 0;
+
+	if (inst->n == 0)
+		return 0;
+
+	for (i = 0; i < inst->n; ++i) {
+		r += inst->frames[i].framebits;
+	}
+
+	r /= inst->n;
+
+	return r;
+}
+
+float get_bitrate_second(struct instant_bitrate *inst)
+{
+	size_t i;
+	float r = 0;
+
+	if (inst == NULL)
+		return 0;
+
+	for (i = 0; i < inst->n; ++i) {
+		r += inst->frames[i].duration;
+	}
+
+	return r;
+}
+
+void add_bitrate(struct instant_bitrate *inst, int frame_bits, double duration)
+{
+	if (inst == NULL)
+		return;
+
+	if (get_bitrate_second(inst) <= 1.000) {
+		if (inst->frames == NULL || inst->n >= inst->cap) {
+			struct instant_bitrate_frame *p =
+				realloc(inst->frames, (inst->cap + 10) * sizeof(*inst->frames));
+
+			if (p == NULL)
+				return;
+
+			inst->frames = p;
+			inst->cap += 10;
+		}
+
+		inst->frames[inst->n].framebits = frame_bits;
+		inst->frames[inst->n].duration = duration;
+
+		inst->n++;
+	} else {
+		memmove(&inst->frames[0], &inst->frames[1],
+				sizeof(*inst->frames) * (inst->n - 1));
+		inst->frames[inst->n - 1].framebits = frame_bits;
+		inst->frames[inst->n - 1].duration = duration;
+	}
+}
+
+void free_bitrate(struct instant_bitrate *inst)
+{
+	if (inst == NULL)
+		return;
+
+	free(inst->frames);
+	memset(inst, 0, sizeof(*inst));
 }

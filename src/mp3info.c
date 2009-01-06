@@ -987,14 +987,13 @@ int skip_id3v2_tag(mp3_reader_data * data)
 	return 0;
 }
 
-int search_valid_frame_me(mp3_reader_data * data)
+int search_valid_frame_me(mp3_reader_data * data, int *brate)
 {
 	uint32_t off, start, dcount = 0;
 	int size = 0;
 	int end;
 	int level;
 	uint8_t buf[1024 + 4];
-	int brate = 0;
 	struct MP3Info inf, *info;
 
 	info = &inf;
@@ -1014,7 +1013,7 @@ int search_valid_frame_me(mp3_reader_data * data)
 	while ((end = sceIoRead(data->fd, &buf[4], sizeof(buf) - 4)) > 0) {
 		while (start < end) {
 			size =
-				parse_frame(buf + start, &level, &brate, info, data,
+				parse_frame(buf + start, &level, brate, info, data,
 							dcount * (sizeof(buf) - 4) + off + start);
 
 			if (size > 0) {

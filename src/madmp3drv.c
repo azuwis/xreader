@@ -249,7 +249,6 @@ enum
 	ID3_TAG_FLAG_EXTENDEDHEADER = 0x40,
 	ID3_TAG_FLAG_EXPERIMENTALINDICATOR = 0x20,
 	ID3_TAG_FLAG_FOOTERPRESENT = 0x10,
-
 	ID3_TAG_FLAG_KNOWNFLAGS = 0xf0
 };
 
@@ -459,6 +458,8 @@ static int madmp3_seek_seconds_offset(double offset)
 
 static int madmp3_seek_seconds(double npt)
 {
+	free_bitrate(&g_inst_br);
+
 	if (mp3info.frameoff && mp3info.frames > 0) {
 		return madmp3_seek_seconds_offset_brute(npt - g_play_time);
 	} else {
@@ -616,6 +617,7 @@ static int madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				mad_timer_fraction(frame.header.duration,
 								   MAD_UNITS_MILLISECONDS) / 1000.0;
 			g_play_time += incr;
+			add_bitrate(&g_inst_br, frame.header.bitrate, incr);
 		}
 	}
 
@@ -691,10 +693,10 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-			int frame_size, ret;
+			int frame_size, ret, brate = 0;
 
 			do {
-				if ((frame_size = search_valid_frame_me(&data)) < 0) {
+				if ((frame_size = search_valid_frame_me(&data, &brate)) < 0) {
 					__end();
 					return -1;
 				}
@@ -716,6 +718,8 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_buff_frame_start = 0;
 			incr = (double) mp3info.spf / mp3info.sample_freq;
 			g_play_time += incr;
+
+			add_bitrate(&g_inst_br, brate * 1000, incr);
 		}
 	}
 
@@ -735,6 +739,7 @@ static int __init(void)
 	g_status = ST_UNKNOWN;
 	madmp3_unlock();
 
+	memset(&g_inst_br, 0, sizeof(g_inst_br));
 	memset(g_buff, 0, sizeof(g_buff));
 	memset(g_input_buff, 0, sizeof(g_input_buff));
 	g_buff_frame_size = g_buff_frame_start = 0;
@@ -1034,7 +1039,11 @@ static int madmp3_get_info(struct music_info *info)
 		info->channels = mp3info.channels;
 	}
 	if (info->type & MD_GET_DECODERNAME) {
-		STRCPY_S(info->decoder_name, "madmp3");
+		if (use_me) {
+			STRCPY_S(info->decoder_name, "mp3");
+		} else {
+			STRCPY_S(info->decoder_name, "madmp3");
+		}
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
 		if (show_encoder_msg) {
@@ -1047,7 +1056,7 @@ static int madmp3_get_info(struct music_info *info)
 		info->avg_kbps = mp3info.average_bitrate / 1000;
 	}
 	if (info->type & MD_GET_INSKBPS) {
-		info->ins_kbps = frame.header.bitrate / 1000;
+		info->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
 	}
 
 	return 0;
@@ -1102,6 +1111,7 @@ static int madmp3_end(void)
 	}
 
 	free_mp3_info(&mp3info);
+	free_bitrate(&g_inst_br);
 
 	if (data.fd >= 0) {
 		sceIoClose(data.fd);

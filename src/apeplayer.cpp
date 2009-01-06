@@ -244,6 +244,7 @@ static int ape_seek_seconds(double seconds)
 	if (seconds < 0)
 		seconds = 0;
 
+	free_bitrate(&g_inst_br);
 	sample = g_ape_total_samples * seconds / g_duration;
 
 	dbg_printf(d, "Seeking to sample %d.", sample);
@@ -328,6 +329,10 @@ static int ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 			incr = 1.0 * g_buff_frame_size / g_ape_sample_freq;
 			g_play_time += incr;
+
+			add_bitrate(&g_inst_br,
+						g_decoder->GetInfo(APE_DECOMPRESS_CURRENT_BITRATE) *
+						1000, incr);
 		}
 	}
 
@@ -414,7 +419,7 @@ static int ape_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	CSmartPtr<str_utf16> path(GetUTF16FromANSI(spath));
+	CSmartPtr <str_utf16> path(GetUTF16FromANSI(spath));
 	int err;
 	CAPEInfo ape_info(&err, path);
 
@@ -555,6 +560,8 @@ static int ape_end(void)
 		g_decoder = NULL;
 	}
 
+	free_bitrate(&g_inst_br);
+
 	return 0;
 }
 
@@ -693,6 +700,9 @@ static int ape_get_info(struct music_info *pinfo)
 	}
 	if (pinfo->type & MD_GET_AVGKBPS) {
 		pinfo->avg_kbps = g_ape_bitrate / 1000;
+	}
+	if (pinfo->type & MD_GET_INSKBPS) {
+		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "ape");

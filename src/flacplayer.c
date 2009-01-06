@@ -150,6 +150,10 @@ static char g_encode_name[80];
  */
 static FLAC__StreamDecoder *g_decoder = NULL;
 
+static FLAC__uint64 decode_position = 0;
+static FLAC__uint64 last_decode_position = 0;
+static int bitrate;
+
 /**
  * ¼ÓËø
  */
@@ -251,6 +255,8 @@ static int flac_seek_seconds(double seconds)
 	if (seconds < 0)
 		seconds = 0;
 
+	free_bitrate(&g_inst_br);
+
 	if (!FLAC__stream_decoder_seek_absolute
 		(g_decoder, g_flac_total_samples * seconds / g_duration)) {
 		return -1;
@@ -262,16 +268,13 @@ static int flac_seek_seconds(double seconds)
 		dbg_printf(d, "Reflush the stream");
 		FLAC__stream_decoder_flush(g_decoder);
 	}
-#if 0
-	FLAC__uint64 byte_pos;
-
-	if (g_flac_file_size > 0
-		&& FLAC__stream_decoder_get_decode_position(g_decoder, &byte_pos)) {
-		g_play_time = g_duration * byte_pos / g_flac_file_size;
-	}
-#endif
 
 	g_play_time = seconds;
+
+	if (!FLAC__stream_decoder_get_decode_position(g_decoder, &decode_position))
+		decode_position = 0;
+
+	last_decode_position = decode_position;
 
 	return 0;
 }
@@ -427,7 +430,29 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_buff_frame_start = 0;
 
 			incr = 1.0 * g_buff_frame_size / g_flac_sample_freq;
+
+			FLAC__stream_decoder_get_bits_per_sample(g_decoder);
 			g_play_time += incr;
+
+			/* Count the bitrate */
+
+			if (!FLAC__stream_decoder_get_decode_position
+				(g_decoder, &decode_position))
+				decode_position = 0;
+
+			if (decode_position > last_decode_position) {
+				int bytes_per_sec =
+					g_flac_bits_per_sample / 8 * g_flac_sample_freq *
+					g_flac_channels;
+
+				bitrate =
+					(decode_position -
+					 last_decode_position) * 8.0 / (g_buff_frame_size * 4 /
+													(float) bytes_per_sec);
+				add_bitrate(&g_inst_br, bitrate, incr);
+			}
+
+			last_decode_position = decode_position;
 		}
 	}
 
@@ -676,6 +701,8 @@ static int flac_end(void)
 		g_decoder = NULL;
 	}
 
+	free_bitrate(&g_inst_br);
+
 	return 0;
 }
 
@@ -814,6 +841,9 @@ static int flac_get_info(struct music_info *pinfo)
 	}
 	if (pinfo->type & MD_GET_AVGKBPS) {
 		pinfo->avg_kbps = g_flac_bitrate / 1000;
+	}
+	if (pinfo->type & MD_GET_INSKBPS) {
+		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "flac");

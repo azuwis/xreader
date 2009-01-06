@@ -298,6 +298,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_status = ST_PLAYING;
 			scene_power_save(true);
 			mpc_unlock();
+			free_bitrate(&g_inst_br);
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
 			g_buff_frame_size = g_buff_frame_start = 0;
 		} else if (g_status == ST_FBACKWARD) {
@@ -309,6 +310,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_status = ST_PLAYING;
 			scene_power_save(true);
 			mpc_unlock();
+			free_bitrate(&g_inst_br);
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
 			g_buff_frame_size = g_buff_frame_start = 0;
 		}
@@ -333,7 +335,12 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-			ret = mpc_decoder_decode(&decoder, g_buff, 0, 0);
+			mpc_uint32_t vbr_update_acc = 0, vbr_update_bits = 0;
+
+			ret =
+				mpc_decoder_decode(&decoder, g_buff, &vbr_update_acc,
+								   &vbr_update_bits);
+
 			if (ret == -1 || ret == 0) {
 				__end();
 				return -1;
@@ -346,6 +353,9 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				(double) (MPC_DECODER_BUFFER_LENGTH / 2 / info.channels) /
 				info.sample_freq;
 			g_play_time += incr;
+			add_bitrate(&g_inst_br,
+						vbr_update_bits * info.sample_freq / MPC_FRAME_LENGTH,
+						incr);
 		}
 	}
 
@@ -550,6 +560,8 @@ static int mpc_end(void)
 		data.fd = -1;
 	}
 
+	free_bitrate(&g_inst_br);
+
 	return 0;
 }
 
@@ -634,6 +646,7 @@ static int mpc_resume(const char *spath, const char *lpath)
 	}
 
 	g_play_time = g_suspend_playing_time;
+	free_bitrate(&g_inst_br);
 	mpc_decoder_seek_seconds(&decoder, g_play_time);
 	g_suspend_playing_time = 0;
 
@@ -689,6 +702,9 @@ static int mpc_get_info(struct music_info *pinfo)
 	}
 	if (pinfo->type & MD_GET_AVGKBPS) {
 		pinfo->avg_kbps = info.average_bitrate / 1000;
+	}
+	if (pinfo->type & MD_GET_INSKBPS) {
+		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "musepack");
