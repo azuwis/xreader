@@ -525,11 +525,6 @@ static int __end(void)
 		g_status_sema = -1;
 	}
 
-	if (data.fd >= 0) {
-		sceIoClose(data.fd);
-		data.fd = -1;
-	}
-
 	g_play_time = 0.;
 
 	return 0;
@@ -549,6 +544,11 @@ static int mpc_end(void)
 	xMP3AudioEnd();
 
 	g_status = ST_STOPPED;
+
+	if (data.fd >= 0) {
+		sceIoClose(data.fd);
+		data.fd = -1;
+	}
 
 	return 0;
 }
