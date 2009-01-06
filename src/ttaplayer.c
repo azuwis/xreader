@@ -34,6 +34,7 @@
 #include "ssv.h"
 #include "simple_gettext.h"
 #include "dbg.h"
+#include "mp3info.h"
 
 static int __end(void);
 
@@ -108,6 +109,16 @@ static double g_suspend_playing_time;
  * TTA音乐数据开始位置
  */
 static uint32_t g_tta_data_offset = 0;
+
+typedef struct _tta_taginfo_t
+{
+	char title[80];
+	char artist[80];
+	char album[80];
+	t_conf_encode enc;
+} tta_taginfo_t;
+
+static tta_taginfo_t g_taginfo;
 
 /**
  * 加锁
@@ -314,6 +325,30 @@ static int __init(void)
 	g_duration = g_play_time = 0.;
 
 	g_tta_frames_decoded = g_tta_frames = g_tta_data_offset = 0;
+	memset(&g_taginfo, 0, sizeof(g_taginfo));
+
+	return 0;
+}
+
+static int tta_read_tag(const char *spath)
+{
+	int fd;
+
+	struct MP3Info info;
+
+	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+
+	if (fd < 0) {
+		return -1;
+	}
+
+	read_id3v2_tag(fd, &info);
+	sceIoClose(fd);
+
+	STRCPY_S(g_taginfo.artist, info.tag.author);
+	STRCPY_S(g_taginfo.title, info.tag.title);
+	STRCPY_S(g_taginfo.album, info.tag.album);
+	g_taginfo.enc = info.tag.encode;
 
 	return 0;
 }
@@ -329,6 +364,11 @@ static int __init(void)
 static int tta_load(const char *spath, const char *lpath)
 {
 	__init();
+
+	if (tta_read_tag(spath) != 0) {
+		__end();
+		return -1;
+	}
 
 	if (g_buff != NULL) {
 		free(g_buff);
@@ -561,12 +601,34 @@ static int tta_resume(const char *spath, const char *lpath)
 static int tta_get_info(struct music_info *pinfo)
 {
 	if (pinfo->type & MD_GET_TITLE) {
-		STRCPY_S(pinfo->title, (const char *) g_info.ID3.title);
+		if (g_taginfo.title[0] != '\0') {
+			pinfo->encode = g_taginfo.enc;
+			STRCPY_S(pinfo->title, (const char *) g_taginfo.title);
+		} else {
+			pinfo->encode = conf_encode_gbk;
+			STRCPY_S(pinfo->title, (const char *) g_info.ID3.title);
+		}
 	}
 	if (pinfo->type & MD_GET_ARTIST) {
-		STRCPY_S(pinfo->artist, (const char *) g_info.ID3.artist);
+		if (g_taginfo.artist[0] != '\0') {
+			pinfo->encode = g_taginfo.enc;
+			STRCPY_S(pinfo->artist, (const char *) g_taginfo.artist);
+		} else {
+			pinfo->encode = conf_encode_gbk;
+			STRCPY_S(pinfo->artist, (const char *) g_info.ID3.artist);
+		}
+	}
+	if (pinfo->type & MD_GET_ALBUM) {
+		if (g_taginfo.album[0] != '\0') {
+			pinfo->encode = g_taginfo.enc;
+			STRCPY_S(pinfo->album, (const char *) g_taginfo.album);
+		} else {
+			pinfo->encode = conf_encode_gbk;
+			STRCPY_S(pinfo->album, (const char *) g_info.ID3.album);
+		}
 	}
 	if (pinfo->type & MD_GET_COMMENT) {
+		pinfo->encode = g_taginfo.enc;
 		STRCPY_S(pinfo->comment, "");
 	}
 	if (pinfo->type & MD_GET_CURTIME) {

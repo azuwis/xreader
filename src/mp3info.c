@@ -1163,13 +1163,38 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	return 0;
 }
 
+int read_id3v2_tag(int fd, struct MP3Info *info)
+{
+	uint8_t buf[ID3v2_HEADER_SIZE];
+	int len;
+	mp3_reader_data data;
+
+	data.fd = fd;
+	memset(info, 0, sizeof(*info));
+
+	if (sceIoRead(fd, buf, sizeof(buf)) != sizeof(buf)) {
+		return -1;
+	}
+
+	if (id3v2_match(buf)) {
+		/* parse ID3v2 header */
+		len = ((buf[6] & 0x7f) << 21) |
+			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
+		id3v2_parse(&data, info, len, buf[3], buf[5]);
+	} else {
+		sceIoLseek(fd, 0, SEEK_SET);
+	}
+
+	return 0;
+}
+
 int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 {
 	int ret;
+	uint32_t off;
 
 	info->frameoff = NULL;
 
-	// TODO: get id3v1
 	if (data->size > 128) {
 		uint8_t buf[ID3v1_TAG_SIZE];
 
@@ -1182,23 +1207,8 @@ int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 
 	sceIoLseek(data->fd, 0, PSP_SEEK_SET);
 
-	/* skip ID3v2 header if exists */
-	uint8_t buf[ID3v2_HEADER_SIZE];
-
-	if (sceIoRead(data->fd, buf, sizeof(buf)) != sizeof(buf)) {
+	if (read_id3v2_tag(data->fd, info) != 0) {
 		return -1;
-	}
-
-	int len;
-	uint32_t off;
-
-	if (id3v2_match(buf)) {
-		/* parse ID3v2 header */
-		len = ((buf[6] & 0x7f) << 21) |
-			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
-		id3v2_parse(data, info, len, buf[3], buf[5]);
-	} else {
-		sceIoLseek(data->fd, 0, PSP_SEEK_SET);
 	}
 
 	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
