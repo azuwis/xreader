@@ -124,6 +124,11 @@ static int g_suspend_status;
 static bool use_brute_method = false;
 
 /**
+ * 检查CRC
+ */
+static bool check_crc = false;
+
+/**
  * 使用ME
  */
 static bool use_me = false;
@@ -515,71 +520,70 @@ static int madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-				if (stream.buffer == NULL || stream.error == MAD_ERROR_BUFLEN) {
-					size_t read_size, remaining = 0;
-					uint8_t *read_start;
-					int bufsize;
+			if (stream.buffer == NULL || stream.error == MAD_ERROR_BUFLEN) {
+				size_t read_size, remaining = 0;
+				uint8_t *read_start;
+				int bufsize;
 
-					if (stream.next_frame != NULL) {
-						remaining = stream.bufend - stream.next_frame;
-						memmove(g_input_buff, stream.next_frame, remaining);
-						read_start = g_input_buff + remaining;
-						read_size = BUFF_SIZE - remaining;
-					} else {
-						read_size = BUFF_SIZE;
-						read_start = g_input_buff;
-						remaining = 0;
-					}
-					bufsize = sceIoRead(data.fd, read_start, read_size);
-					if (bufsize <= 0) {
-						__end();
-						return -1;
-					}
-					if (bufsize < read_size) {
-						uint8_t *guard = read_start + read_size;
-
-						memset(guard, 0, MAD_BUFFER_GUARD);
-						read_size += MAD_BUFFER_GUARD;
-					}
-					mad_stream_buffer(&stream, g_input_buff,
-									  read_size + remaining);
-					stream.error = 0;
+				if (stream.next_frame != NULL) {
+					remaining = stream.bufend - stream.next_frame;
+					memmove(g_input_buff, stream.next_frame, remaining);
+					read_start = g_input_buff + remaining;
+					read_size = BUFF_SIZE - remaining;
+				} else {
+					read_size = BUFF_SIZE;
+					read_start = g_input_buff;
+					remaining = 0;
 				}
+				bufsize = sceIoRead(data.fd, read_start, read_size);
+				if (bufsize <= 0) {
+					__end();
+					return -1;
+				}
+				if (bufsize < read_size) {
+					uint8_t *guard = read_start + read_size;
 
-				ret = mad_frame_decode(&frame, &stream);
+					memset(guard, 0, MAD_BUFFER_GUARD);
+					read_size += MAD_BUFFER_GUARD;
+				}
+				mad_stream_buffer(&stream, g_input_buff, read_size + remaining);
+				stream.error = 0;
+			}
 
-				if (ret == -1) {
-					if (MAD_RECOVERABLE(stream.error)
-							|| stream.error == MAD_ERROR_BUFLEN) {
-						if (stream.error == MAD_ERROR_LOSTSYNC) {
-							long tagsize = id3_tag_query(stream.this_frame,
-									stream.bufend -
-									stream.this_frame);
+			ret = mad_frame_decode(&frame, &stream);
 
-							if (tagsize > 0) {
-								mad_stream_skip(&stream, tagsize);
-							}
+			if (ret == -1) {
+				if (MAD_RECOVERABLE(stream.error)
+					|| stream.error == MAD_ERROR_BUFLEN) {
+					if (stream.error == MAD_ERROR_LOSTSYNC) {
+						long tagsize = id3_tag_query(stream.this_frame,
+													 stream.bufend -
+													 stream.this_frame);
 
-							if (mad_header_decode(&frame.header, &stream) == -1) {
-								if (stream.error != MAD_ERROR_BUFLEN) {
-									if (!MAD_RECOVERABLE(stream.error)) {
-										__end();
-										return -1;
-									}
-								}
-							} else {
-								stream.error = MAD_ERROR_NONE;
-							}
+						if (tagsize > 0) {
+							mad_stream_skip(&stream, tagsize);
 						}
 
-						g_buff_frame_size = 0;
-						g_buff_frame_start = 0;
-						continue;
-					} else {
-						__end();
-						return -1;
+						if (mad_header_decode(&frame.header, &stream) == -1) {
+							if (stream.error != MAD_ERROR_BUFLEN) {
+								if (!MAD_RECOVERABLE(stream.error)) {
+									__end();
+									return -1;
+								}
+							}
+						} else {
+							stream.error = MAD_ERROR_NONE;
+						}
 					}
+
+					g_buff_frame_size = 0;
+					g_buff_frame_start = 0;
+					continue;
+				} else {
+					__end();
+					return -1;
 				}
+			}
 
 			unsigned i;
 			uint16_t *output = &g_buff[0];
@@ -878,6 +882,9 @@ static int madmp3_load(const char *spath, const char *lpath)
 		}
 	}
 
+	mp3info.check_crc = check_crc;
+	mp3info.have_crc = false;
+
 	if (use_brute_method) {
 		// read ID3 tag first
 		read_mp3_info(&mp3info, &data);
@@ -896,12 +903,12 @@ static int madmp3_load(const char *spath, const char *lpath)
 	if (config.apetagorder || mp3info.tag.title[0] == '\0')
 		readMP3ApeTag(spath);
 
-	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%sframes %d]",
+	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%sframes %d%s]",
 			   mp3info.channels, mp3info.sample_freq,
 			   mp3info.average_bitrate / 1000,
 			   (int) (mp3info.duration / 60), (int) mp3info.duration % 60,
 			   mp3info.frameoff != NULL ? ", frame table, " : ", ",
-			   mp3info.frames);
+			   mp3info.frames, mp3info.have_crc ? ", crc passed" : "");
 	ret = xMP3AudioInit();
 
 	if (ret < 0) {
@@ -927,10 +934,18 @@ static int madmp3_load(const char *spath, const char *lpath)
 	return 0;
 }
 
+static void init_default_option(void)
+{
+	use_me = false;
+	check_crc = false;
+}
+
 static int madmp3_set_opt(const char *unused, const char *values)
 {
 	int argc, i;
 	char **argv;
+
+	init_default_option();
 
 	dbg_printf(d, "%s: options are %s", __func__, values);
 
@@ -950,6 +965,13 @@ static int madmp3_set_opt(const char *unused, const char *values)
 				use_me = true;
 			} else {
 				use_me = false;
+			}
+		} else if (!strncasecmp
+				   (argv[i], "mp3_check_crc", sizeof("mp3_check_crc") - 1)) {
+			if (opt_is_on(argv[i])) {
+				check_crc = true;
+			} else {
+				check_crc = false;
 			}
 		} else if (!strncasecmp
 				   (argv[i], "show_encoder_msg",

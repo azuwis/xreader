@@ -45,6 +45,7 @@ typedef struct reader_data_t
 struct MP3Info
 {
 	bool is_mpeg1or2;
+	bool check_crc, have_crc;
 	uint32_t frames;
 	int spf;
 	int channels;

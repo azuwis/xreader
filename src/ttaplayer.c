@@ -338,6 +338,7 @@ static int tta_read_tag(const char *spath)
 
 	struct MP3Info info;
 
+	memset(&info, 0, sizeof(info));
 	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
