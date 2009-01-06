@@ -21,7 +21,16 @@
 #ifndef SSV_H
 #define SSV_H
 
-int build_args(const char *str, int *argc, char ***argv);
-int clean_args(int argc, char **argv);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	int build_args(const char *str, int *argc, char ***argv);
+	int clean_args(int argc, char **argv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

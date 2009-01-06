@@ -128,6 +128,8 @@ t_fs_filetype_entry ft_table[] = {
 	{"wave", fs_filetype_wave},
 	{"tta", fs_filetype_tta},
 	{"flac", fs_filetype_flac},
+	{"ape", fs_filetype_ape},
+	{"mac", fs_filetype_ape},
 #ifdef ENABLE_WMA
 	{"wma", fs_filetype_wma},
 #endif

@@ -660,12 +660,40 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			break;
 		case PSP_CTRL_LEFT:
 #ifdef ENABLE_MUSIC
-			musicdrv_fbackward(5);
+			{
+				struct music_info info;
+
+				memset(&info, 0, sizeof(info));
+				info.type = MD_GET_DECODERNAME;
+				if (musicdrv_get_info(&info) == 0) {
+					if (!strcmp(info.decoder_name, "ape")) {
+						musicdrv_fbackward(10);
+					} else {
+						musicdrv_fbackward(10);
+					}
+				} else {
+					musicdrv_fbackward(5);
+				}
+			}
 #endif
 			break;
 		case PSP_CTRL_RIGHT:
 #ifdef ENABLE_MUSIC
-			musicdrv_fforward(5);
+			{
+				struct music_info info;
+
+				memset(&info, 0, sizeof(info));
+				info.type = MD_GET_DECODERNAME;
+				if (musicdrv_get_info(&info) == 0) {
+					if (!strcmp(info.decoder_name, "ape")) {
+						musicdrv_fforward(10);
+					} else {
+						musicdrv_fforward(10);
+					}
+				} else {
+					musicdrv_fforward(5);
+				}
+			}
 #endif
 			break;
 		case PSP_CTRL_SELECT:

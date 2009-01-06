@@ -38,6 +38,7 @@
 #include "wavplayer.h"
 #include "flacplayer.h"
 #include "ttaplayer.h"
+#include "apeplayer.h"
 #include "madmp3drv.h"
 #include "dbg.h"
 #include "config.h"
@@ -417,6 +418,8 @@ static int music_setupdriver(const char *spath, const char *lpath)
 		dev = set_musicdrv("tta");
 	else if (!stricmp(ext, "flac"))
 		dev = set_musicdrv("flac");
+	else if (!stricmp(ext, "ape") || !stricmp(ext, "mac"))
+		dev = set_musicdrv("ape");
 
 	return dev ? 0 : -ENODEV;
 }
@@ -731,6 +734,7 @@ int music_init(void)
 	mpc_init();
 	wav_init();
 	tta_init();
+	ape_init();
 	madmp3_init();
 	flac_init();
 	set_musicdrv("musepack");
@@ -891,7 +895,7 @@ int music_next(void)
 
 bool is_file_music(const char *filename)
 {
-	static char musicext[][5] = { "MP3", "MPC", "WAV", "TTA", "FLAC" };
+	static char musicext[][5] = { "MP3", "MPC", "WAV", "TTA", "FLAC", "APE" };
 //      { "MP3", "OGG", "AA3", "OMA", "OMG", "FLAC", "WMA", "MPC" };
 	const char *ext = utils_fileext(filename);
 

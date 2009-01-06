@@ -20,6 +20,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include "TagHeader.h"
 #include "TagItem.h"
@@ -58,3 +62,7 @@ APETag *loadAPETag(const char *filename);
 int freeAPETag(APETag * tag);
 const char *APETag_strerror(int errno);
 char *APETag_SimpleGet(APETag * tag, const char *key);
+
+#ifdef __cplusplus
+}
+#endif

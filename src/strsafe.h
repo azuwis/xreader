@@ -18,20 +18,26 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#pragma once
+#ifndef STRSAFE_H
+#define STRSAFE_H
 
-size_t strncpy_s(char *strDest, size_t numberOfElements, const char *strSource,
-				 size_t count);
-size_t strcpy_s(char *strDestination, size_t numberOfElements,
-				const char *strSource);
-size_t strncat_s(char *strDest, size_t numberOfElements, const char *strSource,
-				 size_t count);
-size_t strcat_s(char *strDestination, size_t numberOfElements,
-				const char *strSource);
-int snprintf_s(char *buffer, size_t sizeOfBuffer, const char *format, ...);
-size_t mbcslen(const unsigned char *str);
-size_t mbcsncpy_s(unsigned char *dst, size_t nBytes, const unsigned char *src,
-				  size_t n);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	size_t strncpy_s(char *strDest, size_t numberOfElements,
+					 const char *strSource, size_t count);
+	size_t strcpy_s(char *strDestination, size_t numberOfElements,
+					const char *strSource);
+	size_t strncat_s(char *strDest, size_t numberOfElements,
+					 const char *strSource, size_t count);
+	size_t strcat_s(char *strDestination, size_t numberOfElements,
+					const char *strSource);
+	int snprintf_s(char *buffer, size_t sizeOfBuffer, const char *format, ...);
+	size_t mbcslen(const unsigned char *str);
+	size_t mbcsncpy_s(unsigned char *dst, size_t nBytes,
+					  const unsigned char *src, size_t n);
 
 #define NELEMS(n) (sizeof(n) / sizeof(n[0]))
 
@@ -54,4 +60,10 @@ size_t mbcsncpy_s(unsigned char *dst, size_t nBytes, const unsigned char *src,
 #define SPRINTF_S(str, fmt...) snprintf_s((str), \
 							  ((sizeof(str) / sizeof(str[0]))), fmt)
 #define MBCSCPY_S(dst, src, n) mbcsncpy_s((dst), (sizeof(dst) / sizeof(dst[0])), (src), (n))
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

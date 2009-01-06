@@ -18,7 +18,13 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#pragma once
+#ifndef MUSICDRV_H
+#define MUSICDRV_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #include "conf.h"
 
@@ -40,78 +46,84 @@
 
 #define INFO_STR_SIZE 80
 
-struct music_info
-{
-	int type;
-	t_conf_encode encode;
+	struct music_info
+	{
+		int type;
+		t_conf_encode encode;
 
-	char title[INFO_STR_SIZE];
-	char album[INFO_STR_SIZE];
-	char artist[INFO_STR_SIZE];
-	char comment[INFO_STR_SIZE];
-	char decoder_name[INFO_STR_SIZE];
-	char encode_msg[INFO_STR_SIZE];
+		char title[INFO_STR_SIZE];
+		char album[INFO_STR_SIZE];
+		char artist[INFO_STR_SIZE];
+		char comment[INFO_STR_SIZE];
+		char decoder_name[INFO_STR_SIZE];
+		char encode_msg[INFO_STR_SIZE];
 
-	float cur_time;
-	float duration;
-	int freq;
-	int channels;
-	int psp_freq[2];
-	int avg_kbps;
-	int ins_kbps;
+		float cur_time;
+		float duration;
+		int freq;
+		int channels;
+		int psp_freq[2];
+		int avg_kbps;
+		int ins_kbps;
 
-	int file_handle;
-	int channel_handle;
-};
+		int file_handle;
+		int channel_handle;
+	};
 
 /* get_status returns: */
-enum
-{
-	ST_LOADED = 0,
-	ST_PAUSED = 1,
-	ST_PLAYING = 2,
-	ST_STOPPED = 3,				/* In this status the alloctated resources were freed */
-	ST_FFOWARD = 4,
-	ST_FBACKWARD = 5,
-	ST_SUSPENDED = 6,
-	ST_UNKNOWN = 7
-};
+	enum
+	{
+		ST_LOADED = 0,
+		ST_PAUSED = 1,
+		ST_PLAYING = 2,
+		ST_STOPPED = 3,			/* In this status the alloctated resources were freed */
+		ST_FFOWARD = 4,
+		ST_FBACKWARD = 5,
+		ST_SUSPENDED = 6,
+		ST_UNKNOWN = 7
+	};
 
-struct music_ops
-{
-	const char *name;
-	int (*set_opt) (const char *key, const char *value);
-	int (*load) (const char *spath, const char *lpath);
-	int (*play) (void);
-	int (*pause) (void);
-	int (*fforward) (int);
-	int (*fbackward) (int);
-	int (*get_status) (void);
-	int (*get_info) (struct music_info *);
-	int (*suspend) (void);
-	int (*resume) (const char *spath, const char *lpath);
-	int (*end) (void);
+	struct music_ops
+	{
+		const char *name;
+		int (*set_opt) (const char *key, const char *value);
+		int (*load) (const char *spath, const char *lpath);
+		int (*play) (void);
+		int (*pause) (void);
+		int (*fforward) (int);
+		int (*fbackward) (int);
+		int (*get_status) (void);
+		int (*get_info) (struct music_info *);
+		int (*suspend) (void);
+		int (*resume) (const char *spath, const char *lpath);
+		int (*end) (void);
 
-	struct music_ops *next;
-};
+		struct music_ops *next;
+	};
 
-int register_musicdrv(struct music_ops *drv);
-int unregister_musicdrv(struct music_ops *drv);
-struct music_ops *get_musicdrv(const char *name);
-struct music_ops *set_musicdrv(const char *name);
-int musicdrv_maxindex(void);
-int musicdrv_set_opt(const char *key, const char *value);
-int musicdrv_load(const char *spath, const char *lpath);
-int musicdrv_play(void);
-int musicdrv_pause(void);
-int musicdrv_end(void);
-int musicdrv_fforward(int);
-int musicdrv_fbackward(int);
-int musicdrv_get_status(void);
-int musicdrv_suspend(void);
-int musicdrv_resume(const char *spath, const char *lpath);
-int musicdrv_get_info(struct music_info *info);
+	int register_musicdrv(struct music_ops *drv);
+	int unregister_musicdrv(struct music_ops *drv);
+	struct music_ops *get_musicdrv(const char *name);
+	struct music_ops *set_musicdrv(const char *name);
+	int musicdrv_maxindex(void);
+	int musicdrv_set_opt(const char *key, const char *value);
+	int musicdrv_load(const char *spath, const char *lpath);
+	int musicdrv_play(void);
+	int musicdrv_pause(void);
+	int musicdrv_end(void);
+	int musicdrv_fforward(int);
+	int musicdrv_fbackward(int);
+	int musicdrv_get_status(void);
+	int musicdrv_suspend(void);
+	int musicdrv_resume(const char *spath, const char *lpath);
+	int musicdrv_get_info(struct music_info *info);
 
-bool opt_is_on(const char *str);
+	bool opt_is_on(const char *str);
 
-extern bool show_encoder_msg;
+	extern bool show_encoder_msg;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

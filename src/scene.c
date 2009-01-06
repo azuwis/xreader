@@ -116,6 +116,8 @@ extern bool img_needrf, img_needrp, img_needrc;
 static int config_num = 0;
 win_menu_predraw_data g_predraw;
 
+enum SceneWhere where;
+
 extern int get_center_pos(int left, int right, const char *str)
 {
 	return left + (right - left) / 2 - strlen(str) * DISP_FONTSIZE / 2 / 2;
@@ -4070,6 +4072,8 @@ int scene_single_file_ops_draw(p_win_menuitem item, dword selidx)
 		case fs_filetype_mpc:
 		case fs_filetype_wave:
 		case fs_filetype_tta:
+		case fs_filetype_ape:
+		case fs_filetype_flac:
 		case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 		case fs_filetype_wma:
@@ -4310,6 +4314,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 					case fs_filetype_mpc:
 					case fs_filetype_wave:
 					case fs_filetype_tta:
+					case fs_filetype_ape:
+					case fs_filetype_flac:
 					case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 					case fs_filetype_wma:
@@ -4406,6 +4412,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							case fs_filetype_mpc:
 							case fs_filetype_wave:
 							case fs_filetype_tta:
+							case fs_filetype_ape:
+							case fs_filetype_flac:
 							case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 							case fs_filetype_wma:
@@ -4495,6 +4503,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							case fs_filetype_mpc:
 							case fs_filetype_wave:
 							case fs_filetype_tta:
+							case fs_filetype_ape:
+							case fs_filetype_flac:
 							case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 							case fs_filetype_wma:
@@ -4735,6 +4745,8 @@ static t_win_menu_op scene_fileops(p_win_menuitem item, dword * index)
 				case fs_filetype_mpc:
 				case fs_filetype_wave:
 				case fs_filetype_tta:
+				case fs_filetype_ape:
+				case fs_filetype_flac:
 				case fs_filetype_aa3:
 #ifdef ENABLE_WMA
 				case fs_filetype_wma:
@@ -5603,7 +5615,7 @@ void scene_filelist(void)
 			case fs_filetype_mpc:
 			case fs_filetype_wave:
 			case fs_filetype_tta:
-			case fs_filetype_aa3:
+			case fs_filetype_ape:
 			case fs_filetype_flac:
 #ifdef ENABLE_WMA
 			case fs_filetype_wma:

@@ -21,32 +21,43 @@
 #ifndef _SCENE_H_
 #define _SCENE_H_
 
-#include "common/datatype.h"
-
-extern void scene_init(void);
-extern void scene_exit(void);
-extern void scene_power_save(bool save);
-extern const char *scene_appdir(void);
-
-#ifdef ENABLE_MUSIC
-extern void scene_power_playing_music(bool is_playing);
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
-extern dword get_bgcolor_by_time(void);
+#include "common/datatype.h"
 
-enum
-{
-	scene_in_dir,
-	scene_in_zip,
-	scene_in_umd,
-	scene_in_chm,
-	scene_in_rar
-} where;
+	extern void scene_init(void);
+	extern void scene_exit(void);
+	extern void scene_power_save(bool save);
+	extern const char *scene_appdir(void);
 
-typedef struct
-{
-	int size;
-	bool zipped;
-} t_fonts;
+#ifdef ENABLE_MUSIC
+	extern void scene_power_playing_music(bool is_playing);
+#endif
+
+	extern dword get_bgcolor_by_time(void);
+
+	enum SceneWhere
+	{
+		scene_in_dir,
+		scene_in_zip,
+		scene_in_umd,
+		scene_in_chm,
+		scene_in_rar
+	};
+
+	extern enum SceneWhere where;
+
+	typedef struct
+	{
+		int size;
+		bool zipped;
+	} t_fonts;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

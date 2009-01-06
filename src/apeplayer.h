@@ -18,63 +18,17 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef _DATATYPE_H_
-#define _DATATYPE_H_
+#ifndef APEPLAYER_H
+#define APEPLAYER_H
 
-#ifndef byte
-typedef unsigned char byte;
-#endif
+#include <stdio.h>
+#include <stdlib.h>
 
-#ifndef word
-typedef unsigned short word;
-#endif
-
-#ifndef dword
-typedef unsigned long dword;
-#endif
-
-#ifndef bool
-#ifndef __cplusplus
-typedef int bool;
-#endif
-#endif
-
-#ifndef true
-#ifndef __cplusplus
-#define true 1
-#endif
-#endif
-
-#ifndef false
-#ifndef __cplusplus
-#define false 0
-#endif
-#endif
-
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
-
-#ifndef null
-#define null ((void *)0)
-#endif
-
-#ifndef min
-#ifndef __cplusplus
-#define min(a,b) (((a)<(b))?(a):(b))
-#endif
-#endif
-
-#ifndef max
-#ifndef __cplusplus
-#define max(a,b) (((a)>(b))?(a):(b))
-#endif
-#endif
-
-#ifndef INVALID
-#define INVALID ((dword)-1)
-#endif
-
-#define PATH_MAX 1024
+/**
+ * Flac驱动注册
+ * 
+ * @return 成功时返回0
+ */
+int ape_init(void);
 
 #endif

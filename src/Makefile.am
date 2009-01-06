@@ -1,4 +1,5 @@
 CC = @PSP_CC@
+CXX = @PSP_CXX@
 CCAS = $(CC)
 AR = @PSP_AR@
 RANLIB = @PSP_RANLIB@
@@ -9,6 +10,10 @@ AM_CPPFLAGS = \
 -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_srcdir)/xrPrx -I$(top_srcdir)/xr_rdriver \
 -I$(PSPSDK)/include
 
+if MUSIC
+AM_CPPFLAGS += -I$(PSPSDK)/../include/mac
+endif
+
 if OPTIMIZE
 AM_CFLAGS = -O3 -G0 -fomit-frame-pointer -ffast-math -frename-registers -Wall
 AM_CFLAGS += \
@@ -17,6 +22,7 @@ AM_CFLAGS += \
 else
 AM_CFLAGS = -O0 -G0 -g -Wall
 endif
+AM_CXXFLAGS = $(AM_CFLAGS)
 CCASFLAGS = $(CFLAGS) $(INCLUDES)
 
 noinst_PROGRAMS = xReader.elf
@@ -50,7 +56,7 @@ tta/filter.h tta/ttadec.h tta/ttadec.c tta/ttalib.h
 
 if MUSIC
 xReader_elf_SOURCES += \
-musicdrv.c musicdrv.h musicmgr.c musicmgr.h  \
+musicdrv.c musicdrv.h musicmgr.c musicmgr.h  apeplayer.cpp apeplayer.h \
 lyric.c lyric.h clock.c mp3info.c flacplayer.c flacplayer.h \
 madmp3drv.c madmp3drv.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h \
 xmp3audiolib.c xmp3audiolib.h
@@ -70,7 +76,7 @@ PSP_LARGE_MEMORY = 1
 
 libdir = $(top_srcdir)/lib
 if MUSIC
-LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a
+LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a -lmac
 endif
 LIBS += \
 -L$(libdir) $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a \
