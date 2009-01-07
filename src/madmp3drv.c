@@ -43,6 +43,7 @@
 #include "scene.h"
 #include "mp3info.h"
 #include "apetaglib/APETag.h"
+#include "genericplayer.h"
 
 #define MP3_FRAME_SIZE 2889
 
@@ -64,97 +65,66 @@ static struct mad_frame frame;
 static struct mad_synth synth;
 
 /**
- * å½“å‰é©±åŠ¨æ’­æ”¾çŠ¶æ€
- */
-static int g_status;
-
-/**
- * MP3éŸ³ä¹æ’­æ”¾ç¼“å†²
+ * MP3ÒôÀÖ²¥·Å»º³å
  */
 static uint16_t g_buff[BUFF_SIZE / 2];
 
 /**
- * MP3éŸ³ä¹è§£ç ç¼“å†²
+ * MP3ÒôÀÖ½âÂë»º³å
  */
 static uint8_t g_input_buff[BUFF_SIZE + MAD_BUFFER_GUARD];
 
 /**
- * MP3éŸ³ä¹æ’­æ”¾ç¼“å†²å¤§å°ï¼Œä»¥å¸§æ•°è®¡
+ * MP3ÒôÀÖ²¥·Å»º³å´óĞ¡£¬ÒÔÖ¡Êı¼Æ
  */
 static unsigned g_buff_frame_size;
 
 /**
- * MP3éŸ³ä¹æ’­æ”¾ç¼“å†²å½“å‰ä½ç½®ï¼Œä»¥å¸§æ•°è®¡
+ * MP3ÒôÀÖ²¥·Å»º³åµ±Ç°Î»ÖÃ£¬ÒÔÖ¡Êı¼Æ
  */
 static int g_buff_frame_start;
 
 /**
- * å½“å‰é©±åŠ¨æ’­æ”¾çŠ¶æ€å†™é”
- */
-static SceUID g_status_sema;;
-
-/**
- * MP3æ–‡ä»¶ä¿¡æ¯
+ * MP3ÎÄ¼şĞÅÏ¢
  */
 static struct MP3Info mp3info;
 
 /**
- * å½“å‰æ’­æ”¾æ—¶é—´ï¼Œä»¥ç§’æ•°è®¡
+ * µ±Ç°²¥·ÅÊ±¼ä£¬ÒÔÃëÊı¼Æ
  */
 static double g_play_time;
 
 /**
- * MP3éŸ³ä¹å¿«è¿›ã€é€€ç§’æ•°
- */
-static int g_seek_seconds;
-
-/**
- * MP3éŸ³ä¹ä¼‘çœ æ—¶æ’­æ”¾æ—¶é—´
+ * MP3ÒôÀÖĞİÃßÊ±²¥·ÅÊ±¼ä
  */
 static double g_suspend_playing_time;
 
 /**
- * ä¼‘çœ å‰æ’­æ”¾çŠ¶æ€
+ * ĞİÃßÇ°²¥·Å×´Ì¬
  */
 static int g_suspend_status;
 
 /*
- * ä½¿ç”¨æš´åŠ›
+ * Ê¹ÓÃ±©Á¦
  */
 static bool use_brute_method = false;
 
 /**
- * æ£€æŸ¥CRC
+ * ¼ì²éCRC
  */
 static bool check_crc = false;
 
 /**
- * ä½¿ç”¨ME
+ * Ê¹ÓÃME
  */
 static bool use_me = false;
 
 /**
- * Media Engine bufferç¼“å­˜
+ * Media Engine buffer»º´æ
  */
 unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
 
 bool mp3_getEDRAM = false;
-
-/**
- * åŠ é”
- */
-static inline int madmp3_lock(void)
-{
-	return sceKernelWaitSemaCB(g_status_sema, 1, NULL);
-}
-
-/**
- * è§£é”
- */
-static inline int madmp3_unlock(void)
-{
-	return sceKernelSignalSema(g_status_sema, 1);
-}
 
 static signed short MadFixedToSshort(mad_fixed_t Fixed)
 {
@@ -166,10 +136,10 @@ static signed short MadFixedToSshort(mad_fixed_t Fixed)
 }
 
 /**
- * æ¸…ç©ºå£°éŸ³ç¼“å†²åŒº
+ * Çå¿ÕÉùÒô»º³åÇø
  *
- * @param buf å£°éŸ³ç¼“å†²åŒºæŒ‡é’ˆ
- * @param frames å¸§æ•°å¤§å°
+ * @param buf ÉùÒô»º³åÇøÖ¸Õë
+ * @param frames Ö¡Êı´óĞ¡
  */
 static void clear_snd_buf(void *buf, int frames)
 {
@@ -177,14 +147,14 @@ static void clear_snd_buf(void *buf, int frames)
 }
 
 /**
- * å¤åˆ¶æ•°æ®åˆ°å£°éŸ³ç¼“å†²åŒº
+ * ¸´ÖÆÊı¾İµ½ÉùÒô»º³åÇø
  *
- * @note å£°éŸ³ç¼“å­˜åŒºçš„æ ¼å¼ä¸ºåŒå£°é“ï¼Œ16ä½ä½å­—åº
+ * @note ÉùÒô»º´æÇøµÄ¸ñÊ½ÎªË«ÉùµÀ£¬16Î»µÍ×ÖĞò
  *
- * @param buf å£°éŸ³ç¼“å†²åŒºæŒ‡é’ˆ
- * @param srcbuf è§£ç æ•°æ®ç¼“å†²åŒºæŒ‡é’ˆ
- * @param frames å¤åˆ¶å¸§æ•°
- * @param channels å£°é“æ•°
+ * @param buf ÉùÒô»º³åÇøÖ¸Õë
+ * @param srcbuf ½âÂëÊı¾İ»º³åÇøÖ¸Õë
+ * @param frames ¸´ÖÆÖ¡Êı
+ * @param channels ÉùµÀÊı
  */
 static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 						   int channels)
@@ -351,11 +321,11 @@ signed long id3_tag_query(id3_byte_t const *data, id3_length_t length)
 }
 
 /**
- * æœç´¢ä¸‹ä¸€ä¸ªæœ‰æ•ˆMP3 frame
+ * ËÑË÷ÏÂÒ»¸öÓĞĞ§MP3 frame
  *
  * @return
- * - <0 å¤±è´¥
- * - 0 æˆåŠŸ
+ * - <0 Ê§°Ü
+ * - 0 ³É¹¦
  */
 static int seek_valid_frame(void)
 {
@@ -468,14 +438,14 @@ static int madmp3_seek_seconds(double npt)
 }
 
 /**
- * MP3éŸ³ä¹æ’­æ”¾å›è°ƒå‡½æ•°ï¼Œ
- * è´Ÿè´£å°†è§£ç æ•°æ®å¡«å……å£°éŸ³ç¼“å­˜åŒº
+ * MP3ÒôÀÖ²¥·Å»Øµ÷º¯Êı£¬
+ * ¸ºÔğ½«½âÂëÊı¾İÌî³äÉùÒô»º´æÇø
  *
- * @note å£°éŸ³ç¼“å­˜åŒºçš„æ ¼å¼ä¸ºåŒå£°é“ï¼Œ16ä½ä½å­—åº
+ * @note ÉùÒô»º´æÇøµÄ¸ñÊ½ÎªË«ÉùµÀ£¬16Î»µÍ×ÖĞò
  *
- * @param buf å£°éŸ³ç¼“å†²åŒºæŒ‡é’ˆ
- * @param reqn ç¼“å†²åŒºå¸§å¤§å°
- * @param pdata ç”¨æˆ·æ•°æ®ï¼Œæ— ç”¨
+ * @param buf ÉùÒô»º³åÇøÖ¸Õë
+ * @param reqn »º³åÇøÖ¡´óĞ¡
+ * @param pdata ÓÃ»§Êı¾İ£¬ÎŞÓÃ
  */
 static int madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 {
@@ -489,15 +459,15 @@ static int madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 	if (g_status != ST_PLAYING) {
 		if (g_status == ST_FFOWARD) {
-			madmp3_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
-			madmp3_unlock();
+			generic_unlock();
 			scene_power_save(true);
 			madmp3_seek_seconds(g_play_time + g_seek_seconds);
 		} else if (g_status == ST_FBACKWARD) {
-			madmp3_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
-			madmp3_unlock();
+			generic_unlock();
 			scene_power_save(true);
 			madmp3_seek_seconds(g_play_time - g_seek_seconds);
 		}
@@ -641,14 +611,14 @@ static dword this_frame, buf_end;
 static bool need_data;
 
 /**
- * MP3éŸ³ä¹æ’­æ”¾å›è°ƒå‡½æ•°ï¼ŒMEç‰ˆæœ¬
- * è´Ÿè´£å°†è§£ç æ•°æ®å¡«å……å£°éŸ³ç¼“å­˜åŒº
+ * MP3ÒôÀÖ²¥·Å»Øµ÷º¯Êı£¬ME°æ±¾
+ * ¸ºÔğ½«½âÂëÊı¾İÌî³äÉùÒô»º´æÇø
  *
- * @note å£°éŸ³ç¼“å­˜åŒºçš„æ ¼å¼ä¸ºåŒå£°é“ï¼Œ16ä½ä½å­—åº
+ * @note ÉùÒô»º´æÇøµÄ¸ñÊ½ÎªË«ÉùµÀ£¬16Î»µÍ×ÖĞò
  *
- * @param buf å£°éŸ³ç¼“å†²åŒºæŒ‡é’ˆ
- * @param reqn ç¼“å†²åŒºå¸§å¤§å°
- * @param pdata ç”¨æˆ·æ•°æ®ï¼Œæ— ç”¨
+ * @param buf ÉùÒô»º³åÇøÖ¸Õë
+ * @param reqn »º³åÇøÖ¡´óĞ¡
+ * @param pdata ÓÃ»§Êı¾İ£¬ÎŞÓÃ
  */
 static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 {
@@ -661,15 +631,15 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 	if (g_status != ST_PLAYING) {
 		if (g_status == ST_FFOWARD) {
-			madmp3_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
-			madmp3_unlock();
+			generic_unlock();
 			scene_power_save(true);
 			madmp3_seek_seconds(g_play_time + g_seek_seconds);
 		} else if (g_status == ST_FBACKWARD) {
-			madmp3_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
-			madmp3_unlock();
+			generic_unlock();
 			scene_power_save(true);
 			madmp3_seek_seconds(g_play_time - g_seek_seconds);
 		}
@@ -727,17 +697,17 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 }
 
 /**
- * åˆå§‹åŒ–é©±åŠ¨å˜é‡èµ„æºç­‰
+ * ³õÊ¼»¯Çı¶¯±äÁ¿×ÊÔ´µÈ
  *
- * @return æˆåŠŸæ—¶è¿”å›0
+ * @return ³É¹¦Ê±·µ»Ø0
  */
 static int __init(void)
 {
 	g_status_sema = sceKernelCreateSema("wave Sema", 0, 1, 1, NULL);
 
-	madmp3_lock();
+	generic_lock();
 	g_status = ST_UNKNOWN;
-	madmp3_unlock();
+	generic_unlock();
 
 	memset(&g_inst_br, 0, sizeof(g_inst_br));
 	memset(g_buff, 0, sizeof(g_buff));
@@ -932,9 +902,9 @@ static int madmp3_load(const char *spath, const char *lpath)
 	else
 		xMP3AudioSetChannelCallback(0, madmp3_audiocallback, NULL);
 
-	madmp3_lock();
+	generic_lock();
 	g_status = ST_LOADED;
-	madmp3_unlock();
+	generic_unlock();
 
 	return 0;
 }
@@ -1062,34 +1032,12 @@ static int madmp3_get_info(struct music_info *info)
 	return 0;
 }
 
-static int madmp3_play(void)
-{
-	dbg_printf(d, "%s", __func__);
-
-	scene_power_playing_music(true);
-	g_status = ST_PLAYING;
-
-	/* if return error value won't play */
-
-	return 0;
-}
-
-static int madmp3_pause(void)
-{
-	dbg_printf(d, "%s", __func__);
-
-	scene_power_playing_music(false);
-	g_status = ST_PAUSED;
-
-	return 0;
-}
-
 /**
- * åœæ­¢MP3éŸ³ä¹æ–‡ä»¶çš„æ’­æ”¾ï¼Œé”€æ¯æ‰€å æœ‰çš„çº¿ç¨‹ã€èµ„æºç­‰
+ * Í£Ö¹MP3ÒôÀÖÎÄ¼şµÄ²¥·Å£¬Ïú»ÙËùÕ¼ÓĞµÄÏß³Ì¡¢×ÊÔ´µÈ
  *
- * @note ä¸å¯ä»¥åœ¨æ’­æ”¾çº¿ç¨‹ä¸­è°ƒç”¨ï¼Œå¿…é¡»èƒ½å¤Ÿå¤šæ¬¡é‡å¤è°ƒç”¨è€Œä¸æ­»æœº
+ * @note ²»¿ÉÒÔÔÚ²¥·ÅÏß³ÌÖĞµ÷ÓÃ£¬±ØĞëÄÜ¹»¶à´ÎÖØ¸´µ÷ÓÃ¶ø²»ËÀ»ú
  *
- * @return æˆåŠŸæ—¶è¿”å›0
+ * @return ³É¹¦Ê±·µ»Ø0
  */
 static int madmp3_end(void)
 {
@@ -1122,53 +1070,9 @@ static int madmp3_end(void)
 }
 
 /**
- * Returning <0 value will result in freeze
- * Return ST_UNKNOWN or ST_STOPPED when load failed
- * Return ST_STOPPED when decode error, or freeze
- */
-static int madmp3_get_status(void)
-{
-	return g_status;
-}
-
-static int madmp3_fforward(int sec)
-{
-	if (mp3info.is_mpeg1or2)
-		return -1;
-
-	dbg_printf(d, "%s: sec: %d", __func__, sec);
-
-	madmp3_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FFOWARD;
-	madmp3_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-static int madmp3_fbackward(int sec)
-{
-	if (mp3info.is_mpeg1or2)
-		return -1;
-
-	dbg_printf(d, "%s: sec: %d", __func__, sec);
-
-	madmp3_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FBACKWARD;
-	madmp3_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
- * PSPå‡†å¤‡ä¼‘çœ æ—¶MP3çš„æ“ä½œ
+ * PSP×¼±¸ĞİÃßÊ±MP3µÄ²Ù×÷
  *
- * @return æˆåŠŸæ—¶è¿”å›0
+ * @return ³É¹¦Ê±·µ»Ø0
  */
 static int madmp3_suspend(void)
 {
@@ -1182,12 +1086,12 @@ static int madmp3_suspend(void)
 }
 
 /**
- * PSPå‡†å¤‡ä»ä¼‘çœ æ—¶æ¢å¤çš„MP3çš„æ“ä½œ
+ * PSP×¼±¸´ÓĞİÃßÊ±»Ö¸´µÄMP3µÄ²Ù×÷
  *
- * @param spath å½“å‰æ’­æ”¾éŸ³ä¹åï¼Œ8.3è·¯å¾„å½¢å¼
- * @param lpath å½“å‰æ’­æ”¾éŸ³ä¹åï¼Œé•¿æ–‡ä»¶åå½¢å¼
+ * @param spath µ±Ç°²¥·ÅÒôÀÖÃû£¬8.3Â·¾¶ĞÎÊ½
+ * @param lpath µ±Ç°²¥·ÅÒôÀÖÃû£¬³¤ÎÄ¼şÃûĞÎÊ½
  *
- * @return æˆåŠŸæ—¶è¿”å›0
+ * @return ³É¹¦Ê±·µ»Ø0
  */
 static int madmp3_resume(const char *spath, const char *lpath)
 {
@@ -1203,9 +1107,9 @@ static int madmp3_resume(const char *spath, const char *lpath)
 
 	madmp3_seek_seconds(g_suspend_playing_time);
 	g_suspend_playing_time = 0;
-	madmp3_lock();
+	generic_lock();
 	g_status = g_suspend_status;
-	madmp3_unlock();
+	generic_unlock();
 	g_suspend_status = ST_LOADED;
 
 	return 0;
@@ -1215,12 +1119,12 @@ static struct music_ops madmp3_ops = {
 	.name = "madmp3",
 	.set_opt = madmp3_set_opt,
 	.load = madmp3_load,
-	.play = madmp3_play,
-	.pause = madmp3_pause,
+	.play = NULL,
+	.pause = NULL,
 	.end = madmp3_end,
-	.get_status = madmp3_get_status,
-	.fforward = madmp3_fforward,
-	.fbackward = madmp3_fbackward,
+	.get_status = NULL,
+	.fforward = NULL,
+	.fbackward = NULL,
 	.suspend = madmp3_suspend,
 	.resume = madmp3_resume,
 	.get_info = madmp3_get_info,
@@ -1233,20 +1137,20 @@ int madmp3_init()
 }
 
 /**
- * åœæ­¢MP3éŸ³ä¹æ–‡ä»¶çš„æ’­æ”¾ï¼Œé”€æ¯èµ„æºç­‰
+ * Í£Ö¹MP3ÒôÀÖÎÄ¼şµÄ²¥·Å£¬Ïú»Ù×ÊÔ´µÈ
  *
- * @note å¯ä»¥åœ¨æ’­æ”¾çº¿ç¨‹ä¸­è°ƒç”¨
+ * @note ¿ÉÒÔÔÚ²¥·ÅÏß³ÌÖĞµ÷ÓÃ
  *
- * @return æˆåŠŸæ—¶è¿”å›0
+ * @return ³É¹¦Ê±·µ»Ø0
  */
 static int __end(void)
 {
 	xMP3AudioEndPre();
 
 	g_play_time = 0.;
-	madmp3_lock();
+	generic_lock();
 	g_status = ST_STOPPED;
-	madmp3_unlock();
+	generic_unlock();
 
 	return 0;
 }

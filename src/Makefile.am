@@ -59,7 +59,7 @@ xReader_elf_SOURCES += \
 musicdrv.c musicdrv.h musicmgr.c musicmgr.h  apeplayer.cpp apeplayer.h \
 lyric.c lyric.h clock.c mp3info.c flacplayer.c flacplayer.h \
 madmp3drv.c madmp3drv.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h \
-xmp3audiolib.c xmp3audiolib.h
+xmp3audiolib.c xmp3audiolib.h genericplayer.c genericplayer.h
 endif
 
 if NLS

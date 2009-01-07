@@ -35,13 +35,9 @@
 #include "simple_gettext.h"
 #include "dbg.h"
 #include "mp3info.h"
+#include "genericplayer.h"
 
 static int __end(void);
-
-/**
- * 当前驱动播放状态
- */
-static int g_status;
 
 /**
  * 休眠前播放状态
@@ -66,11 +62,6 @@ static unsigned g_buff_frame_size;
 static int g_buff_frame_start;
 
 /**
- * 当前驱动播放状态写锁
- */
-static SceUID g_status_sema = -1;
-
-/**
  * TTA音乐文件长度，以秒数
  */
 static double g_duration;
@@ -79,11 +70,6 @@ static double g_duration;
  * 当前播放时间，以秒数计
  */
 static double g_play_time;
-
-/**
- * TTA音乐快进、退秒数
- */
-static int g_seek_seconds;
 
 /**
  * TTA音乐信息
@@ -121,61 +107,12 @@ typedef struct _tta_taginfo_t
 static tta_taginfo_t g_taginfo;
 
 /**
- * 加锁
- */
-static inline int tta_lock(void)
-{
-	return sceKernelWaitSemaCB(g_status_sema, 1, NULL);
-}
-
-/**
- * 解锁
- */
-static inline int tta_unlock(void)
-{
-	return sceKernelSignalSema(g_status_sema, 1);
-}
-
-/**
- * 设置TTA音乐播放选项
- *
- * @param key
- * @param value
- *
- * @return 成功时返回0
- */
-static int tta_set_opt(const char *key, const char *values)
-{
-	int argc, i;
-	char **argv;
-
-	dbg_printf(d, "%s: options are %s", __func__, values);
-
-	build_args(values, &argc, &argv);
-
-	for (i = 0; i < argc; ++i) {
-		if (!strncasecmp
-			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
-			if (opt_is_on(argv[i])) {
-				show_encoder_msg = true;
-			} else {
-				show_encoder_msg = false;
-			}
-		}
-	}
-
-	clean_args(argc, argv);
-
-	return 0;
-}
-
-/**
  * 清空声音缓冲区
  *
  * @param buf 声音缓冲区指针
  * @param frames 帧数大小
  */
-static void clear_snd_buf(void *buf, int frames)
+static inline void clear_snd_buf(void *buf, int frames)
 {
 	memset(buf, 0, frames * 2 * 2);
 }
@@ -248,20 +185,20 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				__end();
 				return -1;
 			}
-			tta_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			tta_unlock();
+			generic_unlock();
 			tta_seek_seconds(g_play_time);
 		} else if (g_status == ST_FBACKWARD) {
 			g_play_time -= g_seek_seconds;
 			if (g_play_time < 0.) {
 				g_play_time = 0.;
 			}
-			tta_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			tta_unlock();
+			generic_unlock();
 			tta_seek_seconds(g_play_time);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
@@ -317,9 +254,9 @@ static int __init(void)
 {
 	g_status_sema = sceKernelCreateSema("tta Sema", 0, 1, 1, NULL);
 
-	tta_lock();
+	generic_lock();
 	g_status = ST_UNKNOWN;
-	tta_unlock();
+	generic_unlock();
 
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
@@ -414,39 +351,9 @@ static int tta_load(const char *spath, const char *lpath)
 
 	xMP3AudioSetChannelCallback(0, tta_audiocallback, NULL);
 
-	tta_lock();
+	generic_lock();
 	g_status = ST_LOADED;
-	tta_unlock();
-
-	return 0;
-}
-
-/**
- * 开始TTA音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int tta_play(void)
-{
-	tta_lock();
-	scene_power_playing_music(true);
-	g_status = ST_PLAYING;
-	tta_unlock();
-
-	return 0;
-}
-
-/**
- * 暂停TTA音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int tta_pause(void)
-{
-	tta_lock();
-	scene_power_playing_music(false);
-	g_status = ST_PAUSED;
-	tta_unlock();
+	generic_unlock();
 
 	return 0;
 }
@@ -462,9 +369,9 @@ static int __end(void)
 {
 	xMP3AudioEndPre();
 
-	tta_lock();
+	generic_lock();
 	g_status = ST_STOPPED;
-	tta_unlock();
+	generic_unlock();
 
 	if (g_status_sema >= 0) {
 		sceKernelDeleteSema(g_status_sema);
@@ -498,54 +405,6 @@ static int tta_end(void)
 	close_tta_file(&g_info);
 
 	g_status = ST_STOPPED;
-
-	return 0;
-}
-
-/**
- * 得到当前驱动的播放状态
- *
- * @return 状态
- */
-static int tta_get_status(void)
-{
-	return g_status;
-}
-
-/**
- * 快进TTA音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int tta_fforward(int sec)
-{
-	tta_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FFOWARD;
-	tta_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
- * 快退TTA音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int tta_fbackward(int sec)
-{
-	tta_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FBACKWARD;
-	tta_unlock();
-
-	g_seek_seconds = sec;
 
 	return 0;
 }
@@ -586,9 +445,9 @@ static int tta_resume(const char *spath, const char *lpath)
 	tta_seek_seconds(g_play_time);
 	g_suspend_playing_time = 0;
 
-	tta_lock();
+	generic_lock();
 	g_status = g_suspend_status;
-	tta_unlock();
+	generic_unlock();
 	g_suspend_status = ST_LOADED;
 
 	return 0;
@@ -670,14 +529,14 @@ static int tta_get_info(struct music_info *pinfo)
 
 static struct music_ops tta_ops = {
 	.name = "tta",
-	.set_opt = tta_set_opt,
+	.set_opt = NULL,
 	.load = tta_load,
-	.play = tta_play,
-	.pause = tta_pause,
+	.play = NULL,
+	.pause = NULL,
 	.end = tta_end,
-	.get_status = tta_get_status,
-	.fforward = tta_fforward,
-	.fbackward = tta_fbackward,
+	.get_status = NULL,
+	.fforward = NULL,
+	.fbackward = NULL,
 	.suspend = tta_suspend,
 	.resume = tta_resume,
 	.get_info = tta_get_info,

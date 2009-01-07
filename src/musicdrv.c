@@ -23,7 +23,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <pspkernel.h>
 #include "musicdrv.h"
+#include "genericplayer.h"
 
 static struct music_ops *music_drivers = NULL;
 static struct music_ops *cur_musicdrv = NULL;
@@ -32,7 +34,7 @@ static bool need_stop = false;
 bool show_encoder_msg = false;
 
 /**
- * MP3鍔ㄦ�佹瘮鐗圭巼
+ * MP3动态比特率
  */
 struct instant_bitrate g_inst_br;
 
@@ -107,12 +109,10 @@ int musicdrv_set_opt(const char *key, const char *value)
 {
 	if (key == NULL || value == NULL)
 		return -EINVAL;
-	if (cur_musicdrv == NULL)
-		return -EBUSY;
-	if (cur_musicdrv->set_opt)
-		return cur_musicdrv->set_opt(key, value);
-	else
-		return -ENOSYS;
+	if (cur_musicdrv == NULL || cur_musicdrv->set_opt == NULL)
+		return generic_set_opt(key, value);
+
+	return cur_musicdrv->set_opt(key, value);
 }
 
 int musicdrv_load(const char *spath, const char *lpath)
@@ -133,65 +133,52 @@ int musicdrv_load(const char *spath, const char *lpath)
 
 int musicdrv_play(void)
 {
-	if (cur_musicdrv == NULL)
-		return -EBUSY;
-	if (cur_musicdrv->play)
-		return cur_musicdrv->play();
-	else
-		return -ENOSYS;
+	if (cur_musicdrv == NULL || cur_musicdrv->play == NULL)
+		return generic_play();
+
+	return cur_musicdrv->play();
 }
 
 int musicdrv_pause(void)
 {
-	if (cur_musicdrv == NULL)
-		return -EBUSY;
-	if (cur_musicdrv->pause)
-		return cur_musicdrv->pause();
-	else
-		return -ENOSYS;
+	if (cur_musicdrv == NULL || cur_musicdrv->pause == NULL)
+		return generic_pause();
+
+	return cur_musicdrv->pause();
 }
 
 int musicdrv_end(void)
 {
 	if (!need_stop)
 		return 0;
+	if (cur_musicdrv == NULL || cur_musicdrv->end == NULL)
+		return 0;
 
-	if (cur_musicdrv == NULL)
-		return -EBUSY;
-	if (cur_musicdrv->end)
-		return cur_musicdrv->end();
-	else
-		return -ENOSYS;
+	return cur_musicdrv->end();
 }
 
 int musicdrv_fforward(int second)
 {
-	if (cur_musicdrv == NULL)
-		return -EBUSY;
-	if (cur_musicdrv->fforward)
-		return cur_musicdrv->fforward(second);
-	else
-		return -ENOSYS;
+	if (cur_musicdrv == NULL || cur_musicdrv->fforward == NULL)
+		return generic_fforward(second);
+
+	return cur_musicdrv->fforward(second);
 }
 
 int musicdrv_fbackward(int second)
 {
-	if (cur_musicdrv == NULL)
-		return -EBUSY;
-	if (cur_musicdrv->fbackward)
-		return cur_musicdrv->fbackward(second);
-	else
-		return -ENOSYS;
+	if (cur_musicdrv == NULL || cur_musicdrv->fbackward == NULL)
+		return generic_fbackward(second);
+
+	return cur_musicdrv->fbackward(second);
 }
 
 int musicdrv_get_status(void)
 {
-	if (cur_musicdrv == NULL)
-		return -EBUSY;
-	if (cur_musicdrv->get_status)
-		return cur_musicdrv->get_status();
-	else
-		return -ENOSYS;
+	if (cur_musicdrv == NULL || cur_musicdrv->get_status == NULL)
+		return generic_get_status();
+
+	return cur_musicdrv->get_status();
 }
 
 int musicdrv_suspend(void)

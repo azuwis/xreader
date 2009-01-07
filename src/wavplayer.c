@@ -32,6 +32,7 @@
 #include "apetaglib/APETag.h"
 #include "dbg.h"
 #include "ssv.h"
+#include "genericplayer.h"
 
 typedef struct reader_data_t
 {
@@ -42,11 +43,6 @@ typedef struct reader_data_t
 static int __end(void);
 
 static reader_data data;
-
-/**
- * 当前驱动播放状态
- */
-static int g_status;
 
 /**
  * 休眠前播放状态
@@ -71,11 +67,6 @@ static unsigned g_buff_frame_size;
 static int g_buff_frame_start;
 
 /**
- * 当前驱动播放状态写锁
- */
-static SceUID g_status_sema = -1;
-
-/**
  * Wave音乐文件长度，以秒数
  */
 static double g_duration;
@@ -84,11 +75,6 @@ static double g_duration;
  * 当前播放时间，以秒数计
  */
 static double g_play_time;
-
-/**
- * Wave音乐快进、退秒数
- */
-static int g_seek_seconds;
 
 /**
  * Wave音乐声道数
@@ -140,61 +126,12 @@ typedef struct _wav_taginfo_t
 static wav_taginfo_t g_taginfo;
 
 /**
- * 加锁
- */
-static inline int wav_lock(void)
-{
-	return sceKernelWaitSemaCB(g_status_sema, 1, NULL);
-}
-
-/**
- * 解锁
- */
-static inline int wav_unlock(void)
-{
-	return sceKernelSignalSema(g_status_sema, 1);
-}
-
-/**
- * 设置Wave音乐播放选项
- *
- * @param key
- * @param value
- *
- * @return 成功时返回0
- */
-static int wav_set_opt(const char *key, const char *values)
-{
-	int argc, i;
-	char **argv;
-
-	dbg_printf(d, "%s: options are %s", __func__, values);
-
-	build_args(values, &argc, &argv);
-
-	for (i = 0; i < argc; ++i) {
-		if (!strncasecmp
-			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
-			if (opt_is_on(argv[i])) {
-				show_encoder_msg = true;
-			} else {
-				show_encoder_msg = false;
-			}
-		}
-	}
-
-	clean_args(argc, argv);
-
-	return 0;
-}
-
-/**
  * 清空声音缓冲区
  *
  * @param buf 声音缓冲区指针
  * @param frames 帧数大小
  */
-static void clear_snd_buf(void *buf, int frames)
+static inline void clear_snd_buf(void *buf, int frames)
 {
 	memset(buf, 0, frames * 2 * 2);
 }
@@ -275,20 +212,20 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				__end();
 				return -1;
 			}
-			wav_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			wav_unlock();
+			generic_unlock();
 			wav_seek_seconds(g_play_time);
 		} else if (g_status == ST_FBACKWARD) {
 			g_play_time -= g_seek_seconds;
 			if (g_play_time < 0.) {
 				g_play_time = 0.;
 			}
-			wav_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			wav_unlock();
+			generic_unlock();
 			wav_seek_seconds(g_play_time);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
@@ -344,9 +281,9 @@ static int __init(void)
 {
 	g_status_sema = sceKernelCreateSema("wave Sema", 0, 1, 1, NULL);
 
-	wav_lock();
+	generic_lock();
 	g_status = ST_UNKNOWN;
-	wav_unlock();
+	generic_unlock();
 
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
@@ -574,39 +511,9 @@ static int wav_load(const char *spath, const char *lpath)
 
 	xMP3AudioSetChannelCallback(0, wav_audiocallback, NULL);
 
-	wav_lock();
+	generic_lock();
 	g_status = ST_LOADED;
-	wav_unlock();
-
-	return 0;
-}
-
-/**
- * 开始Wave音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int wav_play(void)
-{
-	wav_lock();
-	scene_power_playing_music(true);
-	g_status = ST_PLAYING;
-	wav_unlock();
-
-	return 0;
-}
-
-/**
- * 暂停Wave音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int wav_pause(void)
-{
-	wav_lock();
-	scene_power_playing_music(false);
-	g_status = ST_PAUSED;
-	wav_unlock();
+	generic_unlock();
 
 	return 0;
 }
@@ -622,9 +529,9 @@ static int __end(void)
 {
 	xMP3AudioEndPre();
 
-	wav_lock();
+	generic_lock();
 	g_status = ST_STOPPED;
-	wav_unlock();
+	generic_unlock();
 
 	if (g_status_sema >= 0) {
 		sceKernelDeleteSema(g_status_sema);
@@ -665,54 +572,6 @@ static int wav_end(void)
 }
 
 /**
- * 得到当前驱动的播放状态
- *
- * @return 状态
- */
-static int wav_get_status(void)
-{
-	return g_status;
-}
-
-/**
- * 快进Wave音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int wav_fforward(int sec)
-{
-	wav_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FFOWARD;
-	wav_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
- * 快退Wave音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int wav_fbackward(int sec)
-{
-	wav_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FBACKWARD;
-	wav_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
  * PSP准备休眠时Wave的操作
  *
  * @return 成功时返回0
@@ -748,9 +607,9 @@ static int wav_resume(const char *spath, const char *lpath)
 	wav_seek_seconds(g_play_time);
 	g_suspend_playing_time = 0;
 
-	wav_lock();
+	generic_lock();
 	g_status = g_suspend_status;
-	wav_unlock();
+	generic_unlock();
 	g_suspend_status = ST_LOADED;
 
 	return 0;
@@ -805,14 +664,14 @@ static int wav_get_info(struct music_info *pinfo)
 
 static struct music_ops wav_ops = {
 	.name = "wave",
-	.set_opt = wav_set_opt,
+	.set_opt = NULL,
 	.load = wav_load,
-	.play = wav_play,
-	.pause = wav_pause,
+	.play = NULL,
+	.pause = NULL,
 	.end = wav_end,
-	.get_status = wav_get_status,
-	.fforward = wav_fforward,
-	.fbackward = wav_fbackward,
+	.get_status = NULL,
+	.fforward = NULL,
+	.fbackward = NULL,
 	.suspend = wav_suspend,
 	.resume = wav_resume,
 	.get_info = wav_get_info,

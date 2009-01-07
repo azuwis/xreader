@@ -32,6 +32,7 @@
 #include "strsafe.h"
 #include "common/utils.h"
 #include "apetaglib/APETag.h"
+#include "genericplayer.h"
 #include "dbg.h"
 
 static int __end(void);
@@ -91,11 +92,6 @@ static mpc_bool_t canseek_impl(void *data)
 }
 
 /**
- * 当前驱动播放状态
- */
-static int g_status;
-
-/**
  * 休眠前播放状态
  */
 static int g_suspend_status;
@@ -116,11 +112,6 @@ static unsigned g_buff_frame_size;
 static int g_buff_frame_start;
 
 /**
- * 当前驱动播放状态写锁
- */
-static SceUID g_status_sema = -1;
-
-/**
  * Musepack音乐文件长度，以秒数
  */
 static double g_duration;
@@ -129,11 +120,6 @@ static double g_duration;
  * 当前播放时间，以秒数计
  */
 static double g_play_time;
-
-/**
- * Musepack音乐快进、退秒数
- */
-static int g_seek_seconds;
 
 /**
  * Musepack音乐休眠时播放时间
@@ -150,63 +136,12 @@ typedef struct _MPC_taginfo_t
 static MPC_taginfo_t g_taginfo;
 
 /**
- * 加锁
- */
-static inline int mpc_lock(void)
-{
-	return sceKernelWaitSemaCB(g_status_sema, 1, NULL);
-}
-
-/**
- * 解锁
- */
-static inline int mpc_unlock(void)
-{
-	return sceKernelSignalSema(g_status_sema, 1);
-}
-
-/**
- * 设置Musepack音乐播放选项
- *
- * @param key
- * @param value
- *
- * @return 成功时返回0
- */
-static int mpc_set_opt(const char *unused, const char *values)
-{
-	int argc, i;
-	char **argv;
-
-	dbg_printf(d, "%s: options are %s", __func__, values);
-
-	build_args(values, &argc, &argv);
-
-	for (i = 0; i < argc; ++i) {
-		if (!strncasecmp
-			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
-			if (opt_is_on(argv[i])) {
-				show_encoder_msg = true;
-			} else {
-				show_encoder_msg = false;
-			}
-		}
-	}
-
-	dbg_printf(d, "%s: %d", __func__, show_encoder_msg);
-
-	clean_args(argc, argv);
-
-	return 0;
-}
-
-/**
  * 清空声音缓冲区
  *
  * @param buf 声音缓冲区指针
  * @param frames 帧数大小
  */
-static void clear_snd_buf(void *buf, int frames)
+static inline void clear_snd_buf(void *buf, int frames)
 {
 	memset(buf, 0, frames * 2 * 2);
 }
@@ -294,10 +229,10 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				__end();
 				return -1;
 			}
-			mpc_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			mpc_unlock();
+			generic_unlock();
 			free_bitrate(&g_inst_br);
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
 			g_buff_frame_size = g_buff_frame_start = 0;
@@ -306,10 +241,10 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			if (g_play_time < 0.) {
 				g_play_time = 0.;
 			}
-			mpc_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			mpc_unlock();
+			generic_unlock();
 			free_bitrate(&g_inst_br);
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
 			g_buff_frame_size = g_buff_frame_start = 0;
@@ -371,9 +306,9 @@ static int __init(void)
 {
 	g_status_sema = sceKernelCreateSema("Musepack Sema", 0, 1, 1, NULL);
 
-	mpc_lock();
+	generic_lock();
 	g_status = ST_UNKNOWN;
-	mpc_unlock();
+	generic_unlock();
 
 	memset(g_buff, 0, sizeof(g_buff));
 	g_buff_frame_size = g_buff_frame_start = 0;
@@ -478,39 +413,9 @@ static int mpc_load(const char *spath, const char *lpath)
 
 	xMP3AudioSetChannelCallback(0, mpc_audiocallback, NULL);
 
-	mpc_lock();
+	generic_lock();
 	g_status = ST_LOADED;
-	mpc_unlock();
-
-	return 0;
-}
-
-/**
- * 开始Musepack音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int mpc_play(void)
-{
-	mpc_lock();
-	scene_power_playing_music(true);
-	g_status = ST_PLAYING;
-	mpc_unlock();
-
-	return 0;
-}
-
-/**
- * 暂停Musepack音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int mpc_pause(void)
-{
-	mpc_lock();
-	scene_power_playing_music(false);
-	g_status = ST_PAUSED;
-	mpc_unlock();
+	generic_unlock();
 
 	return 0;
 }
@@ -526,9 +431,9 @@ static int __end(void)
 {
 	xMP3AudioEndPre();
 
-	mpc_lock();
+	generic_lock();
 	g_status = ST_STOPPED;
-	mpc_unlock();
+	generic_unlock();
 
 	if (g_status_sema >= 0) {
 		sceKernelDeleteSema(g_status_sema);
@@ -561,54 +466,6 @@ static int mpc_end(void)
 	}
 
 	free_bitrate(&g_inst_br);
-
-	return 0;
-}
-
-/**
- * 得到当前驱动的播放状态
- *
- * @return 状态
- */
-static int mpc_get_status(void)
-{
-	return g_status;
-}
-
-/**
- * 快进Musepack音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int mpc_fforward(int sec)
-{
-	mpc_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FFOWARD;
-	mpc_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
- * 快退Musepack音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int mpc_fbackward(int sec)
-{
-	mpc_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FBACKWARD;
-	mpc_unlock();
-
-	g_seek_seconds = sec;
 
 	return 0;
 }
@@ -650,9 +507,9 @@ static int mpc_resume(const char *spath, const char *lpath)
 	mpc_decoder_seek_seconds(&decoder, g_play_time);
 	g_suspend_playing_time = 0;
 
-	mpc_lock();
+	generic_lock();
 	g_status = g_suspend_status;
-	mpc_unlock();
+	generic_unlock();
 	g_suspend_status = ST_LOADED;
 
 	return 0;
@@ -725,14 +582,14 @@ static int mpc_get_info(struct music_info *pinfo)
 
 static struct music_ops mpc_ops = {
 	.name = "musepack",
-	.set_opt = mpc_set_opt,
+	.set_opt = NULL,
 	.load = mpc_load,
-	.play = mpc_play,
-	.pause = mpc_pause,
+	.play = NULL,
+	.pause = NULL,
 	.end = mpc_end,
-	.get_status = mpc_get_status,
-	.fforward = mpc_fforward,
-	.fbackward = mpc_fbackward,
+	.get_status = NULL,
+	.fforward = NULL,
+	.fbackward = NULL,
 	.suspend = mpc_suspend,
 	.resume = mpc_resume,
 	.get_info = mpc_get_info,

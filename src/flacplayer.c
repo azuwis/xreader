@@ -34,15 +34,11 @@
 #include "apetaglib/APETag.h"
 #include "dbg.h"
 #include "ssv.h"
+#include "genericplayer.h"
 
 #define NUM_AUDIO_SAMPLES (1024 * 8)
 
 static int __end(void);
-
-/**
- * 当前驱动播放状态
- */
-static int g_status;
 
 /**
  * 休眠前播放状态
@@ -67,11 +63,6 @@ static unsigned g_buff_frame_size;
 static int g_buff_frame_start;
 
 /**
- * 当前驱动播放状态写锁
- */
-static SceUID g_status_sema = -1;
-
-/**
  * Flac音乐文件长度，以秒数
  */
 static double g_duration;
@@ -80,11 +71,6 @@ static double g_duration;
  * 当前播放时间，以秒数计
  */
 static double g_play_time;
-
-/**
- * Flac音乐快进、退秒数
- */
-static int g_seek_seconds;
 
 /**
  * Flac音乐声道数
@@ -155,61 +141,12 @@ static FLAC__uint64 last_decode_position = 0;
 static int bitrate;
 
 /**
- * 加锁
- */
-static inline int flac_lock(void)
-{
-	return sceKernelWaitSemaCB(g_status_sema, 1, NULL);
-}
-
-/**
- * 解锁
- */
-static inline int flac_unlock(void)
-{
-	return sceKernelSignalSema(g_status_sema, 1);
-}
-
-/**
- * 设置Flac音乐播放选项
- *
- * @param key
- * @param value
- *
- * @return 成功时返回0
- */
-static int flac_set_opt(const char *key, const char *values)
-{
-	int argc, i;
-	char **argv;
-
-	dbg_printf(d, "%s: options are %s", __func__, values);
-
-	build_args(values, &argc, &argv);
-
-	for (i = 0; i < argc; ++i) {
-		if (!strncasecmp
-			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
-			if (opt_is_on(argv[i])) {
-				show_encoder_msg = true;
-			} else {
-				show_encoder_msg = false;
-			}
-		}
-	}
-
-	clean_args(argc, argv);
-
-	return 0;
-}
-
-/**
  * 清空声音缓冲区
  *
  * @param buf 声音缓冲区指针
  * @param frames 帧数大小
  */
-static void clear_snd_buf(void *buf, int frames)
+static inline void clear_snd_buf(void *buf, int frames)
 {
 	memset(buf, 0, frames * 2 * 2);
 }
@@ -374,16 +311,16 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 	if (g_status != ST_PLAYING) {
 		if (g_status == ST_FFOWARD) {
-			flac_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			flac_unlock();
+			generic_unlock();
 			flac_seek_seconds(g_play_time + g_seek_seconds);
 		} else if (g_status == ST_FBACKWARD) {
-			flac_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			flac_unlock();
+			generic_unlock();
 			flac_seek_seconds(g_play_time - g_seek_seconds);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
@@ -468,9 +405,9 @@ static int __init(void)
 {
 	g_status_sema = sceKernelCreateSema("wave Sema", 0, 1, 1, NULL);
 
-	flac_lock();
+	generic_lock();
 	g_status = ST_UNKNOWN;
-	flac_unlock();
+	generic_unlock();
 
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
@@ -600,9 +537,9 @@ static int flac_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	flac_lock();
+	generic_lock();
 	g_status = ST_LOADED;
-	flac_unlock();
+	generic_unlock();
 
 	dbg_printf(d,
 			   "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d, encoder: %s, Ratio: %.3f]",
@@ -622,36 +559,6 @@ static int flac_load(const char *spath, const char *lpath)
 }
 
 /**
- * 开始Flac音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int flac_play(void)
-{
-	flac_lock();
-	scene_power_playing_music(true);
-	g_status = ST_PLAYING;
-	flac_unlock();
-
-	return 0;
-}
-
-/**
- * 暂停Flac音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int flac_pause(void)
-{
-	flac_lock();
-	scene_power_playing_music(false);
-	g_status = ST_PAUSED;
-	flac_unlock();
-
-	return 0;
-}
-
-/**
  * 停止Flac音乐文件的播放，销毁资源等
  *
  * @note 可以在播放线程中调用
@@ -662,9 +569,9 @@ static int __end(void)
 {
 	xMP3AudioEndPre();
 
-	flac_lock();
+	generic_lock();
 	g_status = ST_STOPPED;
-	flac_unlock();
+	generic_unlock();
 
 	if (g_status_sema >= 0) {
 		sceKernelDeleteSema(g_status_sema);
@@ -707,54 +614,6 @@ static int flac_end(void)
 }
 
 /**
- * 得到当前驱动的播放状态
- *
- * @return 状态
- */
-static int flac_get_status(void)
-{
-	return g_status;
-}
-
-/**
- * 快进Flac音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int flac_fforward(int sec)
-{
-	flac_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FFOWARD;
-	flac_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
- * 快退Flac音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int flac_fbackward(int sec)
-{
-	flac_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FBACKWARD;
-	flac_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
  * PSP准备休眠时Flac的操作
  *
  * @return 成功时返回0
@@ -790,9 +649,9 @@ static int flac_resume(const char *spath, const char *lpath)
 	flac_seek_seconds(g_play_time);
 	g_suspend_playing_time = 0;
 
-	flac_lock();
+	generic_lock();
 	g_status = g_suspend_status;
-	flac_unlock();
+	generic_unlock();
 	g_suspend_status = ST_LOADED;
 
 	return 0;
@@ -864,14 +723,14 @@ static int flac_get_info(struct music_info *pinfo)
 
 static struct music_ops flac_ops = {
 	.name = "flac",
-	.set_opt = flac_set_opt,
+	.set_opt = NULL,
 	.load = flac_load,
-	.play = flac_play,
-	.pause = flac_pause,
+	.play = NULL,
+	.pause = NULL,
 	.end = flac_end,
-	.get_status = flac_get_status,
-	.fforward = flac_fforward,
-	.fbackward = flac_fbackward,
+	.get_status = NULL,
+	.fforward = NULL,
+	.fbackward = NULL,
 	.suspend = flac_suspend,
 	.resume = flac_resume,
 	.get_info = flac_get_info,

@@ -34,6 +34,7 @@
 #include "strsafe.h"
 #include "common/utils.h"
 #include "apetaglib/APETag.h"
+#include "genericplayer.h"
 #include "dbg.h"
 #include "ssv.h"
 
@@ -41,11 +42,6 @@
 #define NUM_AUDIO_SAMPLES (BLOCKS_PER_DECODE * 4)
 
 static int __end(void);
-
-/**
- * 当前驱动播放状态
- */
-static int g_status;
 
 /**
  * 休眠前播放状态
@@ -68,11 +64,6 @@ static unsigned g_buff_frame_size;
 static int g_buff_frame_start;
 
 /**
- * 当前驱动播放状态写锁
- */
-static SceUID g_status_sema = -1;
-
-/**
  * APE音乐文件长度，以秒数
  */
 static double g_duration;
@@ -81,11 +72,6 @@ static double g_duration;
  * 当前播放时间，以秒数计
  */
 static double g_play_time;
-
-/**
- * APE音乐快进、退秒数
- */
-static int g_seek_seconds;
 
 /**
  * APE音乐声道数
@@ -140,55 +126,6 @@ static char g_encode_name[80];
  * APE解码器
  */
 static CAPEDecompress *g_decoder = NULL;
-
-/**
- * 加锁
- */
-static inline int ape_lock(void)
-{
-	return sceKernelWaitSemaCB(g_status_sema, 1, NULL);
-}
-
-/**
- * 解锁
- */
-static inline int ape_unlock(void)
-{
-	return sceKernelSignalSema(g_status_sema, 1);
-}
-
-/**
- * 设置APE音乐播放选项
- *
- * @param key
- * @param value
- *
- * @return 成功时返回0
- */
-static int ape_set_opt(const char *key, const char *values)
-{
-	int argc, i;
-	char **argv;
-
-	dbg_printf(d, "%s: options are %s", __func__, values);
-
-	build_args(values, &argc, &argv);
-
-	for (i = 0; i < argc; ++i) {
-		if (!strncasecmp
-			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
-			if (opt_is_on(argv[i])) {
-				show_encoder_msg = true;
-			} else {
-				show_encoder_msg = false;
-			}
-		}
-	}
-
-	clean_args(argc, argv);
-
-	return 0;
-}
 
 /**
  * 清空声音缓冲区
@@ -282,16 +219,16 @@ static int ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 	if (g_status != ST_PLAYING) {
 		if (g_status == ST_FFOWARD) {
-			ape_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			ape_unlock();
+			generic_unlock();
 			ape_seek_seconds(g_play_time + g_seek_seconds);
 		} else if (g_status == ST_FBACKWARD) {
-			ape_lock();
+			generic_lock();
 			g_status = ST_PLAYING;
 			scene_power_save(true);
-			ape_unlock();
+			generic_unlock();
 			ape_seek_seconds(g_play_time - g_seek_seconds);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
@@ -348,9 +285,9 @@ static int __init(void)
 {
 	g_status_sema = sceKernelCreateSema("wave Sema", 0, 1, 1, NULL);
 
-	ape_lock();
+	generic_lock();
 	g_status = ST_UNKNOWN;
-	ape_unlock();
+	generic_unlock();
 
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
@@ -451,9 +388,9 @@ static int ape_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	ape_lock();
+	generic_lock();
 	g_status = ST_LOADED;
-	ape_unlock();
+	generic_unlock();
 
 	dbg_printf(d,
 			   "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d, encoder: %s, Ratio: %.3f]",
@@ -480,36 +417,6 @@ static int ape_load(const char *spath, const char *lpath)
 }
 
 /**
- * 开始APE音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int ape_play(void)
-{
-	ape_lock();
-	scene_power_playing_music(true);
-	g_status = ST_PLAYING;
-	ape_unlock();
-
-	return 0;
-}
-
-/**
- * 暂停APE音乐文件的播放
- *
- * @return 成功时返回0
- */
-static int ape_pause(void)
-{
-	ape_lock();
-	scene_power_playing_music(false);
-	g_status = ST_PAUSED;
-	ape_unlock();
-
-	return 0;
-}
-
-/**
  * 停止APE音乐文件的播放，销毁资源等
  *
  * @note 可以在播放线程中调用
@@ -520,9 +427,9 @@ static int __end(void)
 {
 	xMP3AudioEndPre();
 
-	ape_lock();
+	generic_lock();
 	g_status = ST_STOPPED;
-	ape_unlock();
+	generic_unlock();
 
 	if (g_status_sema >= 0) {
 		sceKernelDeleteSema(g_status_sema);
@@ -566,54 +473,6 @@ static int ape_end(void)
 }
 
 /**
- * 得到当前驱动的播放状态
- *
- * @return 状态
- */
-static int ape_get_status(void)
-{
-	return g_status;
-}
-
-/**
- * 快进APE音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int ape_fforward(int sec)
-{
-	ape_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FFOWARD;
-	ape_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
- * 快退APE音乐文件
- *
- * @param sec 秒数
- *
- * @return 成功时返回0
- */
-static int ape_fbackward(int sec)
-{
-	ape_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
-		g_status = ST_FBACKWARD;
-	ape_unlock();
-
-	g_seek_seconds = sec;
-
-	return 0;
-}
-
-/**
  * PSP准备休眠时APE的操作
  *
  * @return 成功时返回0
@@ -649,9 +508,9 @@ static int ape_resume(const char *spath, const char *lpath)
 	ape_seek_seconds(g_play_time);
 	g_suspend_playing_time = 0;
 
-	ape_lock();
+	generic_lock();
 	g_status = g_suspend_status;
-	ape_unlock();
+	generic_unlock();
 	g_suspend_status = ST_LOADED;
 
 	return 0;
@@ -723,13 +582,13 @@ static int ape_get_info(struct music_info *pinfo)
 
 static struct music_ops ape_ops = {
 	"ape",
-	ape_set_opt,
+	NULL,
 	ape_load,
-	ape_play,
-	ape_pause,
-	ape_fforward,
-	ape_fbackward,
-	ape_get_status,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	ape_get_info,
 	ape_suspend,
 	ape_resume,

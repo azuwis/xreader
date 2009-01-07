@@ -225,11 +225,11 @@ typedef struct
 	bool ttf_haste_up;
 	bool linenum_style;
 	/**
-	 * çŠ¶æ€æ å¯¹é½
+	 * ×´Ì¬À¸¶ÔÆë
 	 *
-	 * 0 - å·¦
-	 * 1 - å³
-	 * 2 - ä¸­
+	 * 0 - ×ó
+	 * 1 - ÓÒ
+	 * 2 - ÖĞ
 	 */
 	t_conf_align infobar_align;
 	char musicdrv_opts[PATH_MAX];
