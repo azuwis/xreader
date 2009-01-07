@@ -5943,27 +5943,7 @@ extern void scene_init(void)
 
 extern void scene_exit(void)
 {
-#ifdef ENABLE_TTF
-	ttf_free();
-#endif
 	power_set_clock(222, 111);
-	if (config.save_password)
-		save_passwords();
-	free_passwords();
-	if (bm != NULL) {
-		bookmark_close(bm);
-		bm = NULL;
-	}
-	if (fs != NULL) {
-		scene_bookmark_autosave();
-	}
-	// always save to config0.ini
-	char conffile[PATH_MAX];
-
-	SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", 0, ".ini");
-	conf_set_file(conffile);
-	load_fontsize_to_config();
-	conf_save(&config);
 
 #ifdef ENABLE_MUSIC
 	music_list_stop();
@@ -5974,9 +5954,29 @@ extern void scene_exit(void)
 	music_list_save(mp3conf);
 	music_free();
 #endif
+	if (config.save_password)
+		save_passwords();
+
+	free_passwords();
+
+	if (bm != NULL) {
+		bookmark_close(bm);
+		bm = NULL;
+	}
+
+	if (fs != NULL) {
+		scene_bookmark_autosave();
+	}
+
+	// always save to config0.ini
+	char conffile[PATH_MAX];
+
+	SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", 0, ".ini");
+	conf_set_file(conffile);
+	load_fontsize_to_config();
+	conf_save(&config);
 
 	fat_free();
-	disp_free_font();
 #ifdef ENABLE_USB
 	usb_close();
 #endif
@@ -5992,6 +5992,7 @@ extern void scene_exit(void)
 		ctrl_destroy();
 		RestoreExitGame();
 	}
+
 	sceKernelExitGame();
 }
 
