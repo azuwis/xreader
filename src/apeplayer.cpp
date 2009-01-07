@@ -44,11 +44,6 @@
 static int __end(void);
 
 /**
- * 休眠前播放状态
- */
-static int g_suspend_status;
-
-/**
  * APE音乐播放缓冲
  */
 static short *g_buff = NULL;
@@ -67,11 +62,6 @@ static int g_buff_frame_start;
  * APE音乐文件长度，以秒数
  */
 static double g_duration;
-
-/**
- * 当前播放时间，以秒数计
- */
-static double g_play_time;
 
 /**
  * APE音乐声道数
@@ -102,11 +92,6 @@ static int g_ape_bits_per_sample = 0;
  * APE文件大小
  */
 static uint32_t g_ape_file_size = 0;
-
-/**
- * APE音乐休眠时播放时间
- */
-static double g_suspend_playing_time;
 
 typedef struct _ape_taginfo_t
 {
@@ -356,7 +341,7 @@ static int ape_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	CSmartPtr <str_utf16> path(GetUTF16FromANSI(spath));
+	CSmartPtr < str_utf16 > path(GetUTF16FromANSI(spath));
 	int err;
 	CAPEInfo ape_info(&err, path);
 
@@ -479,8 +464,7 @@ static int ape_end(void)
  */
 static int ape_suspend(void)
 {
-	g_suspend_status = g_status;
-	g_suspend_playing_time = g_play_time;
+	generic_suspend();
 	ape_end();
 
 	return 0;
@@ -508,10 +492,7 @@ static int ape_resume(const char *spath, const char *lpath)
 	ape_seek_seconds(g_play_time);
 	g_suspend_playing_time = 0;
 
-	generic_lock();
-	g_status = g_suspend_status;
-	generic_unlock();
-	g_suspend_status = ST_LOADED;
+	generic_resume(spath, lpath);
 
 	return 0;
 }

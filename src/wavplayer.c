@@ -44,11 +44,6 @@ static int __end(void);
 
 static reader_data data;
 
-/**
- * 休眠前播放状态
- */
-static int g_suspend_status;
-
 #define WAVE_BUFFER_SIZE (1024 * 95)
 
 /**
@@ -70,11 +65,6 @@ static int g_buff_frame_start;
  * Wave音乐文件长度，以秒数
  */
 static double g_duration;
-
-/**
- * 当前播放时间，以秒数计
- */
-static double g_play_time;
 
 /**
  * Wave音乐声道数
@@ -105,11 +95,6 @@ static int g_wav_frames_decoded = 0;
  * Wave音乐总帧数
  */
 static int g_wav_frames = 0;
-
-/**
- * Wave音乐休眠时播放时间
- */
-static double g_suspend_playing_time;
 
 /**
  * Wave音乐数据开始位置
@@ -578,8 +563,7 @@ static int wav_end(void)
  */
 static int wav_suspend(void)
 {
-	g_suspend_status = g_status;
-	g_suspend_playing_time = g_play_time;
+	generic_suspend();
 	wav_end();
 
 	return 0;
@@ -607,10 +591,7 @@ static int wav_resume(const char *spath, const char *lpath)
 	wav_seek_seconds(g_play_time);
 	g_suspend_playing_time = 0;
 
-	generic_lock();
-	g_status = g_suspend_status;
-	generic_unlock();
-	g_suspend_status = ST_LOADED;
+	generic_resume(spath, lpath);
 
 	return 0;
 }

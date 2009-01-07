@@ -89,21 +89,6 @@ static int g_buff_frame_start;
  */
 static struct MP3Info mp3info;
 
-/**
- * 当前播放时间，以秒数计
- */
-static double g_play_time;
-
-/**
- * MP3音乐休眠时播放时间
- */
-static double g_suspend_playing_time;
-
-/**
- * 休眠前播放状态
- */
-static int g_suspend_status;
-
 /*
  * 使用暴力
  */
@@ -1078,8 +1063,7 @@ static int madmp3_suspend(void)
 {
 	dbg_printf(d, "%s", __func__);
 
-	g_suspend_status = g_status;
-	g_suspend_playing_time = g_play_time;
+	generic_suspend();
 	madmp3_end();
 
 	return 0;
@@ -1107,10 +1091,8 @@ static int madmp3_resume(const char *spath, const char *lpath)
 
 	madmp3_seek_seconds(g_suspend_playing_time);
 	g_suspend_playing_time = 0;
-	generic_lock();
-	g_status = g_suspend_status;
-	generic_unlock();
-	g_suspend_status = ST_LOADED;
+
+	generic_resume(spath, lpath);
 
 	return 0;
 }

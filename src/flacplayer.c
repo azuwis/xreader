@@ -40,11 +40,6 @@
 
 static int __end(void);
 
-/**
- * 休眠前播放状态
- */
-static int g_suspend_status;
-
 #define WAVE_BUFFER_SIZE (1024 * 95)
 
 /**
@@ -66,11 +61,6 @@ static int g_buff_frame_start;
  * Flac音乐文件长度，以秒数
  */
 static double g_duration;
-
-/**
- * 当前播放时间，以秒数计
- */
-static double g_play_time;
 
 /**
  * Flac音乐声道数
@@ -106,11 +96,6 @@ static int g_decoded_sample_size = 0;
  * Flac解码保存位置
  */
 static uint16_t *g_write_frame = NULL;
-
-/**
- * Flac音乐休眠时播放时间
- */
-static double g_suspend_playing_time;
 
 /**
  * Flac文件大小
@@ -620,8 +605,7 @@ static int flac_end(void)
  */
 static int flac_suspend(void)
 {
-	g_suspend_status = g_status;
-	g_suspend_playing_time = g_play_time;
+	generic_suspend();
 	flac_end();
 
 	return 0;
@@ -649,10 +633,7 @@ static int flac_resume(const char *spath, const char *lpath)
 	flac_seek_seconds(g_play_time);
 	g_suspend_playing_time = 0;
 
-	generic_lock();
-	g_status = g_suspend_status;
-	generic_unlock();
-	g_suspend_status = ST_LOADED;
+	generic_resume(spath, lpath);
 
 	return 0;
 }

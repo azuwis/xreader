@@ -92,11 +92,6 @@ static mpc_bool_t canseek_impl(void *data)
 }
 
 /**
- * 休眠前播放状态
- */
-static int g_suspend_status;
-
-/**
  * Musepack音乐播放缓冲
  */
 static MPC_SAMPLE_FORMAT g_buff[MPC_DECODER_BUFFER_LENGTH];
@@ -115,16 +110,6 @@ static int g_buff_frame_start;
  * Musepack音乐文件长度，以秒数
  */
 static double g_duration;
-
-/**
- * 当前播放时间，以秒数计
- */
-static double g_play_time;
-
-/**
- * Musepack音乐休眠时播放时间
- */
-static double g_suspend_playing_time;
 
 typedef struct _MPC_taginfo_t
 {
@@ -477,8 +462,7 @@ static int mpc_end(void)
  */
 static int mpc_suspend(void)
 {
-	g_suspend_status = g_status;
-	g_suspend_playing_time = g_play_time;
+	generic_suspend();
 	mpc_end();
 
 	return 0;
@@ -507,10 +491,7 @@ static int mpc_resume(const char *spath, const char *lpath)
 	mpc_decoder_seek_seconds(&decoder, g_play_time);
 	g_suspend_playing_time = 0;
 
-	generic_lock();
-	g_status = g_suspend_status;
-	generic_unlock();
-	g_suspend_status = ST_LOADED;
+	generic_resume(spath, lpath);
 
 	return 0;
 }

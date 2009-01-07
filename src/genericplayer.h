@@ -5,6 +5,20 @@
 extern "C"
 {
 #endif
+	/**
+	 * 休眠前播放状态
+	 */
+	extern int g_suspend_status;
+
+	/**
+	 * 当前播放时间，以秒数计
+	 */
+	extern double g_play_time;
+
+	/**
+	 * Wave音乐休眠时播放时间
+	 */
+	extern double g_suspend_playing_time;
 
 /**
  * 音乐快进、退秒数
@@ -29,6 +43,10 @@ extern "C"
 	int generic_get_status(void);
 	int generic_fforward(int sec);
 	int generic_fbackward(int sec);
+	int generic_end(void);
+	int generic_init(void);
+	int generic_resume(const char *spath, const char *lpath);
+	int generic_suspend(void);
 
 #ifdef __cplusplus
 }

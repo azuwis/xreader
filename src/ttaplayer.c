@@ -39,11 +39,6 @@
 
 static int __end(void);
 
-/**
- * 休眠前播放状态
- */
-static int g_suspend_status;
-
 #define TTA_BUFFER_SIZE (PCM_BUFFER_LENGTH * MAX_NCH)
 
 /**
@@ -67,11 +62,6 @@ static int g_buff_frame_start;
 static double g_duration;
 
 /**
- * 当前播放时间，以秒数计
- */
-static double g_play_time;
-
-/**
  * TTA音乐信息
  */
 static tta_info g_info;
@@ -85,11 +75,6 @@ static int g_tta_frames_decoded = 0;
  * TTA音乐总帧数
  */
 static int g_tta_frames = 0;
-
-/**
- * TTA音乐休眠时播放时间
- */
-static double g_suspend_playing_time;
 
 /**
  * TTA音乐数据开始位置
@@ -416,8 +401,7 @@ static int tta_end(void)
  */
 static int tta_suspend(void)
 {
-	g_suspend_status = g_status;
-	g_suspend_playing_time = g_play_time;
+	generic_suspend();
 	tta_end();
 
 	return 0;
@@ -445,10 +429,7 @@ static int tta_resume(const char *spath, const char *lpath)
 	tta_seek_seconds(g_play_time);
 	g_suspend_playing_time = 0;
 
-	generic_lock();
-	g_status = g_suspend_status;
-	generic_unlock();
-	g_suspend_status = ST_LOADED;
+	generic_resume(spath, lpath);
 
 	return 0;
 }

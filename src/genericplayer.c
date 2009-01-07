@@ -35,6 +35,21 @@
 #include "dbg.h"
 
 /**
+ * 休眠前播放状态
+ */
+int g_suspend_status;
+
+/**
+ * 当前播放时间，以秒数计
+ */
+double g_play_time;
+
+/**
+ * Wave音乐休眠时播放时间
+ */
+double g_suspend_playing_time;
+
+/**
  * 音乐快进、退秒数
  */
 int g_seek_seconds = 0;
@@ -156,6 +171,34 @@ int generic_fbackward(int sec)
 	generic_unlock();
 
 	g_seek_seconds = sec;
+
+	return 0;
+}
+
+int generic_end(void)
+{
+	return 0;
+}
+
+int generic_init(void)
+{
+	return 0;
+}
+
+int generic_resume(const char *spath, const char *lpath)
+{
+	generic_lock();
+	g_status = g_suspend_status;
+	generic_unlock();
+	g_suspend_status = ST_LOADED;
+
+	return 0;
+}
+
+int generic_suspend(void)
+{
+	g_suspend_status = g_status;
+	g_suspend_playing_time = g_play_time;
 
 	return 0;
 }
