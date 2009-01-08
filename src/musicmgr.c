@@ -39,7 +39,7 @@
 #include "flacplayer.h"
 #include "ttaplayer.h"
 #include "apeplayer.h"
-#include "madmp3drv.h"
+#include "mp3player.h"
 #include "dbg.h"
 #include "config.h"
 #include "mad.h"

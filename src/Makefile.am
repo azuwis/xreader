@@ -11,7 +11,7 @@ AM_CPPFLAGS = \
 -I$(PSPSDK)/include
 
 if MUSIC
-AM_CPPFLAGS += -I$(PSPSDK)/../include/mac
+AM_CPPFLAGS += -I $(srcdir)/include/mac
 endif
 
 if OPTIMIZE
@@ -22,7 +22,7 @@ AM_CFLAGS += \
 else
 AM_CFLAGS = -O0 -G0 -g -Wall
 endif
-AM_CXXFLAGS = $(AM_CFLAGS)
+AM_CXXFLAGS = $(AM_CFLAGS) -fno-exceptions -fno-rtti
 CCASFLAGS = $(CFLAGS) $(INCLUDES)
 
 noinst_PROGRAMS = xReader.elf
@@ -58,7 +58,7 @@ if MUSIC
 xReader_elf_SOURCES += \
 musicdrv.c musicdrv.h musicmgr.c musicmgr.h  apeplayer.cpp apeplayer.h \
 lyric.c lyric.h clock.c mp3info.c flacplayer.c flacplayer.h \
-madmp3drv.c madmp3drv.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h \
+mp3player.c mp3player.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h \
 xmp3audiolib.c xmp3audiolib.h genericplayer.c genericplayer.h
 endif
 
