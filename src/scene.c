@@ -5967,7 +5967,6 @@ extern void scene_exit(void)
 	if (fs != NULL) {
 		scene_bookmark_autosave();
 	}
-
 	// always save to config0.ini
 	char conffile[PATH_MAX];
 
