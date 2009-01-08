@@ -241,7 +241,7 @@ static int ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			ret =
 				g_decoder->GetData((char *) g_buff, BLOCKS_PER_DECODE, &block);
 
-			if (ret != ERROR_SUCCESS) {
+			if (ret != ERROR_SUCCESS || block == 0) {
 				__end();
 				return -1;
 			}
@@ -529,8 +529,8 @@ static int ape_get_info(struct music_info *pinfo)
 		pinfo->duration = g_duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
-		pinfo->psp_freq[0] = 222;
-		pinfo->psp_freq[1] = 111;
+		pinfo->psp_freq[0] = 233;
+		pinfo->psp_freq[1] = 116;
 	}
 	if (pinfo->type & MD_GET_FREQ) {
 		pinfo->freq = g_ape_sample_freq;
