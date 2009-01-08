@@ -394,7 +394,7 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 
 	info->spf = ctx.lsf ? 576 : 1152;	/* Samples per frame, layer 3 */
 	info->duration = (double) frames *info->spf / info->sample_freq;
-
+	info->frames = frames;
 	info->average_bitrate = (double) data->size * 8 / info->duration;
 
 	return frames;
