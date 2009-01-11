@@ -322,6 +322,8 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 	pixel *newdata = memalign(16, sizeof(pixel) * *pwidth * *pheight);
 
 	if (newdata == NULL) {
+		win_msg("内存不足无法完成旋转!", COLOR_WHITE, COLOR_WHITE,
+				config.msgbcolor);
 		dbg_printf(d, "%s: 内存不足无法完成旋转!", __func__);
 		config.rotate = conf_rotate_0;
 		return;
