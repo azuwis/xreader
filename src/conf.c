@@ -35,6 +35,7 @@
 #include "dbg.h"
 #include "kubridge.h"
 #include "passwdmgr.h"
+#include "buffered_reader.h"
 
 extern bool scene_load_font();
 extern bool scene_load_book_font();
@@ -281,8 +282,9 @@ static void conf_default(p_conf conf)
 	conf->ttf_haste_up = true;
 	conf->linenum_style = false;
 	conf->infobar_align = conf_align_left;
-	STRCPY_S(conf->musicdrv_opts,
-			 "mp3_brute_mode=off mp3_use_me=on mp3_check_crc=off mp3_buffered_io=on");
+	SPRINTF_S(conf->musicdrv_opts,
+			  "mp3_brute_mode=off mp3_use_me=on mp3_check_crc=off mp3_buffered_io=on mp3_buffer_size=%d",
+			  BUFFERED_READER_BUFFER_SIZE);
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)

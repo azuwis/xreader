@@ -116,6 +116,11 @@ static unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
 
 static bool mp3_getEDRAM = false;
 
+/**
+ * 默认缓冲IO缓冲字节大小，最低不小于8192
+ */
+static int g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+
 static signed short MadFixedToSshort(mad_fixed_t Fixed)
 {
 	if (Fixed >= MAD_F_ONE)
@@ -920,7 +925,7 @@ static int madmp3_load(const char *spath, const char *lpath)
 	data.use_buffer = use_buffer;
 
 	if (data.use_buffer)
-		data.r = buffered_reader_open(spath, BUFFERED_READER_BUFFER_SIZE, 1);
+		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
 	else
 		data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
@@ -1074,6 +1079,20 @@ static int madmp3_set_opt(const char *unused, const char *values)
 				use_buffer = true;
 			} else {
 				use_buffer = false;
+			}
+		} else if (!strncasecmp
+				   (argv[i], "mp3_buffer_size",
+					sizeof("mp3_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
 			}
 		} else if (!strncasecmp
 				   (argv[i], "show_encoder_msg",
