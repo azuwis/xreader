@@ -407,16 +407,21 @@ static void scene_draw_mp3bar_music_staff(void)
 
 		if (g_ins_kbps == 0)
 			SPRINTF_S(infostr,
-					  "%s   %4d kbps   %d Hz   %02d:%02d / %02d:%02d   [%s@%dkbps]",
+					  "%s   %4d kbps   %d Hz   %02d:%02d / %02d:%02d",
 					  conf_get_cyclename(config.mp3cycle), bitrate, sample,
-					  len / 60, len % 60, tlen / 60, tlen % 60,
-					  info.decoder_name, bitrate);
+					  len / 60, len % 60, tlen / 60, tlen % 60);
 		else
 			SPRINTF_S(infostr,
-					  "%s   %4d kbps   %d Hz   %02d:%02d / %02d:%02d   [%s@%dkbps]",
+					  "%s   %4d kbps   %d Hz   %02d:%02d / %02d:%02d",
 					  conf_get_cyclename(config.mp3cycle), g_ins_kbps,
-					  sample, len / 60, len % 60, tlen / 60, tlen % 60,
-					  info.decoder_name, bitrate);
+					  sample, len / 60, len % 60, tlen / 60, tlen % 60);
+
+		if (config.fontsize <= 12) {
+			char t[128];
+
+			SPRINTF_S(t, "   [%s@%dkbps]", info.decoder_name, bitrate);
+			STRCAT_S(infostr, t);
+		}
 	} else
 		SPRINTF_S(infostr, "%s", conf_get_cyclename(config.mp3cycle));
 	disp_putstring(6 + DISP_FONTSIZE, 265 - DISP_FONTSIZE * 2, COLOR_WHITE,
