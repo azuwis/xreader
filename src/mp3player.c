@@ -455,23 +455,35 @@ static int handle_seek(void)
 			if (g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.3) {
-					g_play_time += g_seek_seconds;
+				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.5) {
+					generic_lock();
+
+					if (g_seek_count > 0) {
+						g_play_time += g_seek_seconds;
+						g_seek_count--;
+					}
+
+					generic_unlock();
 
 					if (g_play_time >= mp3info.duration) {
 						return -1;
 					}
 
-					sceKernelDelayThread(300000);
+					sceKernelDelayThread(100000);
 				} else {
-					scene_power_playing_music(true);
+					generic_lock();
 
-					if (madmp3_seek_seconds(g_play_time) < 0) {
-						return -1;
+					if (g_seek_count == 0) {
+							scene_power_playing_music(true);
+
+							if (madmp3_seek_seconds(g_play_time) < 0) {
+									generic_unlock();
+									return -1;
+							}
+
+							g_status = ST_PLAYING;
 					}
 
-					generic_lock();
-					g_status = ST_PLAYING;
 					generic_unlock();
 				}
 			} else {
@@ -484,22 +496,35 @@ static int handle_seek(void)
 			if (!g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.3) {
-					g_play_time -= g_seek_seconds;
+				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.5) {
+					generic_lock();
 
+					if (g_seek_count > 0) {
+						g_play_time -= g_seek_seconds;
+						g_seek_count--;
+					}
+
+					generic_unlock();
+					
 					if (g_play_time < 0) {
 						g_play_time = 0;
 					}
 
-					sceKernelDelayThread(300000);
+					sceKernelDelayThread(100000);
 				} else {
-					scene_power_playing_music(true);
-
-					if (madmp3_seek_seconds(g_play_time) < 0)
-						return -1;
-
 					generic_lock();
-					g_status = ST_PLAYING;
+
+					if (g_seek_count == 0) {
+							scene_power_playing_music(true);
+
+							if (madmp3_seek_seconds(g_play_time) < 0) {
+									generic_unlock();
+									return -1;
+							}
+
+							g_status = ST_PLAYING;
+					}
+
 					generic_unlock();
 				}
 			} else {

@@ -5,19 +5,19 @@
 extern "C"
 {
 #endif
-	/**
-	 * 休眠前播放状态
-	 */
+/**
+ * 休眠前播放状态
+ */
 	extern int g_suspend_status;
 
-	/**
-	 * 当前播放时间，以秒数计
-	 */
+/**
+ * 当前播放时间，以秒数计
+ */
 	extern double g_play_time;
 
-	/**
-	 * Wave音乐休眠时播放时间
-	 */
+/**
+ * Wave音乐休眠时播放时间
+ */
 	extern double g_suspend_playing_time;
 
 /**
@@ -39,6 +39,11 @@ extern "C"
  * 上次按快进退键时间
  */
 	extern u64 g_last_seek_tick;
+
+/**
+ *  按快进退键计数
+ */
+	extern dword g_seek_count;
 
 	int generic_lock(void);
 	int generic_unlock(void);

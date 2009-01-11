@@ -645,8 +645,9 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			break;
 		case PSP_CTRL_SQUARE:
 #ifdef ENABLE_MUSIC
-			music_list_stop();
-			scene_power_save(true);
+			if (music_list_stop() == 0) {
+				scene_power_save(true);
+			}
 #endif
 			break;
 		case (PSP_CTRL_LEFT | PSP_CTRL_TRIANGLE):

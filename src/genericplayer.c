@@ -41,24 +41,29 @@
 bool g_last_seek_is_forward = false;
 
 /**
- * 上次按快进退键时间
+ * 上次按快进退键起始时间
  */
-u64 g_last_seek_tick;
+u64 g_last_seek_tick = 0;
+
+/**
+ *  按快进退键计数
+ */
+dword g_seek_count = 0;
 
 /**
  * 休眠前播放状态
  */
-int g_suspend_status;
+int g_suspend_status = ST_UNKNOWN;
 
 /**
  * 当前播放时间，以秒数计
  */
-double g_play_time;
+double g_play_time = 0;
 
 /**
  * Wave音乐休眠时播放时间
  */
-double g_suspend_playing_time;
+double g_suspend_playing_time = 0;
 
 /**
  * 音乐快进、退秒数
@@ -166,6 +171,7 @@ int generic_fforward(int sec)
 
 	sceRtcGetCurrentTick(&g_last_seek_tick);
 	g_last_seek_is_forward = true;
+	g_seek_count++;
 	generic_unlock();
 
 	return 0;
@@ -189,6 +195,7 @@ int generic_fbackward(int sec)
 
 	sceRtcGetCurrentTick(&g_last_seek_tick);
 	g_last_seek_is_forward = false;
+	g_seek_count++;
 	generic_unlock();
 
 	return 0;
@@ -207,6 +214,7 @@ int generic_end(void)
 int generic_init(void)
 {
 	g_status_sema = sceKernelCreateSema("Music Sema", 0, 1, 1, NULL);
+	g_seek_count = 0;
 
 	return 0;
 }
