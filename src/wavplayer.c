@@ -264,7 +264,7 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
  */
 static int __init(void)
 {
-	g_status_sema = sceKernelCreateSema("wave Sema", 0, 1, 1, NULL);
+	generic_init();
 
 	generic_lock();
 	g_status = ST_UNKNOWN;
@@ -518,11 +518,6 @@ static int __end(void)
 	g_status = ST_STOPPED;
 	generic_unlock();
 
-	if (g_status_sema >= 0) {
-		sceKernelDeleteSema(g_status_sema);
-		g_status_sema = -1;
-	}
-
 	if (data.fd >= 0) {
 		sceIoClose(data.fd);
 		data.fd = -1;
@@ -552,6 +547,7 @@ static int wav_end(void)
 	}
 
 	g_status = ST_STOPPED;
+	generic_end();
 
 	return 0;
 }

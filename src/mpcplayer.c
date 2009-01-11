@@ -261,7 +261,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				mpc_decoder_decode(&decoder, g_buff, &vbr_update_acc,
 								   &vbr_update_bits);
 
-			if (ret == -1 || ret == 0) {
+			if (ret == 0) {
 				__end();
 				return -1;
 			}
@@ -289,7 +289,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
  */
 static int __init(void)
 {
-	g_status_sema = sceKernelCreateSema("Musepack Sema", 0, 1, 1, NULL);
+	generic_init();
 
 	generic_lock();
 	g_status = ST_UNKNOWN;
@@ -419,12 +419,6 @@ static int __end(void)
 	generic_lock();
 	g_status = ST_STOPPED;
 	generic_unlock();
-
-	if (g_status_sema >= 0) {
-		sceKernelDeleteSema(g_status_sema);
-		g_status_sema = -1;
-	}
-
 	g_play_time = 0.;
 
 	return 0;
@@ -451,6 +445,7 @@ static int mpc_end(void)
 	}
 
 	free_bitrate(&g_inst_br);
+	generic_end();
 
 	return 0;
 }

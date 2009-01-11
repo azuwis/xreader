@@ -31,11 +31,6 @@ extern "C"
 	extern int g_status;
 
 /**
- * 当前驱动播放状态写锁
- */
-	extern SceUID g_status_sema;
-
-/**
  * 上次按快进退键类型
  */
 	extern bool g_last_seek_is_forward;

@@ -237,7 +237,7 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
  */
 static int __init(void)
 {
-	g_status_sema = sceKernelCreateSema("tta Sema", 0, 1, 1, NULL);
+	generic_init();
 
 	generic_lock();
 	g_status = ST_UNKNOWN;
@@ -359,11 +359,6 @@ static int __end(void)
 	g_status = ST_STOPPED;
 	generic_unlock();
 
-	if (g_status_sema >= 0) {
-		sceKernelDeleteSema(g_status_sema);
-		g_status_sema = -1;
-	}
-
 	g_play_time = 0.;
 
 	return 0;
@@ -389,8 +384,8 @@ static int tta_end(void)
 
 	player_stop();
 	close_tta_file(&g_info);
-
 	g_status = ST_STOPPED;
+	generic_end();
 
 	return 0;
 }

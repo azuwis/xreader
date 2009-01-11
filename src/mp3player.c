@@ -789,7 +789,7 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
  */
 static int __init(void)
 {
-	g_status_sema = sceKernelCreateSema("wave Sema", 0, 1, 1, NULL);
+	generic_init();
 
 	generic_lock();
 	g_status = ST_UNKNOWN;
@@ -1218,6 +1218,8 @@ static int madmp3_end(void)
 			data.fd = -1;
 		}
 	}
+
+	generic_end();
 
 	return 0;
 }

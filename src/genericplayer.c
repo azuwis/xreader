@@ -73,7 +73,7 @@ int g_status = ST_UNKNOWN;
 /**
  * 当前驱动播放状态写锁
  */
-SceUID g_status_sema = -1;
+static SceUID g_status_sema = -1;
 
 /**
  * 加锁
@@ -196,11 +196,18 @@ int generic_fbackward(int sec)
 
 int generic_end(void)
 {
+	if (g_status_sema >= 0) {
+		sceKernelDeleteSema(g_status_sema);
+		g_status_sema = -1;
+	}
+
 	return 0;
 }
 
 int generic_init(void)
 {
+	g_status_sema = sceKernelCreateSema("Music Sema", 0, 1, 1, NULL);
+
 	return 0;
 }
 

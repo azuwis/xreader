@@ -353,8 +353,7 @@ static int ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
  */
 static int __init(void)
 {
-	g_status_sema = sceKernelCreateSema("wave Sema", 0, 1, 1, NULL);
-
+	generic_init();
 	generic_lock();
 	g_status = ST_UNKNOWN;
 	generic_unlock();
@@ -500,12 +499,6 @@ static int __end(void)
 	generic_lock();
 	g_status = ST_STOPPED;
 	generic_unlock();
-
-	if (g_status_sema >= 0) {
-		sceKernelDeleteSema(g_status_sema);
-		g_status_sema = -1;
-	}
-
 	g_play_time = 0.;
 
 	return 0;
@@ -538,6 +531,7 @@ static int ape_end(void)
 	}
 
 	free_bitrate(&g_inst_br);
+	generic_end();
 
 	return 0;
 }
