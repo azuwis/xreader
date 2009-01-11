@@ -322,8 +322,7 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 	pixel *newdata = memalign(16, sizeof(pixel) * *pwidth * *pheight);
 
 	if (newdata == NULL) {
-		win_msg("内存不足无法完成旋转!", COLOR_WHITE, COLOR_WHITE,
-				config.msgbcolor);
+		dbg_printf(d, "%s: 内存不足无法完成旋转!", __func__);
 		return;
 	}
 	dword i, j;
@@ -1737,8 +1736,6 @@ void exif_entry_viewer(ExifEntry * pentry, void *user_data)
 	buffer *b = buffer_array_append_get_buffer(exif_array);
 
 	buffer_copy_string(b, msg);
-
-//  win_msg(msg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 }
 
 void exif_context_viewer(ExifContent * pcontext, void *user_data)
@@ -1757,7 +1754,6 @@ void exif_viewer(ExifData * data)
 		exif_array = buffer_array_init();
 	}
 	if (data) {
-//      win_msg("得到JPEG exif数据!", COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		// 打印所有EXIF数据
 		exif_data_foreach_content(data, exif_context_viewer, 0);
 		exif_data_free(data);
