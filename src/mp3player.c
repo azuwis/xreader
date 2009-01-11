@@ -30,7 +30,7 @@
 #include <pspsdk.h>
 #include <pspkernel.h>
 #include <pspaudio.h>
-#include <pspaudio.h>
+#include <psprtc.h>
 #include <pspaudiocodec.h>
 #include <pspmpeg.h>
 #include <limits.h>
@@ -41,9 +41,9 @@
 #include "xmp3audiolib.h"
 #include "dbg.h"
 #include "scene.h"
-#include "mp3info.h"
 #include "apetaglib/APETag.h"
 #include "genericplayer.h"
+#include "mp3info.h"
 
 #define MP3_FRAME_SIZE 2889
 
@@ -102,14 +102,19 @@ static bool check_crc = false;
 /**
  * 使用ME
  */
-static bool use_me = false;
+static bool use_me = true;
+
+/**
+ * 使用缓冲IO
+ */
+static bool use_buffer = true;
 
 /**
  * Media Engine buffer缓存
  */
-unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
+static unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
 
-bool mp3_getEDRAM = false;
+static bool mp3_getEDRAM = false;
 
 static signed short MadFixedToSshort(mad_fixed_t Fixed)
 {
@@ -150,13 +155,11 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 	memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 }
 
-static int madmp3_seek_seconds_offset_brute(double offset)
+static int madmp3_seek_seconds_offset_brute(double npt)
 {
-	int pos, ret;
+	int pos;
 
-	pos =
-		(int) ((double) mp3info.frames * (g_play_time + offset) /
-			   mp3info.duration);
+	pos = (int) ((double) mp3info.frames * (npt) / mp3info.duration);
 
 	if (pos < 0) {
 		pos = 0;
@@ -172,10 +175,10 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 		return -1;
 	}
 
-	ret = sceIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
-
-	if (ret < 0)
-		return -1;
+	if (data.use_buffer)
+		buffered_reader_seek(data.r, mp3info.frameoff[pos]);
+	else
+		sceIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
 
 	mad_stream_finish(&stream);
 	mad_stream_init(&stream);
@@ -183,7 +186,7 @@ static int madmp3_seek_seconds_offset_brute(double offset)
 	if (pos <= 0)
 		g_play_time = 0.0;
 	else
-		g_play_time += offset;
+		g_play_time = npt;
 
 	return 0;
 }
@@ -225,7 +228,7 @@ static enum tagtype tagtype(id3_byte_t const *data, id3_length_t length)
 	return TAGTYPE_NONE;
 }
 
-unsigned long id3_parse_uint(id3_byte_t const **ptr, unsigned int bytes)
+static unsigned long id3_parse_uint(id3_byte_t const **ptr, unsigned int bytes)
 {
 	unsigned long value = 0;
 
@@ -245,7 +248,8 @@ unsigned long id3_parse_uint(id3_byte_t const **ptr, unsigned int bytes)
 	return value;
 }
 
-unsigned long id3_parse_syncsafe(id3_byte_t const **ptr, unsigned int bytes)
+static unsigned long id3_parse_syncsafe(id3_byte_t const **ptr,
+										unsigned int bytes)
 {
 	unsigned long value = 0;
 
@@ -274,7 +278,7 @@ static void parse_header(id3_byte_t const **ptr, unsigned int *version,
 	*size = id3_parse_syncsafe(ptr, 4);
 }
 
-signed long id3_tag_query(id3_byte_t const *data, id3_length_t length)
+static signed long id3_tag_query(id3_byte_t const *data, id3_length_t length)
 {
 	unsigned int version;
 	int flags;
@@ -338,7 +342,10 @@ static int seek_valid_frame(void)
 				remaining = 0;
 			}
 
-			bufsize = sceIoRead(data.fd, read_start, read_size);
+			if (data.use_buffer)
+				bufsize = buffered_reader_read(data.r, read_start, read_size);
+			else
+				bufsize = sceIoRead(data.fd, read_start, read_size);
 
 			if (bufsize <= 0) {
 				return -1;
@@ -369,57 +376,150 @@ static int seek_valid_frame(void)
 	return 0;
 }
 
-static int madmp3_seek_seconds_offset(double offset)
+static int madmp3_seek_seconds_offset(double npt)
 {
-	uint32_t target_frame = abs(offset) * mp3info.average_bitrate / 8;
-	int is_forward = offset > 0 ? 1 : -1;
-	int orig_pos = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
-	int new_pos = orig_pos + is_forward * (int) target_frame;
-	int ret;
+	int new_pos = npt * mp3info.average_bitrate / 8;
 
 	if (new_pos < 0) {
 		new_pos = 0;
 	}
 
-	ret = sceIoLseek(data.fd, new_pos, PSP_SEEK_SET);
+	if (data.use_buffer)
+		buffered_reader_seek(data.r, new_pos);
+	else
+		sceIoLseek(data.fd, new_pos, PSP_SEEK_SET);
 
 	mad_stream_finish(&stream);
 	mad_stream_init(&stream);
 
-	if (ret >= 0) {
-		if (seek_valid_frame() == -1) {
-			__end();
-			return -1;
-		}
-
-		if (data.size > 0) {
-			long cur_pos;
-
-			cur_pos = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
-			g_play_time = mp3info.duration * cur_pos / data.size;
-		} else {
-			g_play_time += offset;
-		}
-
-		if (g_play_time < 0)
-			g_play_time = 0;
-
-		return 0;
+	if (seek_valid_frame() == -1) {
+		__end();
+		return -1;
 	}
 
-	__end();
-	return -1;
+	if (data.size > 0) {
+		long cur_pos;
+
+		if (data.use_buffer)
+			cur_pos = buffered_reader_position(data.r);
+		else
+			cur_pos = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
+		g_play_time = mp3info.duration * cur_pos / data.size;
+	} else {
+		g_play_time = npt;
+	}
+
+	if (g_play_time < 0)
+		g_play_time = 0;
+
+	return 0;
 }
 
 static int madmp3_seek_seconds(double npt)
 {
+	int ret;
+
 	free_bitrate(&g_inst_br);
 
 	if (mp3info.frameoff && mp3info.frames > 0) {
-		return madmp3_seek_seconds_offset_brute(npt - g_play_time);
+		ret = madmp3_seek_seconds_offset_brute(npt);
 	} else {
-		return madmp3_seek_seconds_offset(npt - g_play_time);
+		ret = madmp3_seek_seconds_offset(npt);
 	}
+
+	return ret;
+}
+
+/**
+ * 处理快进快退
+ *
+ * @return
+ * - -1 should exit
+ * - 0 OK
+ */
+static int handle_seek(void)
+{
+	u64 timer_end;
+
+	if (data.use_buffer) {
+
+		if (g_status == ST_FFOWARD) {
+			sceRtcGetCurrentTick(&timer_end);
+
+			generic_lock();
+			if (g_last_seek_is_forward) {
+				generic_unlock();
+
+				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.3) {
+					g_play_time += g_seek_seconds;
+
+					if (g_play_time >= mp3info.duration) {
+						return -1;
+					}
+
+					sceKernelDelayThread(300000);
+				} else {
+					scene_power_playing_music(true);
+
+					if (madmp3_seek_seconds(g_play_time) < 0) {
+						return -1;
+					}
+
+					generic_lock();
+					g_status = ST_PLAYING;
+					generic_unlock();
+				}
+			} else {
+				generic_unlock();
+			}
+		} else if (g_status == ST_FBACKWARD) {
+			sceRtcGetCurrentTick(&timer_end);
+
+			generic_lock();
+			if (!g_last_seek_is_forward) {
+				generic_unlock();
+
+				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.3) {
+					g_play_time -= g_seek_seconds;
+
+					if (g_play_time < 0) {
+						g_play_time = 0;
+					}
+
+					sceKernelDelayThread(300000);
+				} else {
+					scene_power_playing_music(true);
+
+					if (madmp3_seek_seconds(g_play_time) < 0)
+						return -1;
+
+					generic_lock();
+					g_status = ST_PLAYING;
+					generic_unlock();
+				}
+			} else {
+				generic_unlock();
+			}
+		}
+
+		return 0;
+	} else {
+		if (g_status == ST_FFOWARD) {
+			generic_lock();
+			g_status = ST_PLAYING;
+			generic_unlock();
+			scene_power_playing_music(true);
+			madmp3_seek_seconds(g_play_time + g_seek_seconds);
+		} else if (g_status == ST_FBACKWARD) {
+			generic_lock();
+			g_status = ST_PLAYING;
+			generic_unlock();
+			scene_power_playing_music(true);
+			madmp3_seek_seconds(g_play_time - g_seek_seconds);
+		}
+	}
+
+	return 0;
 }
 
 /**
@@ -443,19 +543,11 @@ static int madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFOWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_unlock();
-			scene_power_save(true);
-			madmp3_seek_seconds(g_play_time + g_seek_seconds);
-		} else if (g_status == ST_FBACKWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_unlock();
-			scene_power_save(true);
-			madmp3_seek_seconds(g_play_time - g_seek_seconds);
+		if (handle_seek() == -1) {
+			__end();
+			return -1;
 		}
+
 		clear_snd_buf(buf, snd_buf_frame_size);
 		return 0;
 	}
@@ -491,7 +583,13 @@ static int madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 					read_start = g_input_buff;
 					remaining = 0;
 				}
-				bufsize = sceIoRead(data.fd, read_start, read_size);
+
+				if (data.use_buffer)
+					bufsize =
+						buffered_reader_read(data.r, read_start, read_size);
+				else
+					bufsize = sceIoRead(data.fd, read_start, read_size);
+
 				if (bufsize <= 0) {
 					__end();
 					return -1;
@@ -615,19 +713,11 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFOWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_unlock();
-			scene_power_save(true);
-			madmp3_seek_seconds(g_play_time + g_seek_seconds);
-		} else if (g_status == ST_FBACKWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_unlock();
-			scene_power_save(true);
-			madmp3_seek_seconds(g_play_time - g_seek_seconds);
+		if (handle_seek() == -1) {
+			__end();
+			return -1;
 		}
+
 		clear_snd_buf(buf, snd_buf_frame_size);
 		return 0;
 	}
@@ -651,12 +741,18 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			int frame_size, ret, brate = 0;
 
 			do {
-				if ((frame_size = search_valid_frame_me(&data, &brate)) < 0) {
+				if ((frame_size =
+					 search_valid_frame_me_buffered(&data, &brate)) < 0) {
 					__end();
 					return -1;
 				}
 
-				ret = sceIoRead(data.fd, memp3_input_buf, frame_size);
+				if (data.use_buffer)
+					ret =
+						buffered_reader_read(data.r, memp3_input_buf,
+											 frame_size);
+				else
+					ret = sceIoRead(data.fd, memp3_input_buf, frame_size);
 
 				if (ret < 0) {
 					__end();
@@ -820,16 +916,37 @@ static int madmp3_load(const char *spath, const char *lpath)
 
 	dbg_printf(d, "%s: loading %s", __func__, spath);
 	g_status = ST_UNKNOWN;
-	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
-	if (data.fd < 0) {
-		return data.fd;
+	data.use_buffer = use_buffer;
+
+	if (data.use_buffer)
+		data.r = buffered_reader_open(spath, BUFFERED_READER_BUFFER_SIZE, 1);
+	else
+		data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+
+	if (data.use_buffer) {
+		if (data.r == NULL) {
+			return -1;
+		}
+	} else {
+		if (data.fd < 0)
+			return -1;
 	}
 
-	data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
+	if (data.use_buffer)
+		data.size = buffered_reader_length(data.r);
+	else {
+		data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
+		sceIoLseek(data.fd, 0, PSP_SEEK_SET);
+	}
+
 	if (data.size < 0)
 		return data.size;
-	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
+
+	if (data.use_buffer)
+		buffered_reader_seek(data.r, 0);
+	else
+		sceIoLseek(data.fd, 0, PSP_SEEK_SET);
 
 	mad_stream_init(&stream);
 	mad_frame_init(&frame);
@@ -846,17 +963,34 @@ static int madmp3_load(const char *spath, const char *lpath)
 	mp3info.have_crc = false;
 
 	if (use_brute_method) {
-		// read ID3 tag first
-		read_mp3_info(&mp3info, &data);
+		if (data.use_buffer) {
+			// read ID3 tag first
+			read_mp3_info_buffered(&mp3info, &data);
 
-		if (read_mp3_info_brute(&mp3info, &data) < 0) {
-			__end();
-			return -1;
+			if (read_mp3_info_brute_buffered(&mp3info, &data) < 0) {
+				__end();
+				return -1;
+			}
+		} else {
+			// read ID3 tag first
+			read_mp3_info(&mp3info, &data);
+
+			if (read_mp3_info_brute(&mp3info, &data) < 0) {
+				__end();
+				return -1;
+			}
 		}
 	} else {
-		if (read_mp3_info(&mp3info, &data) < 0) {
-			__end();
-			return -1;
+		if (data.use_buffer) {
+			if (read_mp3_info_buffered(&mp3info, &data) < 0) {
+				__end();
+				return -1;
+			}
+		} else {
+			if (read_mp3_info(&mp3info, &data) < 0) {
+				__end();
+				return -1;
+			}
 		}
 	}
 
@@ -932,6 +1066,14 @@ static int madmp3_set_opt(const char *unused, const char *values)
 				check_crc = true;
 			} else {
 				check_crc = false;
+			}
+		} else if (!strncasecmp
+				   (argv[i], "mp3_buffered_io",
+					sizeof("mp3_buffered_io") - 1)) {
+			if (opt_is_on(argv[i])) {
+				use_buffer = true;
+			} else {
+				use_buffer = false;
 			}
 		} else if (!strncasecmp
 				   (argv[i], "show_encoder_msg",
@@ -1046,9 +1188,16 @@ static int madmp3_end(void)
 	free_mp3_info(&mp3info);
 	free_bitrate(&g_inst_br);
 
-	if (data.fd >= 0) {
-		sceIoClose(data.fd);
-		data.fd = -1;
+	if (data.use_buffer) {
+		if (data.r != NULL) {
+			buffered_reader_close(data.r);
+			data.r = NULL;
+		}
+	} else {
+		if (data.fd >= 0) {
+			sceIoClose(data.fd);
+			data.fd = -1;
+		}
 	}
 
 	return 0;

@@ -35,6 +35,16 @@ extern "C"
  */
 	extern SceUID g_status_sema;
 
+/**
+ * 上次按快进退键类型
+ */
+	extern bool g_last_seek_is_forward;
+
+/**
+ * 上次按快进退键时间
+ */
+	extern u64 g_last_seek_tick;
+
 	int generic_lock(void);
 	int generic_unlock(void);
 	int generic_set_opt(const char *unused, const char *values);

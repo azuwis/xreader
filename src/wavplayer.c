@@ -199,7 +199,7 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_save(true);
+			scene_power_playing_music(true);
 			generic_unlock();
 			wav_seek_seconds(g_play_time);
 		} else if (g_status == ST_FBACKWARD) {
@@ -209,7 +209,7 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_save(true);
+			scene_power_playing_music(true);
 			generic_unlock();
 			wav_seek_seconds(g_play_time);
 		}

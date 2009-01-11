@@ -19,6 +19,7 @@
  */
 
 #include <pspkernel.h>
+#include <psprtc.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
@@ -183,6 +184,98 @@ static int ape_seek_seconds(double seconds)
 }
 
 /**
+ * 处理快进快退
+ *
+ * @return
+ * - -1 should exit
+ * - 0 OK
+ */
+static int handle_seek(void)
+{
+	u64 timer_end;
+
+	if (1) {
+
+		if (g_status == ST_FFOWARD) {
+			sceRtcGetCurrentTick(&timer_end);
+
+			generic_lock();
+			if (g_last_seek_is_forward) {
+				generic_unlock();
+
+				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.3) {
+					g_play_time += g_seek_seconds;
+
+					if (g_play_time >= g_duration) {
+						return -1;
+					}
+
+					sceKernelDelayThread(300000);
+				} else {
+					scene_power_playing_music(true);
+
+					if (ape_seek_seconds(g_play_time) < 0) {
+						return -1;
+					}
+
+					generic_lock();
+					g_status = ST_PLAYING;
+					generic_unlock();
+				}
+			} else {
+				generic_unlock();
+			}
+		} else if (g_status == ST_FBACKWARD) {
+			sceRtcGetCurrentTick(&timer_end);
+
+			generic_lock();
+			if (!g_last_seek_is_forward) {
+				generic_unlock();
+
+				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.3) {
+					g_play_time -= g_seek_seconds;
+
+					if (g_play_time < 0) {
+						g_play_time = 0;
+					}
+
+					sceKernelDelayThread(300000);
+				} else {
+					scene_power_playing_music(true);
+
+					if (ape_seek_seconds(g_play_time) < 0)
+						return -1;
+
+					generic_lock();
+					g_status = ST_PLAYING;
+					generic_unlock();
+				}
+			} else {
+				generic_unlock();
+			}
+		}
+
+		return 0;
+	} else {
+		if (g_status == ST_FFOWARD) {
+			generic_lock();
+			g_status = ST_PLAYING;
+			generic_unlock();
+			scene_power_playing_music(true);
+			ape_seek_seconds(g_play_time + g_seek_seconds);
+		} else if (g_status == ST_FBACKWARD) {
+			generic_lock();
+			g_status = ST_PLAYING;
+			generic_unlock();
+			scene_power_playing_music(true);
+			ape_seek_seconds(g_play_time - g_seek_seconds);
+		}
+	}
+
+	return 0;
+}
+
+/**
  * APE音乐播放回调函数，
  * 负责将解码数据填充声音缓存区
  *
@@ -203,19 +296,11 @@ static int ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFOWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			scene_power_save(true);
-			generic_unlock();
-			ape_seek_seconds(g_play_time + g_seek_seconds);
-		} else if (g_status == ST_FBACKWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			scene_power_save(true);
-			generic_unlock();
-			ape_seek_seconds(g_play_time - g_seek_seconds);
+		if (handle_seek() == -1) {
+			__end();
+			return -1;
 		}
+
 		clear_snd_buf(buf, snd_buf_frame_size);
 		return 0;
 	}

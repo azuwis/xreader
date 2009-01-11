@@ -19,6 +19,7 @@
  */
 
 #include <pspkernel.h>
+#include <psprtc.h>
 #include <string.h>
 #include <stdio.h>
 #include <mpcdec/mpcdec.h>
@@ -33,6 +34,16 @@
 #include "common/utils.h"
 #include "apetaglib/APETag.h"
 #include "dbg.h"
+
+/**
+ * 上次按快进退键类型
+ */
+bool g_last_seek_is_forward = false;
+
+/**
+ * 上次按快进退键时间
+ */
+u64 g_last_seek_tick;
 
 /**
  * 休眠前播放状态
@@ -57,7 +68,7 @@ int g_seek_seconds = 0;
 /**
  * 当前驱动播放状态
  */
-int g_status = 0;
+int g_status = ST_UNKNOWN;
 
 /**
  * 当前驱动播放状态写锁
@@ -147,11 +158,15 @@ int generic_get_status(void)
 int generic_fforward(int sec)
 {
 	generic_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
+	if (g_status == ST_PLAYING || g_status == ST_PAUSED
+		|| g_status == ST_FBACKWARD)
 		g_status = ST_FFOWARD;
-	generic_unlock();
 
 	g_seek_seconds = sec;
+
+	sceRtcGetCurrentTick(&g_last_seek_tick);
+	g_last_seek_is_forward = true;
+	generic_unlock();
 
 	return 0;
 }
@@ -166,11 +181,15 @@ int generic_fforward(int sec)
 int generic_fbackward(int sec)
 {
 	generic_lock();
-	if (g_status == ST_PLAYING || g_status == ST_PAUSED)
+	if (g_status == ST_PLAYING || g_status == ST_PAUSED
+		|| g_status == ST_FFOWARD)
 		g_status = ST_FBACKWARD;
-	generic_unlock();
 
 	g_seek_seconds = sec;
+
+	sceRtcGetCurrentTick(&g_last_seek_tick);
+	g_last_seek_is_forward = false;
+	generic_unlock();
 
 	return 0;
 }

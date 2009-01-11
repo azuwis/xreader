@@ -172,7 +172,7 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_save(true);
+			scene_power_playing_music(true);
 			generic_unlock();
 			tta_seek_seconds(g_play_time);
 		} else if (g_status == ST_FBACKWARD) {
@@ -182,7 +182,7 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_save(true);
+			scene_power_playing_music(true);
 			generic_unlock();
 			tta_seek_seconds(g_play_time);
 		}
@@ -256,19 +256,20 @@ static int __init(void)
 
 static int tta_read_tag(const char *spath)
 {
-	int fd;
+	buffered_reader_t *reader;
 
 	struct MP3Info info;
 
 	memset(&info, 0, sizeof(info));
-	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
-	if (fd < 0) {
+	reader = buffered_reader_open(spath, 1024, 0);
+
+	if (reader == NULL) {
 		return -1;
 	}
 
-	read_id3v2_tag(fd, &info);
-	sceIoClose(fd);
+	read_id3v2_tag_buffered(reader, &info);
+	buffered_reader_close(reader);
 
 	STRCPY_S(g_taginfo.artist, info.tag.author);
 	STRCPY_S(g_taginfo.title, info.tag.title);
