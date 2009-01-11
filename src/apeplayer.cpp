@@ -203,7 +203,7 @@ static int handle_seek(void)
 			if (g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.5) {
+				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 1.0) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -244,7 +244,7 @@ static int handle_seek(void)
 			if (!g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.5) {
+				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 1.0) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -254,8 +254,8 @@ static int handle_seek(void)
 
 					generic_unlock();
 
-					if (g_play_time >= g_duration) {
-						return -1;
+					if (g_play_time < 0) {
+						g_play_time = 0;
 					}
 
 					sceKernelDelayThread(100000);
