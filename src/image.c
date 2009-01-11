@@ -323,6 +323,7 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 
 	if (newdata == NULL) {
 		dbg_printf(d, "%s: 内存不足无法完成旋转!", __func__);
+		config.rotate = conf_rotate_0;
 		return;
 	}
 	dword i, j;
