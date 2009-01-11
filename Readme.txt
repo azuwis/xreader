@@ -17,10 +17,10 @@ xReaderÖ§³Ö×Ô¶¯·­Ò³ºÍ×Ô¶¯¹öÆÁ¹¦ÄÜ£¬Ö§³Ö¶ÁÈ¡Í¼ÏñEXIFÐÅÏ¢£¬Ö§³Ö½âÑ¹Ëõµµ°¸ÎÄ¼þ£¬Ö§³
 µÈµÈeReader²»Ö§³ÖµÄ¹¦ÄÜ¡£
 4. ¸üºÃµÄÓ²¼þÖ§³Ö:
 xReaderÖ§³Ö8GMS¿¨£¬Ö§³ÖPSP2000£¨ÒÔ¼°Æä64MBÄÚ´æ£©£¬Ö§³Ö×îÐÂM33°æ±¾¡£
+5. Ö§³Ö¶àÖÖÒôÀÖ¸ñÊ½
+xReaderÖ§³Ö²¥·ÅMP3£¨Ó²/Èí½âÂë£©¡¢Musepack(MPC)¡¢TTA¡¢FLAC¡¢APE¡¢WAV¸ñÊ½¼°Æä±êÇ©µÈÐÅÏ¢ÏÔÊ¾
 
 Î´À´Õ¹Íû£º
-½«Ö§³ÖMediaEngineÒôÀÖ²¥·Å£¬²¥·ÅMP3 WMAÊ±½«²»Õ¼ÓÃCPU×ÊÔ´¡£
-½«Ö§³Ö¸ü¶àÒôÆµ¸ñÊ½£¨OGG£¬MusePack£¬FLAC£¬APE£¬TTAµÈµÈ£©
 ½«Ö§³ÖGraphics Engine»æÍ¼
 ½«Ö§³Ö¶àÏß³Ì×Ô¶¯Ô¤¶Á¹¦ÄÜ£¬ÏµÍ³¿ÕÏÐ×Ô¶¯»º´æÍ¼Ïñ»òÎÄ×Ö¡£
 ½«Ö§³ÖLRC¸è´Ê×Ô¶¯ËÑË÷ÏÂÔØ
@@ -178,7 +178,13 @@ MP3:
 show_encoder_msg=y/n
 ÊÇ·ñÏÔÊ¾±àÂëÆ÷ÐÅÏ¢
 mp3_brute_mode=on/off
-ÊÇ·ñÊ¹ÓÃ±©Á¦·¨½âÂëMP3£¬Èç¹ûMP3²¥·ÅÓÐÎÊÌâ£¬ÊÔÊÔÕâ¸ö
+ÊÇ·ñÊ¹ÓÃ±©Á¦·¨½âÂëMP3£¬Èç¹ûMP3²¥·ÅÓÐÎÊÌâ£¬ÊÔÊÔÕâ¸ö£¬Ä¬ÈÏÎª·ñ
+mp3_check_crc=on/off
+ÊÇ·ñ×ÜÊÇ¼ì²éMP3µÄCRC¼ìÑéÏûÏ¢£¬Ä¬ÈÏÎª·ñ
+mp3_buffered_io=on/off
+ÊÇ·ñÊ¹ÓÃ»º³å×°ÔØMP3Êý¾Ý£¬Ä¬ÈÏÎªÊÇ
+mp3_use_me=on/off
+ÊÇ·ñÊ¹ÓÃMP3Ó²¼þ½âÂë(Media Engine£©¹¦ÄÜ£¬·ñÔòÊ¹ÓÃlibMAD½øÐÐÈí¼þ½âÂë¡£Ä¬ÈÏÎªÊÇ
 
 WAV:
 ÔÝÎÞ
@@ -188,6 +194,6 @@ show_encoder_msg=y/n
 ÊÇ·ñÏÔÊ¾±àÂëÆ÷ÐÅÏ¢
 
 ½«ËüÃÇÐ´³ÉÒ»ÐÐ£¬Èç:
-musicdrv_opts=show_encoder_msg=on mp3_brute_mode=on
+musicdrv_opts=show_encoder_msg=on mp3_brute_mode=on mp3_use_me=on
 
-½«ÏÔÊ¾MPC¡¢MP3¡¢WAV¡¢TTAµÄ±àÂëÆ÷ÐÅÏ¢£¬²¢Ê¹ÓÃ±©Á¦·¨½âÂëMP3
+½«ÏÔÊ¾MPC¡¢MP3¡¢WAV¡¢TTAµÄ±àÂëÆ÷ÐÅÏ¢£¬²¢Ê¹ÓÃ±©Á¦·¨Ó²¼þ½âÂëMP3
