@@ -771,10 +771,17 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			int frame_size, ret, brate = 0;
 
 			do {
-				if ((frame_size =
-					 search_valid_frame_me_buffered(&data, &brate)) < 0) {
-					__end();
-					return -1;
+				if (data.use_buffer) {
+					if ((frame_size =
+						 search_valid_frame_me_buffered(&data, &brate)) < 0) {
+						__end();
+						return -1;
+					}
+				} else {
+					if ((frame_size = search_valid_frame_me(&data, &brate)) < 0) {
+						__end();
+						return -1;
+					}
 				}
 
 				if (data.use_buffer)
