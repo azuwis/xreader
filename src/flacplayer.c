@@ -297,7 +297,7 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			generic_unlock();
 			flac_seek_seconds(g_play_time - g_seek_seconds);
 		}
-		clear_snd_buf(buf, snd_buf_frame_size);
+		xMP3ClearSndBuf(buf, snd_buf_frame_size);
 		sceKernelDelayThread(100000);
 		return 0;
 	}

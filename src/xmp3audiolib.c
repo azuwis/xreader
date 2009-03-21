@@ -286,7 +286,7 @@ void xMP3AudioEnd()
  * @param buf 声音缓冲区指针
  * @param frames 帧数大小
  */
-void clear_snd_buf(void *buf, int frames)
+void xMP3ClearSndBuf(void *buf, int frames)
 {
 	memset(buf, 0, frames * 2 * 2);
 }

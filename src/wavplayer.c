@@ -202,7 +202,7 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			generic_unlock();
 			wav_seek_seconds(g_play_time);
 		}
-		clear_snd_buf(buf, snd_buf_frame_size);
+		xMP3ClearSndBuf(buf, snd_buf_frame_size);
 		sceKernelDelayThread(100000);
 		return 0;
 	}
