@@ -951,36 +951,20 @@ static int mp3_load(const char *spath, const char *lpath)
 
 	data.use_buffer = use_buffer;
 
-	if (data.use_buffer)
-		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
-	else
-		data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
-	if (data.use_buffer) {
-		if (data.r == NULL) {
-			return -1;
-		}
-	} else {
-		if (data.fd < 0)
-			return -1;
-	}
+	if (data.fd < 0)
+		return -1;
 
-	if (data.use_buffer)
-		data.size = buffered_reader_length(data.r);
-	else {
-		data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
-		sceIoLseek(data.fd, 0, PSP_SEEK_SET);
-	}
+	data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
+	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
 
 	g_info.filesize = data.size;
 
 	if (data.size < 0)
 		return data.size;
 
-	if (data.use_buffer)
-		buffered_reader_seek(data.r, 0);
-	else
-		sceIoLseek(data.fd, 0, PSP_SEEK_SET);
+	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
 
 	mad_stream_init(&stream);
 	mad_frame_init(&frame);
@@ -997,34 +981,14 @@ static int mp3_load(const char *spath, const char *lpath)
 	mp3info.have_crc = false;
 
 	if (use_brute_method) {
-		if (data.use_buffer) {
-			// read ID3 tag first
-			read_mp3_info_buffered(&mp3info, &data);
-
-			if (read_mp3_info_brute_buffered(&mp3info, &data) < 0) {
-				__end();
-				return -1;
-			}
-		} else {
-			// read ID3 tag first
-			read_mp3_info(&mp3info, &data);
-
-			if (read_mp3_info_brute(&mp3info, &data) < 0) {
-				__end();
-				return -1;
-			}
+		if (read_mp3_info_brute(&mp3info, &data) < 0) {
+			__end();
+			return -1;
 		}
 	} else {
-		if (data.use_buffer) {
-			if (read_mp3_info_buffered(&mp3info, &data) < 0) {
-				__end();
-				return -1;
-			}
-		} else {
-			if (read_mp3_info(&mp3info, &data) < 0) {
-				__end();
-				return -1;
-			}
+		if (read_mp3_info(&mp3info, &data) < 0) {
+			__end();
+			return -1;
 		}
 	}
 
@@ -1035,6 +999,14 @@ static int mp3_load(const char *spath, const char *lpath)
 	g_info.duration = mp3info.duration;
 
 	generic_readtag(&g_info, spath);
+
+	if (data.use_buffer) {
+		SceOff cur = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
+		sceIoClose(data.fd);
+		data.fd = -1;
+		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
+		buffered_reader_seek(data.r, cur);
+	}
 
 	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%sframes %d%s]",
 			   g_info.channels, g_info.sample_freq,
