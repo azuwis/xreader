@@ -228,7 +228,7 @@ static int id3v2_match(const uint8_t * buf)
 		(buf[7] & 0x80) == 0 && (buf[8] & 0x80) == 0 && (buf[9] & 0x80) == 0;
 }
 
-static void id3v2_parse(MusicInfoInternalTag * tag_info, const MusicInfo *music_info, SceUID fd,
+static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 						int len, uint8_t version, uint8_t flags)
 {
 	int isv34, tlen;
@@ -341,7 +341,7 @@ static int read_id3v2_tag(MusicInfoInternalTag *tag, const MusicInfo *music_info
 		/* parse ID3v2 header */
 		len = ((buf[6] & 0x7f) << 21) |
 			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
-		id3v2_parse(tag, music_info, fd, len, buf[3], buf[5]);
+		id3v2_parse(tag, fd, len, buf[3], buf[5]);
 	} else {
 		sceIoLseek(fd, 0, SEEK_SET);
 	}
@@ -398,6 +398,8 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 
 	memset(&tag, 0, sizeof(tag));
 
+	tag.type = NONE;
+
 	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
@@ -419,15 +421,28 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 	// Search for APETag
 	read_ape_tag(&tag, spath);
 
-	if (tag.type & APETAG) {
-		memcpy(&music_info->tag, &tag.apetag, sizeof(music_info->tag));
-	} else if (tag.type & ID3V2) {
-		memcpy(&music_info->tag, &tag.id3v2, sizeof(music_info->tag));
-	} else if (tag.type & ID3V1) {
-		memcpy(&music_info->tag, &tag.id3v1, sizeof(music_info->tag));
+	if (config.apetagorder) {
+		if (tag.type & APETAG) {
+			memcpy(&music_info->tag, &tag.apetag, sizeof(music_info->tag));
+		} else if (tag.type & ID3V2) {
+			memcpy(&music_info->tag, &tag.id3v2, sizeof(music_info->tag));
+		} else if (tag.type & ID3V1) {
+			memcpy(&music_info->tag, &tag.id3v1, sizeof(music_info->tag));
+		} else {
+			memset(&music_info->tag, 0, sizeof(music_info->tag));
+			music_info->tag.type = NONE;
+		}
 	} else {
-		memset(&music_info->tag, 0, sizeof(music_info->tag));
-		music_info->tag.type = NONE;
+		if (tag.type & ID3V2) {
+			memcpy(&music_info->tag, &tag.id3v2, sizeof(music_info->tag));
+		} else if (tag.type & APETAG) {
+			memcpy(&music_info->tag, &tag.apetag, sizeof(music_info->tag));
+		} else if (tag.type & ID3V1) {
+			memcpy(&music_info->tag, &tag.id3v1, sizeof(music_info->tag));
+		} else {
+			memset(&music_info->tag, 0, sizeof(music_info->tag));
+			music_info->tag.type = NONE;
+		}
 	}
 
 	return 0;
