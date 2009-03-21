@@ -1364,6 +1364,7 @@ static int image_handle_input(dword * selidx, dword key)
 	else if (key == CTRL_ANALOG && config.img_enable_analog) {
 		int x, y, orgtop = curtop, orgleft = curleft;
 
+		slideshow_move = true;
 		ctrl_analog(&x, &y);
 		x = x / 31 * (int) config.imgmvspd / 2;
 		y = y / 31 * (int) config.imgmvspd / 2;
