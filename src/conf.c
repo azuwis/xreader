@@ -206,6 +206,7 @@ static void conf_default(p_conf conf)
 	conf->imgpaging = conf_imgpaging_direct;
 	conf->imgpaging_spd = 8;
 	conf->imgpaging_interval = 10;
+	conf->imgpaging_duration = 10;
 	conf->fontsize = 12;
 	conf->bookfontsize = 12;
 	conf->reordertxt = false;
@@ -285,6 +286,7 @@ static void conf_default(p_conf conf)
 	SPRINTF_S(conf->musicdrv_opts,
 			  "mp3_brute_mode=off mp3_use_me=on mp3_check_crc=off mp3_buffered_io=on mp3_buffer_size=%d",
 			  BUFFERED_READER_BUFFER_SIZE);
+	conf->magnetic_scrolling = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -1007,6 +1009,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->imgpaging_interval =
 		iniparser_getint(dict, "Image:imgpaging_interval",
 						 conf->imgpaging_interval);
+	conf->imgpaging_duration =
+		iniparser_getint(dict, "Image:imgpaging_duration",
+						 conf->imgpaging_duration);
 	for (i = 0; i < 20; ++i) {
 		char key[20];
 
@@ -1158,6 +1163,9 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 			 iniparser_getstring(dict, "Music:musicdrv_opts",
 								 conf->musicdrv_opts));
 
+	conf->magnetic_scrolling = 
+		iniparser_getboolean(dict, "Image:magnetic_scrolling", conf->magnetic_scrolling);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1302,6 +1310,9 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Image:imgpaging_interval",
 						dwordToString(buf, sizeof(buf),
 									  conf->imgpaging_interval));
+	iniparser_setstring(dict, "Image:imgpaging_duration",
+						dwordToString(buf, sizeof(buf),
+									  conf->imgpaging_duration));
 	for (i = 0; i < 20; ++i) {
 		char key[20];
 
@@ -1452,6 +1463,9 @@ extern bool ini_conf_save(p_conf conf)
 						alignToString(buf, sizeof(buf), conf->infobar_align));
 
 	iniparser_setstring(dict, "Music:musicdrv_opts", conf->musicdrv_opts);
+
+	iniparser_setstring(dict, "Image:magnetic_scrolling",
+						booleanToString(buf, sizeof(buf), conf->magnetic_scrolling));
 
 	iniparser_dump_ini(dict, fp);
 

@@ -57,7 +57,7 @@ extern void quicksort(void *data, int left, int right, int datasize,
 {
 	int fid;
 
-	fid = freq_enter_level(FREQ_MID);
+	fid = freq_enter_hotzone();
 	_quicksort(data, left, right, datasize, compare);
 	freq_leave(fid);
 }

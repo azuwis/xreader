@@ -173,6 +173,7 @@ typedef struct
 	t_conf_imgpaging imgpaging;
 	dword imgpaging_spd;
 	dword imgpaging_interval;
+	dword imgpaging_duration;
 	dword flkey[20];
 	int fontsize;
 	bool reordertxt;
@@ -233,6 +234,7 @@ typedef struct
 	 */
 	t_conf_align infobar_align;
 	char musicdrv_opts[PATH_MAX];
+	bool magnetic_scrolling;
 } t_conf, *p_conf;
 
 /* txt key:

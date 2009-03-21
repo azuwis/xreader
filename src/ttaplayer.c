@@ -133,7 +133,7 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFOWARD) {
+		if (g_status == ST_FFORWARD) {
 			g_play_time += g_seek_seconds;
 			if (g_play_time >= g_info.duration) {
 				__end();
@@ -394,42 +394,28 @@ static int tta_resume(const char *spath, const char *lpath)
  */
 static int tta_get_info(struct music_info *pinfo)
 {
+	generic_get_info(pinfo);
+
 	if (pinfo->type & MD_GET_TITLE) {
-		if (g_info.tag.title[0] != '\0') {
-			pinfo->encode = g_info.tag.encode;
-			STRCPY_S(pinfo->title, g_info.tag.title);
-		} else {
+		if (g_info.tag.title[0] == '\0') {
 			pinfo->encode = conf_encode_gbk;
 			STRCPY_S(pinfo->title, (const char *) ttainfo.ID3.title);
 		}
 	}
 	if (pinfo->type & MD_GET_ARTIST) {
-		if (g_info.tag.artist[0] != '\0') {
-			pinfo->encode = g_info.tag.encode;
-			STRCPY_S(pinfo->artist, (const char *) g_info.tag.artist);
-		} else {
+		if (g_info.tag.artist[0] == '\0') {
 			pinfo->encode = conf_encode_gbk;
 			STRCPY_S(pinfo->artist, (const char *) ttainfo.ID3.artist);
 		}
 	}
 	if (pinfo->type & MD_GET_ALBUM) {
-		if (g_info.tag.album[0] != '\0') {
-			pinfo->encode = g_info.tag.encode;
-			STRCPY_S(pinfo->album, (const char *) g_info.tag.album);
-		} else {
+		if (g_info.tag.album[0] == '\0') {
 			pinfo->encode = conf_encode_gbk;
 			STRCPY_S(pinfo->album, (const char *) ttainfo.ID3.album);
 		}
 	}
-	if (pinfo->type & MD_GET_COMMENT) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->comment, "");
-	}
 	if (pinfo->type & MD_GET_CURTIME) {
 		pinfo->cur_time = g_play_time;
-	}
-	if (pinfo->type & MD_GET_DURATION) {
-		pinfo->duration = g_info.duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] = 222;

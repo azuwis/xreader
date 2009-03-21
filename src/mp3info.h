@@ -21,7 +21,6 @@
 #ifndef MP3INFO_H
 #define MP3INFO_H
 
-#include "musictag.h"
 #include "buffered_reader.h"
 
 #define LB_CONV(x)	\
@@ -55,7 +54,6 @@ struct MP3Info
 	int sample_freq;
 	double duration;
 	double average_bitrate;
-	struct MusicTag tag;
 	dword *frameoff;
 };
 

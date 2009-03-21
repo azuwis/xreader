@@ -145,7 +145,7 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFOWARD) {
+		if (g_status == ST_FFORWARD) {
 			g_play_time += g_seek_seconds;
 			if (g_play_time >= g_info.duration) {
 				__end();
@@ -525,33 +525,12 @@ static int wav_resume(const char *spath, const char *lpath)
  */
 static int wav_get_info(struct music_info *pinfo)
 {
-	if (pinfo->type & MD_GET_TITLE) {
-		STRCPY_S(pinfo->title, g_info.tag.title);
-	}
-	if (pinfo->type & MD_GET_ARTIST) {
-		STRCPY_S(pinfo->artist, g_info.tag.artist);
-	}
-	if (pinfo->type & MD_GET_COMMENT) {
-		STRCPY_S(pinfo->comment, "");
-	}
 	if (pinfo->type & MD_GET_CURTIME) {
 		pinfo->cur_time = g_play_time;
-	}
-	if (pinfo->type & MD_GET_DURATION) {
-		pinfo->duration = g_info.duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] = 33;
 		pinfo->psp_freq[1] = 16;
-	}
-	if (pinfo->type & MD_GET_FREQ) {
-		pinfo->freq = g_info.sample_freq;
-	}
-	if (pinfo->type & MD_GET_CHANNELS) {
-		pinfo->channels = g_info.channels;
-	}
-	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = g_info.avg_bps / 1000;
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "wave");
@@ -560,7 +539,7 @@ static int wav_get_info(struct music_info *pinfo)
 		SPRINTF_S(pinfo->encode_msg, "");
 	}
 
-	return 0;
+	return generic_get_info(pinfo);
 }
 
 /**

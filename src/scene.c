@@ -187,7 +187,7 @@ bool scene_load_font(void)
 	STRCAT_S(fontzipfile, "fonts.zip");
 	SPRINTF_S(efontfile, "ASC%d", config.fontsize);
 	SPRINTF_S(cfontfile, "GBK%d", config.fontsize);
-	int fid = freq_enter_level(FREQ_MID);
+	int fid = freq_enter_hotzone();
 	if (!disp_load_zipped_font(fontzipfile, efontfile, cfontfile)) {
 		SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(), config.fontsize);
 		SPRINTF_S(cfontfile, "%sfonts/GBK%d", scene_appdir(), config.fontsize);
@@ -229,7 +229,7 @@ bool scene_load_book_font(void)
 
 #ifdef ENABLE_TTF
 	if (config.usettf) {
-		int fid = freq_enter_level(FREQ_MID);
+		int fid = freq_enter_hotzone();
 		loaded =
 			disp_load_zipped_truetype_book_font(config.ettfarch,
 												config.cttfarch,
@@ -251,7 +251,7 @@ bool scene_load_book_font(void)
 		STRCAT_S(fontzipfile, "fonts.zip");
 		SPRINTF_S(efontfile, "ASC%d", config.bookfontsize);
 		SPRINTF_S(cfontfile, "GBK%d", config.bookfontsize);
-		int fid = freq_enter_level(FREQ_MID);
+		int fid = freq_enter_hotzone();
 		if (!disp_load_zipped_book_font(fontzipfile, efontfile, cfontfile)) {
 			SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(),
 					  config.bookfontsize);
@@ -669,6 +669,11 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 					else
 						config.imgpaging_interval--;
 					break;
+				case 12:
+					if (config.imgpaging_duration == 0)
+						config.imgpaging_duration = 100;
+					else
+						config.imgpaging_duration--;
 					break;
 			}
 			return win_menu_op_redraw;
@@ -738,6 +743,12 @@ t_win_menu_op scene_ioptions_menucb(dword key, p_win_menuitem item,
 						config.imgpaging_interval = 0;
 					else
 						config.imgpaging_interval++;
+					break;
+				case 12:
+					if (config.imgpaging_duration == 100)
+						config.imgpaging_duration = 0;
+					else
+						config.imgpaging_duration++;
 					break;
 			}
 			return win_menu_op_redraw;
@@ -892,6 +903,12 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 																	DISP_FONTSIZE),
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
+	SPRINTF_S(number, _("%.1f秒"), 0.1f * config.imgpaging_duration);
+	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
+				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
+																	DISP_FONTSIZE),
+				   COLOR_WHITE, (const byte *) number);
+	lines++;
 }
 
 dword scene_ioptions(dword * selidx)
@@ -900,7 +917,7 @@ dword scene_ioptions(dword * selidx)
 
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
 
-	t_win_menuitem item[12];
+	t_win_menuitem item[13];
 	dword i, index;
 
 	STRCPY_S(item[0].name, _("    缩放算法"));
@@ -915,6 +932,7 @@ dword scene_ioptions(dword * selidx)
 	STRCPY_S(item[9].name, _("查看EXIF信息"));
 	STRCPY_S(item[10].name, _("翻页滚动速度"));
 	STRCPY_S(item[11].name, _("翻页滚动间隔"));
+	STRCPY_S(item[12].name, _("翻页滚动时长"));
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
 

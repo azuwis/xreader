@@ -50,6 +50,7 @@ typedef struct _lyric
 
 extern void lyric_init(p_lyric l);
 extern bool lyric_open(p_lyric l, const char *filename);
+extern bool lyric_open_raw(p_lyric l, const char *lyric, size_t size);
 extern void lyric_close(p_lyric l);
 extern void lyric_update_pos(p_lyric l, void *tm);
 extern bool lyric_get_cur_lines(p_lyric l, int extralines, const char **lines,

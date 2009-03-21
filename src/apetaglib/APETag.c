@@ -56,7 +56,97 @@ static long has_id3(FILE * fp)
 	return -1;
 }
 
-static int ReadAPETag(FILE * fp, APETag * tag)
+static APETagItems *new_item(void)
+{
+	APETagItems *p = (APETagItems *) malloc(sizeof(APETagItems));
+
+	p->item_count = 0;
+	p->items = NULL;
+
+	return p;
+}
+
+static int free_item(APETagItems * items)
+{
+	if (items == NULL) {
+		return -1;
+	}
+
+	int i;
+
+	for (i = 0; i < items->item_count; ++i) {
+		free(items->items[i]);
+		items->items[i] = NULL;
+	}
+	items->item_count = 0;
+	free(items->items);
+	items->items = NULL;
+	free(items);
+
+	return 0;
+}
+
+static int append_item(APETagItems * items, void *ptr, int size)
+{
+	if (items == NULL || ptr == NULL || size == 0) {
+		apetag_errno = APETAG_BAD_ARGUMENT;
+		return -1;
+	}
+
+	if (items->item_count == 0) {
+		items->item_count++;
+		items->items = (APETagItem **) malloc(sizeof(APETagItem *) * 1);
+		if (items->items == NULL) {
+			apetag_errno = APETAG_MEMORY_NOT_ENOUGH;
+			return -1;
+		}
+		items->items[0] = (APETagItem *) malloc(size);
+		if (items->items[0] == NULL) {
+			apetag_errno = APETAG_MEMORY_NOT_ENOUGH;
+			return -1;
+		}
+		memcpy(items->items[0], ptr, size);
+	} else {
+		items->item_count++;
+		APETagItem **t = (APETagItem **) realloc(items->items,
+												 sizeof(APETagItem *) *
+												 items->item_count);
+		if (t != NULL)
+			items->items = t;
+		else {
+			apetag_errno = APETAG_MEMORY_NOT_ENOUGH;
+			return -1;
+		}
+		items->items[items->item_count - 1] = (APETagItem *) malloc(size);
+		if (items->items[items->item_count - 1] == NULL) {
+			apetag_errno = APETAG_MEMORY_NOT_ENOUGH;
+			return -1;
+		}
+		memcpy(items->items[items->item_count - 1], ptr, size);
+	}
+
+	apetag_errno = APETAG_OK;
+
+	return 0;
+}
+
+static APETagItem *find_item(const APETagItems * items, const char *searchstr)
+{
+	if (items == NULL)
+		return NULL;
+
+	int i;
+
+	for (i = 0; i < items->item_count; ++i) {
+		if (strcmp(APE_ITEM_GET_KEY(items->items[i]), searchstr) == 0) {
+			return items->items[i];
+		}
+	}
+
+	return NULL;
+}
+
+static int read_apetag(FILE * fp, APETag * tag)
 {
 	if (fread(&tag->footer, sizeof(APETagHeader), 1, fp) == 1) {
 		if (memcmp(&tag->footer.preamble, "APETAGEX", 8) == 0) {
@@ -68,7 +158,7 @@ static int ReadAPETag(FILE * fp, APETag * tag)
 			 */
 
 			tag->item_count = tag->footer.item_count;
-			tag->items = new_APETagItems();
+			tag->items = new_item();
 
 			if (tag->items == NULL) {
 				apetag_errno = APETAG_MEMORY_NOT_ENOUGH;
@@ -100,7 +190,7 @@ static int ReadAPETag(FILE * fp, APETag * tag)
 
 //				sprintf(str, "项目 %%d 大小 %%d %%.%ds: %%.%ds", m, size);
 //              dbg_printf(d, str, i+1, size, p+8, p + 8 + 1 + m);
-				append_APETAGItems(tag->items, (void *) p, size + m + 1 + 8);
+				append_item(tag->items, (void *) p, size + m + 1 + 8);
 				p += size + m + 1 + 8;
 			}
 
@@ -125,7 +215,7 @@ static int ReadAPETag(FILE * fp, APETag * tag)
 	return -2;
 }
 
-static int searchForAPETag(FILE * fp, APETag * tag)
+static int search_apetag(FILE * fp, APETag * tag)
 {
 	apetag_errno = APETAG_NOT_IMPLEMENTED;
 
@@ -140,17 +230,17 @@ static int searchForAPETag(FILE * fp, APETag * tag)
 
 	int ret;
 
-	if ((ret = ReadAPETag(fp, tag)) == 0)
+	if ((ret = read_apetag(fp, tag)) == 0)
 		return 0;
 	if (ret == -2) {
 		fseek(fp, -32, SEEK_END);
-		if (ReadAPETag(fp, tag) == 0) {
+		if (read_apetag(fp, tag) == 0) {
 			tag->is_header_or_footer = APE_FOOTER;
 			return 0;
 		}
 		// 如果没有找到，搜索文件头是否有APE标签
 		fseek(fp, 0, SEEK_SET);
-		if (ReadAPETag(fp, tag) == 0) {
+		if (read_apetag(fp, tag) == 0) {
 			tag->is_header_or_footer = APE_HEADER;
 			return 0;
 		}
@@ -159,7 +249,7 @@ static int searchForAPETag(FILE * fp, APETag * tag)
 	return -1;
 }
 
-APETag *loadAPETag(const char *filename)
+APETag *apetag_load(const char *filename)
 {
 	if (filename == NULL)
 		return 0;
@@ -179,7 +269,7 @@ APETag *loadAPETag(const char *filename)
 		return 0;
 	}
 
-	if (searchForAPETag(fp, p) == -1) {
+	if (search_apetag(fp, p) == -1) {
 		apetag_errno = APETAG_ERROR_FILEFORMAT;
 		fclose(fp);
 		return 0;
@@ -191,26 +281,26 @@ APETag *loadAPETag(const char *filename)
 	return p;
 }
 
-int freeAPETag(APETag * tag)
+int apetag_free(APETag * tag)
 {
 	if (tag == NULL) {
 		apetag_errno = APETAG_BAD_ARGUMENT;
 		return 0;
 	}
 
-	free_APETagItems(tag->items);
+	free_item(tag->items);
 	free(tag);
 
 	return 0;
 }
 
-char *APETag_SimpleGet(APETag * tag, const char *key)
+char *apetag_get(APETag * tag, const char *key)
 {
 	if (tag == NULL || key == NULL) {
 		return NULL;
 	}
 
-	APETagItem *pItem = find_APETagItems(tag->items, key);
+	APETagItem *pItem = find_item(tag->items, key);
 
 	if (pItem == NULL || !APE_ITEM_IS_UTF8(pItem)) {
 		return NULL;
@@ -220,3 +310,4 @@ char *APETag_SimpleGet(APETag * tag, const char *key)
 
 	return t;
 }
+

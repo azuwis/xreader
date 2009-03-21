@@ -40,8 +40,7 @@ scene_music.c scene_text.c strsafe.c strsafe.h text.c text.h \
 ttfont.c ttfont.h usb.c usb.h version.h win.c win.h common/datatype.h \
 common/psp_utils.c common/psp_utils.h common/qsort.c common/qsort.h \
 common/utils.c common/utils.h apetaglib/APETag.c apetaglib/APETag.h \
-apetaglib/TagError.c apetaglib/TagHeader.h apetaglib/TagItem.c \
-apetaglib/TagItem.h simple_gettext.h osk.c \
+simple_gettext.h osk.c \
 osk.h exception.c exception.h m33boot.c m33boot.h passwdmgr.c passwdmgr.h \
 archive.c archive.h xrPrx.S xr_RDLib.S \
 depdb.c depdb.h unumd.c unumd.h ssv.c ssv.h crc16.c crc16.h \

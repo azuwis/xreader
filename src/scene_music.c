@@ -618,6 +618,11 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 				(_("重启音频系统"), _("是"), _("否"), COLOR_WHITE,
 				 COLOR_WHITE, config.msgbcolor)) {
 				power_down();
+				power_down();
+				power_down();
+				power_up();
+				power_up();
+				power_up();
 				power_up();
 			}
 			break;

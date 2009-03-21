@@ -8,6 +8,7 @@ extern "C"
 
 #include "common/datatype.h"
 #include "conf.h"
+#include "buffer.h"
 
 typedef enum {
 	NONE   =  0x0,
@@ -36,6 +37,8 @@ typedef struct {
 
 	MusicTagInfo tag;
 } MusicInfo, *PMusicInfo;
+
+extern buffer *tag_lyric;
 
 /**
  * 通用音乐文件标签读取

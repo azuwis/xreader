@@ -21,7 +21,7 @@
 #include <pspkernel.h>
 #include <string.h>
 #include <stdio.h>
-#include <mpcdec/mpcdec.h>
+#include <mpc/mpcdec.h>
 #include <assert.h>
 #include "config.h"
 #include "ssv.h"
@@ -37,59 +37,9 @@
 
 static int __end(void);
 
-/*
-  The data bundle we pass around with our reader to store file
-  position and size etc. 
-*/
-typedef struct reader_data_t
-{
-	SceUID fd;
-	long size;
-	mpc_bool_t seekable;
-} reader_data;
-
-static reader_data data;
-static mpc_decoder decoder;
 static mpc_reader reader;
+static mpc_demux* demux;
 static mpc_streaminfo info;
-
-/*
-  Our implementations of the mpc_reader callback functions.
-*/
-static mpc_int32_t read_impl(void *data, void *ptr, mpc_int32_t size)
-{
-	reader_data *d = (reader_data *) data;
-
-	return sceIoRead(d->fd, ptr, size);
-}
-
-static mpc_bool_t seek_impl(void *data, mpc_int32_t offset)
-{
-	reader_data *d = (reader_data *) data;
-
-	return d->seekable ? (sceIoLseek(d->fd, offset, SEEK_SET), 1) : 0;
-}
-
-static mpc_int32_t tell_impl(void *data)
-{
-	reader_data *d = (reader_data *) data;
-
-	return sceIoLseek(d->fd, 0, SEEK_CUR);
-}
-
-static mpc_int32_t get_size_impl(void *data)
-{
-	reader_data *d = (reader_data *) data;
-
-	return d->size;
-}
-
-static mpc_bool_t canseek_impl(void *data)
-{
-	reader_data *d = (reader_data *) data;
-
-	return d->seekable;
-}
 
 /**
  * Musepack音乐播放缓冲
@@ -100,6 +50,11 @@ static MPC_SAMPLE_FORMAT g_buff[MPC_DECODER_BUFFER_LENGTH];
  * Musepack音乐播放缓冲大小，以帧数计
  */
 static unsigned g_buff_frame_size;
+
+/**
+ * Musepack mpc_reader_exit_stdio()调用需要一个锁
+ */
+static bool reader_inited = false;
 
 /**
  * Musepack音乐播放缓冲当前位置，以帧数计
@@ -183,7 +138,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFOWARD) {
+		if (g_status == ST_FFORWARD) {
 			g_play_time += g_seek_seconds;
 			if (g_play_time >= g_info.duration) {
 				__end();
@@ -194,7 +149,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			generic_set_playback(true);
 			generic_unlock();
 			free_bitrate(&g_inst_br);
-			mpc_decoder_seek_seconds(&decoder, g_play_time);
+			mpc_demux_seek_second(demux, g_play_time);
 			g_buff_frame_size = g_buff_frame_start = 0;
 		} else if (g_status == ST_FBACKWARD) {
 			g_play_time -= g_seek_seconds;
@@ -206,7 +161,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			generic_set_playback(true);
 			generic_unlock();
 			free_bitrate(&g_inst_br);
-			mpc_decoder_seek_seconds(&decoder, g_play_time);
+			mpc_demux_seek_second(demux, g_play_time);
 			g_buff_frame_size = g_buff_frame_start = 0;
 		}
 		xMP3ClearSndBuf(buf, snd_buf_frame_size);
@@ -231,18 +186,18 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-			mpc_uint32_t vbr_update_acc = 0, vbr_update_bits = 0;
+			mpc_frame_info frame;
+			frame.buffer = (MPC_SAMPLE_FORMAT*)g_buff;
 
 			ret =
-				mpc_decoder_decode(&decoder, g_buff, &vbr_update_acc,
-								   &vbr_update_bits);
+				mpc_demux_decode(demux, &frame);
 
-			if (ret == 0) {
+			if (frame.bits == -1) {
 				__end();
 				return -1;
 			}
 
-			g_buff_frame_size = ret;
+			g_buff_frame_size = frame.samples;
 			g_buff_frame_start = 0;
 
 			incr =
@@ -250,7 +205,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				g_info.sample_freq;
 			g_play_time += incr;
 			add_bitrate(&g_inst_br,
-						vbr_update_bits * g_info.sample_freq / MPC_FRAME_LENGTH,
+						frame.bits * g_info.sample_freq / MPC_FRAME_LENGTH,
 						incr);
 		}
 	}
@@ -274,8 +229,10 @@ static int __init(void)
 	memset(g_buff, 0, sizeof(g_buff));
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
+	reader_inited = false;
 
 	g_play_time = 0.;
+	demux = NULL;
 
 	memset(&g_info, 0, sizeof(g_info));
 
@@ -294,30 +251,14 @@ static int mpc_load(const char *spath, const char *lpath)
 {
 	__init();
 
-	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
-
-	if (data.fd < 0) {
+	if (mpc_reader_init_stdio(&reader, spath) < 0) {
 		__end();
 		return -1;
 	}
 
-	data.seekable = TRUE;
-	data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
-	g_info.filesize = data.size;
-	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
-
-	reader.read = read_impl;
-	reader.seek = seek_impl;
-	reader.tell = tell_impl;
-	reader.get_size = get_size_impl;
-	reader.canseek = canseek_impl;
-	reader.data = &data;
-
-	mpc_streaminfo_init(&info);
-	if (mpc_streaminfo_read(&info, &reader) != ERROR_CODE_OK) {
-		__end();
-		return -1;
-	}
+	reader_inited = true;
+    demux = mpc_demux_init(&reader);
+	mpc_demux_get_info(demux, &info);
 
 	if (info.average_bitrate != 0) {
 		g_info.duration = (double) info.total_file_length * 8 / info.average_bitrate;
@@ -326,16 +267,9 @@ static int mpc_load(const char *spath, const char *lpath)
 	g_info.avg_bps = info.average_bitrate;
 	g_info.sample_freq = info.sample_freq;
 	g_info.channels = info.channels;
+	g_info.filesize = info.total_file_length;
 
 	generic_readtag(&g_info, spath);
-
-	mpc_decoder_setup(&decoder, &reader);
-	mpc_decoder_set_seeking(&decoder, &info, 0);
-
-	if (!mpc_decoder_initialize(&decoder, &info)) {
-		__end();
-		return -1;
-	}
 
 	if (xMP3AudioInit() < 0) {
 		__end();
@@ -390,9 +324,14 @@ static int mpc_end(void)
 
 	g_status = ST_STOPPED;
 
-	if (data.fd >= 0) {
-		sceIoClose(data.fd);
-		data.fd = -1;
+	if (demux != NULL) { 
+		mpc_demux_exit(demux);
+		demux = NULL;
+	}
+
+	if (reader_inited == true) {
+		mpc_reader_exit_stdio(&reader);
+		reader_inited = false;
 	}
 
 	free_bitrate(&g_inst_br);
@@ -434,7 +373,7 @@ static int mpc_resume(const char *spath, const char *lpath)
 
 	g_play_time = g_suspend_playing_time;
 	free_bitrate(&g_inst_br);
-	mpc_decoder_seek_seconds(&decoder, g_play_time);
+	mpc_demux_seek_second(demux, g_play_time);
 	g_suspend_playing_time = 0;
 
 	generic_resume(spath, lpath);
@@ -451,41 +390,13 @@ static int mpc_resume(const char *spath, const char *lpath)
  */
 static int mpc_get_info(struct music_info *pinfo)
 {
-	if (pinfo->type & MD_GET_TITLE) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->title, g_info.tag.title);
-	}
-	if (pinfo->type & MD_GET_ALBUM) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->album, g_info.tag.album);
-	}
-	if (pinfo->type & MD_GET_ARTIST) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->artist, g_info.tag.artist);
-	}
-	if (pinfo->type & MD_GET_COMMENT) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->comment, g_info.tag.comment);
-	}
 	if (pinfo->type & MD_GET_CURTIME) {
 		pinfo->cur_time = g_play_time;
-	}
-	if (pinfo->type & MD_GET_DURATION) {
-		pinfo->duration = g_info.duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] =
 			66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
 		pinfo->psp_freq[1] = 111;
-	}
-	if (pinfo->type & MD_GET_FREQ) {
-		pinfo->freq = g_info.sample_freq;
-	}
-	if (pinfo->type & MD_GET_CHANNELS) {
-		pinfo->channels = g_info.channels;
-	}
-	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = g_info.avg_bps / 1000;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
@@ -504,7 +415,7 @@ static int mpc_get_info(struct music_info *pinfo)
 		}
 	}
 
-	return 0;
+	return generic_get_info(pinfo);
 }
 
 /**

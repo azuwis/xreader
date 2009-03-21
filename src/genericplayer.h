@@ -65,6 +65,7 @@ extern "C"
 	int generic_resume(const char *spath, const char *lpath);
 	int generic_suspend(void);
 	void generic_set_playback(bool playing);
+	int generic_get_info(struct music_info *info);
 
 #ifdef __cplusplus
 }

@@ -8,6 +8,7 @@
 #include "conf.h"
 #include "charsets.h"
 #include "apetaglib/APETag.h"
+#include "buffer.h"
 #include "dbg.h"
 
 #define ID3v1_TAG_SIZE 128
@@ -32,6 +33,8 @@ typedef struct {
 	MusicTagInfo id3v2;
 	MusicTagInfo apetag;
 } MusicInfoInternalTag, *PMusicInfoInternalTag;
+
+buffer * tag_lyric = NULL;
 
 static void id3v1_get_string(char *str, int str_size,
 							 const uint8_t * buf, int buf_size)
@@ -308,6 +311,51 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 				id3v2_read_ttag(fd, tlen, info->comment,
 								sizeof(info->comment), info);
 				break;
+			case MKBETAG('T', 'X', 'X', 'X'):
+				{
+					char desc[20], *p = desc;
+					char ch;
+
+					if (tag_lyric) {
+						buffer_free(tag_lyric);
+					}
+
+					tag_lyric = buffer_init();
+
+					sceIoLseek(fd, 1, PSP_SEEK_CUR);
+					desc[0] = '\0';
+
+					// Acount for text encoding byte
+					tlen--;
+
+					while (sceIoRead(fd, &ch, 1) == 1 && 
+							p - desc < sizeof(desc) &&
+						   	ch != '\0') {
+						*p++ = ch;
+						tlen--;
+					}
+
+					tlen--;
+					*p = '\0';
+
+					if (!strcmp(desc, "Lyrics")) {
+						char *p = malloc(tlen);
+
+						if (p == NULL) {
+							return;
+						}
+
+						if (sceIoRead(fd, p, tlen) != tlen) {
+							free(p);
+							return;
+						}
+
+						buffer_copy_string_len(tag_lyric, p, tlen);
+						
+						free(p);
+					}
+				}
+				break;
 			case 0:
 				/* padding, skip to end */
 				sceIoLseek(fd, len, PSP_SEEK_CUR);
@@ -351,12 +399,12 @@ static int read_id3v2_tag(MusicInfoInternalTag *tag, const MusicInfo *music_info
 
 void read_ape_tag(MusicInfoInternalTag *tag_info, const char *spath)
 {
-	APETag *tag = loadAPETag(spath);
+	APETag *tag = apetag_load(spath);
 
 	if (tag != NULL) {
-		char *title = APETag_SimpleGet(tag, "Title");
-		char *artist = APETag_SimpleGet(tag, "Artist");
-		char *album = APETag_SimpleGet(tag, "Album");
+		char *title = apetag_get(tag, "Title");
+		char *artist = apetag_get(tag, "Artist");
+		char *album = apetag_get(tag, "Album");
 
 		if (title) {
 			STRCPY_S(tag_info->apetag.title, title);
@@ -368,7 +416,7 @@ void read_ape_tag(MusicInfoInternalTag *tag_info, const char *spath)
 			free(artist);
 			artist = NULL;
 		} else {
-			artist = APETag_SimpleGet(tag, "Album artist");
+			artist = apetag_get(tag, "Album artist");
 			if (artist) {
 				STRCPY_S(tag_info->apetag.artist, artist);
 				free(artist);
@@ -381,7 +429,7 @@ void read_ape_tag(MusicInfoInternalTag *tag_info, const char *spath)
 			album = NULL;
 		}
 
-		freeAPETag(tag);
+		apetag_free(tag);
 		tag_info->apetag.encode = conf_encode_utf8;
 		tag_info->type |= APETAG;
 	}
@@ -397,7 +445,6 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 	}
 
 	memset(&tag, 0, sizeof(tag));
-
 	tag.type = NONE;
 
 	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);

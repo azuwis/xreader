@@ -780,7 +780,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs = NULL;
 	}
 
-	int fid = freq_enter_level(FREQ_MID);
+	int fid = freq_enter_hotzone();
 
 	extern bool g_force_text_view_mode;
 	extern p_umd_chapter p_umdchapter;
@@ -1438,7 +1438,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		return exit_confirm();
 	} else if (key == ctlkey[11] || key == ctlkey2[11]
 			   || key == CTRL_PLAYPAUSE) {
-		int fid = freq_enter_level(FREQ_MID);
+		int fid = freq_enter_hotzone();
 		if (config.autobm)
 			bookmark_autosave(pView->bookmarkname,
 							  (fs->rows[fs->crow >> 10] +
@@ -1473,7 +1473,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 				break;
 			case 1:
 				{
-				int fid = freq_enter_level(FREQ_MID);
+				int fid = freq_enter_hotzone();
 				if (config.autobm)
 					bookmark_autosave(pView->bookmarkname,
 									  (fs->rows[fs->crow >> 10] +
@@ -1600,7 +1600,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		}
 		pView->text_needrp = true;
 	} else if (key == ctlkey[13] || key == ctlkey2[13]) {
-		int fid = freq_enter_level(FREQ_MID);
+		int fid = freq_enter_hotzone();
 		char buf[128];
 
 		if (get_osk_input(buf, 128) == 1 && strcmp(buf, "") != 0) {
@@ -1893,7 +1893,7 @@ dword scene_readbook(dword selidx)
 	  redraw:
 		;
 	}
-	int fid = freq_enter_level(FREQ_MID);
+	int fid = freq_enter_hotzone();
 	if (config.autobm)
 		bookmark_autosave(cur_book_view.bookmarkname,
 						  (fs->rows[fs->crow >> 10] +

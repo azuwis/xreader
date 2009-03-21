@@ -25,6 +25,7 @@
 #include <pspsdk.h>
 #include <pspkernel.h>
 #include <psprtc.h>
+#include <psppower.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include "musicdrv.h"
@@ -46,6 +47,9 @@
 #include "scene.h"
 #include "ctrl.h"
 #include "fs.h"
+#include "buffer.h"
+#include "musicinfo.h"
+#include "power.h"
 
 struct music_list
 {
@@ -348,7 +352,7 @@ int music_stop(void)
 		return ret;
 
 	if (ret == ST_PLAYING || ret == ST_PAUSED || ret == ST_LOADED
-		|| ret == ST_STOPPED || ret == ST_FFOWARD || ret == ST_FBACKWARD) {
+		|| ret == ST_STOPPED || ret == ST_FFORWARD || ret == ST_FBACKWARD) {
 		ret = musicdrv_end();
 	} else
 		ret = 0;
@@ -643,8 +647,16 @@ static int musicdrv_has_stop(void)
 
 static int music_thread(SceSize arg, void *argp)
 {
+	dword key = 0;
+	dword oldkey = 0;
+	u64 start, end;
+	double interval = 0;
+
 	g_thread_actived = 1;
 	g_thread_exited = 0;
+
+	sceRtcGetCurrentTick(&start);
+	sceRtcGetCurrentTick(&end);
 
 	while (g_thread_actived) {
 		music_lock();
@@ -674,24 +686,49 @@ static int music_thread(SceSize arg, void *argp)
 			sceKernelDelayThread(100000);
 		} else {
 			music_unlock();
-			sceKernelDelayThread(200000);
+			sceKernelDelayThread(500000);
 		}
 
 		if (g_music_hprm_enable) {
-			dword key = ctrl_hprm();
+			key = ctrl_hprm_raw();
+			sceRtcGetCurrentTick(&end);
+			interval = pspDiffTime(&end, &start);
 
-			if (key > 0) {
-				switch (key) {
-					case PSP_HPRM_PLAYPAUSE:
-						music_list_playorpause();
-						break;
-					case PSP_HPRM_FORWARD:
-						music_next();
-						break;
-					case PSP_HPRM_BACK:
-						music_prev();
-						break;
+			if (key == PSP_HPRM_FORWARD || key == PSP_HPRM_BACK || key == PSP_HPRM_PLAYPAUSE) {
+				if (interval >= 0.5) {
+					if (key == PSP_HPRM_FORWARD) {
+						musicdrv_fforward(2);
+					} else if (key == PSP_HPRM_BACK) {
+						musicdrv_fbackward(2);
+					}
+				} 
+
+				if (key != oldkey) {
+					sceRtcGetCurrentTick(&start);
 				}
+
+				oldkey = key;
+				
+				if (key == PSP_HPRM_PLAYPAUSE && interval >= 4.0) {
+					power_down();
+					scePowerRequestSuspend();
+				}
+			} else {
+				if ((oldkey == PSP_HPRM_FORWARD || oldkey == PSP_HPRM_BACK || oldkey == PSP_HPRM_PLAYPAUSE)) {
+					if (interval < 0.5) {
+						if (oldkey == PSP_HPRM_FORWARD)
+							music_next();
+						else if (oldkey == PSP_HPRM_BACK)
+							music_prev();
+					}
+
+					if (interval < 4.0) {
+						if (oldkey == PSP_HPRM_PLAYPAUSE)
+							music_list_playorpause();
+					}
+				}
+				oldkey = key;
+				sceRtcGetCurrentTick(&start);
 			}
 		}
 	}
@@ -1046,14 +1083,20 @@ int music_load(int i)
 	char lyricname[PATH_MAX];
 	char lyricshortname[PATH_MAX];
 
-	strncpy_s(lyricname, NELEMS(lyricname), file->longpath, PATH_MAX);
-	int lsize = strlen(lyricname);
+	if (tag_lyric && tag_lyric->used != 0) {
+		lyric_open_raw(&lyric, tag_lyric->ptr, tag_lyric->used);
+		buffer_free(tag_lyric);
+		tag_lyric = NULL;
+	} else {
+		strncpy_s(lyricname, NELEMS(lyricname), file->longpath, PATH_MAX);
+		int lsize = strlen(lyricname);
 
-	lyricname[lsize - 3] = 'l';
-	lyricname[lsize - 2] = 'r';
-	lyricname[lsize - 1] = 'c';
-	if (fat_longnametoshortname(lyricshortname, lyricname, PATH_MAX))
-		lyric_open(&lyric, lyricshortname);
+		lyricname[lsize - 3] = 'l';
+		lyricname[lsize - 2] = 'r';
+		lyricname[lsize - 1] = 'c';
+		if (fat_longnametoshortname(lyricshortname, lyricname, PATH_MAX))
+			lyric_open(&lyric, lyricshortname);
+	}
 #endif
 
 	return ret;

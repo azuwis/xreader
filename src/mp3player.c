@@ -438,7 +438,7 @@ static int handle_seek(void)
 
 	if (data.use_buffer) {
 
-		if (g_status == ST_FFOWARD) {
+		if (g_status == ST_FFORWARD) {
 			sceRtcGetCurrentTick(&timer_end);
 
 			generic_lock();
@@ -526,7 +526,7 @@ static int handle_seek(void)
 
 		return 0;
 	} else {
-		if (g_status == ST_FFOWARD) {
+		if (g_status == ST_FFORWARD) {
 			generic_lock();
 			g_status = ST_PLAYING;
 			generic_unlock();
@@ -905,12 +905,12 @@ static int me_init()
 
 void readMP3ApeTag(const char *spath)
 {
-	APETag *tag = loadAPETag(spath);
+	APETag *tag = apetag_load(spath);
 
 	if (tag != NULL) {
-		char *title = APETag_SimpleGet(tag, "Title");
-		char *artist = APETag_SimpleGet(tag, "Artist");
-		char *album = APETag_SimpleGet(tag, "Album");
+		char *title = apetag_get(tag, "Title");
+		char *artist = apetag_get(tag, "Artist");
+		char *album = apetag_get(tag, "Album");
 
 		if (title) {
 			STRCPY_S(g_info.tag.title, title);
@@ -922,7 +922,7 @@ void readMP3ApeTag(const char *spath)
 			free(artist);
 			artist = NULL;
 		} else {
-			artist = APETag_SimpleGet(tag, "Album artist");
+			artist = apetag_get(tag, "Album artist");
 			if (artist) {
 				STRCPY_S(g_info.tag.artist, artist);
 				free(artist);
@@ -935,7 +935,7 @@ void readMP3ApeTag(const char *spath)
 			album = NULL;
 		}
 
-		freeAPETag(tag);
+		apetag_free(tag);
 		g_info.tag.encode = conf_encode_utf8;
 	}
 }
@@ -1122,27 +1122,8 @@ static int mp3_get_info(struct music_info *info)
 		return -1;
 	}
 
-	if (info->type & MD_GET_TITLE) {
-		info->encode = g_info.tag.encode;
-		STRCPY_S(info->title, g_info.tag.title);
-	}
-	if (info->type & MD_GET_ALBUM) {
-		info->encode = g_info.tag.encode;
-		STRCPY_S(info->album, g_info.tag.album);
-	}
-	if (info->type & MD_GET_ARTIST) {
-		info->encode = g_info.tag.encode;
-		STRCPY_S(info->artist, g_info.tag.artist);
-	}
-	if (info->type & MD_GET_COMMENT) {
-		info->encode = g_info.tag.encode;
-		STRCPY_S(info->comment, g_info.tag.comment);
-	}
 	if (info->type & MD_GET_CURTIME) {
 		info->cur_time = g_play_time;
-	}
-	if (info->type & MD_GET_DURATION) {
-		info->duration = g_info.duration;
 	}
 	if (info->type & MD_GET_CPUFREQ) {
 		if (use_me) {
@@ -1154,12 +1135,6 @@ static int mp3_get_info(struct music_info *info)
 			info->psp_freq[1] = 111;
 		}
 	}
-	if (info->type & MD_GET_FREQ) {
-		info->freq = g_info.sample_freq;
-	}
-	if (info->type & MD_GET_CHANNELS) {
-		info->channels = g_info.channels;
-	}
 	if (info->type & MD_GET_DECODERNAME) {
 		if (use_me) {
 			STRCPY_S(info->decoder_name, "mp3");
@@ -1168,20 +1143,13 @@ static int mp3_get_info(struct music_info *info)
 		}
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg) {
-			STRCPY_S(info->encode_msg, mp3info.tag.encoder);
-		} else {
-			info->encode_msg[0] = '\0';
-		}
-	}
-	if (info->type & MD_GET_AVGKBPS) {
-		info->avg_kbps = g_info.avg_bps / 1000;
+		info->encode_msg[0] = '\0';
 	}
 	if (info->type & MD_GET_INSKBPS) {
 		info->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
 	}
 
-	return 0;
+	return generic_get_info(info);
 }
 
 /**

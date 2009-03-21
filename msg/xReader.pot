@@ -1107,3 +1107,6 @@ msgstr ""
 
 msgid "压缩率"
 msgstr ""
+
+msgid "翻页滚动时长"
+msgstr ""

@@ -146,7 +146,7 @@ static int handle_seek(void)
 
 	if (1) {
 
-		if (g_status == ST_FFOWARD) {
+		if (g_status == ST_FFORWARD) {
 			sceRtcGetCurrentTick(&timer_end);
 
 			generic_lock();
@@ -232,7 +232,7 @@ static int handle_seek(void)
 
 		return 0;
 	} else {
-		if (g_status == ST_FFOWARD) {
+		if (g_status == ST_FFORWARD) {
 			generic_lock();
 			g_status = ST_PLAYING;
 			generic_unlock();
@@ -530,40 +530,12 @@ static int ape_resume(const char *spath, const char *lpath)
  */
 static int ape_get_info(struct music_info *pinfo)
 {
-	if (pinfo->type & MD_GET_TITLE) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->title, g_info.tag.title);
-	}
-	if (pinfo->type & MD_GET_ALBUM) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->album, g_info.tag.album);
-	}
-	if (pinfo->type & MD_GET_ARTIST) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->artist, g_info.tag.artist);
-	}
-	if (pinfo->type & MD_GET_COMMENT) {
-		pinfo->encode = g_info.tag.encode;
-		STRCPY_S(pinfo->comment, "");
-	}
 	if (pinfo->type & MD_GET_CURTIME) {
 		pinfo->cur_time = g_play_time;
-	}
-	if (pinfo->type & MD_GET_DURATION) {
-		pinfo->duration = g_info.duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] = 233;
 		pinfo->psp_freq[1] = 116;
-	}
-	if (pinfo->type & MD_GET_FREQ) {
-		pinfo->freq = g_info.sample_freq;
-	}
-	if (pinfo->type & MD_GET_CHANNELS) {
-		pinfo->channels = g_info.channels;
-	}
-	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = g_info.avg_bps / 1000;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
@@ -582,7 +554,7 @@ static int ape_get_info(struct music_info *pinfo)
 		}
 	}
 
-	return 0;
+	return generic_get_info(pinfo);
 }
 
 /**

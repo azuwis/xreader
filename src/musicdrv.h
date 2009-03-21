@@ -40,9 +40,8 @@ extern "C"
 #define MD_GET_ENCODEMSG   (1 << 9)
 #define MD_GET_AVGKBPS     (1 << 10)
 #define MD_GET_INSKBPS     (1 << 11)
-#define MD_GET_FILEFD      (1 << 12)
-#define MD_GET_SNDCHL      (1 << 13)
-#define MD_GET_CHANNELS    (1 << 14)
+#define MD_GET_CHANNELS    (1 << 12)
+#define MD_GET_LYRIC	   (1 << 13)
 
 #define INFO_STR_SIZE 80
 
@@ -77,7 +76,7 @@ extern "C"
 		ST_PAUSED = 1,
 		ST_PLAYING = 2,
 		ST_STOPPED = 3,			/* In this status the alloctated resources were freed */
-		ST_FFOWARD = 4,
+		ST_FFORWARD = 4,
 		ST_FBACKWARD = 5,
 		ST_SUSPENDED = 6,
 		ST_UNKNOWN = 7

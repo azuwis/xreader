@@ -231,7 +231,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 
 	win_item_destroy(mitem, &filecount);
 
-	fid = freq_enter_level(FREQ_MID);
+	fid = freq_enter_hotzone();
 	strcpy_s((char *) sdir, 256, dir);
 	SceIoDirent info;
 	dword cur_count = 0;
@@ -362,7 +362,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	int fid = freq_enter_level(FREQ_MID);
+	int fid = freq_enter_hotzone();
 	p_win_menuitem item = NULL;
 	p_fat_info info;
 
@@ -473,7 +473,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	int fid = freq_enter_level(FREQ_MID);
+	int fid = freq_enter_hotzone();
 	unzFile unzf = unzOpen(zipfile);
 	p_win_menuitem item = NULL;
 
@@ -562,7 +562,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	int fid = freq_enter_level(FREQ_MID);
+	int fid = freq_enter_hotzone();
 	p_win_menuitem item = NULL;
 
 	struct RAROpenArchiveData arcdata;
@@ -769,7 +769,7 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	int fid = freq_enter_level(FREQ_MID);
+	int fid = freq_enter_hotzone();
 	struct chmFile *chm = chm_open(chmfile);
 	p_win_menuitem item = NULL;
 
@@ -819,7 +819,7 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	int fid = freq_enter_level(FREQ_MID);
+	int fid = freq_enter_hotzone();
 	p_win_menuitem item = NULL;
 
 	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);

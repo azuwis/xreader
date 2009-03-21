@@ -48,6 +48,11 @@ static int __end(void);
 static short *g_buff = NULL;
 
 /**
+ * Flac音乐播放缓冲总大小, 以帧数计
+ */
+static unsigned g_buff_size;
+
+/**
  * Flac音乐播放缓冲大小，以帧数计
  */
 static unsigned g_buff_frame_size;
@@ -66,11 +71,6 @@ static int g_flac_bits_per_sample = 0;
  * 一次Flac解码操作已解码帧样本数
  */
 static int g_decoded_sample_size = 0;
-
-/**
- * Flac解码保存位置
- */
-static uint16_t *g_write_frame = NULL;
 
 /**
  * Flac编码器名字
@@ -172,7 +172,16 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 	}
 
 	g_decoded_sample_size = frame->header.blocksize;
-	uint16_t *output = g_write_frame;
+
+	if (frame->header.blocksize > g_buff_size) {
+		g_buff_size = frame->header.blocksize;
+		g_buff = safe_realloc(g_buff, g_buff_size * frame->header.channels * sizeof(*g_buff));
+
+		if (g_buff == NULL)
+			return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
+	}
+
+	uint16_t *output = (uint16_t*) g_buff;
 
 	if (frame->header.channels == 2) {
 		for (i = 0; i < frame->header.blocksize; i++) {
@@ -244,7 +253,7 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFOWARD) {
+		if (g_status == ST_FFORWARD) {
 			generic_lock();
 			g_status = ST_PLAYING;
 			generic_set_playback(true);
@@ -278,7 +287,6 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 						   avail_frame, g_info.channels);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
-			g_write_frame = (uint16_t *) & g_buff[0];
 
 			if (!FLAC__stream_decoder_process_single(g_decoder)) {
 				__end();
@@ -371,7 +379,8 @@ static int flac_load(const char *spath, const char *lpath)
 		g_buff = NULL;
 	}
 
-	g_buff = calloc(NUM_AUDIO_SAMPLES, sizeof(*g_buff));
+	g_buff_size = NUM_AUDIO_SAMPLES / 2;
+	g_buff = calloc(g_buff_size * 2, sizeof(*g_buff));
 
 	if (g_buff == NULL) {
 		__end();
@@ -431,6 +440,8 @@ static int flac_load(const char *spath, const char *lpath)
 					STRCPY_S(g_info.tag.title, q);
 				}
 			}
+
+			g_info.tag.encode = conf_encode_utf8;
 		}
 
 		FLAC__metadata_object_delete(ptag);
@@ -589,40 +600,12 @@ static int flac_resume(const char *spath, const char *lpath)
  */
 static int flac_get_info(struct music_info *pinfo)
 {
-	if (pinfo->type & MD_GET_TITLE) {
-		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->title, g_info.tag.title);
-	}
-	if (pinfo->type & MD_GET_ALBUM) {
-		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->album, g_info.tag.album);
-	}
-	if (pinfo->type & MD_GET_ARTIST) {
-		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->artist, g_info.tag.artist);
-	}
-	if (pinfo->type & MD_GET_COMMENT) {
-		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->comment, "");
-	}
 	if (pinfo->type & MD_GET_CURTIME) {
 		pinfo->cur_time = g_play_time;
-	}
-	if (pinfo->type & MD_GET_DURATION) {
-		pinfo->duration = g_info.duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] = 222;
 		pinfo->psp_freq[1] = 111;
-	}
-	if (pinfo->type & MD_GET_FREQ) {
-		pinfo->freq = g_info.sample_freq;
-	}
-	if (pinfo->type & MD_GET_CHANNELS) {
-		pinfo->channels = g_info.channels;
-	}
-	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = g_info.avg_bps / 1000;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
@@ -641,7 +624,7 @@ static int flac_get_info(struct music_info *pinfo)
 		}
 	}
 
-	return 0;
+	return generic_get_info(pinfo);
 }
 
 /**

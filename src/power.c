@@ -113,7 +113,7 @@ extern const char *power_get_battery_charging(void)
 extern int use_ttf;
 extern p_ttf cttf, ettf;
 
-static bool has_run_suspend = false;
+static volatile bool has_run_suspend = false;
 
 extern void power_down(void)
 {
@@ -136,7 +136,11 @@ extern void power_down(void)
 
 extern void power_up(void)
 {
-	has_run_suspend = false;
+	if (has_run_suspend)
+		has_run_suspend = false;
+	else
+		return;
+
 	fat_powerup();
 #ifdef ENABLE_MUSIC
 	music_resume();

@@ -61,26 +61,8 @@ __inline bool lyric_add(p_lyric l, dword sec, dword fra, const char *line,
 	return true;
 }
 
-extern bool lyric_open(p_lyric l, const char *filename)
+static void parse_lyric(p_lyric l)
 {
-	if (l == NULL)
-		return false;
-	memset(l, 0, sizeof(t_lyric));
-	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
-
-	if (fd < 0)
-		return false;
-	l->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	if ((l->whole = malloc(l->size + 1)) == NULL) {
-		sceIoClose(fd);
-		return false;
-	}
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	sceIoRead(fd, l->whole, l->size);
-	l->whole[l->size] = 0;
-	sceIoClose(fd);
-
-	l->count = 0;
 	int i = 0;
 	const char *ls = NULL, *rs = NULL, *ts = NULL;
 	dword minute;
@@ -88,6 +70,8 @@ extern bool lyric_open(p_lyric l, const char *filename)
 	int tc = 0;
 	double sec;
 	bool islyric = false;
+
+	l->count = 0;
 
 	while (i < l->size) {
 		if (ls == NULL) {
@@ -201,6 +185,45 @@ extern bool lyric_open(p_lyric l, const char *filename)
 	l->idx = -1;
 	l->changed = true;
 	l->succ = true;
+}
+
+extern bool lyric_open_raw(p_lyric l, const char *lyric, size_t size)
+{
+	if (l == NULL)
+		return false;
+	memset(l, 0, sizeof(t_lyric));
+	l->size = size;
+	if ((l->whole = malloc(l->size + 1)) == NULL) {
+		return false;
+	}
+	memcpy(l->whole, lyric, l->size);
+	l->whole[l->size] = 0;
+
+	parse_lyric(l);
+
+	return true;
+}
+
+extern bool lyric_open(p_lyric l, const char *filename)
+{
+	if (l == NULL)
+		return false;
+	memset(l, 0, sizeof(t_lyric));
+	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+
+	if (fd < 0)
+		return false;
+	l->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
+	if ((l->whole = malloc(l->size + 1)) == NULL) {
+		sceIoClose(fd);
+		return false;
+	}
+	sceIoLseek32(fd, 0, PSP_SEEK_SET);
+	sceIoRead(fd, l->whole, l->size);
+	l->whole[l->size] = 0;
+	sceIoClose(fd);
+
+	parse_lyric(l);
 
 	return true;
 }

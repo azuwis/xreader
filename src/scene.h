@@ -51,24 +51,6 @@ extern "C"
 		bool zipped;
 	} t_fonts;
 
-	enum {
-		FREQ_LOW = 0,
-		FREQ_MID = 1,
-		FREQ_HIGH = 2
-	};
-
-	enum {
-		FREQ_15 = 0,
-		FREQ_33,
-		FREQ_66,
-		FREQ_111,
-		FREQ_166,
-		FREQ_222,
-		FREQ_266,
-		FREQ_300,
-		FREQ_333
-	};
-
 	extern int freq_list[][2];
 
 #ifdef __cplusplus
