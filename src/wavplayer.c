@@ -29,7 +29,6 @@
 #include "musicdrv.h"
 #include "strsafe.h"
 #include "common/utils.h"
-#include "apetaglib/APETag.h"
 #include "dbg.h"
 #include "ssv.h"
 #include "genericplayer.h"
@@ -287,38 +286,6 @@ static int wav_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	APETag *tag = loadAPETag(spath);
-
-	if (tag != NULL) {
-		char *title = APETag_SimpleGet(tag, "Title");
-		char *artist = APETag_SimpleGet(tag, "Artist");
-		char *album = APETag_SimpleGet(tag, "Album");
-
-		if (title) {
-			STRCPY_S(g_info.tag.title, title);
-			free(title);
-			title = NULL;
-		}
-		if (artist) {
-			STRCPY_S(g_info.tag.artist, artist);
-			free(artist);
-			artist = NULL;
-		} else {
-			artist = APETag_SimpleGet(tag, "Album artist");
-			if (artist) {
-				STRCPY_S(g_info.tag.artist, artist);
-				free(artist);
-				artist = NULL;
-			}
-		}
-		if (album) {
-			STRCPY_S(g_info.tag.album, album);
-			free(album);
-			album = NULL;
-		}
-		freeAPETag(tag);
-	}
-
 	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (data.fd < 0) {
@@ -438,6 +405,8 @@ static int wav_load(const char *spath, const char *lpath)
 	}
 	g_info.samples = temp / g_wav_byte_per_frame;
 	g_info.duration = (double) (temp) / g_wav_byte_per_frame / g_info.sample_freq;
+
+	generic_readtag(&g_info, spath);
 
 	if (xMP3AudioInit() < 0) {
 		__end();

@@ -29,7 +29,6 @@
 #include "musicdrv.h"
 #include "strsafe.h"
 #include "common/utils.h"
-#include "apetaglib/APETag.h"
 #include "tta/ttalib.h"
 #include "ssv.h"
 #include "simple_gettext.h"
@@ -227,25 +226,7 @@ static int __init(void)
 
 static int tta_read_tag(const char *spath)
 {
-	buffered_reader_t *reader;
-
-	struct MP3Info info;
-
-	memset(&info, 0, sizeof(info));
-
-	reader = buffered_reader_open(spath, 1024, 0);
-
-	if (reader == NULL) {
-		return -1;
-	}
-
-	read_id3v2_tag_buffered(reader, &info);
-	buffered_reader_close(reader);
-
-	STRCPY_S(g_info.tag.artist, info.tag.author);
-	STRCPY_S(g_info.tag.title, info.tag.title);
-	STRCPY_S(g_info.tag.album, info.tag.album);
-	g_info.tag.encode = info.tag.encode;
+	generic_readtag(&g_info, spath);
 
 	return 0;
 }
@@ -297,6 +278,7 @@ static int tta_load(const char *spath, const char *lpath)
 	g_info.duration = (double)ttainfo.LENGTH;
 	g_info.sample_freq = ttainfo.SAMPLERATE;
 	g_info.channels = ttainfo.NCH;
+	g_info.filesize = ttainfo.FILESIZE;
 
 	if (xMP3AudioInit() < 0) {
 		__end();
@@ -415,7 +397,7 @@ static int tta_get_info(struct music_info *pinfo)
 	if (pinfo->type & MD_GET_TITLE) {
 		if (g_info.tag.title[0] != '\0') {
 			pinfo->encode = g_info.tag.encode;
-			STRCPY_S(pinfo->title, (const char *) g_info.tag.title);
+			STRCPY_S(pinfo->title, g_info.tag.title);
 		} else {
 			pinfo->encode = conf_encode_gbk;
 			STRCPY_S(pinfo->title, (const char *) ttainfo.ID3.title);

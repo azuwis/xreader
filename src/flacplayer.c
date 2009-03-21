@@ -31,7 +31,6 @@
 #include "FLAC/metadata.h"
 #include "strsafe.h"
 #include "common/utils.h"
-#include "apetaglib/APETag.h"
 #include "dbg.h"
 #include "ssv.h"
 #include "genericplayer.h"

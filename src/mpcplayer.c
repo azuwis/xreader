@@ -31,7 +31,6 @@
 #include "musicdrv.h"
 #include "strsafe.h"
 #include "common/utils.h"
-#include "apetaglib/APETag.h"
 #include "genericplayer.h"
 #include "musicinfo.h"
 #include "dbg.h"
@@ -295,41 +294,6 @@ static int mpc_load(const char *spath, const char *lpath)
 {
 	__init();
 
-	APETag *tag = loadAPETag(spath);
-
-	if (tag != NULL) {
-		char *title = APETag_SimpleGet(tag, "Title");
-		char *artist = APETag_SimpleGet(tag, "Artist");
-		char *album = APETag_SimpleGet(tag, "Album");
-
-		g_info.tag.type = APETAG;
-		g_info.tag.encode = conf_encode_utf8;
-
-		if (title) {
-			STRCPY_S(g_info.tag.title, title);
-			free(title);
-			title = NULL;
-		}
-		if (artist) {
-			STRCPY_S(g_info.tag.artist, artist);
-			free(artist);
-			artist = NULL;
-		} else {
-			artist = APETag_SimpleGet(tag, "Album artist");
-			if (artist) {
-				STRCPY_S(g_info.tag.artist, artist);
-				free(artist);
-				artist = NULL;
-			}
-		}
-		if (album) {
-			STRCPY_S(g_info.tag.album, album);
-			free(album);
-			album = NULL;
-		}
-		freeAPETag(tag);
-	}
-
 	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (data.fd < 0) {
@@ -337,7 +301,6 @@ static int mpc_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	g_info.is_seekable = true;
 	data.seekable = TRUE;
 	data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
 	g_info.filesize = data.size;
@@ -363,6 +326,8 @@ static int mpc_load(const char *spath, const char *lpath)
 	g_info.avg_bps = info.average_bitrate;
 	g_info.sample_freq = info.sample_freq;
 	g_info.channels = info.channels;
+
+	generic_readtag(&g_info, spath);
 
 	mpc_decoder_setup(&decoder, &reader);
 	mpc_decoder_set_seeking(&decoder, &info, 0);

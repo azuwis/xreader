@@ -34,7 +34,6 @@
 #include "APEInfo.h"
 #include "strsafe.h"
 #include "common/utils.h"
-#include "apetaglib/APETag.h"
 #include "genericplayer.h"
 #include "musicinfo.h"
 #include "dbg.h"
@@ -357,40 +356,6 @@ static int ape_load(const char *spath, const char *lpath)
 {
 	__init();
 
-	APETag *tag = loadAPETag(spath);
-
-	if (tag != NULL) {
-		char *title = APETag_SimpleGet(tag, "Title");
-		char *artist = APETag_SimpleGet(tag, "Artist");
-		char *album = APETag_SimpleGet(tag, "Album");
-
-		g_info.tag.encode = conf_encode_utf8;
-
-		if (title) {
-			STRCPY_S(g_info.tag.title, title);
-			free(title);
-			title = NULL;
-		}
-		if (artist) {
-			STRCPY_S(g_info.tag.artist, artist);
-			free(artist);
-			artist = NULL;
-		} else {
-			artist = APETag_SimpleGet(tag, "Album artist");
-			if (artist) {
-				STRCPY_S(g_info.tag.artist, artist);
-				free(artist);
-				artist = NULL;
-			}
-		}
-		if (album) {
-			STRCPY_S(g_info.tag.album, album);
-			free(album);
-			album = NULL;
-		}
-		freeAPETag(tag);
-	}
-
 	if (g_buff != NULL) {
 		free(g_buff);
 		g_buff = NULL;
@@ -439,6 +404,8 @@ static int ape_load(const char *spath, const char *lpath)
 	g_status = ST_LOADED;
 	generic_unlock();
 
+	generic_readtag(&g_info, spath);
+
 	dbg_printf(d,
 			   "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d, encoder: %s, Ratio: %.3f]",
 			   g_info.channels, g_info.sample_freq, g_info.avg_bps / 1000,
@@ -448,8 +415,8 @@ static int ape_load(const char *spath, const char *lpath)
 										(g_ape_bits_per_sample / 8))
 		);
 
-	dbg_printf(d, "[%s - %s - %s, ape tag]", g_info.tag.artist, g_info.tag.album,
-			   g_info.tag.title);
+	dbg_printf(d, "[%s - %s - %s, tag type: %d]", g_info.tag.artist, g_info.tag.album,
+			   g_info.tag.title, g_info.tag.type);
 
 	g_decoder = (CAPEDecompress *) CreateIAPEDecompress(path, &err);
 

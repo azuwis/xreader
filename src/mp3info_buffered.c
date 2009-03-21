@@ -1119,6 +1119,7 @@ int read_mp3_info_brute_buffered(struct MP3Info *info, mp3_reader_data * data)
 	return 0;
 }
 
+#if 1
 int read_id3v2_tag_buffered(buffered_reader_t * reader, struct MP3Info *info)
 {
 	uint8_t buf[ID3v2_HEADER_SIZE];
@@ -1142,6 +1143,7 @@ int read_id3v2_tag_buffered(buffered_reader_t * reader, struct MP3Info *info)
 
 	return 0;
 }
+#endif
 
 int read_mp3_info_buffered(struct MP3Info *info, mp3_reader_data * data)
 {
@@ -1179,6 +1181,7 @@ int read_mp3_info_buffered(struct MP3Info *info, mp3_reader_data * data)
 	return 0;
 }
 
+#if 1
 int free_mp3_info_buffered(struct MP3Info *info)
 {
 	if (info->frameoff) {
@@ -1188,3 +1191,4 @@ int free_mp3_info_buffered(struct MP3Info *info)
 
 	return 0;
 }
+#endif

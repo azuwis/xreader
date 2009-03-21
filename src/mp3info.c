@@ -69,6 +69,7 @@ typedef struct MPADecodeContext
 	//    AVCodecContext* avctx;
 } MPADecodeContext;
 
+#if 0
 #define ID3v1_GENRE_MAX 125
 
 static const char *const id3v1_genre_str[ID3v1_GENRE_MAX + 1] = {
@@ -199,6 +200,7 @@ static const char *const id3v1_genre_str[ID3v1_GENRE_MAX + 1] = {
 	[124] = "Euro-House",
 	[125] = "Dance Hall",
 };
+#endif
 
 static const uint16_t ff_mpa_freq_tab[3] = { 44100, 48000, 32000 };
 
@@ -448,6 +450,7 @@ static inline int av_log2(unsigned int v)
 	return n;
 }
 
+#if 0
 static void id3v2_read_ttag(mp3_reader_data * data, int taglen, char *dst,
 							int dstlen, struct MP3Info *info)
 {
@@ -755,6 +758,7 @@ static int id3v1_parse_tag(mp3_reader_data * data, struct MP3Info *info,
 
 	return 0;
 }
+#endif
 
 static int _bitrate[9][16] = {
 	{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448,
@@ -977,10 +981,10 @@ int skip_id3v2_tag(mp3_reader_data * data)
 		struct MP3Info info;
 
 		memset(&info, 0, sizeof(info));
-		/* parse ID3v2 header */
+		/* skip ID3v2 header */
 		len = ((buf[6] & 0x7f) << 21) |
 			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
-		id3v2_parse(data, &info, len, buf[3], buf[5]);
+		sceIoLseek(data->fd, len, PSP_SEEK_CUR);
 	} else {
 		sceIoLseek(data->fd, 0, PSP_SEEK_SET);
 	}
@@ -1119,6 +1123,7 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	return 0;
 }
 
+#if 0
 int read_id3v2_tag(int fd, struct MP3Info *info)
 {
 	uint8_t buf[ID3v2_HEADER_SIZE];
@@ -1142,14 +1147,16 @@ int read_id3v2_tag(int fd, struct MP3Info *info)
 
 	return 0;
 }
+#endif
 
 int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 {
-	int ret;
+//	int ret;
 	uint32_t off;
 
 	info->frameoff = NULL;
 
+#if 0
 	if (data->size > 128) {
 		uint8_t buf[ID3v1_TAG_SIZE];
 
@@ -1165,6 +1172,10 @@ int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 	if (read_id3v2_tag(data->fd, info) != 0) {
 		return -1;
 	}
+#endif
+
+	if (skip_id3v2_tag(data) == -1)
+		return -1;
 
 	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
 

@@ -972,6 +972,8 @@ static int mp3_load(const char *spath, const char *lpath)
 		sceIoLseek(data.fd, 0, PSP_SEEK_SET);
 	}
 
+	g_info.filesize = data.size;
+
 	if (data.size < 0)
 		return data.size;
 
@@ -1026,20 +1028,13 @@ static int mp3_load(const char *spath, const char *lpath)
 		}
 	}
 
-	STRCPY_S(g_info.tag.artist, mp3info.tag.author);
-	STRCPY_S(g_info.tag.album, mp3info.tag.album);
-	STRCPY_S(g_info.tag.title, mp3info.tag.title);
-	STRCPY_S(g_info.tag.comment, mp3info.tag.comment);
-	g_info.tag.encode = mp3info.tag.encode;
-
-	if (config.apetagorder || mp3info.tag.title[0] == '\0')
-		readMP3ApeTag(spath);
-
 	g_info.channels = mp3info.channels;
 	g_info.sample_freq = mp3info.sample_freq;
 	g_info.avg_bps = mp3info.average_bitrate;
 	g_info.samples = mp3info.frames;
 	g_info.duration = mp3info.duration;
+
+	generic_readtag(&g_info, spath);
 
 	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%sframes %d%s]",
 			   g_info.channels, g_info.sample_freq,

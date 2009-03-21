@@ -1,6 +1,11 @@
 #ifndef MUSICINFO_H
 #define MUSICINFO_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "common/datatype.h"
 #include "conf.h"
 
@@ -28,9 +33,22 @@ typedef struct {
 	int samples;
 	double duration;
 	double avg_bps;
-	bool is_seekable;
 
 	MusicTagInfo tag;
 } MusicInfo, *PMusicInfo;
+
+/**
+ * 通用音乐文件标签读取
+ *
+ * @param music_info 音乐信息结构体指针, 指向除Tag部分外已初始化的音乐信息结构体
+ * @param spath 文件短路径, 8.3文件名形式
+ *
+ * @return 成功返回0, 否则返回-1
+ */
+int generic_readtag(MusicInfo *music_info, const char* spath);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
