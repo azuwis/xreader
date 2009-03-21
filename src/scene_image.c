@@ -50,9 +50,10 @@
 #include "common/utils.h"
 #include "scene_impl.h"
 #include "pspscreen.h"
-#include "dbg.h"
 #include "simple_gettext.h"
 #include "math.h"
+#include "freq_lock.h"
+#include "dbg.h"
 
 #ifdef ENABLE_IMAGE
 
@@ -149,7 +150,6 @@ static void report_image_error(int status)
 			   errstr, where, config.path, filename);
 	imgreading = false;
 	reset_image_ptr();
-	scene_power_save(true);
 }
 
 // TODO: use GU to improve speed...
@@ -170,7 +170,6 @@ static void recalc_brightness(void)
 
 static int scene_reloadimage(dword selidx)
 {
-	scene_power_save(false);
 	reset_image_ptr();
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_rar)
 		STRCPY_S(filename, filelist[selidx].compname->ptr);
@@ -193,13 +192,11 @@ static int scene_reloadimage(dword selidx)
 	STRCPY_S(prev_lastfile, filelist[selidx].compname->ptr);
 	prev_where = where;
 	oldangle = 0;
-	scene_power_save(true);
 	return 0;
 }
 
 static dword scene_rotateimage(void)
 {
-	scene_power_save(false);
 	image_rotate(imgdata, &width, &height, oldangle,
 				 (dword) config.rotate * 90);
 	oldangle = (dword) config.rotate * 90;
@@ -320,7 +317,7 @@ static dword scene_rotateimage(void)
 
 	if (slideshow)
 		lasttime = time(NULL);
-	scene_power_save(true);
+
 	return 0;
 }
 
@@ -1187,7 +1184,6 @@ static int image_handle_input(dword * selidx, dword key)
 
 		if (scene_options(selidx)) {
 			imgreading = false;
-			scene_power_save(true);
 			if (imgshow != NULL && imgshow != imgdata) {
 				free(imgshow);
 				imgshow = NULL;
@@ -1298,7 +1294,6 @@ static int image_handle_input(dword * selidx, dword key)
 					COLOR_WHITE, config.msgbcolor);
 		} else {
 			imgreading = false;
-			scene_power_save(true);
 			if (imgshow != NULL && imgshow != imgdata) {
 				free(imgshow);
 				imgshow = NULL;
@@ -1396,28 +1391,40 @@ dword scene_readimage(dword selidx)
 		u64 dbgnow, dbglasttick;
 
 		if (img_needrf) {
+			int fid;
+
+			fid = freq_enter_level(FREQ_MID);
 			sceRtcGetCurrentTick(&dbglasttick);
 			dword ret = scene_reloadimage(selidx);
 
-			if (ret == -1)
+			if (ret == -1) {
+				freq_leave(fid);
 				return selidx;
+			}
 			img_needrf = false;
 			sceRtcGetCurrentTick(&dbgnow);
 			dbg_printf(d, _("装载图像时间: %.2f秒"),
 					   pspDiffTime(&dbgnow, &dbglasttick));
+			freq_leave(fid);
 		}
 		if (img_needrc) {
+			int fid;
+
+			fid = freq_enter_level(FREQ_MID);
 			sceRtcGetCurrentTick(&dbglasttick);
 			scene_rotateimage();
 			img_needrc = false;
 			sceRtcGetCurrentTick(&dbgnow);
 			dbg_printf(d, _("旋转图像时间: %.2f秒"),
 					   pspDiffTime(&dbgnow, &dbglasttick));
+			freq_leave(fid);
 		}
+
 		if (img_needrp) {
 			scene_printimage(selidx);
 			img_needrp = false;
 		}
+
 		now = time(NULL);
 		dword key = 0;
 
@@ -1483,16 +1490,19 @@ dword scene_readimage(dword selidx)
 		scene_image_delay_action();
 	}
 	imgreading = false;
-	scene_power_save(false);
+
 	if (imgshow != NULL && imgshow != imgdata) {
 		free(imgshow);
 		imgshow = NULL;
 	}
+
 	if (imgdata != NULL) {
 		free(imgdata);
 		imgdata = NULL;
 	}
+
 	disp_duptocachealpha(50);
+
 	return selidx;
 }
 

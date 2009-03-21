@@ -216,7 +216,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_playing_music(true);
+			generic_set_playback(true);
 			generic_unlock();
 			free_bitrate(&g_inst_br);
 			mpc_decoder_seek_seconds(&decoder, g_play_time);
@@ -228,7 +228,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_playing_music(true);
+			generic_set_playback(true);
 			generic_unlock();
 			free_bitrate(&g_inst_br);
 			mpc_decoder_seek_seconds(&decoder, g_play_time);

@@ -41,7 +41,9 @@
 #include "bg.h"
 #include "image.h"
 #include "archive.h"
+#include "freq_lock.h"
 #include "dbg.h"
+
 typedef struct
 {
 	const char *ext;
@@ -242,10 +244,11 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 								 dword selbcolor)
 {
 	extern dword filecount;
+	int fid;
 
 	win_item_destroy(mitem, &filecount);
 
-	scene_power_save(false);
+	fid = freq_enter_level(FREQ_MID);
 	strcpy_s((char *) sdir, 256, dir);
 	SceIoDirent info;
 	dword cur_count = 0;
@@ -253,15 +256,16 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 	int fd = sceIoDopen(dir);
 
 	if (fd < 0) {
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
+
 	//  if(stricmp(dir, "ms0:/") == 0)
 	{
 		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 		if (*mitem == NULL) {
 			sceIoDclose(fd);
-			scene_power_save(true);
+			freq_leave(fid);
 			return 0;
 		}
 		cur_count = 1;
@@ -276,7 +280,9 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		item[0].selrcolor = selrcolor;
 		item[0].selbcolor = selbcolor;
 	}
+
 	memset(&info, 0, sizeof(SceIoDirent));
+
 	while (sceIoDread(fd, &info) > 0) {
 		if ((info.d_stat.st_mode & FIO_S_IFMT) == FIO_S_IFDIR) {
 			if (info.d_name[0] == '.' && info.d_name[1] == 0)
@@ -291,7 +297,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 						win_realloc_items(*mitem, cur_count,
 										  cur_count + DIR_INC_SIZE);
 				if (*mitem == NULL) {
-					scene_power_save(true);
+					freq_leave(fid);
 					return 0;
 				}
 				item = *mitem;
@@ -325,7 +331,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 						win_realloc_items(*mitem, cur_count,
 										  cur_count + DIR_INC_SIZE);
 				if (*mitem == NULL) {
-					scene_power_save(true);
+					freq_leave(fid);
 					return 0;
 				}
 				item = *mitem;
@@ -357,8 +363,10 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		item[cur_count].data3 = info.d_stat.st_size;
 		cur_count++;
 	}
+
 	sceIoDclose(fd);
-	scene_power_save(true);
+	freq_leave(fid);
+
 	return cur_count;
 }
 
@@ -371,14 +379,14 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	scene_power_save(false);
+	int fid = freq_enter_level(FREQ_MID);
 	p_win_menuitem item = NULL;
 	p_fat_info info;
 
 	dword count = fat_readdir(dir, sdir, &info);
 
 	if (count == INVALID) {
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
 	dword i, cur_count = 0;
@@ -387,7 +395,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 		if (*mitem == NULL) {
 			free(info);
-			scene_power_save(true);
+			freq_leave(fid);
 			return 0;
 		}
 		cur_count = 1;
@@ -416,7 +424,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 									  cur_count + DIR_INC_SIZE);
 			if (*mitem == NULL) {
 				free(info);
-				scene_power_save(true);
+				freq_leave(fid);
 				return 0;
 			}
 			item = *mitem;
@@ -470,7 +478,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 		cur_count++;
 	}
 	free(info);
-	scene_power_save(true);
+	freq_leave(fid);
 	return cur_count;
 }
 
@@ -482,12 +490,12 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	scene_power_save(false);
+	int fid = freq_enter_level(FREQ_MID);
 	unzFile unzf = unzOpen(zipfile);
 	p_win_menuitem item = NULL;
 
 	if (unzf == NULL) {
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
 	dword cur_count = 1;
@@ -495,7 +503,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 	if (*mitem == NULL) {
 		unzClose(unzf);
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
 	item = *mitem;
@@ -510,7 +518,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 	item[0].selbcolor = selbcolor;
 	if (unzGoToFirstFile(unzf) != UNZ_OK) {
 		unzClose(unzf);
-		scene_power_save(true);
+		freq_leave(fid);
 		return 1;
 	}
 	do {
@@ -538,7 +546,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 									  cur_count + DIR_INC_SIZE);
 			if (*mitem == NULL) {
 				unzClose(unzf);
-				scene_power_save(true);
+				freq_leave(fid);
 				return 0;
 			}
 			item = *mitem;
@@ -558,7 +566,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 		cur_count++;
 	} while (unzGoToNextFile(unzf) == UNZ_OK);
 	unzClose(unzf);
-	scene_power_save(true);
+	freq_leave(fid);
 	return cur_count;
 }
 
@@ -570,7 +578,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	scene_power_save(false);
+	int fid = freq_enter_level(FREQ_MID);
 	p_win_menuitem item = NULL;
 
 	struct RAROpenArchiveData arcdata;
@@ -582,7 +590,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 	HANDLE hrar = RAROpenArchive(&arcdata);
 
 	if (hrar == 0) {
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
 	dword cur_count = 1;
@@ -590,7 +598,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 	if (*mitem == NULL) {
 		RARCloseArchive(hrar);
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
 	item = *mitem;
@@ -635,7 +643,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 									  cur_count + DIR_INC_SIZE);
 			if (*mitem == NULL) {
 				RARCloseArchive(hrar);
-				scene_power_save(true);
+				freq_leave(fid);
 				return 0;
 			}
 			item = *mitem;
@@ -671,7 +679,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 	while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
 
 	RARCloseArchive(hrar);
-	scene_power_save(true);
+	freq_leave(fid);
 	return cur_count;
 }
 
@@ -775,18 +783,18 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	scene_power_save(false);
+	int fid = freq_enter_level(FREQ_MID);
 	struct chmFile *chm = chm_open(chmfile);
 	p_win_menuitem item = NULL;
 
 	if (chm == NULL) {
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
 	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 	if (*mitem == NULL) {
 		chm_close(chm);
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
 	item = *mitem;
@@ -812,7 +820,7 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 				  (void *) &cenum);
 
 	chm_close(chm);
-	scene_power_save(true);
+	freq_leave(fid);
 	return cenum.cur_count;
 }
 
@@ -825,12 +833,12 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 
 	win_item_destroy(mitem, &filecount);
 
-	scene_power_save(false);
+	int fid = freq_enter_level(FREQ_MID);
 	p_win_menuitem item = NULL;
 
 	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 	if (*mitem == NULL) {
-		scene_power_save(true);
+		freq_leave(fid);
 		return 0;
 	}
 	item = *mitem;
@@ -918,7 +926,7 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 	} while (false);
 	if (pbuf)
 		buffer_free(pbuf);
-	scene_power_save(true);
+	freq_leave(fid);
 #define MAX_CHAP_LEN 500
 	return (cur_count > 1 && cur_count < MAX_CHAP_LEN) ? cur_count : 1;
 }

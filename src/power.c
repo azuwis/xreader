@@ -132,7 +132,6 @@ extern void power_down(void)
 	music_suspend();
 #endif
 	fat_powerdown();
-	scene_power_save(true);
 }
 
 extern void power_up(void)
@@ -148,5 +147,4 @@ extern void power_up(void)
 		ttf_unlock();
 	}
 #endif
-	scene_power_save(true);
 }

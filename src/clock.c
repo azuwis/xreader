@@ -49,10 +49,3 @@ void xrSetCpuClock(int cpu, int bus)
 	}
 }
 
-void setCpuClock(int cpu)
-{
-	if (cpu >= 100)
-		scene_power_save(false);
-	else
-		scene_power_save(true);
-}

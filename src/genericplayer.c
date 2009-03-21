@@ -33,6 +33,8 @@
 #include "strsafe.h"
 #include "common/utils.h"
 #include "apetaglib/APETag.h"
+#include "freq_lock.h"
+#include "freq_lock.h"
 #include "dbg.h"
 
 /**
@@ -81,6 +83,11 @@ int g_status = ST_UNKNOWN;
 static SceUID g_status_sema = -1;
 
 /**
+ * freq_locker ID
+ */
+int g_fid = -1;
+
+/**
  * ¼ÓËø
  */
 int generic_lock(void)
@@ -123,10 +130,30 @@ int generic_set_opt(const char *unused, const char *values)
 	return 0;
 }
 
+void generic_set_playback(bool playing)
+{
+	if (playing) {
+		if (g_fid < 0) {
+			struct music_info info = { 0 };
+
+			info.type = MD_GET_CPUFREQ;
+
+			if (musicdrv_get_info(&info) == 0) {
+				g_fid = freq_enter(info.psp_freq[0], info.psp_freq[1]);
+			}
+		}
+	} else {
+		if (g_fid >= 0) {
+			freq_leave(g_fid);
+			g_fid = -1;
+		}
+	}
+}
+
 int generic_play(void)
 {
 	generic_lock();
-	scene_power_playing_music(true);
+	generic_set_playback(true);
 	g_status = ST_PLAYING;
 	generic_unlock();
 
@@ -136,7 +163,7 @@ int generic_play(void)
 int generic_pause(void)
 {
 	generic_lock();
-	scene_power_playing_music(false);
+	generic_set_playback(false);
 	g_status = ST_PAUSED;
 	generic_unlock();
 
@@ -207,6 +234,8 @@ int generic_end(void)
 		sceKernelDeleteSema(g_status_sema);
 		g_status_sema = -1;
 	}
+
+	generic_set_playback(false);
 
 	return 0;
 }

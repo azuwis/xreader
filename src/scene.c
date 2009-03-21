@@ -61,6 +61,7 @@
 #include "common/utils.h"
 #include "scene_impl.h"
 #include "pspscreen.h"
+#include "freq_lock.h"
 #include "dbg.h"
 #include "simple_gettext.h"
 #include "exception.h"
@@ -186,12 +187,12 @@ bool scene_load_font(void)
 	STRCAT_S(fontzipfile, "fonts.zip");
 	SPRINTF_S(efontfile, "ASC%d", config.fontsize);
 	SPRINTF_S(cfontfile, "GBK%d", config.fontsize);
-	scene_power_save(false);
+	int fid = freq_enter_level(FREQ_MID);
 	if (!disp_load_zipped_font(fontzipfile, efontfile, cfontfile)) {
 		SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(), config.fontsize);
 		SPRINTF_S(cfontfile, "%sfonts/GBK%d", scene_appdir(), config.fontsize);
 		if (!disp_load_font(efontfile, cfontfile)) {
-			scene_power_save(true);
+			freq_leave(fid);
 			return false;
 		}
 	}
@@ -202,7 +203,7 @@ bool scene_load_font(void)
 #else
 	config.lyricex = 0;
 #endif
-	scene_power_save(true);
+	freq_leave(fid);
 	return true;
 }
 
@@ -228,14 +229,14 @@ bool scene_load_book_font(void)
 
 #ifdef ENABLE_TTF
 	if (config.usettf) {
-		scene_power_save(false);
+		int fid = freq_enter_level(FREQ_MID);
 		loaded =
 			disp_load_zipped_truetype_book_font(config.ettfarch,
 												config.cttfarch,
 												config.ettfpath,
 												config.cttfpath,
 												config.bookfontsize);
-		scene_power_save(imgreading || fs != NULL);
+		freq_leave(fid);
 		if (!loaded) {
 			char infomsg[80];
 
@@ -250,14 +251,14 @@ bool scene_load_book_font(void)
 		STRCAT_S(fontzipfile, "fonts.zip");
 		SPRINTF_S(efontfile, "ASC%d", config.bookfontsize);
 		SPRINTF_S(cfontfile, "GBK%d", config.bookfontsize);
-		scene_power_save(false);
+		int fid = freq_enter_level(FREQ_MID);
 		if (!disp_load_zipped_book_font(fontzipfile, efontfile, cfontfile)) {
 			SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(),
 					  config.bookfontsize);
 			SPRINTF_S(cfontfile, "%sfonts/GBK%d", scene_appdir(),
 					  config.bookfontsize);
 			if (!disp_load_book_font(efontfile, cfontfile)) {
-				scene_power_save(true);
+				freq_leave(fid);
 #ifdef ENABLE_LITE
 				config.bookfontsize = 12;
 				return scene_load_book_font();
@@ -265,10 +266,10 @@ bool scene_load_book_font(void)
 				return false;
 			}
 		}
+		freq_leave(fid);
 		memset(disp_ewidth, config.bookfontsize / 2, 0x80);
 	}
 	disp_set_book_fontsize(config.bookfontsize);
-	scene_power_save(true);
 	return true;
 }
 
@@ -2543,7 +2544,7 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 						config.freqs[*index - 7]--;
 					if (config.freqs[*index - 7] > NELEMS(freq_list) - 1)
 						config.freqs[*index - 7] = NELEMS(freq_list) - 1;
-					scene_power_save(true);
+					freq_update();
 					break;
 				case 10:
 					config.dis_scrsave = !config.dis_scrsave;
@@ -2599,7 +2600,7 @@ t_win_menu_op scene_moptions_menucb(dword key, p_win_menuitem item,
 						config.freqs[*index - 7]++;
 					if (config.freqs[*index - 7] < 0)
 						config.freqs[*index - 7] = 0;
-					scene_power_save(true);
+					freq_update();
 					break;
 				case 10:
 					config.dis_scrsave = !config.dis_scrsave;
@@ -3294,7 +3295,7 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 			break;
 	}
 	if (i != 3) {
-		scene_power_save(true);
+		freq_update();
 	}
 
 	STRCPY_S(curr->path, prev->path);
@@ -5892,7 +5893,6 @@ extern void scene_init(void)
 		ret = load_rdriver();
 		dbg_printf(d, "load_rdriver returns 0x%08x", ret);
 	}
-	scene_power_save(true);
 	sceRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "initExceptionHandler(): %.2fs",
 			   pspDiffTime(&dbgnow, &dbglasttick));
@@ -5935,6 +5935,8 @@ extern void scene_init(void)
 #ifdef ENABLE_TTF
 	ttf_init();
 #endif
+
+	freq_init();
 
 	xreader_scene_inited = true;
 
@@ -5993,76 +5995,6 @@ extern void scene_exit(void)
 	}
 
 	sceKernelExitGame();
-}
-
-#ifdef ENABLE_MUSIC
-extern void scene_power_playing_music(bool is_playing)
-{
-	if (is_playing) {
-		// 音乐正在播放？
-		// defaultCPUClock
-		struct music_info info = { 0 };
-		info.type = MD_GET_CPUFREQ;
-
-		if (musicdrv_get_info(&info) == 0) {
-			if (info.psp_freq[0] != 0) {
-				int cpu = max(info.psp_freq[0], freq_list[config.freqs[0]][0]);
-				int bus = max(info.psp_freq[1], freq_list[config.freqs[0]][1]);
-
-				power_set_clock(cpu, bus);
-				return;
-			}
-		}
-
-		power_set_clock(freq_list[config.freqs[1]][0],
-						freq_list[config.freqs[1]][1]);
-	} else {
-		// 最高频率
-		power_set_clock(freq_list[config.freqs[0]][0],
-						freq_list[config.freqs[0]][1]);
-	}
-}
-#endif
-
-extern void scene_power_save(bool save)
-{
-	if (save) {
-#ifdef ENABLE_MUSIC
-		// 音乐正在播放？
-		if (music_curr_playing()) {
-			// defaultCPUClock
-			struct music_info info = { 0 };
-			info.type = MD_GET_CPUFREQ;
-			if (musicdrv_get_info(&info) == 0) {
-				if (info.psp_freq[0] != 0) {
-					int cpu = info.psp_freq[0] > freq_list[config.freqs[0]][0] ?
-						info.psp_freq[0] : freq_list[config.freqs[0]][0];
-					xrSetCpuClock(cpu, 0);
-				}
-			}
-
-		} else
-#endif
-		{
-			// 最低频率
-			power_set_clock(freq_list[config.freqs[0]][0],
-							freq_list[config.freqs[0]][1]);
-		}
-	} else {
-#ifdef ENABLE_MUSIC
-		// 音乐正在播放？
-		if (music_curr_playing()) {
-			// 最高频率
-			power_set_clock(freq_list[config.freqs[2]][0],
-							freq_list[config.freqs[2]][1]);
-		} else
-#endif
-		{
-			// 中等频率
-			power_set_clock(freq_list[config.freqs[1]][0],
-							freq_list[config.freqs[1]][1]);
-		}
-	}
 }
 
 extern const char *scene_appdir(void)

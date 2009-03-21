@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include "qsort.h"
+#include "freq_lock.h"
 #include "scene.h"
 
 __inline void swap_data(void *data1, void *data2, int datasize)
@@ -54,7 +55,9 @@ void _quicksort(void *data, int left, int right, int datasize,
 extern void quicksort(void *data, int left, int right, int datasize,
 					  qsort_compare compare)
 {
-	scene_power_save(false);
+	int fid;
+
+	fid = freq_enter_level(FREQ_MID);
 	_quicksort(data, left, right, datasize, compare);
-	scene_power_save(true);
+	freq_leave(fid);
 }

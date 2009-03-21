@@ -298,13 +298,13 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 		if (g_status == ST_FFOWARD) {
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_playing_music(true);
+			generic_set_playback(true);
 			generic_unlock();
 			flac_seek_seconds(g_play_time + g_seek_seconds);
 		} else if (g_status == ST_FBACKWARD) {
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_playing_music(true);
+			generic_set_playback(true);
 			generic_unlock();
 			flac_seek_seconds(g_play_time - g_seek_seconds);
 		}

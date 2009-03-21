@@ -30,12 +30,7 @@ extern "C"
 
 	extern void scene_init(void);
 	extern void scene_exit(void);
-	extern void scene_power_save(bool save);
 	extern const char *scene_appdir(void);
-
-#ifdef ENABLE_MUSIC
-	extern void scene_power_playing_music(bool is_playing);
-#endif
 
 	extern dword get_bgcolor_by_time(void);
 
@@ -55,6 +50,26 @@ extern "C"
 		int size;
 		bool zipped;
 	} t_fonts;
+
+	enum {
+		FREQ_LOW = 0,
+		FREQ_MID = 1,
+		FREQ_HIGH = 2
+	};
+
+	enum {
+		FREQ_15 = 0,
+		FREQ_33,
+		FREQ_66,
+		FREQ_111,
+		FREQ_166,
+		FREQ_222,
+		FREQ_266,
+		FREQ_300,
+		FREQ_333
+	};
+
+	extern int freq_list[][2];
 
 #ifdef __cplusplus
 }

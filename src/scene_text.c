@@ -58,6 +58,7 @@
 #include "dbg.h"
 #include "simple_gettext.h"
 #include "osk.h"
+#include "freq_lock.h"
 
 #define MAX_TXT_KEY 14
 
@@ -773,11 +774,13 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 			pView->text_needrb = true;
 		}
 	}
+
 	if (fs != NULL) {
 		text_close(fs);
 		fs = NULL;
 	}
-	scene_power_save(false);
+
+	int fid = freq_enter_level(FREQ_MID);
 
 	extern bool g_force_text_view_mode;
 	extern p_umd_chapter p_umdchapter;
@@ -819,7 +822,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		dbg_printf(d, _("scene_book_reload: %s %s %s"), filelist[selidx].name,
 				   filelist[selidx].shortname->ptr,
 				   filelist[selidx].compname->ptr, where);
-		scene_power_save(true);
+		freq_leave(fid);
 		return 1;
 	}
 
@@ -855,7 +858,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 	STRCPY_S(prev_shortpath, config.shortpath);
 	STRCPY_S(prev_lastfile, filelist[selidx].compname->ptr);
 	prev_where = where;
-	scene_power_save(true);
+	freq_leave(fid);
 	return 0;
 }
 
@@ -1435,7 +1438,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		return exit_confirm();
 	} else if (key == ctlkey[11] || key == ctlkey2[11]
 			   || key == CTRL_PLAYPAUSE) {
-		scene_power_save(false);
+		int fid = freq_enter_level(FREQ_MID);
 		if (config.autobm)
 			bookmark_autosave(pView->bookmarkname,
 							  (fs->rows[fs->crow >> 10] +
@@ -1443,7 +1446,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		text_close(fs);
 		fs = NULL;
 		disp_duptocachealpha(50);
-		scene_power_save(true);
+		freq_leave(fid);
 		return *selidx;
 	} else if ((key == ctlkey[0] || key == ctlkey2[0])
 			   && scene_readbook_in_raw_mode == false) {
@@ -1469,7 +1472,8 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 				pView->text_needrf = true;
 				break;
 			case 1:
-				scene_power_save(false);
+				{
+				int fid = freq_enter_level(FREQ_MID);
 				if (config.autobm)
 					bookmark_autosave(pView->bookmarkname,
 									  (fs->rows[fs->crow >> 10] +
@@ -1477,8 +1481,9 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 				text_close(fs);
 				fs = NULL;
 				disp_duptocachealpha(50);
-				scene_power_save(true);
+				freq_leave(fid);
 				return *selidx;
+				}
 		}
 		scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
 		pView->text_needrp = true;
@@ -1595,7 +1600,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		}
 		pView->text_needrp = true;
 	} else if (key == ctlkey[13] || key == ctlkey2[13]) {
-		scene_power_save(false);
+		int fid = freq_enter_level(FREQ_MID);
 		char buf[128];
 
 		if (get_osk_input(buf, 128) == 1 && strcmp(buf, "") != 0) {
@@ -1622,7 +1627,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		disp_waitv();
 		cur_book_view.text_needrp = true;
 
-		scene_power_save(true);
+		freq_leave(fid);
 	} else
 		pView->text_needrp = pView->text_needrb = pView->text_needrf = false;
 	// reset ticks
@@ -1882,14 +1887,13 @@ dword scene_readbook(dword selidx)
 		ret = book_handle_input(&cur_book_view, &selidx, key);
 
 		if (ret != -1) {
-			scene_power_save(true);
 			free_infobar_image();
 			return ret;
 		}
 	  redraw:
 		;
 	}
-	scene_power_save(false);
+	int fid = freq_enter_level(FREQ_MID);
 	if (config.autobm)
 		bookmark_autosave(cur_book_view.bookmarkname,
 						  (fs->rows[fs->crow >> 10] +
@@ -1897,8 +1901,8 @@ dword scene_readbook(dword selidx)
 	text_close(fs);
 	fs = NULL;
 	disp_duptocachealpha(50);
-	scene_power_save(true);
 	free_infobar_image();
+	freq_leave(fid);
 	return selidx;
 }
 

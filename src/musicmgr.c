@@ -349,7 +349,6 @@ int music_stop(void)
 	if (ret == ST_PLAYING || ret == ST_PAUSED || ret == ST_LOADED
 		|| ret == ST_STOPPED || ret == ST_FFOWARD || ret == ST_FBACKWARD) {
 		ret = musicdrv_end();
-		scene_power_save(true);
 	} else
 		ret = 0;
 
@@ -436,9 +435,7 @@ static int music_play(int i)
 	int ret;
 
 	music_load(i);
-	scene_power_save(false);
 	ret = musicdrv_play();
-	scene_power_save(true);
 
 	return ret;
 }

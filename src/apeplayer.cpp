@@ -222,7 +222,7 @@ static int handle_seek(void)
 					generic_lock();
 
 					if (g_seek_count == 0) {
-						scene_power_playing_music(true);
+						generic_set_playback(true);
 
 						if (ape_seek_seconds(g_play_time) < 0) {
 							generic_unlock();
@@ -263,7 +263,7 @@ static int handle_seek(void)
 					generic_lock();
 
 					if (g_seek_count == 0) {
-						scene_power_playing_music(true);
+						generic_set_playback(true);
 
 						if (ape_seek_seconds(g_play_time) < 0) {
 							generic_unlock();
@@ -286,13 +286,13 @@ static int handle_seek(void)
 			generic_lock();
 			g_status = ST_PLAYING;
 			generic_unlock();
-			scene_power_playing_music(true);
+			generic_set_playback(true);
 			ape_seek_seconds(g_play_time + g_seek_seconds);
 		} else if (g_status == ST_FBACKWARD) {
 			generic_lock();
 			g_status = ST_PLAYING;
 			generic_unlock();
-			scene_power_playing_music(true);
+			generic_set_playback(true);
 			ape_seek_seconds(g_play_time - g_seek_seconds);
 		}
 	}

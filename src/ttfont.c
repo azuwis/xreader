@@ -40,6 +40,7 @@
 #include "strsafe.h"
 #include "text.h"
 #include "power.h"
+#include "freq_lock.h"
 
 static SceUID ttf_sema = -1;
 
@@ -1061,13 +1062,15 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	cprevious = eprevious = 0;
 
 	dword cpu, bus;
+	int fid = -1;
 
 	power_get_clock(&cpu, &bus);
-	if (cpu < 222 && config.ttf_haste_up)
-		power_set_clock(222, 111);
+	if (cpu < 222 && config.ttf_haste_up) {
+		fid = freq_enter(222, 111);
+	}
 	while (*str != 0 && count > 0) {
-		if (!check_range(x, y)) {
-			scene_power_save(true);
+		if (!check_range(x, y) && fid >= 0) {
+			freq_leave(fid);
 			return;
 		}
 		if (*str > 0x80) {
@@ -1094,7 +1097,9 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			count--;
 		}
 	}
-	scene_power_save(true);
+
+	if (fid >= 0)
+		freq_leave(fid);
 }
 
 extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
@@ -1437,13 +1442,15 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 	cprevious = eprevious = 0;
 
 	dword cpu, bus;
+	int fid = -1;
 
 	power_get_clock(&cpu, &bus);
-	if (cpu < 222 && config.ttf_haste_up)
-		power_set_clock(222, 111);
+	if (cpu < 222 && config.ttf_haste_up) {
+		fid = freq_enter(222, 111);
+	}
 	while (*str != 0 && count > 0) {
-		if (!check_range(x, y)) {
-			scene_power_save(true);
+		if (!check_range(x, y) && fid >= 0) {
+			freq_leave(fid);
 			return;
 		}
 		if (x < 0)
@@ -1472,7 +1479,8 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 			count--;
 		}
 	}
-	scene_power_save(true);
+	if (fid >= 0)
+		freq_leave(fid);
 }
 
 /** 
@@ -1751,13 +1759,15 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	cprevious = eprevious = 0;
 
 	dword cpu, bus;
+	int fid = -1;
 
 	power_get_clock(&cpu, &bus);
-	if (cpu < 222 && config.ttf_haste_up)
-		power_set_clock(222, 111);
+	if (cpu < 222 && config.ttf_haste_up) {
+		fid = freq_enter(222, 111);
+	}
 	while (*str != 0 && count > 0) {
-		if (!check_range(x, y)) {
-			scene_power_save(true);
+		if (!check_range(x, y) && fid >= 0) {
+			freq_leave(fid);
 			return;
 		}
 		if (*str > 0x80) {
@@ -1784,7 +1794,8 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			count--;
 		}
 	}
-	scene_power_save(true);
+	if (fid >= 0)
+		freq_leave(fid);
 }
 
 /** 
@@ -2065,13 +2076,14 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	cprevious = eprevious = 0;
 
 	dword cpu, bus;
+	int fid = -1;
 
 	power_get_clock(&cpu, &bus);
 	if (cpu < 222 && config.ttf_haste_up)
-		power_set_clock(222, 111);
+		fid = freq_enter(222, 111);
 	while (*str != 0 && count > 0) {
 		if (!check_range(x, y)) {
-			scene_power_save(true);
+			freq_leave(fid);
 			return;
 		}
 		if (*str > 0x80) {
@@ -2098,7 +2110,8 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			count--;
 		}
 	}
-	scene_power_save(true);
+	if (fid >= 0)
+		freq_leave(fid);
 }
 #endif
 

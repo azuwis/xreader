@@ -172,7 +172,7 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_playing_music(true);
+			generic_set_playback(true);
 			generic_unlock();
 			tta_seek_seconds(g_play_time);
 		} else if (g_status == ST_FBACKWARD) {
@@ -182,7 +182,7 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 			generic_lock();
 			g_status = ST_PLAYING;
-			scene_power_playing_music(true);
+			generic_set_playback(true);
 			generic_unlock();
 			tta_seek_seconds(g_play_time);
 		}

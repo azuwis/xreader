@@ -57,6 +57,7 @@ extern "C"
 	int generic_init(void);
 	int generic_resume(const char *spath, const char *lpath);
 	int generic_suspend(void);
+	void generic_set_playback(bool playing);
 
 #ifdef __cplusplus
 }
