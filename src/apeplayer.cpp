@@ -655,6 +655,28 @@ static int ape_get_info(struct music_info *pinfo)
 	return 0;
 }
 
+/**
+ * 检测是否为APE文件，目前只检查文件后缀名
+ *
+ * @param spath 当前播放音乐名，8.3路径形式
+ *
+ * @return 是APE文件返回1，否则返回0
+ */
+static int ape_probe(const char* spath)
+{
+	const char *p;
+
+	p = utils_fileext(spath);
+
+	if (p) {
+		if (stricmp(p, "ape") == 0) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static struct music_ops ape_ops = {
 	"ape",
 	NULL,
@@ -668,6 +690,7 @@ static struct music_ops ape_ops = {
 	ape_suspend,
 	ape_resume,
 	ape_end,
+	ape_probe,
 	NULL
 };
 

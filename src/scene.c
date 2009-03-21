@@ -4069,16 +4069,7 @@ int scene_single_file_ops_draw(p_win_menuitem item, dword selidx)
 			}
 			break;
 #ifdef ENABLE_MUSIC
-		case fs_filetype_mp3:
-		case fs_filetype_mpc:
-		case fs_filetype_wave:
-		case fs_filetype_tta:
-		case fs_filetype_ape:
-		case fs_filetype_flac:
-		case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-		case fs_filetype_wma:
-#endif
+		case fs_filetype_music:
 			if (where == scene_in_dir) {
 				disp_putstring(240 - DISP_FONTSIZE * 3,
 							   136 - DISP_FONTSIZE * 2, COLOR_WHITE,
@@ -4311,16 +4302,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 									COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 						}
 						break;
-					case fs_filetype_mp3:
-					case fs_filetype_mpc:
-					case fs_filetype_wave:
-					case fs_filetype_tta:
-					case fs_filetype_ape:
-					case fs_filetype_flac:
-					case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-					case fs_filetype_wma:
-#endif
+					case fs_filetype_music:
 						if (win_msgbox
 							(_("添加歌曲到播放列表？"), _("是"),
 							 _("否"), COLOR_WHITE, COLOR_WHITE,
@@ -4409,16 +4391,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 								}
 								break;
 #ifdef ENABLE_MUSIC
-							case fs_filetype_mp3:
-							case fs_filetype_mpc:
-							case fs_filetype_wave:
-							case fs_filetype_tta:
-							case fs_filetype_ape:
-							case fs_filetype_flac:
-							case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-							case fs_filetype_wma:
-#endif
+							case fs_filetype_music:
 								if (bmcount == 0) {
 									char mp3name[PATH_MAX],
 										mp3longname[PATH_MAX];
@@ -4500,16 +4473,7 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 								}
 								break;
 #ifdef ENABLE_MUSIC
-							case fs_filetype_mp3:
-							case fs_filetype_mpc:
-							case fs_filetype_wave:
-							case fs_filetype_tta:
-							case fs_filetype_ape:
-							case fs_filetype_flac:
-							case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-							case fs_filetype_wma:
-#endif
+							case fs_filetype_music:
 								if (mp3count > 0) {
 									char mp3name[PATH_MAX],
 										mp3longname[PATH_MAX];
@@ -4742,16 +4706,7 @@ static t_win_menu_op scene_fileops(p_win_menuitem item, dword * index)
 					dircount++;
 					break;
 #ifdef ENABLE_MUSIC
-				case fs_filetype_mp3:
-				case fs_filetype_mpc:
-				case fs_filetype_wave:
-				case fs_filetype_tta:
-				case fs_filetype_ape:
-				case fs_filetype_flac:
-				case fs_filetype_aa3:
-#ifdef ENABLE_WMA
-				case fs_filetype_wma:
-#endif
+				case fs_filetype_music:
 					mp3count++;
 					break;
 #endif
@@ -5612,15 +5567,7 @@ void scene_filelist(void)
 				scene_open_ebm(&idx);
 				break;
 #ifdef ENABLE_MUSIC
-			case fs_filetype_mp3:
-			case fs_filetype_mpc:
-			case fs_filetype_wave:
-			case fs_filetype_tta:
-			case fs_filetype_ape:
-			case fs_filetype_flac:
-#ifdef ENABLE_WMA
-			case fs_filetype_wma:
-#endif
+			case fs_filetype_music:
 				scene_open_music(&idx);
 				break;
 #endif

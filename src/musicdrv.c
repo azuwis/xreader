@@ -86,6 +86,22 @@ int musicdrv_maxindex(void)
 	return count;
 }
 
+struct music_ops *musicdrv_chk_file(const char *name)
+{
+	struct music_ops *tmp;
+
+	if (name == NULL)
+		return NULL;
+
+	for (tmp = music_drivers; tmp; tmp = tmp->next) {
+		if (tmp->probe(name)) {
+			return tmp;
+		}
+	}
+
+	return NULL;
+}
+
 struct music_ops *get_musicdrv(const char *name)
 {
 	struct music_ops *tmp;

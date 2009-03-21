@@ -629,6 +629,28 @@ static int wav_get_info(struct music_info *pinfo)
 	return 0;
 }
 
+/**
+ * 检测是否为WAV文件，目前只检查文件后缀名
+ *
+ * @param spath 当前播放音乐名，8.3路径形式
+ *
+ * @return 是WAV文件返回1，否则返回0
+ */
+static int wav_probe(const char* spath)
+{
+	const char *p;
+
+	p = utils_fileext(spath);
+
+	if (p) {
+		if (stricmp(p, "wav") == 0) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static struct music_ops wav_ops = {
 	.name = "wave",
 	.set_opt = NULL,
@@ -642,6 +664,7 @@ static struct music_ops wav_ops = {
 	.suspend = wav_suspend,
 	.resume = wav_resume,
 	.get_info = wav_get_info,
+	.probe = wav_probe,
 	.next = NULL
 };
 

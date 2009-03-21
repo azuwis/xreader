@@ -48,16 +48,7 @@ typedef enum
 	fs_filetype_tga,
 #endif
 #ifdef ENABLE_MUSIC
-	fs_filetype_mp3,
-	fs_filetype_mpc,
-	fs_filetype_wave,
-	fs_filetype_tta,
-	fs_filetype_ape,
-	fs_filetype_flac,
-	fs_filetype_aa3,
-#ifdef ENABLE_WMA
-	fs_filetype_wma,
-#endif
+	fs_filetype_music,
 #endif
 	fs_filetype_ebm,
 	fs_filetype_unknown,
@@ -94,5 +85,6 @@ p_win_menuitem fs_empty_dir(dword * filecount, dword icolor,
 extern t_fs_filetype fs_file_get_type(const char *filename);
 extern bool fs_is_image(t_fs_filetype ft);
 extern bool fs_is_txtbook(t_fs_filetype ft);
+extern bool fs_is_music(const char* spath);
 
 #endif

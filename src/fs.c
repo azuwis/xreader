@@ -42,6 +42,7 @@
 #include "image.h"
 #include "archive.h"
 #include "freq_lock.h"
+#include "musicdrv.h"
 #include "dbg.h"
 
 typedef struct
@@ -122,20 +123,6 @@ t_fs_filetype_entry ft_table[] = {
 	{"chm", fs_filetype_chm},
 	{"rar", fs_filetype_rar},
 	{"pbp", fs_filetype_prog},
-#ifdef ENABLE_MUSIC
-	{"mp3", fs_filetype_mp3},
-	{"mpc", fs_filetype_mpc},
-	{"aa3", fs_filetype_aa3},
-	{"wav", fs_filetype_wave},
-	{"wave", fs_filetype_wave},
-	{"tta", fs_filetype_tta},
-	{"flac", fs_filetype_flac},
-	{"ape", fs_filetype_ape},
-	{"mac", fs_filetype_ape},
-#ifdef ENABLE_WMA
-	{"wma", fs_filetype_wma},
-#endif
-#endif
 	{"ebm", fs_filetype_ebm},
 	{"iso", fs_filetype_iso},
 	{"cso", fs_filetype_iso},
@@ -156,10 +143,6 @@ t_fs_specfiletype_entry ft_spec_table[] = {
 	{"Version", fs_filetype_txt},
 	{"INSTALL", fs_filetype_txt},
 	{"CREDITS", fs_filetype_txt},
-#ifdef ENABLE_MUSIC
-	{"mpeg", fs_filetype_mp3},
-	{"mpea", fs_filetype_mp3},
-#endif
 	{NULL, fs_filetype_unknown}
 };
 
@@ -563,6 +546,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 		item[cur_count].selicolor = selicolor;
 		item[cur_count].selrcolor = selrcolor;
 		item[cur_count].selbcolor = selbcolor;
+		item[cur_count].data3 = file_info.uncompressed_size;
 		cur_count++;
 	} while (unzGoToNextFile(unzf) == UNZ_OK);
 	unzClose(unzf);
@@ -674,6 +658,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 		item[cur_count].selicolor = selicolor;
 		item[cur_count].selrcolor = selrcolor;
 		item[cur_count].selbcolor = selbcolor;
+		item[cur_count].data3 = header.UnpSize;
 		cur_count++;
 	}
 	while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
@@ -771,6 +756,7 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 	item[cur_count].selicolor = ((p_fs_chm_enum) context)->selicolor;
 	item[cur_count].selrcolor = ((p_fs_chm_enum) context)->selrcolor;
 	item[cur_count].selbcolor = ((p_fs_chm_enum) context)->selbcolor;
+	item[cur_count].data3 = ui->length;
 	((p_fs_chm_enum) context)->cur_count++;
 	return CHM_ENUMERATOR_CONTINUE;
 }
@@ -907,9 +893,12 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 				item[i].data2[1] = (p[i - 1].chunk_pos >> 16) & 0xFFFF;
 				item[i].data2[2] = p[i - 1].chunk_offset & 0xFFFF;
 				item[i].data2[3] = (p[i - 1].chunk_offset >> 16) & 0xFFFF;
+				item[i].data3 = p[i - 1].length;
+#if 0
 				printf("%d pos:%d,%d,%d-%d,%d\n", i, p[i - 1].chunk_pos,
 					   item[i].data2[0], item[i].data2[1], item[i].data2[2],
 					   item[i].data2[3]);
+#endif
 				item[i].selected = false;
 				item[i].icolor = icolor;
 				item[i].selicolor = selicolor;
@@ -944,6 +933,7 @@ extern t_fs_filetype fs_file_get_type(const char *filename)
 			entry++;
 		}
 	}
+
 	while (entry2->fname != NULL) {
 		const char *shortname = strrchr(filename, '/');
 
@@ -955,6 +945,11 @@ extern t_fs_filetype fs_file_get_type(const char *filename)
 			return entry2->ft;
 		entry2++;
 	}
+
+	if (fs_is_music(filename)) {
+		return fs_filetype_music;
+	}
+	
 	return fs_filetype_unknown;
 }
 
@@ -972,3 +967,10 @@ extern bool fs_is_txtbook(t_fs_filetype ft)
 	return ft == fs_filetype_txt || ft == fs_filetype_html
 		|| ft == fs_filetype_gz;
 }
+
+#ifdef ENABLE_MUSIC
+extern bool fs_is_music(const char* spath)
+{
+	return musicdrv_chk_file(spath) != NULL ? true : false;
+}
+#endif

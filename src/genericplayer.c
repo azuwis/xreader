@@ -196,7 +196,7 @@ int generic_fforward(int sec)
 
 	g_seek_seconds = sec;
 
-	sceRtcGetCurrentTick(&g_last_seek_tick);
+	sceRtcGetCurrentTick((u64*)&g_last_seek_tick);
 	g_last_seek_is_forward = true;
 	g_seek_count++;
 	generic_unlock();
@@ -220,7 +220,7 @@ int generic_fbackward(int sec)
 
 	g_seek_seconds = sec;
 
-	sceRtcGetCurrentTick(&g_last_seek_tick);
+	sceRtcGetCurrentTick((u64*)&g_last_seek_tick);
 	g_last_seek_is_forward = false;
 	g_seek_count++;
 	generic_unlock();

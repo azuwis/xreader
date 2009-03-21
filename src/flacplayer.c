@@ -687,6 +687,28 @@ static int flac_get_info(struct music_info *pinfo)
 	return 0;
 }
 
+/**
+ * 检测是否为FLAC文件，目前只检查文件后缀名
+ *
+ * @param spath 当前播放音乐名，8.3路径形式
+ *
+ * @return 是FLAC文件返回1，否则返回0
+ */
+static int flac_probe(const char* spath)
+{
+	const char *p;
+
+	p = utils_fileext(spath);
+
+	if (p) {
+		if (stricmp(p, "flac") == 0) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 static struct music_ops flac_ops = {
 	.name = "flac",
 	.set_opt = NULL,
@@ -700,6 +722,7 @@ static struct music_ops flac_ops = {
 	.suspend = flac_suspend,
 	.resume = flac_resume,
 	.get_info = flac_get_info,
+	.probe = flac_probe,
 	.next = NULL
 };
 

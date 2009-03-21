@@ -97,6 +97,7 @@ extern "C"
 		int (*suspend) (void);
 		int (*resume) (const char *spath, const char *lpath);
 		int (*end) (void);
+		int (*probe) (const char* spath);
 
 		struct music_ops *next;
 	};
@@ -117,6 +118,7 @@ extern "C"
 	int musicdrv_suspend(void);
 	int musicdrv_resume(const char *spath, const char *lpath);
 	int musicdrv_get_info(struct music_info *info);
+	struct music_ops *musicdrv_chk_file(const char *name);
 
 	bool opt_is_on(const char *str);
 
@@ -141,7 +143,6 @@ extern "C"
 	void free_bitrate(struct instant_bitrate *inst);
 
 	extern struct instant_bitrate g_inst_br;
-
 #ifdef __cplusplus
 }
 #endif

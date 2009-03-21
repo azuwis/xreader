@@ -43,6 +43,7 @@
 #include "apetaglib/APETag.h"
 #include "genericplayer.h"
 #include "mp3info.h"
+#include "common/utils.h"
 
 #define MP3_FRAME_SIZE 2889
 
@@ -148,7 +149,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 	memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 }
 
-static int madmp3_seek_seconds_offset_brute(double npt)
+static int mp3_seek_seconds_offset_brute(double npt)
 {
 	int pos;
 
@@ -369,7 +370,7 @@ static int seek_valid_frame(void)
 	return 0;
 }
 
-static int madmp3_seek_seconds_offset(double npt)
+static int mp3_seek_seconds_offset(double npt)
 {
 	int new_pos = npt * mp3info.average_bitrate / 8;
 
@@ -408,16 +409,16 @@ static int madmp3_seek_seconds_offset(double npt)
 	return 0;
 }
 
-static int madmp3_seek_seconds(double npt)
+static int mp3_seek_seconds(double npt)
 {
 	int ret;
 
 	free_bitrate(&g_inst_br);
 
 	if (mp3info.frameoff && mp3info.frames > 0) {
-		ret = madmp3_seek_seconds_offset_brute(npt);
+		ret = mp3_seek_seconds_offset_brute(npt);
 	} else {
-		ret = madmp3_seek_seconds_offset(npt);
+		ret = mp3_seek_seconds_offset(npt);
 	}
 
 	return ret;
@@ -464,7 +465,7 @@ static int handle_seek(void)
 					g_seek_count = 0;
 					generic_set_playback(true);
 
-					if (madmp3_seek_seconds(g_play_time) < 0) {
+					if (mp3_seek_seconds(g_play_time) < 0) {
 						generic_unlock();
 						return -1;
 					}
@@ -506,7 +507,7 @@ static int handle_seek(void)
 					g_seek_count = 0;
 					generic_set_playback(true);
 
-					if (madmp3_seek_seconds(g_play_time) < 0) {
+					if (mp3_seek_seconds(g_play_time) < 0) {
 						generic_unlock();
 						return -1;
 					}
@@ -529,13 +530,13 @@ static int handle_seek(void)
 			g_status = ST_PLAYING;
 			generic_unlock();
 			generic_set_playback(true);
-			madmp3_seek_seconds(g_play_time + g_seek_seconds);
+			mp3_seek_seconds(g_play_time + g_seek_seconds);
 		} else if (g_status == ST_FBACKWARD) {
 			generic_lock();
 			g_status = ST_PLAYING;
 			generic_unlock();
 			generic_set_playback(true);
-			madmp3_seek_seconds(g_play_time - g_seek_seconds);
+			mp3_seek_seconds(g_play_time - g_seek_seconds);
 		}
 	}
 
@@ -552,7 +553,7 @@ static int handle_seek(void)
  * @param reqn 缓冲区帧大小
  * @param pdata 用户数据，无用
  */
-static int madmp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
+static int mp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 {
 	int avail_frame;
 	int snd_buf_frame_size = (int) reqn;
@@ -937,7 +938,7 @@ void readMP3ApeTag(const char *spath)
 	}
 }
 
-static int madmp3_load(const char *spath, const char *lpath)
+static int mp3_load(const char *spath, const char *lpath)
 {
 	int ret;
 
@@ -1048,7 +1049,7 @@ static int madmp3_load(const char *spath, const char *lpath)
 	if (use_me)
 		xMP3AudioSetChannelCallback(0, memp3_audiocallback, NULL);
 	else
-		xMP3AudioSetChannelCallback(0, madmp3_audiocallback, NULL);
+		xMP3AudioSetChannelCallback(0, mp3_audiocallback, NULL);
 
 	generic_lock();
 	g_status = ST_LOADED;
@@ -1063,7 +1064,7 @@ static void init_default_option(void)
 	check_crc = false;
 }
 
-static int madmp3_set_opt(const char *unused, const char *values)
+static int mp3_set_opt(const char *unused, const char *values)
 {
 	int argc, i;
 	char **argv;
@@ -1134,7 +1135,7 @@ static int madmp3_set_opt(const char *unused, const char *values)
 	return 0;
 }
 
-static int madmp3_get_info(struct music_info *info)
+static int mp3_get_info(struct music_info *info)
 {
 	if (g_status == ST_UNKNOWN) {
 		return -1;
@@ -1182,7 +1183,7 @@ static int madmp3_get_info(struct music_info *info)
 		if (use_me) {
 			STRCPY_S(info->decoder_name, "mp3");
 		} else {
-			STRCPY_S(info->decoder_name, "madmp3");
+			STRCPY_S(info->decoder_name, "mp3");
 		}
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
@@ -1209,7 +1210,7 @@ static int madmp3_get_info(struct music_info *info)
  *
  * @return 成功时返回0
  */
-static int madmp3_end(void)
+static int mp3_end(void)
 {
 	dbg_printf(d, "%s", __func__);
 
@@ -1253,12 +1254,12 @@ static int madmp3_end(void)
  *
  * @return 成功时返回0
  */
-static int madmp3_suspend(void)
+static int mp3_suspend(void)
 {
 	dbg_printf(d, "%s", __func__);
 
 	generic_suspend();
-	madmp3_end();
+	mp3_end();
 
 	return 0;
 }
@@ -1271,19 +1272,19 @@ static int madmp3_suspend(void)
  *
  * @return 成功时返回0
  */
-static int madmp3_resume(const char *spath, const char *lpath)
+static int mp3_resume(const char *spath, const char *lpath)
 {
 	int ret;
 
 	dbg_printf(d, "%s", __func__);
-	ret = madmp3_load(spath, lpath);
+	ret = mp3_load(spath, lpath);
 
 	if (ret != 0) {
-		dbg_printf(d, "%s: madmp3_load failed %d", __func__, ret);
+		dbg_printf(d, "%s: mp3_load failed %d", __func__, ret);
 		return -1;
 	}
 
-	madmp3_seek_seconds(g_suspend_playing_time);
+	mp3_seek_seconds(g_suspend_playing_time);
 	g_suspend_playing_time = 0;
 
 	generic_resume(spath, lpath);
@@ -1291,25 +1292,51 @@ static int madmp3_resume(const char *spath, const char *lpath)
 	return 0;
 }
 
-static struct music_ops madmp3_ops = {
-	.name = "madmp3",
-	.set_opt = madmp3_set_opt,
-	.load = madmp3_load,
+/**
+ * 检测是否为MP3文件，目前只检查文件后缀名
+ *
+ * @param spath 当前播放音乐名，8.3路径形式
+ *
+ * @return 是MP3文件返回1，否则返回0
+ */
+static int mp3_probe(const char* spath)
+{
+	const char *p;
+
+	p = utils_fileext(spath);
+
+	if (p) {
+		if (stricmp(p, "mp3") == 0) {
+			return 1;
+		}
+		if (stricmp(p, "mpa") == 0) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+static struct music_ops mp3_ops = {
+	.name = "mp3",
+	.set_opt = mp3_set_opt,
+	.load = mp3_load,
 	.play = NULL,
 	.pause = NULL,
-	.end = madmp3_end,
+	.end = mp3_end,
 	.get_status = NULL,
 	.fforward = NULL,
 	.fbackward = NULL,
-	.suspend = madmp3_suspend,
-	.resume = madmp3_resume,
-	.get_info = madmp3_get_info,
+	.suspend = mp3_suspend,
+	.resume = mp3_resume,
+	.get_info = mp3_get_info,
+	.probe = mp3_probe,
 	.next = NULL,
 };
 
-int madmp3_init()
+int mp3_init()
 {
-	return register_musicdrv(&madmp3_ops);
+	return register_musicdrv(&mp3_ops);
 }
 
 /**

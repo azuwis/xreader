@@ -25,6 +25,11 @@
 
 #include "datatype.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 extern dword utils_dword2string(dword dw, char *dest, dword width);
 extern bool utils_string2dword(const char *src, dword * dw);
 extern bool utils_string2double(const char *src, double *db);
@@ -35,5 +40,9 @@ bool utils_is_file_exists(const char *filename);
 void *safe_realloc(void *ptr, size_t size);
 
 #define UNUSED(x) ((void)(x))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

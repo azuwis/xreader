@@ -45,6 +45,7 @@
 #include "mad.h"
 #include "scene.h"
 #include "ctrl.h"
+#include "fs.h"
 
 struct music_list
 {
@@ -387,38 +388,18 @@ int music_fbackward(int sec)
 	return ret;
 }
 
-static const char *get_file_ext(const char *path)
-{
-	if (path == NULL)
-		return "";
-
-	const char *p = strrchr(path, '.');
-
-	if (p == NULL)
-		return "";
-
-	return p + 1;
-}
-
 static int music_setupdriver(const char *spath, const char *lpath)
 {
-	const char *ext = get_file_ext(lpath);
-	struct music_ops *dev = 0;
+	struct music_ops * ops = musicdrv_chk_file(spath);
+	struct music_ops * dev = NULL;
 
-	if (!stricmp(ext, "mp3"))
-		dev = set_musicdrv("madmp3");
-	else if (!stricmp(ext, "mpc"))
-		dev = set_musicdrv("musepack");
-	else if (!stricmp(ext, "mpc"))
-		dev = set_musicdrv("musepack");
-	else if (!stricmp(ext, "wav") || !stricmp(ext, "wave"))
-		dev = set_musicdrv("wave");
-	else if (!stricmp(ext, "tta"))
-		dev = set_musicdrv("tta");
-	else if (!stricmp(ext, "flac"))
-		dev = set_musicdrv("flac");
-	else if (!stricmp(ext, "ape") || !stricmp(ext, "mac"))
-		dev = set_musicdrv("ape");
+	if (ops) {
+		dev = set_musicdrv(ops->name);
+	}
+
+	if (dev != ops) {
+		dbg_printf(d, "%s: set musicdrv dev (0x%08x) != ops(0x%08x), but they have same name.", __func__, (unsigned int)dev, (unsigned int)ops);
+	}
 
 	return dev ? 0 : -ENODEV;
 }
@@ -732,7 +713,7 @@ int music_init(void)
 	wav_init();
 	tta_init();
 	ape_init();
-	madmp3_init();
+	mp3_init();
 	flac_init();
 	set_musicdrv("musepack");
 	memset(&g_list, 0, sizeof(g_list));
@@ -890,26 +871,6 @@ int music_next(void)
 	return 0;
 }
 
-bool is_file_music(const char *filename)
-{
-	static char musicext[][5] = { "MP3", "MPC", "WAV", "TTA", "FLAC", "APE" };
-//      { "MP3", "OGG", "AA3", "OMA", "OMG", "FLAC", "WMA", "MPC" };
-	const char *ext = utils_fileext(filename);
-
-	if (ext == NULL)
-		return false;
-
-	size_t i;
-
-	for (i = 0; i < NELEMS(musicext); ++i) {
-		if (stricmp(ext, musicext[i]) == 0) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
 int music_add_dir(const char *spath, const char *lpath)
 {
 	p_fat_info info;
@@ -932,7 +893,7 @@ int music_add_dir(const char *spath, const char *lpath)
 			music_add_dir(spath2, lpath2);
 			continue;
 		}
-		if (is_file_music(info[i].longname) == false)
+		if (fs_is_music(info[i].filename) == false)
 			continue;
 		char sfn[PATH_MAX];
 		char lfn[PATH_MAX];

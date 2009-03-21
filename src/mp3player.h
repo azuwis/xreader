@@ -20,4 +20,4 @@
 
 #pragma once
 
-int madmp3_init(void);
+int mp3_init(void);
