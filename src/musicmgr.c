@@ -1100,8 +1100,8 @@ int music_suspend(void)
 
 	prev_is_playing = g_list.is_list_playing;
 	g_list.is_list_playing = 0;
-	music_unlock();
 
+	// now music module is locked
 	return 0;
 }
 
