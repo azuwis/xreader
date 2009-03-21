@@ -77,6 +77,8 @@ extern "C"
 							 unsigned int vol2, void *buf);
 	int xMP3AudioSetFrequency(unsigned short freq);
 
+	void clear_snd_buf(void *buf, int frames);
+
 #ifdef __cplusplus
 }
 #endif

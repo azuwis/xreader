@@ -120,17 +120,6 @@ typedef struct _MPC_taginfo_t
 
 static MPC_taginfo_t g_taginfo;
 
-/**
- * 清空声音缓冲区
- *
- * @param buf 声音缓冲区指针
- * @param frames 帧数大小
- */
-static inline void clear_snd_buf(void *buf, int frames)
-{
-	memset(buf, 0, frames * 2 * 2);
-}
-
 #ifdef MPC_FIXED_POINT
 static int shift_signed(MPC_SAMPLE_FORMAT val, int shift)
 {
@@ -235,6 +224,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_buff_frame_size = g_buff_frame_start = 0;
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
+		sceKernelDelayThread(100000);
 		return 0;
 	}
 

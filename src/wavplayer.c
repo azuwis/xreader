@@ -111,17 +111,6 @@ typedef struct _wav_taginfo_t
 static wav_taginfo_t g_taginfo;
 
 /**
- * 清空声音缓冲区
- *
- * @param buf 声音缓冲区指针
- * @param frames 帧数大小
- */
-static inline void clear_snd_buf(void *buf, int frames)
-{
-	memset(buf, 0, frames * 2 * 2);
-}
-
-/**
  * 复制数据到声音缓冲区
  *
  * @note 声音缓存区的格式为双声道，16位低字序
@@ -214,6 +203,7 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			wav_seek_seconds(g_play_time);
 		}
 		clear_snd_buf(buf, snd_buf_frame_size);
+		sceKernelDelayThread(100000);
 		return 0;
 	}
 
