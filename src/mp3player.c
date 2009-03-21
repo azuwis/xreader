@@ -32,7 +32,6 @@
 #include <pspaudio.h>
 #include <psprtc.h>
 #include <pspaudiocodec.h>
-#include <pspmpeg.h>
 #include <limits.h>
 #include "config.h"
 #include "ssv.h"
