@@ -243,10 +243,27 @@ static byte fat_calc_chksum(p_fat_entry info)
 {
 	byte *n = (byte *) & info->norm.filename[0];
 	byte chksum = 0;
+
+	// Fix upset warning in psp-gcc 4.3.3
+#if 0
 	u32 i;
 
 	for (i = 0; i < 11; i++)
 		chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[i];
+#endif
+
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[0];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[1];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[2];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[3];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[4];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[5];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[6];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[7];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[8];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[9];
+	chksum = ((chksum & 1) ? 0x80 : 0) + (chksum >> 1) + n[10];
+
 	return chksum;
 }
 
