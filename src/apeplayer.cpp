@@ -210,18 +210,18 @@ static int handle_seek(void)
 				} else {
 					generic_lock();
 
-					if (g_seek_count == 0) {
-						generic_set_playback(true);
+					g_seek_count = 0;
+					generic_set_playback(true);
 
-						if (ape_seek_seconds(g_play_time) < 0) {
-							generic_unlock();
-							return -1;
-						}
-
-						g_status = ST_PLAYING;
+					if (ape_seek_seconds(g_play_time) < 0) {
+						generic_unlock();
+						return -1;
 					}
 
+					g_status = ST_PLAYING;
+
 					generic_unlock();
+					sceKernelDelayThread(100000);
 				}
 			} else {
 				generic_unlock();
@@ -251,18 +251,18 @@ static int handle_seek(void)
 				} else {
 					generic_lock();
 
-					if (g_seek_count == 0) {
-						generic_set_playback(true);
+					g_seek_count = 0;
+					generic_set_playback(true);
 
-						if (ape_seek_seconds(g_play_time) < 0) {
-							generic_unlock();
-							return -1;
-						}
-
-						g_status = ST_PLAYING;
+					if (ape_seek_seconds(g_play_time) < 0) {
+						generic_unlock();
+						return -1;
 					}
 
+					g_status = ST_PLAYING;
+
 					generic_unlock();
+					sceKernelDelayThread(100000);
 				}
 			} else {
 				generic_unlock();

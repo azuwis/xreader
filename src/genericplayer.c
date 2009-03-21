@@ -45,12 +45,12 @@ bool g_last_seek_is_forward = false;
 /**
  * 上次按快进退键起始时间
  */
-u64 g_last_seek_tick = 0;
+volatile u64 g_last_seek_tick = 0;
 
 /**
  *  按快进退键计数
  */
-dword g_seek_count = 0;
+volatile dword g_seek_count = 0;
 
 /**
  * 休眠前播放状态
