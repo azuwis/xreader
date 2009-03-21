@@ -12223,7 +12223,7 @@ extern dword charsets_ucs_conv(const byte * ucs, size_t inputlen, byte * cjk,
 		int l = gbk_wctomb(cjk + j, *(word *) (ucs + i), 2);
 
 		j += l;
-		outputlen -= j;
+		outputlen -= l;
 		i += 2;
 		inputlen -= 2;
 	}
