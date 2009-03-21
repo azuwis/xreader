@@ -4,6 +4,7 @@ AR = @PSP_AR@
 RANLIB = @PSP_RANLIB@
 
 EXEEXT =
+OBJEXT = o
 
 if OPTIMIZE
 AM_CFLAGS = -Os -G0 -Wall -fno-builtin-printf

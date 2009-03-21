@@ -5,6 +5,8 @@ AR = @PSP_AR@
 RANLIB = @PSP_RANLIB@
 
 EXEEXT =
+OBJEXT = o
+
 AM_CPPFLAGS = \
 -I$(srcdir) -I$(srcdir)/include -I$(srcdir)/include/freetype2 \
 -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_srcdir)/xrPrx -I$(top_srcdir)/xr_rdriver \

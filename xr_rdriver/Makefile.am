@@ -4,6 +4,7 @@ AR = @PSP_AR@
 RANLIB = @PSP_RANLIB@
 
 EXEEXT =
+OBJEXT = o
 
 AM_CFLAGS = -I $(top_srcdir)/src/include
 
