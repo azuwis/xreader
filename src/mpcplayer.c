@@ -33,6 +33,7 @@
 #include "common/utils.h"
 #include "apetaglib/APETag.h"
 #include "genericplayer.h"
+#include "musicinfo.h"
 #include "dbg.h"
 
 static int __end(void);
@@ -105,20 +106,6 @@ static unsigned g_buff_frame_size;
  * Musepack音乐播放缓冲当前位置，以帧数计
  */
 static int g_buff_frame_start;
-
-/**
- * Musepack音乐文件长度，以秒数
- */
-static double g_duration;
-
-typedef struct _MPC_taginfo_t
-{
-	char title[80];
-	char artist[80];
-	char album[80];
-} MPC_taginfo_t;
-
-static MPC_taginfo_t g_taginfo;
 
 #ifdef MPC_FIXED_POINT
 static int shift_signed(MPC_SAMPLE_FORMAT val, int shift)
@@ -199,7 +186,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	if (g_status != ST_PLAYING) {
 		if (g_status == ST_FFOWARD) {
 			g_play_time += g_seek_seconds;
-			if (g_play_time >= g_duration) {
+			if (g_play_time >= g_info.duration) {
 				__end();
 				return -1;
 			}
@@ -233,15 +220,15 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 		if (avail_frame >= snd_buf_frame_size) {
 			send_to_sndbuf(audio_buf,
-						   &g_buff[g_buff_frame_start * info.channels],
-						   snd_buf_frame_size, info.channels);
+						   &g_buff[g_buff_frame_start * g_info.channels],
+						   snd_buf_frame_size, g_info.channels);
 			g_buff_frame_start += snd_buf_frame_size;
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
 			send_to_sndbuf(audio_buf,
-						   &g_buff[g_buff_frame_start * info.channels],
-						   avail_frame, info.channels);
+						   &g_buff[g_buff_frame_start * g_info.channels],
+						   avail_frame, g_info.channels);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
@@ -260,11 +247,11 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_buff_frame_start = 0;
 
 			incr =
-				(double) (MPC_DECODER_BUFFER_LENGTH / 2 / info.channels) /
-				info.sample_freq;
+				(double) (MPC_DECODER_BUFFER_LENGTH / 2 / g_info.channels) /
+				g_info.sample_freq;
 			g_play_time += incr;
 			add_bitrate(&g_inst_br,
-						vbr_update_bits * info.sample_freq / MPC_FRAME_LENGTH,
+						vbr_update_bits * g_info.sample_freq / MPC_FRAME_LENGTH,
 						incr);
 		}
 	}
@@ -289,9 +276,9 @@ static int __init(void)
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
 
-	g_duration = g_play_time = 0.;
+	g_play_time = 0.;
 
-	memset(&g_taginfo, 0, sizeof(g_taginfo));
+	memset(&g_info, 0, sizeof(g_info));
 
 	return 0;
 }
@@ -315,25 +302,28 @@ static int mpc_load(const char *spath, const char *lpath)
 		char *artist = APETag_SimpleGet(tag, "Artist");
 		char *album = APETag_SimpleGet(tag, "Album");
 
+		g_info.tag.type = APETAG;
+		g_info.tag.encode = conf_encode_utf8;
+
 		if (title) {
-			STRCPY_S(g_taginfo.title, title);
+			STRCPY_S(g_info.tag.title, title);
 			free(title);
 			title = NULL;
 		}
 		if (artist) {
-			STRCPY_S(g_taginfo.artist, artist);
+			STRCPY_S(g_info.tag.artist, artist);
 			free(artist);
 			artist = NULL;
 		} else {
 			artist = APETag_SimpleGet(tag, "Album artist");
 			if (artist) {
-				STRCPY_S(g_taginfo.artist, artist);
+				STRCPY_S(g_info.tag.artist, artist);
 				free(artist);
 				artist = NULL;
 			}
 		}
 		if (album) {
-			STRCPY_S(g_taginfo.album, album);
+			STRCPY_S(g_info.tag.album, album);
 			free(album);
 			album = NULL;
 		}
@@ -347,8 +337,10 @@ static int mpc_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
+	g_info.is_seekable = true;
 	data.seekable = TRUE;
 	data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
+	g_info.filesize = data.size;
 	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
 
 	reader.read = read_impl;
@@ -365,8 +357,12 @@ static int mpc_load(const char *spath, const char *lpath)
 	}
 
 	if (info.average_bitrate != 0) {
-		g_duration = (double) info.total_file_length * 8 / info.average_bitrate;
+		g_info.duration = (double) info.total_file_length * 8 / info.average_bitrate;
 	}
+
+	g_info.avg_bps = info.average_bitrate;
+	g_info.sample_freq = info.sample_freq;
+	g_info.channels = info.channels;
 
 	mpc_decoder_setup(&decoder, &reader);
 	mpc_decoder_set_seeking(&decoder, &info, 0);
@@ -381,7 +377,7 @@ static int mpc_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	if (xMP3AudioSetFrequency(info.sample_freq) < 0) {
+	if (xMP3AudioSetFrequency(g_info.sample_freq) < 0) {
 		__end();
 		return -1;
 	}
@@ -491,40 +487,40 @@ static int mpc_resume(const char *spath, const char *lpath)
 static int mpc_get_info(struct music_info *pinfo)
 {
 	if (pinfo->type & MD_GET_TITLE) {
-		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->title, g_taginfo.title);
+		pinfo->encode = g_info.tag.encode;
+		STRCPY_S(pinfo->title, g_info.tag.title);
 	}
 	if (pinfo->type & MD_GET_ALBUM) {
-		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->album, g_taginfo.album);
+		pinfo->encode = g_info.tag.encode;
+		STRCPY_S(pinfo->album, g_info.tag.album);
 	}
 	if (pinfo->type & MD_GET_ARTIST) {
-		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->artist, g_taginfo.artist);
+		pinfo->encode = g_info.tag.encode;
+		STRCPY_S(pinfo->artist, g_info.tag.artist);
 	}
 	if (pinfo->type & MD_GET_COMMENT) {
-		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->comment, "");
+		pinfo->encode = g_info.tag.encode;
+		STRCPY_S(pinfo->comment, g_info.tag.comment);
 	}
 	if (pinfo->type & MD_GET_CURTIME) {
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_DURATION) {
-		pinfo->duration = g_duration;
+		pinfo->duration = g_info.duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] =
-			66 + (120 - 66) * info.average_bitrate / 1000 / 320;
+			66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_FREQ) {
-		pinfo->freq = info.sample_freq;
+		pinfo->freq = g_info.sample_freq;
 	}
 	if (pinfo->type & MD_GET_CHANNELS) {
-		pinfo->channels = info.channels;
+		pinfo->channels = g_info.channels;
 	}
 	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = info.average_bitrate / 1000;
+		pinfo->avg_kbps = g_info.avg_bps / 1000;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;

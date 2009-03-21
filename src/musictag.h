@@ -22,14 +22,7 @@
 #define MUSICTAG_H
 
 #include "conf.h"
-
-enum
-{
-	NONE,
-	ID3V1,
-	ID3V2,
-	APETAG
-};
+#include "musicinfo.h"
 
 struct MusicTag
 {

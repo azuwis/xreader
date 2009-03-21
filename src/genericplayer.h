@@ -1,6 +1,8 @@
 #ifndef GENERICPLAY_H
 #define GENERICPLAY_H
 
+#include "musicinfo.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -44,6 +46,11 @@ extern "C"
  *  按快进退键计数
  */
 	extern dword g_seek_count;
+
+/**
+ * 当前播放音乐文件信息
+ */
+	extern MusicInfo g_info;
 
 	int generic_lock(void);
 	int generic_unlock(void);

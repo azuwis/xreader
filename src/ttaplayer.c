@@ -35,6 +35,7 @@
 #include "simple_gettext.h"
 #include "dbg.h"
 #include "mp3info.h"
+#include "musicinfo.h"
 #include "genericplayer.h"
 
 static int __end(void);
@@ -57,39 +58,19 @@ static unsigned g_buff_frame_size;
 static int g_buff_frame_start;
 
 /**
- * TTA音乐文件长度，以秒数
- */
-static double g_duration;
-
-/**
  * TTA音乐信息
  */
-static tta_info g_info;
+static tta_info ttainfo;
 
 /**
  * TTA音乐已播放帧数
  */
-static int g_tta_frames_decoded = 0;
-
-/**
- * TTA音乐总帧数
- */
-static int g_tta_frames = 0;
+static int g_samples_decoded = 0;
 
 /**
  * TTA音乐数据开始位置
  */
 static uint32_t g_tta_data_offset = 0;
-
-typedef struct _tta_taginfo_t
-{
-	char title[80];
-	char artist[80];
-	char album[80];
-	t_conf_encode enc;
-} tta_taginfo_t;
-
-static tta_taginfo_t g_taginfo;
 
 /**
  * 复制数据到声音缓冲区
@@ -124,7 +105,7 @@ static int tta_seek_seconds(double seconds)
 	if (set_position(seconds * 1000 / SEEK_STEP) == 0) {
 		g_buff_frame_size = g_buff_frame_start = 0;
 		g_play_time = seconds;
-		g_tta_frames_decoded = (uint32_t) (seconds * g_info.SAMPLERATE);
+		g_samples_decoded = (uint32_t) (seconds * g_info.sample_freq);
 		return 0;
 	}
 
@@ -155,7 +136,7 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	if (g_status != ST_PLAYING) {
 		if (g_status == ST_FFOWARD) {
 			g_play_time += g_seek_seconds;
-			if (g_play_time >= g_duration) {
+			if (g_play_time >= g_info.duration) {
 				__end();
 				return -1;
 			}
@@ -185,19 +166,19 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 		if (avail_frame >= snd_buf_frame_size) {
 			send_to_sndbuf(audio_buf,
-						   &g_buff[g_buff_frame_start * g_info.NCH],
-						   snd_buf_frame_size, g_info.NCH);
+						   &g_buff[g_buff_frame_start * g_info.channels],
+						   snd_buf_frame_size, g_info.channels);
 			g_buff_frame_start += snd_buf_frame_size;
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
 			send_to_sndbuf(audio_buf,
-						   &g_buff[g_buff_frame_start * g_info.NCH],
-						   avail_frame, g_info.NCH);
+						   &g_buff[g_buff_frame_start * g_info.channels],
+						   avail_frame, g_info.channels);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-			if (g_tta_frames_decoded >= g_tta_frames) {
+			if (g_samples_decoded >= g_info.samples) {
 				__end();
 				return -1;
 			}
@@ -210,10 +191,10 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_buff_frame_size = ret;
 			g_buff_frame_start = 0;
 
-			incr = (double) (g_buff_frame_size) / g_info.SAMPLERATE;
+			incr = (double) (g_buff_frame_size) / g_info.sample_freq;
 			g_play_time += incr;
 
-			g_tta_frames_decoded += g_buff_frame_size;
+			g_samples_decoded += g_buff_frame_size;
 		}
 	}
 
@@ -236,10 +217,10 @@ static int __init(void)
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
 
-	g_duration = g_play_time = 0.;
+	g_play_time = 0.;
 
-	g_tta_frames_decoded = g_tta_frames = g_tta_data_offset = 0;
-	memset(&g_taginfo, 0, sizeof(g_taginfo));
+	g_samples_decoded = g_tta_data_offset = 0;
+	memset(&g_info, 0, sizeof(g_info));
 
 	return 0;
 }
@@ -261,10 +242,10 @@ static int tta_read_tag(const char *spath)
 	read_id3v2_tag_buffered(reader, &info);
 	buffered_reader_close(reader);
 
-	STRCPY_S(g_taginfo.artist, info.tag.author);
-	STRCPY_S(g_taginfo.title, info.tag.title);
-	STRCPY_S(g_taginfo.album, info.tag.album);
-	g_taginfo.enc = info.tag.encode;
+	STRCPY_S(g_info.tag.artist, info.tag.author);
+	STRCPY_S(g_info.tag.title, info.tag.title);
+	STRCPY_S(g_info.tag.album, info.tag.album);
+	g_info.tag.encode = info.tag.encode;
 
 	return 0;
 }
@@ -296,31 +277,33 @@ static int tta_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	if (open_tta_file(spath, &g_info, 0) < 0) {
-		dbg_printf(d, "TTA Decoder Error - %s", get_error_str(g_info.STATE));
-		close_tta_file(&g_info);
+	if (open_tta_file(spath, &ttainfo, 0) < 0) {
+		dbg_printf(d, "TTA Decoder Error - %s", get_error_str(ttainfo.STATE));
+		close_tta_file(&ttainfo);
 		return -1;
 	}
 
-	if (player_init(&g_info) != 0) {
+	if (player_init(&ttainfo) != 0) {
 		__end();
 		return -1;
 	}
 
-	if (g_info.BPS == 0) {
+	if (ttainfo.BPS == 0) {
 		__end();
 		return -1;
 	}
 
-	g_tta_frames = g_info.DATALENGTH;
-	g_duration = g_info.LENGTH;
+	g_info.samples = ttainfo.DATALENGTH;
+	g_info.duration = (double)ttainfo.LENGTH;
+	g_info.sample_freq = ttainfo.SAMPLERATE;
+	g_info.channels = ttainfo.NCH;
 
 	if (xMP3AudioInit() < 0) {
 		__end();
 		return -1;
 	}
 
-	if (xMP3AudioSetFrequency(g_info.SAMPLERATE) < 0) {
+	if (xMP3AudioSetFrequency(ttainfo.SAMPLERATE) < 0) {
 		__end();
 		return -1;
 	}
@@ -373,7 +356,7 @@ static int tta_end(void)
 	}
 
 	player_stop();
-	close_tta_file(&g_info);
+	close_tta_file(&ttainfo);
 	g_status = ST_STOPPED;
 	generic_end();
 
@@ -430,54 +413,54 @@ static int tta_resume(const char *spath, const char *lpath)
 static int tta_get_info(struct music_info *pinfo)
 {
 	if (pinfo->type & MD_GET_TITLE) {
-		if (g_taginfo.title[0] != '\0') {
-			pinfo->encode = g_taginfo.enc;
-			STRCPY_S(pinfo->title, (const char *) g_taginfo.title);
+		if (g_info.tag.title[0] != '\0') {
+			pinfo->encode = g_info.tag.encode;
+			STRCPY_S(pinfo->title, (const char *) g_info.tag.title);
 		} else {
 			pinfo->encode = conf_encode_gbk;
-			STRCPY_S(pinfo->title, (const char *) g_info.ID3.title);
+			STRCPY_S(pinfo->title, (const char *) ttainfo.ID3.title);
 		}
 	}
 	if (pinfo->type & MD_GET_ARTIST) {
-		if (g_taginfo.artist[0] != '\0') {
-			pinfo->encode = g_taginfo.enc;
-			STRCPY_S(pinfo->artist, (const char *) g_taginfo.artist);
+		if (g_info.tag.artist[0] != '\0') {
+			pinfo->encode = g_info.tag.encode;
+			STRCPY_S(pinfo->artist, (const char *) g_info.tag.artist);
 		} else {
 			pinfo->encode = conf_encode_gbk;
-			STRCPY_S(pinfo->artist, (const char *) g_info.ID3.artist);
+			STRCPY_S(pinfo->artist, (const char *) ttainfo.ID3.artist);
 		}
 	}
 	if (pinfo->type & MD_GET_ALBUM) {
-		if (g_taginfo.album[0] != '\0') {
-			pinfo->encode = g_taginfo.enc;
-			STRCPY_S(pinfo->album, (const char *) g_taginfo.album);
+		if (g_info.tag.album[0] != '\0') {
+			pinfo->encode = g_info.tag.encode;
+			STRCPY_S(pinfo->album, (const char *) g_info.tag.album);
 		} else {
 			pinfo->encode = conf_encode_gbk;
-			STRCPY_S(pinfo->album, (const char *) g_info.ID3.album);
+			STRCPY_S(pinfo->album, (const char *) ttainfo.ID3.album);
 		}
 	}
 	if (pinfo->type & MD_GET_COMMENT) {
-		pinfo->encode = g_taginfo.enc;
+		pinfo->encode = g_info.tag.encode;
 		STRCPY_S(pinfo->comment, "");
 	}
 	if (pinfo->type & MD_GET_CURTIME) {
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_DURATION) {
-		pinfo->duration = g_duration;
+		pinfo->duration = g_info.duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] = 222;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_FREQ) {
-		pinfo->freq = g_info.SAMPLERATE;
+		pinfo->freq = ttainfo.SAMPLERATE;
 	}
 	if (pinfo->type & MD_GET_CHANNELS) {
-		pinfo->channels = g_info.NCH;
+		pinfo->channels = ttainfo.NCH;
 	}
 	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = g_info.BITRATE;
+		pinfo->avg_kbps = ttainfo.BITRATE;
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "tta");
@@ -485,7 +468,7 @@ static int tta_get_info(struct music_info *pinfo)
 	if (pinfo->type & MD_GET_ENCODEMSG) {
 		if (show_encoder_msg) {
 			SPRINTF_S(pinfo->encode_msg, "%s: %.2f", _("压缩率"),
-					  g_info.COMPRESS);
+					  ttainfo.COMPRESS);
 		} else {
 			pinfo->encode_msg[0] = '\0';
 		}

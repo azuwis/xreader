@@ -35,6 +35,7 @@
 #include "dbg.h"
 #include "ssv.h"
 #include "genericplayer.h"
+#include "musicinfo.h"
 
 #define NUM_AUDIO_SAMPLES (1024 * 8)
 
@@ -58,31 +59,6 @@ static unsigned g_buff_frame_size;
 static int g_buff_frame_start;
 
 /**
- * Flac音乐文件长度，以秒数
- */
-static double g_duration;
-
-/**
- * Flac音乐声道数
- */
-static int g_flac_channels;
-
-/**
- * Flac音乐声道数
- */
-static int g_flac_sample_freq;
-
-/**
- * Flac音乐比特率
- */
-static float g_flac_bitrate;
-
-/**
- * Flac总帧数
- */
-static int g_flac_total_samples = 0;
-
-/**
  * Flac音乐每样本位数
  */
 static int g_flac_bits_per_sample = 0;
@@ -98,20 +74,6 @@ static int g_decoded_sample_size = 0;
 static uint16_t *g_write_frame = NULL;
 
 /**
- * Flac文件大小
- */
-static uint32_t g_flac_file_size = 0;
-
-typedef struct _flac_taginfo_t
-{
-	char title[80];
-	char artist[80];
-	char album[80];
-} flac_taginfo_t;
-
-static flac_taginfo_t g_taginfo;
-
-/**
  * Flac编码器名字
  */
 static char g_encode_name[80];
@@ -123,7 +85,6 @@ static FLAC__StreamDecoder *g_decoder = NULL;
 
 static FLAC__uint64 decode_position = 0;
 static FLAC__uint64 last_decode_position = 0;
-static int bitrate;
 
 /**
  * 复制数据到声音缓冲区
@@ -155,10 +116,10 @@ static void send_to_sndbuf(void *buf, short *srcbuf, int frames, int channels)
 
 static int flac_seek_seconds(double seconds)
 {
-	if (g_duration == 0)
+	if (g_info.duration == 0)
 		return -1;
 
-	if (seconds >= g_duration) {
+	if (seconds >= g_info.duration) {
 		__end();
 		return 0;
 	}
@@ -169,7 +130,7 @@ static int flac_seek_seconds(double seconds)
 	free_bitrate(&g_inst_br);
 
 	if (!FLAC__stream_decoder_seek_absolute
-		(g_decoder, g_flac_total_samples * seconds / g_duration)) {
+		(g_decoder, g_info.samples * seconds / g_info.duration)) {
 		return -1;
 	}
 
@@ -201,12 +162,12 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 
 	(void) decoder;
 
-	if (g_flac_total_samples == 0) {
+	if (g_info.samples == 0) {
 		dbg_printf(d,
-				   "ERROR: this example only works for FLAC files that have a g_flac_total_samples count in STREAMINFO");
+				   "ERROR: this example only works for FLAC files that have a g_info.samples count in STREAMINFO");
 		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
-	if (g_flac_channels != 2 || g_flac_bits_per_sample != 16) {
+	if (g_info.channels != 2 || g_flac_bits_per_sample != 16) {
 		dbg_printf(d, "ERROR: this example only supports 16bit stereo streams");
 		return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
@@ -238,17 +199,17 @@ static void metadata_callback(const FLAC__StreamDecoder * decoder,
 	/* print some stats */
 	if (metadata->type == FLAC__METADATA_TYPE_STREAMINFO) {
 		/* save for later */
-		g_flac_total_samples = metadata->data.stream_info.total_samples;
-		g_flac_sample_freq = metadata->data.stream_info.sample_rate;
-		g_flac_channels = metadata->data.stream_info.channels;
+		g_info.samples = metadata->data.stream_info.total_samples;
+		g_info.sample_freq = metadata->data.stream_info.sample_rate;
+		g_info.channels = metadata->data.stream_info.channels;
 		g_flac_bits_per_sample = metadata->data.stream_info.bits_per_sample;
 
-		if (g_flac_total_samples > 0) {
-			g_duration = 1.0 * g_flac_total_samples / g_flac_sample_freq;
-			g_flac_bitrate = g_flac_file_size * 8 / g_duration;
+		if (g_info.samples > 0) {
+			g_info.duration = 1.0 * g_info.samples / g_info.sample_freq;
+			g_info.avg_bps = g_info.filesize * 8 / g_info.duration;
 		} else {
-			g_duration = 0;
-			g_flac_bitrate = 0;
+			g_info.duration = 0;
+			g_info.avg_bps = 0;
 		}
 
 	}
@@ -307,18 +268,15 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 		if (avail_frame >= snd_buf_frame_size) {
 			send_to_sndbuf(audio_buf,
-						   &g_buff[g_buff_frame_start * g_flac_channels],
-						   snd_buf_frame_size, g_flac_channels);
+						   &g_buff[g_buff_frame_start * g_info.channels],
+						   snd_buf_frame_size, g_info.channels);
 			g_buff_frame_start += snd_buf_frame_size;
 			audio_buf += snd_buf_frame_size * 2;
-			// TODO
-//          incr = (double) (snd_buf_frame_size) / g_flac_sample_freq;
-//          g_play_time += incr;
 			snd_buf_frame_size = 0;
 		} else {
 			send_to_sndbuf(audio_buf,
-						   &g_buff[g_buff_frame_start * g_flac_channels],
-						   avail_frame, g_flac_channels);
+						   &g_buff[g_buff_frame_start * g_info.channels],
+						   avail_frame, g_info.channels);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 			g_write_frame = (uint16_t *) & g_buff[0];
@@ -341,7 +299,7 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			g_buff_frame_size = g_decoded_sample_size;
 			g_buff_frame_start = 0;
 
-			incr = 1.0 * g_buff_frame_size / g_flac_sample_freq;
+			incr = 1.0 * g_buff_frame_size / g_info.sample_freq;
 
 			FLAC__stream_decoder_get_bits_per_sample(g_decoder);
 			g_play_time += incr;
@@ -353,9 +311,10 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				decode_position = 0;
 
 			if (decode_position > last_decode_position) {
+				int bitrate;
 				int bytes_per_sec =
-					g_flac_bits_per_sample / 8 * g_flac_sample_freq *
-					g_flac_channels;
+					g_flac_bits_per_sample / 8 * g_info.sample_freq *
+					g_info.channels;
 
 				bitrate =
 					(decode_position -
@@ -385,9 +344,8 @@ static int __init(void)
 
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
-	g_duration = g_play_time = 0.;
-	g_flac_bitrate = g_flac_sample_freq = g_flac_channels = 0;;
-	memset(&g_taginfo, 0, sizeof(g_taginfo));
+	g_play_time = 0.;
+	memset(&g_info, 0, sizeof(g_info));
 	g_decoder = NULL;
 	g_encode_name[0] = '\0';
 
@@ -428,7 +386,7 @@ static int flac_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	g_flac_file_size = sceIoLseek(fd, 0, PSP_SEEK_END);
+	g_info.filesize = sceIoLseek(fd, 0, PSP_SEEK_END);
 	sceIoClose(fd);
 
 	if ((g_decoder = FLAC__stream_decoder_new()) == NULL) {
@@ -462,16 +420,16 @@ static int flac_load(const char *spath, const char *lpath)
 
 				if (!strncmp(p, "ALBUM=", sizeof("ALBUM=") - 1)) {
 					q = p + sizeof("ALBUM=") - 1;
-					STRCPY_S(g_taginfo.album, q);
+					STRCPY_S(g_info.tag.album, q);
 				} else if (!strncmp(p, "ARTIST=", sizeof("ARTIST=") - 1)) {
 					q = p + sizeof("ARTIST=") - 1;
-					STRCPY_S(g_taginfo.artist, q);
+					STRCPY_S(g_info.tag.artist, q);
 				} else if (!strncmp(p, "PERFORMER=", sizeof("PERFORMER=") - 1)) {
 					q = p + sizeof("ARTIST=") - 1;
-					STRCPY_S(g_taginfo.artist, q);
+					STRCPY_S(g_info.tag.artist, q);
 				} else if (!strncmp(p, "TITLE=", sizeof("TITLE=") - 1)) {
 					q = p + sizeof("TITLE=") - 1;
-					STRCPY_S(g_taginfo.title, q);
+					STRCPY_S(g_info.tag.title, q);
 				}
 			}
 		}
@@ -496,7 +454,7 @@ static int flac_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	if (g_flac_channels != 1 && g_flac_channels != 2) {
+	if (g_info.channels != 1 && g_info.channels != 2) {
 		__end();
 		return -1;
 	}
@@ -506,7 +464,7 @@ static int flac_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	if (xMP3AudioSetFrequency(g_flac_sample_freq) < 0) {
+	if (xMP3AudioSetFrequency(g_info.sample_freq) < 0) {
 		__end();
 		return -1;
 	}
@@ -517,15 +475,15 @@ static int flac_load(const char *spath, const char *lpath)
 
 	dbg_printf(d,
 			   "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d, encoder: %s, Ratio: %.3f]",
-			   g_flac_channels, g_flac_sample_freq, g_flac_bitrate / 1000,
-			   (int) (g_duration / 60), (int) g_duration % 60, g_encode_name,
-			   1.0 * g_flac_file_size / (g_flac_total_samples *
-										 g_flac_channels *
+			   g_info.channels, g_info.sample_freq, g_info.avg_bps / 1000,
+			   (int) (g_info.duration / 60), (int) g_info.duration % 60, g_encode_name,
+			   1.0 * g_info.filesize / (g_info.samples *
+										 g_info.channels *
 										 (g_flac_bits_per_sample / 8))
 		);
 
-	dbg_printf(d, "[%s - %s - %s, flac tag]", g_taginfo.artist, g_taginfo.album,
-			   g_taginfo.title);
+	dbg_printf(d, "[%s - %s - %s, flac tag]", g_info.tag.artist, g_info.tag.album,
+			   g_info.tag.title);
 
 	xMP3AudioSetChannelCallback(0, flac_audiocallback, NULL);
 
@@ -634,15 +592,15 @@ static int flac_get_info(struct music_info *pinfo)
 {
 	if (pinfo->type & MD_GET_TITLE) {
 		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->title, g_taginfo.title);
+		STRCPY_S(pinfo->title, g_info.tag.title);
 	}
 	if (pinfo->type & MD_GET_ALBUM) {
 		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->album, g_taginfo.album);
+		STRCPY_S(pinfo->album, g_info.tag.album);
 	}
 	if (pinfo->type & MD_GET_ARTIST) {
 		pinfo->encode = conf_encode_utf8;
-		STRCPY_S(pinfo->artist, g_taginfo.artist);
+		STRCPY_S(pinfo->artist, g_info.tag.artist);
 	}
 	if (pinfo->type & MD_GET_COMMENT) {
 		pinfo->encode = conf_encode_utf8;
@@ -652,20 +610,20 @@ static int flac_get_info(struct music_info *pinfo)
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_DURATION) {
-		pinfo->duration = g_duration;
+		pinfo->duration = g_info.duration;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] = 222;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_FREQ) {
-		pinfo->freq = g_flac_sample_freq;
+		pinfo->freq = g_info.sample_freq;
 	}
 	if (pinfo->type & MD_GET_CHANNELS) {
-		pinfo->channels = g_flac_channels;
+		pinfo->channels = g_info.channels;
 	}
 	if (pinfo->type & MD_GET_AVGKBPS) {
-		pinfo->avg_kbps = g_flac_bitrate / 1000;
+		pinfo->avg_kbps = g_info.avg_bps / 1000;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
@@ -676,8 +634,8 @@ static int flac_get_info(struct music_info *pinfo)
 	if (pinfo->type & MD_GET_ENCODEMSG) {
 		if (show_encoder_msg) {
 			SPRINTF_S(pinfo->encode_msg, "%s Ratio: %.3f", g_encode_name,
-					  1.0 * g_flac_file_size / (g_flac_total_samples *
-												g_flac_channels *
+					  1.0 * g_info.filesize / (g_info.samples *
+												g_info.channels *
 												(g_flac_bits_per_sample / 8)));
 		} else {
 			pinfo->encode_msg[0] = '\0';
@@ -701,7 +659,7 @@ static int flac_probe(const char* spath)
 	p = utils_fileext(spath);
 
 	if (p) {
-		if (stricmp(p, "flac") == 0) {
+		if (strnicmp(p, "flac", 3) == 0) {
 			return 1;
 		}
 	}

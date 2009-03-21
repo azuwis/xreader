@@ -35,6 +35,7 @@
 #include "apetaglib/APETag.h"
 #include "freq_lock.h"
 #include "freq_lock.h"
+#include "musicinfo.h"
 #include "dbg.h"
 
 /**
@@ -86,6 +87,11 @@ static SceUID g_status_sema = -1;
  * freq_locker ID
  */
 int g_fid = -1;
+
+/**
+ * 当前播放音乐文件信息
+ */
+MusicInfo g_info = { 0 };
 
 /**
  * 加锁

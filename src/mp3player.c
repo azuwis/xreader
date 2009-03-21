@@ -43,6 +43,7 @@
 #include "apetaglib/APETag.h"
 #include "genericplayer.h"
 #include "mp3info.h"
+#include "musicinfo.h"
 #include "common/utils.h"
 
 #define MP3_FRAME_SIZE 2889
@@ -153,7 +154,7 @@ static int mp3_seek_seconds_offset_brute(double npt)
 {
 	int pos;
 
-	pos = (int) ((double) mp3info.frames * (npt) / mp3info.duration);
+	pos = (int) ((double) g_info.samples * (npt) / g_info.duration);
 
 	if (pos < 0) {
 		pos = 0;
@@ -162,9 +163,9 @@ static int mp3_seek_seconds_offset_brute(double npt)
 	dbg_printf(d, "%s: jumping to %d frame, offset %08x", __func__, pos,
 			   (int) mp3info.frameoff[pos]);
 	dbg_printf(d, "%s: frame range (0~%u)", __func__,
-			   (unsigned) mp3info.frames);
+			   (unsigned) g_info.samples);
 
-	if (pos >= mp3info.frames) {
+	if (pos >= g_info.samples) {
 		__end();
 		return -1;
 	}
@@ -398,7 +399,7 @@ static int mp3_seek_seconds_offset(double npt)
 			cur_pos = buffered_reader_position(data.r);
 		else
 			cur_pos = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
-		g_play_time = mp3info.duration * cur_pos / data.size;
+		g_play_time = g_info.duration * cur_pos / data.size;
 	} else {
 		g_play_time = npt;
 	}
@@ -415,7 +416,7 @@ static int mp3_seek_seconds(double npt)
 
 	free_bitrate(&g_inst_br);
 
-	if (mp3info.frameoff && mp3info.frames > 0) {
+	if (mp3info.frameoff && g_info.samples > 0) {
 		ret = mp3_seek_seconds_offset_brute(npt);
 	} else {
 		ret = mp3_seek_seconds_offset(npt);
@@ -454,7 +455,7 @@ static int handle_seek(void)
 
 					generic_unlock();
 
-					if (g_play_time >= mp3info.duration) {
+					if (g_play_time >= g_info.duration) {
 						return -1;
 					}
 
@@ -826,8 +827,9 @@ static int __init(void)
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
 
-	mp3info.duration = g_play_time = 0.;
+	g_play_time = 0.;
 	memset(&mp3info, 0, sizeof(mp3info));
+	memset(&g_info, 0, sizeof(g_info));
 
 	return 0;
 }
@@ -911,30 +913,30 @@ void readMP3ApeTag(const char *spath)
 		char *album = APETag_SimpleGet(tag, "Album");
 
 		if (title) {
-			STRCPY_S(mp3info.tag.title, title);
+			STRCPY_S(g_info.tag.title, title);
 			free(title);
 			title = NULL;
 		}
 		if (artist) {
-			STRCPY_S(mp3info.tag.author, artist);
+			STRCPY_S(g_info.tag.artist, artist);
 			free(artist);
 			artist = NULL;
 		} else {
 			artist = APETag_SimpleGet(tag, "Album artist");
 			if (artist) {
-				STRCPY_S(mp3info.tag.author, artist);
+				STRCPY_S(g_info.tag.artist, artist);
 				free(artist);
 				artist = NULL;
 			}
 		}
 		if (album) {
-			STRCPY_S(mp3info.tag.album, album);
+			STRCPY_S(g_info.tag.album, album);
 			free(album);
 			album = NULL;
 		}
 
 		freeAPETag(tag);
-		mp3info.tag.encode = conf_encode_utf8;
+		g_info.tag.encode = conf_encode_utf8;
 	}
 }
 
@@ -1024,15 +1026,27 @@ static int mp3_load(const char *spath, const char *lpath)
 		}
 	}
 
+	STRCPY_S(g_info.tag.artist, mp3info.tag.author);
+	STRCPY_S(g_info.tag.album, mp3info.tag.album);
+	STRCPY_S(g_info.tag.title, mp3info.tag.title);
+	STRCPY_S(g_info.tag.comment, mp3info.tag.comment);
+	g_info.tag.encode = mp3info.tag.encode;
+
 	if (config.apetagorder || mp3info.tag.title[0] == '\0')
 		readMP3ApeTag(spath);
 
+	g_info.channels = mp3info.channels;
+	g_info.sample_freq = mp3info.sample_freq;
+	g_info.avg_bps = mp3info.average_bitrate;
+	g_info.samples = mp3info.frames;
+	g_info.duration = mp3info.duration;
+
 	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%sframes %d%s]",
-			   mp3info.channels, mp3info.sample_freq,
-			   mp3info.average_bitrate / 1000,
-			   (int) (mp3info.duration / 60), (int) mp3info.duration % 60,
+			   g_info.channels, g_info.sample_freq,
+			   g_info.avg_bps / 1000,
+			   (int) (g_info.duration / 60), (int) g_info.duration % 60,
 			   mp3info.frameoff != NULL ? ", frame table, " : ", ",
-			   mp3info.frames, mp3info.have_crc ? ", crc passed" : "");
+			   g_info.samples, mp3info.have_crc ? ", crc passed" : "");
 	ret = xMP3AudioInit();
 
 	if (ret < 0) {
@@ -1040,7 +1054,7 @@ static int mp3_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	ret = xMP3AudioSetFrequency(mp3info.sample_freq);
+	ret = xMP3AudioSetFrequency(g_info.sample_freq);
 	if (ret < 0) {
 		__end();
 		return -1;
@@ -1142,26 +1156,26 @@ static int mp3_get_info(struct music_info *info)
 	}
 
 	if (info->type & MD_GET_TITLE) {
-		info->encode = mp3info.tag.encode;
-		STRCPY_S(info->title, mp3info.tag.title);
+		info->encode = g_info.tag.encode;
+		STRCPY_S(info->title, g_info.tag.title);
 	}
 	if (info->type & MD_GET_ALBUM) {
-		info->encode = mp3info.tag.encode;
-		STRCPY_S(info->album, mp3info.tag.album);
+		info->encode = g_info.tag.encode;
+		STRCPY_S(info->album, g_info.tag.album);
 	}
 	if (info->type & MD_GET_ARTIST) {
-		info->encode = mp3info.tag.encode;
-		STRCPY_S(info->artist, mp3info.tag.author);
+		info->encode = g_info.tag.encode;
+		STRCPY_S(info->artist, g_info.tag.artist);
 	}
 	if (info->type & MD_GET_COMMENT) {
-		info->encode = mp3info.tag.encode;
-		STRCPY_S(info->comment, mp3info.tag.comment);
+		info->encode = g_info.tag.encode;
+		STRCPY_S(info->comment, g_info.tag.comment);
 	}
 	if (info->type & MD_GET_CURTIME) {
 		info->cur_time = g_play_time;
 	}
 	if (info->type & MD_GET_DURATION) {
-		info->duration = mp3info.duration;
+		info->duration = g_info.duration;
 	}
 	if (info->type & MD_GET_CPUFREQ) {
 		if (use_me) {
@@ -1169,15 +1183,15 @@ static int mp3_get_info(struct music_info *info)
 			info->psp_freq[1] = 16;
 		} else {
 			info->psp_freq[0] =
-				66 + (133 - 66) * mp3info.average_bitrate / 1000 / 320;
+				66 + (133 - 66) * g_info.avg_bps / 1000 / 320;
 			info->psp_freq[1] = 111;
 		}
 	}
 	if (info->type & MD_GET_FREQ) {
-		info->freq = mp3info.sample_freq;
+		info->freq = g_info.sample_freq;
 	}
 	if (info->type & MD_GET_CHANNELS) {
-		info->channels = mp3info.channels;
+		info->channels = g_info.channels;
 	}
 	if (info->type & MD_GET_DECODERNAME) {
 		if (use_me) {
@@ -1194,7 +1208,7 @@ static int mp3_get_info(struct music_info *info)
 		}
 	}
 	if (info->type & MD_GET_AVGKBPS) {
-		info->avg_kbps = mp3info.average_bitrate / 1000;
+		info->avg_kbps = g_info.avg_bps / 1000;
 	}
 	if (info->type & MD_GET_INSKBPS) {
 		info->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
@@ -1306,10 +1320,19 @@ static int mp3_probe(const char* spath)
 	p = utils_fileext(spath);
 
 	if (p) {
+		if (stricmp(p, "mp1") == 0) {
+			return 1;
+		}
+		if (stricmp(p, "mp2") == 0) {
+			return 1;
+		}
 		if (stricmp(p, "mp3") == 0) {
 			return 1;
 		}
 		if (stricmp(p, "mpa") == 0) {
+			return 1;
+		}
+		if (strnicmp(p, "mpeg", 3) == 0) {
 			return 1;
 		}
 	}
