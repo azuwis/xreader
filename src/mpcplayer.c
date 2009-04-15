@@ -437,6 +437,9 @@ static int mpc_probe(const char* spath)
 		if (stricmp(p, "mp+") == 0) {
 			return 1;
 		}
+		if (stricmp(p, "mpp") == 0) {
+			return 1;
+		}
 	}
 
 	return 0;
