@@ -3,6 +3,7 @@ CXX = @PSP_CXX@
 CCAS = $(CC)
 AR = @PSP_AR@
 RANLIB = @PSP_RANLIB@
+CFLAGS = 
 
 EXEEXT =
 OBJEXT = o
