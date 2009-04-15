@@ -714,6 +714,18 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			}
 #endif
 			break;
+		case PSP_CTRL_UP:
+#ifdef ENABLE_MUSIC
+			musicdrv_fforward(30);
+			sceKernelDelayThread(200000);
+#endif
+			break;
+		case PSP_CTRL_DOWN:
+#ifdef ENABLE_MUSIC
+			musicdrv_fbackward(30);
+			sceKernelDelayThread(200000);
+#endif
+			break;
 		case PSP_CTRL_LEFT:
 #ifdef ENABLE_MUSIC
 			musicdrv_fbackward(5);
