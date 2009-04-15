@@ -533,7 +533,7 @@ static int ogg_get_info(struct music_info *pinfo)
 
 			pinfo->ins_kbps = bitrate / 1000;
 		} else {
-			pinfo->ins_kbps = 0;
+			pinfo->ins_kbps = g_info.avg_bps / 1000;
 		}
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
