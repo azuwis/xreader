@@ -647,6 +647,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 		case PSP_CTRL_CIRCLE:
 #ifdef ENABLE_MUSIC
 			music_list_playorpause();
+			ctrl_waitrelease();
 #endif
 			break;
 		case PSP_CTRL_CROSS:
@@ -656,12 +657,15 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			else
 				config.mp3cycle++;
 			music_set_cycle_mode(config.mp3cycle);
+			ctrl_waitrelease();
 #endif
 			break;
 		case PSP_CTRL_SQUARE:
 #ifdef ENABLE_MUSIC
 			if (music_list_stop() == 0) {
 			}
+
+			ctrl_waitrelease();
 #endif
 			break;
 		case (PSP_CTRL_LEFT | PSP_CTRL_TRIANGLE):
@@ -669,6 +673,8 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			config.lyricencode++;
 			if ((dword) config.lyricencode > 4)
 				config.lyricencode = 0;
+
+			sceKernelDelayThread(200000);
 #endif
 			break;
 		case (PSP_CTRL_RIGHT | PSP_CTRL_TRIANGLE):
@@ -677,6 +683,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			if ((dword) config.mp3encode > 4)
 				config.mp3encode = 0;
 //          music_set_encode(config.mp3encode);
+			sceKernelDelayThread(200000);
 #endif
 			break;
 		case PSP_CTRL_LTRIGGER:
