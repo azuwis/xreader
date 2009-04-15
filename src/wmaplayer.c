@@ -325,23 +325,6 @@ static void get_wma_tag(void)
 	for(i=0; i<decoder->avf_context->metadata->count; ++i) {
 		dbg_printf(d, "%s: key %s value %s", __func__, decoder->avf_context->metadata->elems[i].key, decoder->avf_context->metadata->elems[i].value);
 	}	
-
-#if 0
-	for(i=0; i<decoder->avf_context->metadata->count; ++i) {
-		dbg_printf(d, "%s: key %s value %s", __func__, decoder->avf_context->metadata->elems[i].key, decoder->avf_context->metadata->elems[i].value);
-
-		if (comp_wma_tag_key(decoder->avf_context->metadata->elems[i].key, "author")) {
-			STRCPY_S(g_info.tag.artist, decoder->avf_context->metadata->elems[i].value);
-		} else if (comp_wma_tag_key(decoder->avf_context->metadata->elems[i].key, "album")) {
-			STRCPY_S(g_info.tag.album, decoder->avf_context->metadata->elems[i].value);
-		} else if (comp_wma_tag_key(decoder->avf_context->metadata->elems[i].key, "WM/AlbumTitle")) {
-			STRCPY_S(g_info.tag.album, decoder->avf_context->metadata->elems[i].value);
-		} else if (comp_wma_tag_key(decoder->avf_context->metadata->elems[i].key, "title")) { 
-			STRCPY_S(g_info.tag.title, decoder->avf_context->metadata->elems[i].value);
-		}
-	}
-#endif
-
 }
 
 /**
@@ -568,12 +551,7 @@ static int wma_get_info(struct music_info *pinfo)
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
-#if 0
-		pinfo->psp_freq[0] =
-			66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
-#else
-		pinfo->psp_freq[0] = 222;
-#endif
+		pinfo->psp_freq[0] = 266;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
@@ -583,16 +561,7 @@ static int wma_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "WMA");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg) {
-#if 0
-			SPRINTF_S(pinfo->encode_msg,
-					  "SV %lu.%lu, Profile %s (%s)", info.stream_version & 15,
-					  info.stream_version >> 4, info.profile_name,
-					  info.encoder);
-#endif
-		} else {
-			pinfo->encode_msg[0] = '\0';
-		}
+		pinfo->encode_msg[0] = '\0';
 	}
 
 	return generic_get_info(pinfo);
