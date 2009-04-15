@@ -57,7 +57,7 @@ int xrIoMkdir(const char *dir, SceMode mode)
 static inline
 int xrIoRmdir(const char *path)
 {
-	return xrIoRmdir(path);
+	return sceIoRmdir(path);
 }
 
 static inline
@@ -274,6 +274,139 @@ static inline
 void xrGuViewport(int cx, int cy, int width, int height)
 {
 	sceGuViewport(cx, cy, width, height);
+}
+
+static inline
+int xrKernelDelayThread(SceUInt delay)
+{
+	return sceKernelDelayThread(delay);
+}
+
+static inline
+int xrKernelDevkitVersion(void)
+{
+	return sceKernelDevkitVersion();
+}
+
+static inline
+SceUID xrKernelCreateSema(const char *name, SceUInt attr, int initVal, int maxVal, SceKernelSemaOptParam *option)
+{
+	return sceKernelCreateSema(name, attr, initVal, maxVal, option);
+}
+
+static inline
+int xrKernelDeleteSema(SceUID semaid)
+{
+	return sceKernelDeleteSema(semaid);
+}
+
+static inline
+SceUID xrKernelCreateThread(const char *name, SceKernelThreadEntry entry, int initPriority,
+                             int stackSize, SceUInt attr, SceKernelThreadOptParam *option)
+{
+	return sceKernelCreateThread(name, entry, initPriority, stackSize, attr, option);
+}
+
+static inline
+int xrKernelStartThread(SceUID thid, SceSize arglen, void *argp)
+{
+	return sceKernelStartThread(thid, arglen, argp);
+}
+
+static inline
+int xrKernelExitDeleteThread(int status)
+{
+	return sceKernelExitDeleteThread(status);
+}
+
+static inline
+int xrKernelWaitThreadEnd(SceUID thid, SceUInt *timeout)
+{
+	return sceKernelWaitThreadEnd(thid, timeout);
+}
+
+static inline
+int xrKernelTerminateDeleteThread(SceUID thid)
+{
+	return sceKernelTerminateDeleteThread(thid);
+}
+
+static inline
+int xrKernelDeleteThread(SceUID thid)
+{
+	return sceKernelDeleteThread(thid);
+}
+
+static inline
+int xrKernelWaitSema(SceUID semaid, int signal, SceUInt *timeout)
+{
+	return sceKernelWaitSema(semaid, signal, timeout);
+}
+
+static inline
+int xrKernelSignalSema(SceUID semaid, int signal)
+{
+	return sceKernelSignalSema(semaid, signal);
+}
+
+static inline
+int xrKernelWaitThreadEndCB(SceUID thid, SceUInt *timeout)
+{
+	return sceKernelWaitThreadEndCB(thid, timeout);
+}
+
+static inline
+int xrKernelStartModule(SceUID modid, SceSize argsize, void *argp, int *status, SceKernelSMOption *option)
+{
+	return sceKernelStartModule(modid, argsize, argp, status, option);
+}
+
+static inline
+SceUID xrKernelLoadModule(const char *path, int flags, SceKernelLMOption *option)
+{
+	return sceKernelLoadModule(path, flags, option);
+}
+
+static inline
+void xrKernelExitGame(void)
+{
+	sceKernelExitGame();
+}
+
+static inline
+int xrKernelExitThread(int status)
+{
+	return sceKernelExitThread(status);
+}
+
+static inline
+int xrKernelSleepThread(void)
+{
+	return sceKernelSleepThread();
+}
+
+static inline
+int xrKernelSleepThreadCB(void)
+{
+	return sceKernelSleepThreadCB();
+}
+
+static inline
+int xrKernelWaitSemaCB(SceUID semaid, int signal, SceUInt *timeout)
+{
+	return sceKernelWaitSemaCB(semaid, signal, timeout);
+}
+
+static inline
+int xrKernelCreateCallback(const char *name, SceKernelCallbackFunction func, void *arg)
+{
+	return sceKernelCreateCallback(name, func, arg);
+}
+
+static inline
+int xrKernelRegisterExitCallback(int cbid)
+{
+	return sceKernelRegisterExitCallback(cbid);
 }
 
 #endif
