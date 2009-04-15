@@ -295,7 +295,6 @@ static int __init(void)
 	return 0;
 }
 
-// FIXME ffmpeg 获取的tag键名有问题
 static void get_wma_tag(void)
 {
 	g_info.tag.type = WMATAG;
@@ -303,19 +302,19 @@ static void get_wma_tag(void)
 
 	AVMetadataTag *tag;
 
-	tag = av_metadata_get(decoder->avf_context->metadata, "le", NULL, AV_METADATA_IGNORE_SUFFIX);
+	tag = av_metadata_get(decoder->avf_context->metadata, "title", NULL, AV_METADATA_IGNORE_SUFFIX);
 
 	if (tag != NULL) {
 		STRCPY_S(g_info.tag.title, tag->value);
 	}
 
-	tag = av_metadata_get(decoder->avf_context->metadata, "hor", NULL, AV_METADATA_IGNORE_SUFFIX);
+	tag = av_metadata_get(decoder->avf_context->metadata, "author", NULL, AV_METADATA_IGNORE_SUFFIX);
 
 	if (tag != NULL) {
 		STRCPY_S(g_info.tag.artist, tag->value);
 	}
 
-	tag = av_metadata_get(decoder->avf_context->metadata, "WM/AlbumTitle", NULL, AV_METADATA_IGNORE_SUFFIX);
+	tag = av_metadata_get(decoder->avf_context->metadata, "AlbumTitle", NULL, AV_METADATA_IGNORE_SUFFIX);
 
 	if (tag != NULL) {
 		STRCPY_S(g_info.tag.album, tag->value);

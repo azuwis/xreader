@@ -32,7 +32,7 @@
 #include "dbg.h"
 #include "ssv.h"
 #include "genericplayer.h"
-#include "wavpack/wavpack.h"
+#include "WavPack/wavpack.h"
 #include "musicinfo.h"
 #include "xrhal.h"
 
