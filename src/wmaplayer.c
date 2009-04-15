@@ -88,10 +88,21 @@ static wmadec_context *decoder = NULL;
 static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 						   int channels)
 {
+	int n;
+	signed short *p = (signed short *) buf;
+
 	if (frames <= 0)
 		return;
+	
+	if (channels == 2) {
+		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
+	} else {
+		for (n = 0; n < frames * channels; n++) {
+			*p++ = srcbuf[n];
+			*p++ = srcbuf[n];
+		}
+	}
 
-	memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 }
 
 static void wma_seek_seconds(wmadec_context *decoder, double npt)
@@ -148,28 +159,16 @@ static int wma_process_single(void)
 
 	int samplesdecoded = outbuf_size / 2 / g_info.channels;
 
-	if (samplesdecoded > g_buff_size) {
-		g_buff_size = samplesdecoded;
-		g_buff = safe_realloc(g_buff, g_buff_size * g_info.channels * sizeof(*g_buff));
-		dbg_printf(d, "realloc g_buff to %u bytes",  g_buff_size * g_info.channels * sizeof(*g_buff));
+	if (samplesdecoded * g_info.channels > g_buff_size) {
+		g_buff_size = samplesdecoded * g_info.channels;
+		g_buff = safe_realloc(g_buff, g_buff_size * sizeof(*g_buff));
+		dbg_printf(d, "realloc g_buff to %u bytes",  g_buff_size * sizeof(*g_buff));
 
 		if (g_buff == NULL)
 			return -1;
 	}
 
-	if (g_info.channels == 2) {
-		memcpy(g_buff, p_context->outbuf, samplesdecoded * 4);
-	} else {
-		int i;
-		uint8_t *output = (uint8_t*) g_buff;
-
-		for(i=0; i<samplesdecoded; ++i) {
-			*output++ = p_context->outbuf[i * 2];
-			*output++ = p_context->outbuf[i * 2 + 1];
-			*output++ = p_context->outbuf[i * 2];
-			*output++ = p_context->outbuf[i * 2 + 1];
-		}
-	}
+	memcpy(g_buff, p_context->outbuf, outbuf_size);
 
 	return samplesdecoded;
 }
