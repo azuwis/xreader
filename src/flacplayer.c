@@ -45,7 +45,7 @@ static int __end(void);
 /**
  * Flac音乐播放缓冲
  */
-static short *g_buff = NULL;
+static uint16_t *g_buff = NULL;
 
 /**
  * Flac音乐播放缓冲总大小, 以帧数计
@@ -95,22 +95,24 @@ static FLAC__uint64 last_decode_position = 0;
  * @param frames 复制帧数
  * @param channels 声道数
  */
-static void send_to_sndbuf(void *buf, short *srcbuf, int frames, int channels)
+static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
+						   int channels)
 {
-	unsigned n;
-	signed short *p = buf;
+	int n;
+	signed short *p = (signed short *) buf;
 
 	if (frames <= 0)
 		return;
-
-	for (n = 0; n < frames * channels; n++) {
-		if (channels == 2)
-			*p++ = srcbuf[n];
-		else if (channels == 1) {
+	
+	if (channels == 2) {
+		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
+	} else {
+		for (n = 0; n < frames * channels; n++) {
 			*p++ = srcbuf[n];
 			*p++ = srcbuf[n];
 		}
 	}
+
 }
 
 static int flac_seek_seconds(double seconds)

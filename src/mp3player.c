@@ -144,10 +144,21 @@ static signed short MadFixedToSshort(mad_fixed_t Fixed)
 static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 						   int channels)
 {
+	int n;
+	signed short *p = (signed short *) buf;
+
 	if (frames <= 0)
 		return;
+	
+	if (channels == 2) {
+		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
+	} else {
+		for (n = 0; n < frames * channels; n++) {
+			*p++ = srcbuf[n];
+			*p++ = srcbuf[n];
+		}
+	}
 
-	memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 }
 
 static int mp3_seek_seconds_offset_brute(double npt)

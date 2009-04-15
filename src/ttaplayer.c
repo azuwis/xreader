@@ -44,7 +44,7 @@ static int __end(void);
 /**
  * TTA音乐播放缓冲
  */
-static short *g_buff = NULL;
+static uint16_t *g_buff = NULL;
 
 /**
  * TTA音乐播放缓冲大小，以帧数计
@@ -81,22 +81,24 @@ static uint32_t g_tta_data_offset = 0;
  * @param frames 复制帧数
  * @param channels 声道数
  */
-static void send_to_sndbuf(void *buf, short *srcbuf, int frames, int channels)
+static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
+						   int channels)
 {
-	unsigned n;
-	signed short *p = buf;
+	int n;
+	signed short *p = (signed short *) buf;
 
 	if (frames <= 0)
 		return;
-
-	for (n = 0; n < frames * channels; n++) {
-		if (channels == 2)
-			*p++ = srcbuf[n];
-		else if (channels == 1) {
+	
+	if (channels == 2) {
+		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
+	} else {
+		for (n = 0; n < frames * channels; n++) {
 			*p++ = srcbuf[n];
 			*p++ = srcbuf[n];
 		}
 	}
+
 }
 
 static int tta_seek_seconds(double seconds)

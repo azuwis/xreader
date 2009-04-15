@@ -97,10 +97,21 @@ static ov_callbacks vorbis_callbacks =
 static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 						   int channels)
 {
+	int n;
+	signed short *p = (signed short *) buf;
+
 	if (frames <= 0)
 		return;
+	
+	if (channels == 2) {
+		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
+	} else {
+		for (n = 0; n < frames * channels; n++) {
+			*p++ = srcbuf[n];
+			*p++ = srcbuf[n];
+		}
+	}
 
-	memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 }
 
 static void ogg_seek_seconds(OggVorbis_File *decoder, double npt)
@@ -115,10 +126,9 @@ static void ogg_seek_seconds(OggVorbis_File *decoder, double npt)
 static int ogg_process_single(void)
 {
 	int bytes;
-	char pcmout[OGG_BUFF_SIZE / 2];
 	int current_section;
 
-	bytes = ov_read(decoder, pcmout, sizeof(pcmout), &current_section);
+	bytes = ov_read(decoder, (char*)g_buff, g_buff_size * sizeof(g_buff[0]), &current_section);
 	
 	switch (bytes)
 	{
@@ -140,19 +150,8 @@ static int ogg_process_single(void)
 
 	int samplesdecoded = bytes / 2 / g_info.channels;
 
-	if (g_info.channels == 2) {
-		memcpy(g_buff, pcmout, samplesdecoded * 4);
-	} else {
-		int i;
-		uint8_t *output = (uint8_t*) g_buff;
-
-		for(i=0; i<samplesdecoded; ++i) {
-			*output++ = pcmout[i * 2];
-			*output++ = pcmout[i * 2 + 1];
-			*output++ = pcmout[i * 2];
-			*output++ = pcmout[i * 2 + 1];
-		}
-	}
+	g_buff_frame_size = samplesdecoded;
+	g_buff_frame_start = 0;
 
 	return samplesdecoded;
 }
@@ -232,9 +231,6 @@ static int ogg_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				__end();
 				return -1;
 			}
-
-			g_buff_frame_size = ret;
-			g_buff_frame_start = 0;
 
 			incr = (double) ret / g_info.sample_freq;
 			g_play_time += incr;
