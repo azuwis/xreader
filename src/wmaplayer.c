@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 #include "config.h"
 #include "ssv.h"
 #include "scene.h"
@@ -108,7 +109,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 static void wma_seek_seconds(wmadec_context *decoder, double npt)
 {
-	av_seek_frame(decoder->avf_context, -1, npt * AV_TIME_BASE, 0);
+	av_seek_frame(decoder->avf_context, -1, npt * AV_TIME_BASE, AVSEEK_FLAG_ANY);
 	decoder->inbuf_size = 0;
 	decoder->inbuf_ptr = NULL;
 }
@@ -287,37 +288,39 @@ static int __init(void)
 	return 0;
 }
 
-// FFMPEG有BUG? author 会变成 hor? title -> le comment -> ment?
-static bool comp_wma_tag_key(const char* key, const char* comp)
-{
-	const char* striplist[] = {
-		"artist", "album", "author", "genre", "copyright",  "track", "year", "title"
-	};
-	
-	int i;
-	int len2 = strlen(comp);
-
-	for(i=0; i<sizeof(striplist) / sizeof(striplist[0]); ++i) {
-		if (!stricmp(comp, striplist[i])) {
-			if (len2 < 4) {
-				return false;
-			}
-
-			return stricmp(key, comp + 3) == 0 ? true : false;
-		}
-	}
-
-	return stricmp(key, comp) == 0 ? true : false;
-}
-
-#if 1
+// FIXME ffmpeg 获取的tag键名有问题
 static void get_wma_tag(void)
 {
-	int i;
-
 	g_info.tag.type = WMATAG;
 	g_info.tag.encode = conf_encode_utf8;
 
+	AVMetadataTag *tag;
+
+	tag = av_metadata_get(decoder->avf_context->metadata, "le", NULL, AV_METADATA_IGNORE_SUFFIX);
+
+	if (tag != NULL) {
+		STRCPY_S(g_info.tag.title, tag->value);
+	}
+
+	tag = av_metadata_get(decoder->avf_context->metadata, "hor", NULL, AV_METADATA_IGNORE_SUFFIX);
+
+	if (tag != NULL) {
+		STRCPY_S(g_info.tag.artist, tag->value);
+	}
+
+	tag = av_metadata_get(decoder->avf_context->metadata, "WM/AlbumTitle", NULL, AV_METADATA_IGNORE_SUFFIX);
+
+	if (tag != NULL) {
+		STRCPY_S(g_info.tag.album, tag->value);
+	}
+
+	int i;
+
+	for(i=0; i<decoder->avf_context->metadata->count; ++i) {
+		dbg_printf(d, "%s: key %s value %s", __func__, decoder->avf_context->metadata->elems[i].key, decoder->avf_context->metadata->elems[i].value);
+	}	
+
+#if 0
 	for(i=0; i<decoder->avf_context->metadata->count; ++i) {
 		dbg_printf(d, "%s: key %s value %s", __func__, decoder->avf_context->metadata->elems[i].key, decoder->avf_context->metadata->elems[i].value);
 
@@ -331,34 +334,9 @@ static void get_wma_tag(void)
 			STRCPY_S(g_info.tag.title, decoder->avf_context->metadata->elems[i].value);
 		}
 	}
-
-#if 0
-	dbg_printf(d, "Dump title:");
-	dbg_hexdump_ascii(d, (uint8_t*)decoder->avf_context->title, sizeof(decoder->avf_context->title));
-
-	if (decoder->avf_context->title)
-		STRCPY_S(g_info.tag.title, decoder->avf_context->title);
-	else
-		STRCPY_S(g_info.tag.title, "");
-	
-	dbg_printf(d, "Dump album:");
-	dbg_hexdump_ascii(d, (uint8_t*)decoder->avf_context->album, sizeof(decoder->avf_context->album));
-	
-	if (decoder->avf_context->album)
-		STRCPY_S(g_info.tag.album, decoder->avf_context->album);
-	else
-		STRCPY_S(g_info.tag.album, "");
-
-	dbg_printf(d, "Dump author:");
-	dbg_hexdump_ascii(d, (uint8_t*)decoder->avf_context->author, sizeof(decoder->avf_context->author));
-	
-	if (decoder->avf_context->author)
-		STRCPY_S(g_info.tag.artist, decoder->avf_context->author);
-	else
-		STRCPY_S(g_info.tag.artist, "");
 #endif
+
 }
-#endif
 
 /**
  * 装载WMA音乐文件 
@@ -593,9 +571,9 @@ static int wma_get_info(struct music_info *pinfo)
 		pinfo->psp_freq[0] =
 			66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
 #else
-		pinfo->psp_freq[0] = 333;
+		pinfo->psp_freq[0] = 222;
 #endif
-		pinfo->psp_freq[1] = 166;
+		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
