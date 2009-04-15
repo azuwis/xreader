@@ -43,6 +43,7 @@
 #include "mp3player.h"
 #include "oggplayer.h"
 #include "wmaplayer.h"
+#include "wvplayer.h"
 #include "dbg.h"
 #include "config.h"
 #include "mad.h"
@@ -760,6 +761,7 @@ int music_init(void)
 	flac_init();
 	ogg_init();
 	wmadrv_init();
+	wv_init();
 	set_musicdrv("musepack");
 	memset(&g_list, 0, sizeof(g_list));
 	g_list.first_time = true;

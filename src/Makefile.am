@@ -60,7 +60,7 @@ xReader_elf_SOURCES += \
 musicdrv.c musicdrv.h musicmgr.c musicmgr.h  apeplayer.cpp apeplayer.h \
 lyric.c lyric.h clock.c mp3info.c flacplayer.c flacplayer.h \
 mp3player.c mp3player.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h oggplayer.c oggplayer.h \
-wmaplayer.c wmaplayer.h \
+wmaplayer.c wmaplayer.h wvplayer.c wvplayer.h \
 xmp3audiolib.c xmp3audiolib.h genericplayer.c genericplayer.h buffered_reader.c buffered_reader.h \
 mp3info_buffered.c musicinfo.c musicinfo.h
 endif
@@ -82,7 +82,8 @@ if MUSIC
 LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a -lmac \
 	$(libdir)/libvorbisidec.a -lm \
 	$(libdir)/pmpmodavc/libavformat.a \
-	$(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a
+	$(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a \
+	$(libdir)/libwavpack.a
 endif
 LIBS += \
 -L$(libdir) $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a \
