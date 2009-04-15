@@ -35,6 +35,7 @@
 #include "dbg.h"
 #include "ffmpeg/avcodec.h"
 #include "ffmpeg/avformat.h"
+#include "ffmpeg/metadata.h"
 
 #define WMA_MAX_BUF_SIZE 12288
 
@@ -107,7 +108,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 static void wma_seek_seconds(wmadec_context *decoder, double npt)
 {
-	av_seek_frame(decoder->avf_context, decoder->wma_idx, npt * 1000000LL, AVSEEK_FLAG_ANY);
+	av_seek_frame(decoder->avf_context, -1, npt * AV_TIME_BASE, 0);
 	decoder->inbuf_size = 0;
 	decoder->inbuf_ptr = NULL;
 }
@@ -129,9 +130,9 @@ static int wma_process_single(void)
 	if(p_context->inbuf_size == 0) 
 		return -1;
 
-	int use_len, outbuf_size;
+	int use_len, outbuf_size = sizeof(p_context->outbuf);
 
-	use_len = avcodec_decode_audio(p_context->avc_context, (short *)(p_context->outbuf), &outbuf_size,
+	use_len = avcodec_decode_audio2(p_context->avc_context, (short *)(p_context->outbuf), &outbuf_size,
 			p_context->inbuf_ptr, p_context->inbuf_size);
 
 	if(use_len < 0) {
@@ -286,12 +287,52 @@ static int __init(void)
 	return 0;
 }
 
+// FFMPEG有BUG? author 会变成 hor? title -> le comment -> ment?
+static bool comp_wma_tag_key(const char* key, const char* comp)
+{
+	const char* striplist[] = {
+		"artist", "album", "author", "genre", "copyright",  "track", "year", "title"
+	};
+	
+	int i;
+	int len2 = strlen(comp);
+
+	for(i=0; i<sizeof(striplist) / sizeof(striplist[0]); ++i) {
+		if (!stricmp(comp, striplist[i])) {
+			if (len2 < 4) {
+				return false;
+			}
+
+			return stricmp(key, comp + 3) == 0 ? true : false;
+		}
+	}
+
+	return stricmp(key, comp) == 0 ? true : false;
+}
+
 #if 1
 static void get_wma_tag(void)
 {
-	g_info.tag.type = WMATAG;
-	g_info.tag.encode = config.mp3encode;
+	int i;
 
+	g_info.tag.type = WMATAG;
+	g_info.tag.encode = conf_encode_utf8;
+
+	for(i=0; i<decoder->avf_context->metadata->count; ++i) {
+		dbg_printf(d, "%s: key %s value %s", __func__, decoder->avf_context->metadata->elems[i].key, decoder->avf_context->metadata->elems[i].value);
+
+		if (comp_wma_tag_key(decoder->avf_context->metadata->elems[i].key, "author")) {
+			STRCPY_S(g_info.tag.artist, decoder->avf_context->metadata->elems[i].value);
+		} else if (comp_wma_tag_key(decoder->avf_context->metadata->elems[i].key, "album")) {
+			STRCPY_S(g_info.tag.album, decoder->avf_context->metadata->elems[i].value);
+		} else if (comp_wma_tag_key(decoder->avf_context->metadata->elems[i].key, "WM/AlbumTitle")) {
+			STRCPY_S(g_info.tag.album, decoder->avf_context->metadata->elems[i].value);
+		} else if (comp_wma_tag_key(decoder->avf_context->metadata->elems[i].key, "title")) { 
+			STRCPY_S(g_info.tag.title, decoder->avf_context->metadata->elems[i].value);
+		}
+	}
+
+#if 0
 	dbg_printf(d, "Dump title:");
 	dbg_hexdump_ascii(d, (uint8_t*)decoder->avf_context->title, sizeof(decoder->avf_context->title));
 
@@ -315,6 +356,7 @@ static void get_wma_tag(void)
 		STRCPY_S(g_info.tag.artist, decoder->avf_context->author);
 	else
 		STRCPY_S(g_info.tag.artist, "");
+#endif
 }
 #endif
 
@@ -362,6 +404,7 @@ static int wma_load(const char *spath, const char *lpath)
 	}
 
 	if(av_open_input_file(&(decoder->avf_context), spath, NULL, 0, NULL) < 0) {
+		dbg_printf(d, "av_open_input_file failed");
 		__end();
 		return -1;
 	}
@@ -373,6 +416,8 @@ static int wma_load(const char *spath, const char *lpath)
 	}
 
 	if ( decoder->wma_idx >= decoder->avf_context->nb_streams ) {
+		dbg_printf(d, "decoder->wma_idx >= decoder->avf_context->nb_streams failed");
+		
 		__end();
 		return -1;
 	}
@@ -383,11 +428,15 @@ static int wma_load(const char *spath, const char *lpath)
 	codec = avcodec_find_decoder(decoder->avc_context->codec_id);
 	
 	if ( !codec ) {
+		dbg_printf(d, "avcodec_find_decoder failed");
+		
 		__end();
 		return -1;
 	}
 	
 	if(avcodec_open(decoder->avc_context, codec) < 0) {
+		dbg_printf(d, "avcodec_open failed");
+		
 		__end();
 		return -1;
 	}
@@ -615,5 +664,11 @@ static struct music_ops wma_ops = {
 int wmadrv_init(void)
 {
 	return register_musicdrv(&wma_ops);
+}
+
+// FIX missing llrint
+extern long long llrint(double x)
+{
+	return rint(x);
 }
 
