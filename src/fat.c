@@ -28,6 +28,7 @@
 #include "fat.h"
 #include <stdio.h>
 #include "dbg.h"
+#include "xrhal.h"
 
 static int fatfd = -1;
 static t_fat_dbr dbr;
@@ -56,7 +57,7 @@ void fat_powerdown(void)
 
 void fat_powerup(void)
 {
-	fatfd = sceIoOpen("msstor:", PSP_O_RDONLY, 0777);
+	fatfd = xrIoOpen("msstor:", PSP_O_RDONLY, 0777);
 	fat_unlock();
 }
 
@@ -76,7 +77,7 @@ extern bool fat_init(void)
 	if (fat_sema < 0)
 		return false;
 	fat_lock();
-	fatfd = sceIoOpen("msstor:", PSP_O_RDONLY, 0777);
+	fatfd = xrIoOpen("msstor:", PSP_O_RDONLY, 0777);
 	if (fatfd < 0) {
 		fat_unlock();
 		return false;
@@ -196,7 +197,7 @@ static bool fat_load_table(void)
 		loadcount++;
 		return true;
 	}
-	fatfd = sceIoOpen("msstor:", PSP_O_RDONLY, 0777);
+	fatfd = xrIoOpen("msstor:", PSP_O_RDONLY, 0777);
 	if (fatfd < 0)
 		return false;
 
