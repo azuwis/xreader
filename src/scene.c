@@ -1777,12 +1777,8 @@ static int scene_bookmark_autosave(void)
 		return 0;
 	}
 
-	if (fs != NULL) {
-		/*
-		bookmark_autosave(cur_book_view.bookmarkname,
-						  (fs->rows[fs->crow >> 10] +
-						   (fs->crow & 0x3FF))->start - fs->buf);
-						   */
+	if (fs != NULL && g_bm != NULL) {
+		g_bm->row[0] =  (fs->rows[fs-> crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
 		bookmark_save(g_bm);
 	}
 
@@ -5763,13 +5759,6 @@ extern void scene_exit(void)
 		save_passwords();
 
 	free_passwords();
-
-#if 0
-	if (bm != NULL) {
-		bookmark_close(bm);
-		bm = NULL;
-	}
-#endif
 
 	if (fs != NULL) {
 		scene_bookmark_autosave();

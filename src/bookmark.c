@@ -275,40 +275,6 @@ extern void bookmark_close(p_bookmark bm)
 		free(bm);
 }
 
-extern dword bookmark_autoload(const char *filename)
-{
-	dword row;
-	p_bookmark bm = bookmark_open(filename);
-
-	if (bm == NULL)
-		return 0;
-
-	if (bm->row[0] == INVALID)
-		row = 0;
-	else
-		row = bm->row[0];
-	bookmark_close(bm);
-	return row;
-}
-
-extern void bookmark_autosave(const char *filename, dword row)
-{
-	if (!filename)
-		return;
-	extern bool scene_readbook_in_raw_mode;
-
-	if (scene_readbook_in_raw_mode)
-		return;
-	p_bookmark bm = bookmark_open(filename);
-
-	if (bm == NULL)
-		return;
-
-	bm->row[0] = row;
-	bookmark_save(bm);
-	bookmark_close(bm);
-}
-
 extern bool bookmark_export(p_bookmark bm, const char *filename)
 {
 	if (!bm || !filename)
