@@ -31,6 +31,7 @@
 #endif
 #endif
 #include "ctrl.h"
+#include "xrhal.h"
 
 #define CTRL_REPEAT_TIME 0x40000
 static unsigned int last_btn = 0;
@@ -45,21 +46,21 @@ static SceUID hprm_sema = -1;
 
 extern void ctrl_init(void)
 {
-	sceCtrlSetSamplingCycle(0);
+	xrCtrlSetSamplingCycle(0);
 #ifdef ENABLE_ANALOG
-	sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
+	xrCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 #else
-	sceCtrlSetSamplingMode(PSP_CTRL_MODE_DIGITAL);
+	xrCtrlSetSamplingMode(PSP_CTRL_MODE_DIGITAL);
 #endif
 #ifdef ENABLE_HPRM
-	hprm_sema = sceKernelCreateSema("hprm sem", 0, 1, 1, NULL);
+	hprm_sema = xrKernelCreateSema("hprm sem", 0, 1, 1, NULL);
 #endif
 }
 
 extern void ctrl_destroy(void)
 {
 #ifdef ENABLE_HPRM
-	sceKernelDeleteSema(hprm_sema);
+	xrKernelDeleteSema(hprm_sema);
 	hprm_sema = -1;
 #endif
 }
@@ -69,7 +70,7 @@ extern void ctrl_analog(int *x, int *y)
 {
 	SceCtrlData ctl;
 
-	sceCtrlReadBufferPositive(&ctl, 1);
+	xrCtrlReadBufferPositive(&ctl, 1);
 	*x = ((int) ctl.Lx) - 128;
 	*y = ((int) ctl.Ly) - 128;
 }
@@ -79,15 +80,15 @@ extern dword ctrl_read_cont(void)
 {
 	SceCtrlData ctl;
 
-	sceCtrlReadBufferPositive(&ctl, 1);
+	xrCtrlReadBufferPositive(&ctl, 1);
 
 #ifdef ENABLE_HPRM
-	if (hprmenable && sceHprmIsRemoteExist()) {
+	if (hprmenable && xrHprmIsRemoteExist()) {
 		u32 key;
 
-		if (sceKernelWaitSema(hprm_sema, 1, NULL) >= 0) {
-			sceHprmPeekCurrentKey(&key);
-			sceKernelSignalSema(hprm_sema, 1);
+		if (xrKernelWaitSema(hprm_sema, 1, NULL) >= 0) {
+			xrHprmPeekCurrentKey(&key);
+			xrKernelSignalSema(hprm_sema, 1);
 
 			if (key > 0) {
 				switch (key) {
@@ -127,10 +128,10 @@ extern dword ctrl_read(void)
 	SceCtrlData ctl;
 
 #ifdef ENABLE_HPRM
-	if (hprmenable && sceHprmIsRemoteExist()) {
+	if (hprmenable && xrHprmIsRemoteExist()) {
 		u32 key;
 
-		sceHprmPeekCurrentKey(&key);
+		xrHprmPeekCurrentKey(&key);
 
 		if (key > 0) {
 			switch (key) {
@@ -155,7 +156,7 @@ extern dword ctrl_read(void)
 	}
 #endif
 
-	sceCtrlReadBufferPositive(&ctl, 1);
+	xrCtrlReadBufferPositive(&ctl, 1);
 
 #ifdef ENABLE_ANALOG
 	if (ctl.Lx < 65 || ctl.Lx > 191 || ctl.Ly < 65 || ctl.Ly > 191)
@@ -176,8 +177,8 @@ extern void ctrl_waitreleaseintime(int i)
 	SceCtrlData ctl;
 
 	do {
-		sceCtrlReadBufferPositive(&ctl, 1);
-		sceKernelDelayThread(i);
+		xrCtrlReadBufferPositive(&ctl, 1);
+		xrKernelDelayThread(i);
 	} while (ctl.Buttons != 0);
 }
 
@@ -190,10 +191,10 @@ extern int ctrl_waitreleasekey(dword key)
 {
 	SceCtrlData pad;
 
-	sceCtrlReadBufferPositive(&pad, 1);
+	xrCtrlReadBufferPositive(&pad, 1);
 	while (pad.Buttons == key) {
-		sceKernelDelayThread(50000);
-		sceCtrlReadBufferPositive(&pad, 1);
+		xrKernelDelayThread(50000);
+		xrCtrlReadBufferPositive(&pad, 1);
 	}
 
 	return 0;
@@ -204,7 +205,7 @@ extern dword ctrl_waitany(void)
 	dword key;
 
 	while ((key = ctrl_read()) == 0) {
-		sceKernelDelayThread(50000);
+		xrKernelDelayThread(50000);
 	}
 	return key;
 }
@@ -214,7 +215,7 @@ extern dword ctrl_waitkey(dword keymask)
 	dword key;
 
 	while ((key = ctrl_read()) != key) {
-		sceKernelDelayThread(50000);
+		xrKernelDelayThread(50000);
 	}
 	return key;
 }
@@ -224,7 +225,7 @@ extern dword ctrl_waitmask(dword keymask)
 	dword key;
 
 	while (((key = ctrl_read()) & keymask) == 0) {
-		sceKernelDelayThread(50000);
+		xrKernelDelayThread(50000);
 	}
 	return key;
 }
@@ -235,7 +236,7 @@ extern dword ctrl_waitlyric(void)
 	dword key;
 
 	while ((key = ctrl_read()) == 0) {
-		sceKernelDelayThread(50000);
+		xrKernelDelayThread(50000);
 		if (lyric_check_changed(music_get_lyric()))
 			break;
 	}
@@ -257,17 +258,17 @@ extern dword ctrl_hprm(void)
 
 extern dword ctrl_hprm_raw(void)
 {
-/*	if(sceKernelDevkitVersion() >= 0x02000010)
+/*	if(xrKernelDevkitVersion() >= 0x02000010)
 		return 0;*/
-	if (!sceHprmIsRemoteExist())
+	if (!xrHprmIsRemoteExist())
 		return 0;
 
-	if (sceKernelWaitSema(hprm_sema, 1, NULL) < 0)
+	if (xrKernelWaitSema(hprm_sema, 1, NULL) < 0)
 		return 0;
 	u32 key;
 
-	sceHprmPeekCurrentKey(&key);
-	sceKernelSignalSema(hprm_sema, 1);
+	xrHprmPeekCurrentKey(&key);
+	xrKernelSignalSema(hprm_sema, 1);
 	return (dword) key;
 }
 #endif
@@ -278,7 +279,7 @@ extern dword ctrl_waittime(dword t)
 	time_t t1 = time(NULL);
 
 	while ((key = ctrl_read()) == 0) {
-		sceKernelDelayThread(50000);
+		xrKernelDelayThread(50000);
 		if (time(NULL) - t1 >= t)
 			return 0;
 	}
@@ -288,6 +289,6 @@ extern dword ctrl_waittime(dword t)
 #ifdef ENABLE_HPRM
 extern void ctrl_enablehprm(bool enable)
 {
-	hprmenable = /*(sceKernelDevkitVersion() < 0x02000010) && */ enable;
+	hprmenable = /*(xrKernelDevkitVersion() < 0x02000010) && */ enable;
 }
 #endif

@@ -453,7 +453,7 @@ static int handle_seek(void)
 	if (data.use_buffer) {
 
 		if (g_status == ST_FFORWARD) {
-			sceRtcGetCurrentTick(&timer_end);
+			xrRtcGetCurrentTick(&timer_end);
 
 			generic_lock();
 			if (g_last_seek_is_forward) {
@@ -473,7 +473,7 @@ static int handle_seek(void)
 						return -1;
 					}
 
-					sceKernelDelayThread(100000);
+					xrKernelDelayThread(100000);
 				} else {
 					generic_lock();
 
@@ -489,13 +489,13 @@ static int handle_seek(void)
 
 					generic_unlock();
 
-					sceKernelDelayThread(100000);
+					xrKernelDelayThread(100000);
 				}
 			} else {
 				generic_unlock();
 			}
 		} else if (g_status == ST_FBACKWARD) {
-			sceRtcGetCurrentTick(&timer_end);
+			xrRtcGetCurrentTick(&timer_end);
 
 			generic_lock();
 			if (!g_last_seek_is_forward) {
@@ -515,7 +515,7 @@ static int handle_seek(void)
 						g_play_time = 0;
 					}
 
-					sceKernelDelayThread(100000);
+					xrKernelDelayThread(100000);
 				} else {
 					generic_lock();
 
@@ -531,7 +531,7 @@ static int handle_seek(void)
 
 					generic_unlock();
 
-					sceKernelDelayThread(100000);
+					xrKernelDelayThread(100000);
 				}
 			} else {
 				generic_unlock();
@@ -585,7 +585,7 @@ static int mp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 		}
 
 		xMP3ClearSndBuf(buf, snd_buf_frame_size);
-		sceKernelDelayThread(100000);
+		xrKernelDelayThread(100000);
 		return 0;
 	}
 
@@ -722,7 +722,7 @@ int memp3_decode(void *data, dword data_len, void *pcm_data)
 	mp3_codec_buffer[10] = data_len;
 	mp3_codec_buffer[9] = mp3info.spf << 2;
 
-	return sceAudiocodecDecode(mp3_codec_buffer, 0x1002);
+	return xrAudiocodecDecode(mp3_codec_buffer, 0x1002);
 }
 
 static uint8_t memp3_input_buf[2889] __attribute__ ((aligned(64)));
@@ -756,7 +756,7 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 		}
 
 		xMP3ClearSndBuf(buf, snd_buf_frame_size);
-		sceKernelDelayThread(100000);
+		xrKernelDelayThread(100000);
 		return 0;
 	}
 
@@ -858,7 +858,7 @@ static int load_me_prx(void)
 		return 0;
 
 #if (PSP_FW_VERSION >= 300)
-	result = sceUtilityLoadAvModule(PSP_AV_MODULE_AVCODEC);
+	result = xrUtilityLoadAvModule(PSP_AV_MODULE_AVCODEC);
 #else
 	result =
 		pspSdkLoadStartModule("flash0:/kd/avcodec.prx",
@@ -869,7 +869,7 @@ static int load_me_prx(void)
 		return -1;
 
 #if (PSP_FW_VERSION >= 300)
-	result = sceUtilityLoadAvModule(PSP_AV_MODULE_ATRAC3PLUS);
+	result = xrUtilityLoadAvModule(PSP_AV_MODULE_ATRAC3PLUS);
 	if (result < 0)
 		return -2;
 #endif
@@ -889,23 +889,23 @@ static int me_init()
 		return ret;
 
 	memset(mp3_codec_buffer, 0, sizeof(mp3_codec_buffer));
-	ret = sceAudiocodecCheckNeedMem(mp3_codec_buffer, 0x1002);
+	ret = xrAudiocodecCheckNeedMem(mp3_codec_buffer, 0x1002);
 
 	if (ret < 0)
 		return ret;
 
 	mp3_getEDRAM = false;
-	ret = sceAudiocodecGetEDRAM(mp3_codec_buffer, 0x1002);
+	ret = xrAudiocodecGetEDRAM(mp3_codec_buffer, 0x1002);
 
 	if (ret < 0)
 		return ret;
 
 	mp3_getEDRAM = true;
 
-	ret = sceAudiocodecInit(mp3_codec_buffer, 0x1002);
+	ret = xrAudiocodecInit(mp3_codec_buffer, 0x1002);
 
 	if (ret < 0) {
-		sceAudiocodecReleaseEDRAM(mp3_codec_buffer);
+		xrAudiocodecReleaseEDRAM(mp3_codec_buffer);
 		return ret;
 	}
 
@@ -1262,7 +1262,7 @@ static int mp3_end(void)
 
 	if (use_me) {
 		if (mp3_getEDRAM)
-			sceAudiocodecReleaseEDRAM(mp3_codec_buffer);
+			xrAudiocodecReleaseEDRAM(mp3_codec_buffer);
 	}
 
 	free_mp3_info(&mp3info);

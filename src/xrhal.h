@@ -5,6 +5,17 @@
 #include <pspkernel.h>
 #include <psptypes.h>
 #include <pspgu.h>
+#include <pspaudio.h>
+#include <pspaudiocodec.h>
+#include <pspdisplay.h>
+#include <psphprm.h>
+#include <pspctrl.h>
+#include <psppower.h>
+#include <psprtc.h>
+#include <pspusb.h>
+#include <pspusbstor.h>
+#include <psputility.h>
+#include <psputility_osk.h>
 
 static inline
 SceUID xrIoOpen(const char *file, int flags, SceMode mode)
@@ -407,6 +418,294 @@ static inline
 int xrKernelRegisterExitCallback(int cbid)
 {
 	return sceKernelRegisterExitCallback(cbid);
+}
+
+static inline
+int xrAudioOutput2GetRestSample(void)
+{
+	return sceAudioOutput2GetRestSample();
+}
+
+static inline
+int xrAudioSRCChRelease(void)
+{
+	return sceAudioSRCChRelease();
+}
+
+static inline
+int xrAudioSRCChReserve(int samplecount, int freq, int channels)
+{
+	return sceAudioSRCChReserve(samplecount, freq, channels);
+}
+
+static inline
+int xrAudioSRCOutputBlocking(int vol, void *buf)
+{
+	return sceAudioSRCOutputBlocking(vol, buf);
+}
+
+static inline
+int xrAudioSetChannelDataLen(int channel, int samplecount)
+{
+	return sceAudioSetChannelDataLen(channel, samplecount);
+}
+
+static inline
+int xrAudiocodecCheckNeedMem(unsigned long *Buffer, int Type)
+{
+	return sceAudiocodecCheckNeedMem(Buffer, Type);
+}
+
+static inline
+int xrAudiocodecDecode(unsigned long *Buffer, int Type)
+{
+	return sceAudiocodecDecode(Buffer, Type);
+}
+
+static inline
+int xrAudiocodecGetEDRAM(unsigned long *Buffer, int Type)
+{
+	return sceAudiocodecGetEDRAM(Buffer, Type);
+}
+
+static inline
+int xrAudiocodecInit(unsigned long *Buffer, int Type)
+{
+	return sceAudiocodecInit(Buffer, Type);
+}
+
+static inline
+int xrAudiocodecReleaseEDRAM(unsigned long *Buffer)
+{
+	return sceAudiocodecReleaseEDRAM(Buffer);
+}
+
+static inline
+int xrCtrlReadBufferPositive(SceCtrlData *pad_data, int count)
+{
+	return sceCtrlReadBufferPositive(pad_data, count);
+}
+
+static inline
+int xrCtrlSetSamplingCycle(int cycle)
+{
+	return sceCtrlSetSamplingCycle(cycle);
+}
+
+static inline
+int xrCtrlSetSamplingMode(int mode)
+{
+	return sceCtrlSetSamplingMode(mode);
+}
+
+static inline
+int xrDisplaySetFrameBuf(void *topaddr, int bufferwidth, int pixelformat, int sync)
+{
+	return sceDisplaySetFrameBuf(topaddr, bufferwidth, pixelformat, sync);
+}
+
+static inline
+int xrDisplaySetMode(int mode, int width, int height)
+{
+	return sceDisplaySetMode(mode, width, height);
+}
+
+static inline
+int xrDisplayWaitVblankStart(void)
+{
+	return sceDisplayWaitVblankStart();
+}
+
+static inline
+int xrHprmIsRemoteExist(void)
+{
+	return sceHprmIsRemoteExist();
+}
+
+static inline
+int xrHprmPeekCurrentKey(u32 *key)
+{
+	return sceHprmPeekCurrentKey(key);
+}
+
+static inline
+int xrPowerGetBatteryChargingStatus(void)
+{
+	return scePowerGetBatteryChargingStatus();
+}
+
+static inline
+int xrPowerGetBatteryLifePercent(void)
+{
+	return scePowerGetBatteryLifePercent();
+}
+
+static inline
+int xrPowerGetBatteryLifeTime(void)
+{
+	return scePowerGetBatteryLifeTime();
+}
+
+static inline
+int xrPowerGetBatteryTemp(void)
+{
+	return scePowerGetBatteryTemp();
+}
+
+static inline
+int xrPowerGetBatteryVolt(void)
+{
+	return scePowerGetBatteryVolt();
+}
+
+static inline
+int xrPowerGetBusClockFrequency(void)
+{
+	return scePowerGetBusClockFrequency();
+}
+
+static inline
+int xrPowerGetCpuClockFrequency(void)
+{
+	return scePowerGetCpuClockFrequency();
+}
+
+static inline
+int xrPowerRegisterCallback(int slot, SceUID cbid)
+{
+	return scePowerRegisterCallback(slot, cbid);
+}
+
+static inline
+int xrPowerRequestSuspend(void)
+{
+	return scePowerRequestSuspend();
+}
+
+static inline
+int xrPowerSetBusClockFrequency(int busfreq)
+{
+	return scePowerSetBusClockFrequency(busfreq);
+}
+
+static inline
+int xrPowerSetClockFrequency(int pllfreq, int cpufreq, int busfreq)
+{
+	return scePowerSetClockFrequency(pllfreq, cpufreq, busfreq);
+}
+
+static inline
+int xrPowerSetCpuClockFrequency(int cpufreq)
+{
+	return scePowerSetCpuClockFrequency(cpufreq);
+}
+
+static inline
+int xrPowerTick(int type)
+{
+	return scePowerTick(type);
+}
+
+static inline
+int xrPowerUnregisterCallback(int slot)
+{
+	return scePowerUnregisterCallback(slot);
+}
+
+static inline
+int xrRtcGetCurrentClockLocalTime(pspTime *time)
+{
+	return sceRtcGetCurrentClockLocalTime(time);
+}
+
+static inline
+int xrRtcGetCurrentTick(u64 *tick)
+{
+	return sceRtcGetCurrentTick(tick);
+}
+
+static inline
+int xrRtcGetDayOfWeek(int year, int month, int day)
+{
+	return sceRtcGetDayOfWeek(year, month, day);
+}
+
+static inline
+int xrRtcGetDaysInMonth(int year, int month)
+{
+	return sceRtcGetDaysInMonth(year, month);
+}
+
+static inline
+u32 xrRtcGetTickResolution()
+{
+	return sceRtcGetTickResolution();
+}
+
+static inline
+int xrUsbActivate(u32 pid)
+{
+	return sceUsbActivate(pid);
+}
+
+static inline
+int xrUsbDeactivate(u32 pid)
+{
+	return sceUsbDeactivate(pid);
+}
+
+static inline
+int xrUsbGetState(void)
+{
+	return sceUsbGetState();
+}
+
+static inline
+int xrUsbStart(const char* driverName, int size, void *args)
+{
+	return sceUsbStart(driverName, size, args);
+}
+
+static inline
+int xrUsbStop(const char* driverName, int size, void *args)
+{
+	return sceUsbStop(driverName, size, args);
+}
+
+static inline
+int xrUsbstorBootSetCapacity(u32 size)
+{
+	return sceUsbstorBootSetCapacity(size);
+}
+
+static inline
+int xrUtilityLoadAvModule(int module)
+{
+	return sceUtilityLoadAvModule(module);
+}
+
+static inline
+int xrUtilityOskGetStatus(void)
+{
+	return sceUtilityOskGetStatus();
+}
+
+static inline
+int xrUtilityOskInitStart(SceUtilityOskParams* params)
+{
+	return sceUtilityOskInitStart(params);
+}
+
+static inline
+int xrUtilityOskShutdownStart(void)
+{
+	return sceUtilityOskShutdownStart();
+}
+
+static inline
+int xrUtilityOskUpdate(int n)
+{
+	return sceUtilityOskUpdate(n);
 }
 
 #endif

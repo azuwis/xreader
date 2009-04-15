@@ -36,6 +36,7 @@
 #include "freq_lock.h"
 #include "musicinfo.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 /**
  * 上次按快进退键类型
@@ -97,7 +98,7 @@ MusicInfo g_info = { 0 };
  */
 int generic_lock(void)
 {
-	return sceKernelWaitSemaCB(g_status_sema, 1, NULL);
+	return xrKernelWaitSemaCB(g_status_sema, 1, NULL);
 }
 
 /**
@@ -105,7 +106,7 @@ int generic_lock(void)
  */
 int generic_unlock(void)
 {
-	return sceKernelSignalSema(g_status_sema, 1);
+	return xrKernelSignalSema(g_status_sema, 1);
 }
 
 int generic_set_opt(const char *unused, const char *values)
@@ -201,7 +202,7 @@ int generic_fforward(int sec)
 
 	g_seek_seconds = sec;
 
-	sceRtcGetCurrentTick((u64*)&g_last_seek_tick);
+	xrRtcGetCurrentTick((u64*)&g_last_seek_tick);
 	g_last_seek_is_forward = true;
 	g_seek_count++;
 	generic_unlock();
@@ -225,7 +226,7 @@ int generic_fbackward(int sec)
 
 	g_seek_seconds = sec;
 
-	sceRtcGetCurrentTick((u64*)&g_last_seek_tick);
+	xrRtcGetCurrentTick((u64*)&g_last_seek_tick);
 	g_last_seek_is_forward = false;
 	g_seek_count++;
 	generic_unlock();
@@ -236,7 +237,7 @@ int generic_fbackward(int sec)
 int generic_end(void)
 {
 	if (g_status_sema >= 0) {
-		sceKernelDeleteSema(g_status_sema);
+		xrKernelDeleteSema(g_status_sema);
 		g_status_sema = -1;
 	}
 
@@ -247,7 +248,7 @@ int generic_end(void)
 
 int generic_init(void)
 {
-	g_status_sema = sceKernelCreateSema("Music Sema", 0, 1, 1, NULL);
+	g_status_sema = xrKernelCreateSema("Music Sema", 0, 1, 1, NULL);
 	g_seek_count = 0;
 
 	return 0;

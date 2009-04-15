@@ -37,6 +37,7 @@
 #include "conf.h"
 #include "text.h"
 #include "power.h"
+#include "xrhal.h"
 
 static volatile int secticks = 0;
 
@@ -88,7 +89,7 @@ extern t_win_menu_op win_menu_defcb(dword key, p_win_menuitem item,
 static void win_menu_delay_action(void)
 {
 	if (config.dis_scrsave)
-		scePowerTick(0);
+		xrPowerTick(0);
 }
 
 extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
@@ -123,7 +124,7 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 
 	u64 timer_start, timer_end;
 
-	sceRtcGetCurrentTick(&timer_start);
+	xrRtcGetCurrentTick(&timer_start);
 	while (1) {
 		t_win_menu_op op;
 
@@ -229,17 +230,17 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 		dword key;
 
 		while ((key = ctrl_read()) == 0) {
-			sceRtcGetCurrentTick(&timer_end);
+			xrRtcGetCurrentTick(&timer_end);
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
-				sceRtcGetCurrentTick(&timer_start);
+				xrRtcGetCurrentTick(&timer_start);
 				secticks++;
 			}
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 				power_down();
-				scePowerRequestSuspend();
+				xrPowerRequestSuspend();
 				secticks = 0;
 			}
-			sceKernelDelayThread(20000);
+			xrKernelDelayThread(20000);
 			win_menu_delay_action();
 		}
 		if (key != 0) {
@@ -249,17 +250,17 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 				cb(key, item, &count, max_height, &topindex,
 				   &index)) == win_menu_op_continue) {
 			while ((key = ctrl_read()) == 0) {
-				sceRtcGetCurrentTick(&timer_end);
+				xrRtcGetCurrentTick(&timer_end);
 				if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
-					sceRtcGetCurrentTick(&timer_start);
+					xrRtcGetCurrentTick(&timer_start);
 					secticks++;
 				}
 				if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 					power_down();
-					scePowerRequestSuspend();
+					xrPowerRequestSuspend();
 					secticks = 0;
 				}
-				sceKernelDelayThread(20000);
+				xrKernelDelayThread(20000);
 				win_menu_delay_action();
 			}
 		}

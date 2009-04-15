@@ -22,29 +22,30 @@
 #include <psppower.h>
 #include <pspsdk.h>
 #include "scene.h"
+#include "xrhal.h"
 
 int getCpuClock()
 {
-	return scePowerGetCpuClockFrequency();
+	return xrPowerGetCpuClockFrequency();
 }
 
 void setBusClock(int bus)
 {
-	if (bus >= 54 && bus <= 111 && sceKernelDevkitVersion() < 0x03070110)
-		scePowerSetBusClockFrequency(bus);
+	if (bus >= 54 && bus <= 111 && xrKernelDevkitVersion() < 0x03070110)
+		xrPowerSetBusClockFrequency(bus);
 }
 
 void xrSetCpuClock(int cpu, int bus)
 {
-	if (sceKernelDevkitVersion() < 0x03070110) {
-		scePowerSetCpuClockFrequency(cpu);
-		if (scePowerGetCpuClockFrequency() < cpu)
-			scePowerSetCpuClockFrequency(++cpu);
+	if (xrKernelDevkitVersion() < 0x03070110) {
+		xrPowerSetCpuClockFrequency(cpu);
+		if (xrPowerGetCpuClockFrequency() < cpu)
+			xrPowerSetCpuClockFrequency(++cpu);
 	} else {
-		scePowerSetClockFrequency(cpu, cpu, cpu / 2);
-		if (scePowerGetCpuClockFrequency() < cpu) {
+		xrPowerSetClockFrequency(cpu, cpu, cpu / 2);
+		if (xrPowerGetCpuClockFrequency() < cpu) {
 			cpu++;
-			scePowerSetClockFrequency(cpu, cpu, cpu / 2);
+			xrPowerSetClockFrequency(cpu, cpu, cpu / 2);
 		}
 	}
 }

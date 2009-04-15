@@ -54,6 +54,7 @@
 #include "math.h"
 #include "freq_lock.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 #ifdef ENABLE_IMAGE
 
@@ -862,13 +863,13 @@ static bool is_need_delay(void)
 	static u64 start, end;
 
 	if (g_imgpaging_count == 0)
-		sceRtcGetCurrentTick(&start);
+		xrRtcGetCurrentTick(&start);
 
-	sceRtcGetCurrentTick(&end);
+	xrRtcGetCurrentTick(&end);
 
 	if (pspDiffTime(&start, &end) >= 0.1) {
 		g_imgpaging_count++;
-		sceRtcGetCurrentTick(&start);
+		xrRtcGetCurrentTick(&start);
 	}
 
 	if (config.imgpaging_duration <= 1 || g_imgpaging_count < config.imgpaging_duration) {
@@ -893,7 +894,7 @@ static bool is_need_delay(void)
 			g_imgpaging_count = 0;
 		}
 
-		sceKernelDelayThread(100000);
+		xrKernelDelayThread(100000);
 
 		return true;
 	}
@@ -907,13 +908,13 @@ static bool splashz(void)
 	double s, t, t2;
 
 	if (z_mode_cnt == 0)
-		sceRtcGetCurrentTick(&start);
+		xrRtcGetCurrentTick(&start);
 
-	sceRtcGetCurrentTick(&end);
+	xrRtcGetCurrentTick(&end);
 
 	if (pspDiffTime(&start, &end) >= 0.1) {
 		z_mode_cnt++;
-		sceRtcGetCurrentTick(&start);
+		xrRtcGetCurrentTick(&start);
 	}
 
 	s = sqrt(1. * (destx - srcx) * (destx - srcx) +
@@ -1170,7 +1171,7 @@ static bool image_paging_leftright_smooth(bool is_forward)
 	}
 
 	g_imgpaging_count = config.imgpaging_duration;
-	sceKernelDelayThread(100000 * config.imgpaging_duration);
+	xrKernelDelayThread(100000 * config.imgpaging_duration);
 
 	if (!in_move_z_mode) {
 		return enter_z_mode(is_forward, true);
@@ -1214,7 +1215,7 @@ static bool image_paging_updown_smooth(bool is_forward)
 	}
 
 	g_imgpaging_count = config.imgpaging_duration;
-	sceKernelDelayThread(100000 * config.imgpaging_duration);
+	xrKernelDelayThread(100000 * config.imgpaging_duration);
 
 	if (!in_move_z_mode) {
 		return enter_z_mode(is_forward, false);
@@ -1340,7 +1341,7 @@ static int image_handle_input(dword * selidx, dword key)
 
 		if (config.imgpaging == conf_imgpaging_updown ||
 			config.imgpaging == conf_imgpaging_leftright)
-			sceKernelDelayThread(200000);
+			xrKernelDelayThread(200000);
 
 		if (!image_paging(true, config.imgpaging))
 			goto next;
@@ -1354,7 +1355,7 @@ static int image_handle_input(dword * selidx, dword key)
 			   || key == CTRL_BACK) {
 		if (config.imgpaging == conf_imgpaging_updown ||
 			config.imgpaging == conf_imgpaging_leftright)
-			sceKernelDelayThread(200000);
+			xrKernelDelayThread(200000);
 
 		if (!image_paging(false, config.imgpaging))
 			goto next;
@@ -1430,8 +1431,8 @@ static int image_handle_input(dword * selidx, dword key)
 		img_needrp = true;
 
 		do {
-			sceCtrlReadBufferPositive(&ctl, 1);
-			sceKernelDelayThread(10000);
+			xrCtrlReadBufferPositive(&ctl, 1);
+			xrKernelDelayThread(10000);
 			t += 10000;
 		} while (ctl.Buttons != 0 && t <= 500000);
 	} else if (key == config.imgkey[9] || key == config.imgkey2[9]
@@ -1512,7 +1513,7 @@ static int image_handle_input(dword * selidx, dword key)
 static void scene_image_delay_action(void)
 {
 	if (config.dis_scrsave)
-		scePowerTick(0);
+		xrPowerTick(0);
 }
 
 static int scene_slideshow_forward(dword *selidx)
@@ -1521,7 +1522,7 @@ static int scene_slideshow_forward(dword *selidx)
 
 	if (config.imgpaging == conf_imgpaging_updown ||
 			config.imgpaging == conf_imgpaging_leftright) {
-		sceKernelDelayThread(200000);
+		xrKernelDelayThread(200000);
 	}
 
 	if (!image_paging(true, config.imgpaging)) {
@@ -1558,7 +1559,7 @@ dword scene_readimage(dword selidx)
 	else
 		imgh = PSP_SCREEN_HEIGHT;
 
-	sceRtcGetCurrentTick(&timer_start);
+	xrRtcGetCurrentTick(&timer_start);
 
 	while (1) {
 		u64 dbgnow, dbglasttick;
@@ -1568,7 +1569,7 @@ dword scene_readimage(dword selidx)
 			int fid;
 
 			fid = freq_enter_hotzone();
-			sceRtcGetCurrentTick(&dbglasttick);
+			xrRtcGetCurrentTick(&dbglasttick);
 			dword ret = scene_reloadimage(selidx);
 
 			if (ret == -1) {
@@ -1577,7 +1578,7 @@ dword scene_readimage(dword selidx)
 			}
 
 			img_needrf = false;
-			sceRtcGetCurrentTick(&dbgnow);
+			xrRtcGetCurrentTick(&dbgnow);
 			dbg_printf(d, _("装载图像时间: %.2f秒"),
 					   pspDiffTime(&dbgnow, &dbglasttick));
 			freq_leave(fid);
@@ -1587,10 +1588,10 @@ dword scene_readimage(dword selidx)
 			int fid;
 
 			fid = freq_enter_hotzone();
-			sceRtcGetCurrentTick(&dbglasttick);
+			xrRtcGetCurrentTick(&dbglasttick);
 			scene_rotateimage();
 			img_needrc = false;
-			sceRtcGetCurrentTick(&dbgnow);
+			xrRtcGetCurrentTick(&dbgnow);
 			dbg_printf(d, _("旋转图像时间: %.2f秒"),
 					   pspDiffTime(&dbgnow, &dbglasttick));
 			freq_leave(fid);
@@ -1625,7 +1626,7 @@ dword scene_readimage(dword selidx)
 			} else if (key != 0 && (key == config.imgkey[0] || key == config.imgkey2[0] || key == CTRL_BACK)) {
 				prev_image(&selidx);
 			} else {
-				scePowerTick(0);
+				xrPowerTick(0);
 				if (config.imgpaging == conf_imgpaging_direct ||
 					config.imgpaging == conf_imgpaging_updown ||
 					config.imgpaging == conf_imgpaging_leftright) {
@@ -1634,9 +1635,9 @@ dword scene_readimage(dword selidx)
 						ret = scene_slideshow_forward(&selidx);
 					}
 				} else {
-					sceRtcGetCurrentTick(&slide_end);
+					xrRtcGetCurrentTick(&slide_end);
 					if (pspDiffTime(&slide_end, &slide_start) >= 0.1) {
-						sceRtcGetCurrentTick(&slide_start);
+						xrRtcGetCurrentTick(&slide_start);
 					} else {
 						lasttime = now;
 						ret = scene_slideshow_forward(&selidx);
@@ -1650,16 +1651,16 @@ dword scene_readimage(dword selidx)
 			showinfo = false;
 		}
 
-		sceRtcGetCurrentTick(&timer_end);
+		xrRtcGetCurrentTick(&timer_end);
 
 		if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
-			sceRtcGetCurrentTick(&timer_start);
+			xrRtcGetCurrentTick(&timer_start);
 			secticks++;
 		}
 
 		if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 			power_down();
-			scePowerRequestSuspend();
+			xrPowerRequestSuspend();
 			secticks = 0;
 		}
 
@@ -1703,13 +1704,13 @@ static t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item,
 
 			ctrl_waitrelease();
 			do {
-				sceCtrlReadBufferPositive(&ctl, 1);
+				xrCtrlReadBufferPositive(&ctl, 1);
 				key = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
 			} while (key == 0);
 			key2 = key;
 			while ((key2 & key) == key) {
 				key = key2;
-				sceCtrlReadBufferPositive(&ctl, 1);
+				xrCtrlReadBufferPositive(&ctl, 1);
 				key2 = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
 			}
 			if (config.imgkey[*index] == key || config.imgkey2[*index] == key)
@@ -1735,7 +1736,7 @@ static t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item,
 			config.imgkey2[*index] = config.imgkey[*index];
 			config.imgkey[*index] = key;
 			do {
-				sceCtrlReadBufferPositive(&ctl, 1);
+				xrCtrlReadBufferPositive(&ctl, 1);
 			} while (ctl.Buttons != 0);
 			return win_menu_op_force_redraw;
 		case PSP_CTRL_TRIANGLE:

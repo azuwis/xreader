@@ -34,6 +34,7 @@
 #include "genericplayer.h"
 #include "wavpack/wavpack.h"
 #include "musicinfo.h"
+#include "xrhal.h"
 
 #ifdef ENABLE_WAVPACK
 
@@ -175,7 +176,7 @@ static int wv_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			wv_seek_seconds(g_play_time - g_seek_seconds);
 		}
 		xMP3ClearSndBuf(buf, snd_buf_frame_size);
-		sceKernelDelayThread(100000);
+		xrKernelDelayThread(100000);
 		return 0;
 	}
 
@@ -327,15 +328,15 @@ static int wv_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
 		__end();
 		return -1;
 	}
 
-	g_info.filesize = sceIoLseek(fd, 0, PSP_SEEK_END);
-	sceIoClose(fd);
+	g_info.filesize = xrIoLseek(fd, 0, PSP_SEEK_END);
+	xrIoClose(fd);
 
 	char error[80];
 

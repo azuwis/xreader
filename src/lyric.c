@@ -234,27 +234,27 @@ extern void lyric_init(p_lyric l)
 	if (l == NULL)
 		return;
 	memset(l, 0, sizeof(t_lyric));
-	l->sema = sceKernelCreateSema("lyric sem", 0, 1, 1, NULL);
+	l->sema = xrKernelCreateSema("lyric sem", 0, 1, 1, NULL);
 }
 
 extern void lyric_close(p_lyric l)
 {
 	if (l == NULL || !l->succ)
 		return;
-	sceKernelWaitSema(l->sema, 1, NULL);
+	xrKernelWaitSema(l->sema, 1, NULL);
 	l->succ = false;
 	if (l->whole != NULL)
 		free(l->whole);
 	if (l->count > 0 && l->lines != NULL)
 		free(l->lines);
-	sceKernelSignalSema(l->sema, 1);
+	xrKernelSignalSema(l->sema, 1);
 }
 
 extern void lyric_update_pos(p_lyric l, void *tm)
 {
 	if (l == NULL || !l->succ)
 		return;
-	sceKernelWaitSema(l->sema, 1, NULL);
+	xrKernelWaitSema(l->sema, 1, NULL);
 	mad_timer_t t = *(mad_timer_t *) tm;
 
 	while (l->idx >= 0 && mad_timer_compare(l->lines[l->idx].t, t) > 0) {
@@ -266,7 +266,7 @@ extern void lyric_update_pos(p_lyric l, void *tm)
 		l->idx++;
 		l->changed = true;
 	}
-	sceKernelSignalSema(l->sema, 1);
+	xrKernelSignalSema(l->sema, 1);
 }
 
 extern bool lyric_get_cur_lines(p_lyric l, int extralines, const char **lines,
@@ -274,7 +274,7 @@ extern bool lyric_get_cur_lines(p_lyric l, int extralines, const char **lines,
 {
 	if (l == NULL || !l->succ)
 		return false;
-	sceKernelWaitSema(l->sema, 1, NULL);
+	xrKernelWaitSema(l->sema, 1, NULL);
 	if (l->changed)
 		l->changed = false;
 	int i, j = 0;
@@ -287,7 +287,7 @@ extern bool lyric_get_cur_lines(p_lyric l, int extralines, const char **lines,
 			lines[j] = NULL;
 		++j;
 	}
-	sceKernelSignalSema(l->sema, 1);
+	xrKernelSignalSema(l->sema, 1);
 
 	return true;
 }
@@ -296,12 +296,12 @@ extern bool lyric_check_changed(p_lyric l)
 {
 	if (l == NULL || !l->succ)
 		return false;
-	sceKernelWaitSema(l->sema, 1, NULL);
+	xrKernelWaitSema(l->sema, 1, NULL);
 	if (l->changed) {
 		l->changed = false;
 		return true;
 	}
-	sceKernelSignalSema(l->sema, 1);
+	xrKernelSignalSema(l->sema, 1);
 	return false;
 }
 

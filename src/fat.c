@@ -63,17 +63,17 @@ void fat_powerup(void)
 
 void fat_lock(void)
 {
-	sceKernelWaitSema(fat_sema, 1, NULL);
+	xrKernelWaitSema(fat_sema, 1, NULL);
 }
 
 void fat_unlock(void)
 {
-	sceKernelSignalSema(fat_sema, 1);
+	xrKernelSignalSema(fat_sema, 1);
 }
 
 extern bool fat_init(void)
 {
-	fat_sema = sceKernelCreateSema("FAT Sema", 0, 1, 1, NULL);
+	fat_sema = xrKernelCreateSema("FAT Sema", 0, 1, 1, NULL);
 	if (fat_sema < 0)
 		return false;
 	fat_lock();
@@ -447,7 +447,7 @@ extern bool fat_locate(const char *name, char *sname, dword clus,
 					entrys[i].norm.filename[0] = 0x05;
 				memcpy(info, &entrys[i], sizeof(t_fat_entry));
 				free(entrys);
-				if (sceKernelDevkitVersion() <= 0x03070110) {
+				if (xrKernelDevkitVersion() <= 0x03070110) {
 					strcat_s(sname, 256, sid.d_name);
 				} else {
 					char short_name[256];
@@ -469,7 +469,7 @@ extern bool fat_locate(const char *name, char *sname, dword clus,
 			if (stricmp(name, longnames) == 0) {
 				memcpy(info, &entrys[i], sizeof(t_fat_entry));
 				free(entrys);
-				if (sceKernelDevkitVersion() <= 0x03070110) {
+				if (xrKernelDevkitVersion() <= 0x03070110) {
 					strcat_s(sname, 256, sid.d_name);
 				} else {
 					char short_name[256];
@@ -597,7 +597,7 @@ extern dword fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 			inf->filename[0] = 0xE5;
 		if (!fat_get_longname(entrys, i, inf->longname))
 			STRCPY_S(inf->longname, inf->filename);
-		if (sceKernelDevkitVersion() <= 0x03070110) {
+		if (xrKernelDevkitVersion() <= 0x03070110) {
 			STRCPY_S(inf->filename, sid.d_name);
 		}
 		inf->filesize = entrys[i].norm.filesize;
@@ -633,7 +633,7 @@ extern void fat_free(void)
 	loadcount = 0;
 	clus_max = 0;
 	fat_type = fat16;
-	sceKernelDeleteSema(fat_sema);
+	xrKernelDeleteSema(fat_sema);
 }
 
 /**

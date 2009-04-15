@@ -23,7 +23,7 @@
  * -----------------------------------------------------------------------
  * Licensed under the BSD license, see LICENSE in PSPSDK root for details.
  *
- * pspaudiolib.c - Audio library build on top of sceAudio, but to provide
+ * pspaudiolib.c - Audio library build on top of xrAudio, but to provide
  *                 multiple thread usage and callbacks.
  *
  * Copyright (c) 2005 Adresd
@@ -38,23 +38,24 @@
 #include <pspaudio.h>
 
 #include "xmp3audiolib.h"
+#include "xrhal.h"
 
 #define THREAD_STACK_SIZE (128 * 1024)
 
 int setFrequency(unsigned short samples, unsigned short freq, char car)
 {
-	return sceAudioSRCChReserve(samples, freq, car);
+	return xrAudioSRCChReserve(samples, freq, car);
 }
 
 int xMP3ReleaseAudio(void)
 {
-	while (sceAudioOutput2GetRestSample() > 0);
-	return sceAudioSRCChRelease();
+	while (xrAudioOutput2GetRestSample() > 0);
+	return xrAudioSRCChRelease();
 }
 
 int audioOutpuBlocking(int volume, void *buffer)
 {
-	return sceAudioSRCOutputBlocking(volume, buffer);
+	return xrAudioSRCOutputBlocking(volume, buffer);
 }
 
 static int audio_ready = 0;
@@ -133,13 +134,13 @@ static int AudioChannelThread(int args, void *argp)
 				*(ptr++) = 0;
 		}
 		//xMP3AudioOutBlocking(channel,AudioStatus[channel].volumeleft,AudioStatus[channel].volumeright,bufptr);
-		sceKernelWaitSema(play_sema, 1, 0);
+		xrKernelWaitSema(play_sema, 1, 0);
 		audioOutpuBlocking(AudioStatus[0].volumeright, bufptr);
-		sceKernelSignalSema(play_sema, 1);
+		xrKernelSignalSema(play_sema, 1);
 		bufidx = (bufidx ? 0 : 1);
 	}
 	AudioStatus[channel].threadactive = 0;
-	sceKernelExitThread(0);
+	xrKernelExitThread(0);
 	return 0;
 }
 
@@ -161,11 +162,11 @@ int xMP3AudioSetFrequency(unsigned short freq)
 		default:
 			return -1;
 	}
-	sceKernelWaitSema(play_sema, 1, 0);
+	xrKernelWaitSema(play_sema, 1, 0);
 	xMP3ReleaseAudio();
 	if (setFrequency(PSP_NUM_AUDIO_SAMPLES, freq, 2) < 0)
 		ret = -1;
-	sceKernelSignalSema(play_sema, 1);
+	xrKernelSignalSema(play_sema, 1);
 	return ret;
 }
 
@@ -181,7 +182,7 @@ int xMP3AudioInit()
 	memset(audio_sndbuf, 0, sizeof(audio_sndbuf));
 
 	if (play_sema < 0) {
-		play_sema = sceKernelCreateSema("play_sema", 6, 1, 1, 0);
+		play_sema = xrKernelCreateSema("play_sema", 6, 1, 1, 0);
 	}
 	for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
 		AudioStatus[i].handle = -1;
@@ -210,10 +211,10 @@ int xMP3AudioInit()
 	strcpy(str, "audiot0");
 	for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
 		str[6] = '0' + i;
-		//AudioStatus[i].threadhandle = sceKernelCreateThread(str,(void*)&AudioChannelThread,0x12,0x10000,0,NULL);
-		//sceAudioSetChannelDataLen(i, PSP_NUM_AUDIO_SAMPLES);
+		//AudioStatus[i].threadhandle = xrKernelCreateThread(str,(void*)&AudioChannelThread,0x12,0x10000,0,NULL);
+		//xrAudioSetChannelDataLen(i, PSP_NUM_AUDIO_SAMPLES);
 		AudioStatus[i].threadhandle =
-			sceKernelCreateThread(str, (void *) &AudioChannelThread, 0x12,
+			xrKernelCreateThread(str, (void *) &AudioChannelThread, 0x12,
 								  THREAD_STACK_SIZE, PSP_THREAD_ATTR_USER,
 								  NULL);
 		if (AudioStatus[i].threadhandle < 0) {
@@ -221,7 +222,7 @@ int xMP3AudioInit()
 			failed = 1;
 			break;
 		}
-		ret = sceKernelStartThread(AudioStatus[i].threadhandle, sizeof(i), &i);
+		ret = xrKernelStartThread(AudioStatus[i].threadhandle, sizeof(i), &i);
 		if (ret != 0) {
 			failed = 1;
 			break;
@@ -231,10 +232,10 @@ int xMP3AudioInit()
 		audio_terminate = 1;
 		for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
 			if (AudioStatus[i].threadhandle != -1) {
-				//sceKernelWaitThreadEnd(AudioStatus[i].threadhandle,NULL);
+				//xrKernelWaitThreadEnd(AudioStatus[i].threadhandle,NULL);
 				while (AudioStatus[i].threadactive)
-					sceKernelDelayThread(100000);
-				sceKernelDeleteThread(AudioStatus[i].threadhandle);
+					xrKernelDelayThread(100000);
+				xrKernelDeleteThread(AudioStatus[i].threadhandle);
 			}
 			AudioStatus[i].threadhandle = -1;
 		}
@@ -260,10 +261,10 @@ void xMP3AudioEnd()
 	for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
 		if (AudioStatus[i].threadhandle != -1) {
 			xMP3ReleaseAudio();
-			//sceKernelWaitThreadEnd(AudioStatus[i].threadhandle,NULL);
+			//xrKernelWaitThreadEnd(AudioStatus[i].threadhandle,NULL);
 			while (AudioStatus[i].threadactive)
-				sceKernelDelayThread(100000);
-			sceKernelDeleteThread(AudioStatus[i].threadhandle);
+				xrKernelDelayThread(100000);
+			xrKernelDeleteThread(AudioStatus[i].threadhandle);
 		}
 		AudioStatus[i].threadhandle = -1;
 	}
@@ -275,7 +276,7 @@ void xMP3AudioEnd()
 		}
 	}
 	if (play_sema >= 0) {
-		sceKernelDeleteSema(play_sema);
+		xrKernelDeleteSema(play_sema);
 		play_sema = -1;
 	}
 }

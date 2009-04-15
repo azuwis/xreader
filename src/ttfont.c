@@ -2120,7 +2120,7 @@ extern void ttf_lock(void)
 {
 #ifdef ENABLE_TTF
 	if (ttf_sema >= 0)
-		sceKernelWaitSema(ttf_sema, 1, NULL);
+		xrKernelWaitSema(ttf_sema, 1, NULL);
 #endif
 }
 
@@ -2128,14 +2128,14 @@ extern void ttf_unlock(void)
 {
 #ifdef ENABLE_TTF
 	if (ttf_sema >= 0)
-		sceKernelSignalSema(ttf_sema, 1);
+		xrKernelSignalSema(ttf_sema, 1);
 #endif
 }
 
 extern void ttf_init(void)
 {
 #ifdef ENABLE_TTF
-	ttf_sema = sceKernelCreateSema("TTF Sema", 0, 1, 1, NULL);
+	ttf_sema = xrKernelCreateSema("TTF Sema", 0, 1, 1, NULL);
 #endif
 }
 
@@ -2143,6 +2143,6 @@ extern void ttf_free(void)
 {
 #ifdef ENABLE_TTF
 	if (ttf_sema >= 0)
-		sceKernelDeleteSema(ttf_sema);
+		xrKernelDeleteSema(ttf_sema);
 #endif
 }

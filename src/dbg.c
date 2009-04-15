@@ -359,7 +359,7 @@ int dbg_printf(DBG * d, const char *fmt, ...)
 	va_start(ap, fmt);
 	pspTime tm;
 
-	sceRtcGetCurrentClockLocalTime(&tm);
+	xrRtcGetCurrentClockLocalTime(&tm);
 
 	char timestr[80];
 
@@ -570,7 +570,7 @@ double pspDiffTime(u64 * t1, u64 * t2)
 {
 	if (!t1 || !t2)
 		return 0.0;
-	double d = (*t1 - *t2) * 1.0 / sceRtcGetTickResolution();
+	double d = (*t1 - *t2) * 1.0 / xrRtcGetTickResolution();
 
 	return d;
 }

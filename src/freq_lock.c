@@ -9,6 +9,7 @@
 #include "conf.h"
 #include "musicmgr.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 struct _freq_lock_entry {
 	unsigned short cpu, bus;
@@ -23,7 +24,7 @@ static int g_freq_sema;
 
 int freq_init()
 {
-	g_freq_sema = sceKernelCreateSema("Freq Sema", 0, 1, 1, NULL);
+	g_freq_sema = xrKernelCreateSema("Freq Sema", 0, 1, 1, NULL);
 
 	if (freqs_cnt != 0 || freqs != NULL) {
 		free(freqs);
@@ -37,7 +38,7 @@ int freq_init()
 int freq_free()
 {
 	if (g_freq_sema >= 0) {
-		sceKernelDeleteSema(g_freq_sema);
+		xrKernelDeleteSema(g_freq_sema);
 		g_freq_sema = -1;
 	}
 
@@ -46,12 +47,12 @@ int freq_free()
 
 int freq_lock()
 {
-	return sceKernelWaitSemaCB(g_freq_sema, 1, NULL);
+	return xrKernelWaitSemaCB(g_freq_sema, 1, NULL);
 }
 
 int freq_unlock()
 {
-	return sceKernelSignalSema(g_freq_sema, 1);
+	return xrKernelSignalSema(g_freq_sema, 1);
 }
 
 static int generate_id()
@@ -157,10 +158,10 @@ static int update_freq(void)
 
 //	dbg_printf(d, "%s: should set cpu/bus to %d/%d", __func__, cpu, bus);
 
-	if (scePowerGetCpuClockFrequency() != cpu || scePowerGetBusClockFrequency() != bus) {
+	if (xrPowerGetCpuClockFrequency() != cpu || xrPowerGetBusClockFrequency() != bus) {
 		power_set_clock(cpu, bus);
 		{
-//			dbg_printf(d, "%s: cpu: %d, bus: %d", __func__, scePowerGetCpuClockFrequency(), scePowerGetBusClockFrequency());
+//			dbg_printf(d, "%s: cpu: %d, bus: %d", __func__, xrPowerGetCpuClockFrequency(), xrPowerGetBusClockFrequency());
 		}
 	}
 

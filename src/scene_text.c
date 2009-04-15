@@ -314,7 +314,7 @@ static void get_infobar_system_string(char *dest, int size)
 	char t[512];
 	int percent, unused;
 
-	sceRtcGetCurrentClockLocalTime(&tm);
+	xrRtcGetCurrentClockLocalTime(&tm);
 
 	power_get_battery(&percent, &unused, &unused, &unused);
 	if (tm.seconds % 2 == 0) {
@@ -750,7 +750,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		|| where == scene_in_rar) {
 		STRCPY_S(pView->filename, filelist[selidx].compname->ptr);
 		STRCPY_S(pView->archname, config.shortpath);
-		if (sceKernelDevkitVersion() <= 0x03070110) {
+		if (xrKernelDevkitVersion() <= 0x03070110) {
 			STRCPY_S(pView->bookmarkname, config.shortpath);
 		} else {
 			STRCPY_S(pView->bookmarkname, config.path);
@@ -764,7 +764,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		STRCAT_S(pView->filename, filelist[selidx].compname->ptr);
 		STRCPY_S(pView->archname, config.shortpath);
 		STRCAT_S(pView->archname, filelist[selidx].shortname->ptr);
-		if (sceKernelDevkitVersion() <= 0x03070110) {
+		if (xrKernelDevkitVersion() <= 0x03070110) {
 			STRCPY_S(pView->bookmarkname, pView->archname);
 		} else {
 			STRCPY_S(pView->bookmarkname, pView->filename);
@@ -1371,7 +1371,7 @@ static int scene_autopage(PBookViewData pView, dword * selidx)
 				ticks = 0;
 				move_line_smooth(&cur_book_view, config.autopage);
 				// prevent LCD shut down by setting counter = 0
-				scePowerTick(0);
+				xrPowerTick(0);
 				return 1;
 			}
 		} else {
@@ -1382,7 +1382,7 @@ static int scene_autopage(PBookViewData pView, dword * selidx)
 				else
 					move_page_up(&cur_book_view, key, selidx);
 				// prevent LCD shut down by setting counter = 0
-				scePowerTick(0);
+				xrPowerTick(0);
 				return 1;
 			}
 		}
@@ -1804,7 +1804,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 static void scene_text_delay_action(void)
 {
 	if (config.dis_scrsave)
-		scePowerTick(0);
+		xrPowerTick(0);
 }
 
 dword scene_reload_raw(const char *title, const unsigned char *data,
@@ -1898,7 +1898,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 
 	u64 timer_start, timer_end;
 
-	sceRtcGetCurrentTick(&timer_start);
+	xrRtcGetCurrentTick(&timer_start);
 	scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
 	while (1) {
 		if (cur_book_view.text_needrf) {
@@ -1931,10 +1931,10 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 		dword key;
 
 		while ((key = ctrl_read()) == 0) {
-			sceKernelDelayThread(20000);
-			sceRtcGetCurrentTick(&timer_end);
+			xrKernelDelayThread(20000);
+			xrRtcGetCurrentTick(&timer_end);
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
-				sceRtcGetCurrentTick(&timer_start);
+				xrRtcGetCurrentTick(&timer_start);
 				secticks++;
 
 				if (config.infobar_show_timer) {
@@ -1949,7 +1949,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 				power_down();
-				scePowerRequestSuspend();
+				xrPowerRequestSuspend();
 				secticks = 0;
 			}
 
@@ -1991,7 +1991,7 @@ dword scene_readbook(dword selidx)
 {
 	u64 timer_start, timer_end;
 
-	sceRtcGetCurrentTick(&timer_start);
+	xrRtcGetCurrentTick(&timer_start);
 
 	new_book_view(&cur_book_view);
 
@@ -2011,11 +2011,11 @@ dword scene_readbook(dword selidx)
 		dword key;
 
 		while ((key = ctrl_read()) == 0) {
-			sceKernelDelayThread(20000);
+			xrKernelDelayThread(20000);
 			if (config.infobar_show_timer) {
 				static u64 start, end;
 
-				sceRtcGetCurrentTick(&end);
+				xrRtcGetCurrentTick(&end);
 				if (pspDiffTime(&end, &start) >= 1.0) {
 					redraw_infobar(selidx);
 				}
@@ -2026,10 +2026,10 @@ dword scene_readbook(dword selidx)
 				break;
 			}
 #endif
-			sceRtcGetCurrentTick(&timer_end);
+			xrRtcGetCurrentTick(&timer_end);
 
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
-				sceRtcGetCurrentTick(&timer_start);
+				xrRtcGetCurrentTick(&timer_start);
 				secticks++;
 
 				if (config.autopage) {
@@ -2045,7 +2045,7 @@ dword scene_readbook(dword selidx)
 
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 				power_down();
-				scePowerRequestSuspend();
+				xrPowerRequestSuspend();
 				secticks = 0;
 			}
 
@@ -2106,10 +2106,10 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 			SceCtrlData ctl;
 
 			do {
-				sceCtrlReadBufferPositive(&ctl, 1);
+				xrCtrlReadBufferPositive(&ctl, 1);
 			} while (ctl.Buttons != 0);
 			do {
-				sceCtrlReadBufferPositive(&ctl, 1);
+				xrCtrlReadBufferPositive(&ctl, 1);
 				key = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
 			} while ((key &
 					  ~(PSP_CTRL_UP | PSP_CTRL_DOWN | PSP_CTRL_LEFT |
@@ -2117,7 +2117,7 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 			key2 = key;
 			while ((key2 & key) == key) {
 				key = key2;
-				sceCtrlReadBufferPositive(&ctl, 1);
+				xrCtrlReadBufferPositive(&ctl, 1);
 				key2 = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
 			}
 			if (config.txtkey[*index] == key || config.txtkey2[*index] == key)
@@ -2143,7 +2143,7 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 			config.txtkey2[*index] = config.txtkey[*index];
 			config.txtkey[*index] = key;
 			do {
-				sceCtrlReadBufferPositive(&ctl, 1);
+				xrCtrlReadBufferPositive(&ctl, 1);
 			} while (ctl.Buttons != 0);
 			return win_menu_op_force_redraw;
 		case PSP_CTRL_TRIANGLE:

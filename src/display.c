@@ -94,11 +94,11 @@ static inline void setVertexUV(Vertex * vertex, u16 x, u16 y, u16 z, u32 color,
 
 extern void disp_init(void)
 {
-	sceDisplaySetMode(0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
+	xrDisplaySetMode(0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 	vram_page = 0;
 	vram_disp = (pixel *) 0x04000000;
 	vram_draw = (pixel *) (0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
-	sceDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
+	xrDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
 						  PSP_DISPLAY_SETBUF_NEXTFRAME);
 }
 
@@ -125,7 +125,7 @@ extern void init_gu(void)
 	xrGuFinish();
 	xrGuSync(0, 0);
 
-	sceDisplayWaitVblankStart();
+	xrDisplayWaitVblankStart();
 	xrGuDisplay(1);
 }
 
@@ -698,7 +698,7 @@ extern void disp_flip(void)
 	vram_draw =
 		(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
 	disp_waitv();
-	sceDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
+	xrDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
 						  PSP_DISPLAY_SETBUF_IMMEDIATE);
 	framebuffer = xrGuSwapBuffers();
 }
@@ -860,7 +860,7 @@ extern void disp_fix_osk(void *buffer)
 		vram_draw =
 			(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
 	}
-	sceDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
+	xrDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
 						  PSP_DISPLAY_SETBUF_IMMEDIATE);
 }
 

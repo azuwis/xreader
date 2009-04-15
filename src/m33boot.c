@@ -34,6 +34,7 @@
 #include "m33boot.h"
 #include "dbg.h"
 #include "xrPrx/xrPrx.h"
+#include "xrhal.h"
 
 static struct SceKernelLoadExecVSHParam param;
 static int apitype = 0;

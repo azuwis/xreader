@@ -34,6 +34,7 @@
 #include "scene.h"
 #include "display.h"
 #include "ttfont.h"
+#include "xrhal.h"
 
 bool use_prx_power_save = false;
 
@@ -44,24 +45,24 @@ extern void power_set_clock(dword cpu, dword bus)
 		// 15Mhz can't use xrPlayerSetSpeed
 		if (cpu <= 15) {
 			power_set_clock(33, 16);
-			scePowerSetCpuClockFrequency(cpu);
-			scePowerSetBusClockFrequency(bus);
+			xrPowerSetCpuClockFrequency(cpu);
+			xrPowerSetBusClockFrequency(bus);
 		}
 	} else {
 		if (cpu > 222 || bus > 111)
-			scePowerSetClockFrequency(cpu, cpu, bus);
+			xrPowerSetClockFrequency(cpu, cpu, bus);
 		else {
-			scePowerSetClockFrequency(222, 222, 111);
-			scePowerSetCpuClockFrequency(cpu);
-			scePowerSetBusClockFrequency(bus);
+			xrPowerSetClockFrequency(222, 222, 111);
+			xrPowerSetCpuClockFrequency(cpu);
+			xrPowerSetBusClockFrequency(bus);
 		}
 	}
 }
 
 extern void power_get_clock(dword * cpu, dword * bus)
 {
-	*cpu = scePowerGetCpuClockFrequency();
-	*bus = scePowerGetBusClockFrequency();
+	*cpu = xrPowerGetCpuClockFrequency();
+	*bus = xrPowerGetBusClockFrequency();
 }
 
 extern void power_get_battery(int *percent, int *lifetime, int *tempe,
@@ -69,24 +70,24 @@ extern void power_get_battery(int *percent, int *lifetime, int *tempe,
 {
 	int t;
 
-	t = scePowerGetBatteryLifePercent();
+	t = xrPowerGetBatteryLifePercent();
 	if (t >= 0)
 		*percent = t;
 	else
 		*percent = 0;
-	t = scePowerGetBatteryLifeTime();
+	t = xrPowerGetBatteryLifeTime();
 	if (t >= 0)
 		*lifetime = t;
 	else
 		*lifetime = 0;
-	t = scePowerGetBatteryTemp();
+	t = xrPowerGetBatteryTemp();
 	if (t >= 0)
 		*tempe = t;
 	else
 		*tempe = 0;
-	t = scePowerGetBatteryVolt();
+	t = xrPowerGetBatteryVolt();
 	if (t >= 0)
-		*volt = scePowerGetBatteryVolt();
+		*volt = xrPowerGetBatteryVolt();
 	else
 		*volt = 0;
 }
@@ -96,7 +97,7 @@ static char status_str[256] = "";
 
 extern const char *power_get_battery_charging(void)
 {
-	int status = scePowerGetBatteryChargingStatus();
+	int status = xrPowerGetBatteryChargingStatus();
 
 	if (last_status != status) {
 		status_str[0] = 0;
