@@ -24,6 +24,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <stdint.h>
+#include "xrhal.h"
 
 typedef struct
 {
@@ -63,7 +64,7 @@ void buffered_reader_close(buffered_reader_t * reader)
 {
 	if (reader) {
 		if (!(reader->handle < 0))
-			sceIoClose(reader->handle);
+			xrIoClose(reader->handle);
 		if (reader->buffer_0 != 0)
 			free_64(reader->buffer_0);
 		if (reader->buffer_1 != 0)
@@ -104,18 +105,18 @@ buffered_reader_t *buffered_reader_open(const char *path, int32_t buffer_size,
 		return 0;
 	}
 
-	reader->handle = sceIoOpen(path, PSP_O_RDONLY, 0777);
+	reader->handle = xrIoOpen(path, PSP_O_RDONLY, 0777);
 
 	if (reader->handle < 0) {
 		buffered_reader_close(reader);
 		return 0;
 	}
-	if (sceIoChangeAsyncPriority(reader->handle, 0x10) < 0) {
+	if (xrIoChangeAsyncPriority(reader->handle, 0x10) < 0) {
 		buffered_reader_close(reader);
 		return 0;
 	}
 
-	reader->length = sceIoLseek(reader->handle, 0, PSP_SEEK_END);
+	reader->length = xrIoLseek(reader->handle, 0, PSP_SEEK_END);
 
 	reader->first_buffer = reader->buffer_0;
 	reader->second_buffer = reader->buffer_1;
@@ -123,16 +124,16 @@ buffered_reader_t *buffered_reader_open(const char *path, int32_t buffer_size,
 
 	long long result;
 
-	sceIoLseek(reader->handle, reader->position_0, PSP_SEEK_SET);
-	sceIoReadAsync(reader->handle, reader->first_buffer,
+	xrIoLseek(reader->handle, reader->position_0, PSP_SEEK_SET);
+	xrIoReadAsync(reader->handle, reader->first_buffer,
 				   reader->position_1 - reader->position_0);
-	sceIoWaitAsync(reader->handle, &result);
-	sceIoLseek(reader->handle, reader->position_1, PSP_SEEK_SET);
-	sceIoReadAsync(reader->handle, reader->second_buffer,
+	xrIoWaitAsync(reader->handle, &result);
+	xrIoLseek(reader->handle, reader->position_1, PSP_SEEK_SET);
+	xrIoReadAsync(reader->handle, reader->second_buffer,
 				   reader->position_2 - reader->position_1);
-	sceIoWaitAsync(reader->handle, &result);
-	sceIoLseek(reader->handle, reader->position_2, PSP_SEEK_SET);
-	sceIoReadAsync(reader->handle, reader->third_buffer,
+	xrIoWaitAsync(reader->handle, &result);
+	xrIoLseek(reader->handle, reader->position_2, PSP_SEEK_SET);
+	xrIoReadAsync(reader->handle, reader->third_buffer,
 				   reader->position_3 - reader->position_2);
 	return reader;
 }
@@ -146,7 +147,7 @@ static int32_t buffered_reader_reset_buffer(buffered_reader_t *reader, const int
 {
 	long long result;
 
-	sceIoWaitAsync(reader->handle, &result);
+	xrIoWaitAsync(reader->handle, &result);
 	if (position >= reader->position_2 && position < reader->position_3) {
 		uint8_t *temp = reader->first_buffer;
 
@@ -160,8 +161,8 @@ static int32_t buffered_reader_reset_buffer(buffered_reader_t *reader, const int
 		reader->position_3 = reader->position_2 + reader->buffer_size;
 		if (reader->position_3 >= reader->length)
 			reader->position_3 = reader->length;
-		sceIoLseek(reader->handle, reader->position_2, PSP_SEEK_SET);
-		sceIoReadAsync(reader->handle, reader->third_buffer,
+		xrIoLseek(reader->handle, reader->position_2, PSP_SEEK_SET);
+		xrIoReadAsync(reader->handle, reader->third_buffer,
 				reader->position_3 - reader->position_2);
 		return position;
 	} else {
@@ -193,19 +194,19 @@ static int32_t buffered_reader_reset_buffer(buffered_reader_t *reader, const int
 			reader->current_position = reader->position_1;
 		}
 
-		sceIoLseek(reader->handle, reader->position_0, PSP_SEEK_SET);
-		//          sceIoReadAsync(reader->handle, reader->first_buffer, reader->position_1 - reader->position_0);
-		//          sceIoWaitAsync(reader->handle, &result);
-		//          sceIoLseek(reader->handle, reader->position_1, PSP_SEEK_SET);
-		//          sceIoReadAsync(reader->handle, reader->second_buffer, reader->position_2 - reader->position_1);
-		//          sceIoWaitAsync(reader->handle, &result);
-		sceIoRead(reader->handle, reader->first_buffer,
+		xrIoLseek(reader->handle, reader->position_0, PSP_SEEK_SET);
+		//          xrIoReadAsync(reader->handle, reader->first_buffer, reader->position_1 - reader->position_0);
+		//          xrIoWaitAsync(reader->handle, &result);
+		//          xrIoLseek(reader->handle, reader->position_1, PSP_SEEK_SET);
+		//          xrIoReadAsync(reader->handle, reader->second_buffer, reader->position_2 - reader->position_1);
+		//          xrIoWaitAsync(reader->handle, &result);
+		xrIoRead(reader->handle, reader->first_buffer,
 				reader->position_1 - reader->position_0);
-		sceIoLseek(reader->handle, reader->position_1, PSP_SEEK_SET);
-		sceIoRead(reader->handle, reader->second_buffer,
+		xrIoLseek(reader->handle, reader->position_1, PSP_SEEK_SET);
+		xrIoRead(reader->handle, reader->second_buffer,
 				reader->position_2 - reader->position_1);
-		sceIoLseek(reader->handle, reader->position_2, PSP_SEEK_SET);
-		sceIoReadAsync(reader->handle, reader->third_buffer,
+		xrIoLseek(reader->handle, reader->position_2, PSP_SEEK_SET);
+		xrIoReadAsync(reader->handle, reader->third_buffer,
 				reader->position_3 - reader->position_2);
 		return position;
 	}

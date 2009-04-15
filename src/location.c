@@ -24,6 +24,7 @@
 #include <pspkernel.h>
 #include "location.h"
 #include "common/utils.h"
+#include "xrhal.h"
 
 static char fn[PATH_MAX];
 static bool slot[10];
@@ -41,43 +42,43 @@ extern void location_init(const char *filename, int *slotaval)
 {
 	STRCPY_S(fn, filename);
 	memset(slot, 0, sizeof(bool) * 10);
-	int fd = sceIoOpen(fn, PSP_O_RDONLY, 0777);
+	int fd = xrIoOpen(fn, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
-		if ((fd = sceIoOpen(fn, PSP_O_CREAT | PSP_O_RDWR, 0777)) < 0)
+		if ((fd = xrIoOpen(fn, PSP_O_CREAT | PSP_O_RDWR, 0777)) < 0)
 			return;
 		byte tempdata[sizeof(t_location) * 10 + sizeof(bool) * 10];
 
 		memset(tempdata, 0, sizeof(t_location) * 10 + sizeof(bool) * 10);
-		sceIoWrite(fd, tempdata, sizeof(t_location) * 10 + sizeof(bool) * 10);
+		xrIoWrite(fd, tempdata, sizeof(t_location) * 10 + sizeof(bool) * 10);
 	}
-	sceIoRead(fd, slot, sizeof(bool) * 10);
+	xrIoRead(fd, slot, sizeof(bool) * 10);
 	memcpy(slotaval, slot, sizeof(bool) * 10);
-	sceIoClose(fd);
+	xrIoClose(fd);
 }
 
 extern bool location_enum(t_location_enum_func func, void *data)
 {
-	int fd = sceIoOpen(fn, PSP_O_RDONLY, 0777);
+	int fd = xrIoOpen(fn, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
 	int i;
 
-	if (sceIoLseek32(fd, sizeof(bool) * 10, PSP_SEEK_SET) != sizeof(bool) * 10) {
-		sceIoClose(fd);
+	if (xrIoLseek32(fd, sizeof(bool) * 10, PSP_SEEK_SET) != sizeof(bool) * 10) {
+		xrIoClose(fd);
 		return false;
 	}
 	for (i = 0; i < 10; i++) {
 		t_location l;
 
 		memset(&l, 0, sizeof(t_location));
-		if (sceIoRead(fd, &l, sizeof(t_location)) != sizeof(t_location))
+		if (xrIoRead(fd, &l, sizeof(t_location)) != sizeof(t_location))
 			break;
 		if (slot[i])
 			func(i, l.comppath, l.shortpath, l.compname, l.isreading, data);
 	}
-	sceIoClose(fd);
+	xrIoClose(fd);
 	return true;
 }
 
@@ -86,21 +87,21 @@ extern bool location_get(dword index, char *comppath, char *shortpath,
 {
 	if (!slot[index])
 		return false;
-	int fd = sceIoOpen(fn, PSP_O_RDONLY, 0777);
+	int fd = xrIoOpen(fn, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
-	if (sceIoLseek32
+	if (xrIoLseek32
 		(fd, sizeof(t_location) * index + sizeof(bool) * 10,
 		 PSP_SEEK_SET) != sizeof(t_location) * index + sizeof(bool) * 10) {
-		sceIoClose(fd);
+		xrIoClose(fd);
 		return false;
 	}
 	t_location l;
 
 	memset(&l, 0, sizeof(t_location));
-	sceIoRead(fd, &l, sizeof(t_location));
-	sceIoClose(fd);
+	xrIoRead(fd, &l, sizeof(t_location));
+	xrIoClose(fd);
 	strcpy_s(comppath, PATH_MAX, l.comppath);
 	strcpy_s(shortpath, PATH_MAX, l.shortpath);
 	strcpy_s(compname, PATH_MAX, l.compname);
@@ -113,22 +114,22 @@ extern bool location_set(dword index, char *comppath, char *shortpath,
 {
 	int fd;
 
-	if ((fd = sceIoOpen(fn, PSP_O_RDWR, 0777)) < 0
-		&& (fd = sceIoOpen(fn, PSP_O_CREAT | PSP_O_RDWR, 0777)) < 0)
+	if ((fd = xrIoOpen(fn, PSP_O_RDWR, 0777)) < 0
+		&& (fd = xrIoOpen(fn, PSP_O_CREAT | PSP_O_RDWR, 0777)) < 0)
 		return false;
-	dword pos = sceIoLseek32(fd, sizeof(t_location) * index + sizeof(bool) * 10,
+	dword pos = xrIoLseek32(fd, sizeof(t_location) * index + sizeof(bool) * 10,
 							 PSP_SEEK_SET);
 
 	if (pos < sizeof(t_location) * index + sizeof(bool) * 10) {
 		byte tempdata[sizeof(t_location) * 10 + sizeof(bool) * 10 - pos];
 
 		memset(tempdata, 0, sizeof(t_location) * 10 + sizeof(bool) * 10 - pos);
-		sceIoWrite(fd, tempdata,
+		xrIoWrite(fd, tempdata,
 				   sizeof(t_location) * 10 + sizeof(bool) * 10 - pos);
-		if (sceIoLseek32
+		if (xrIoLseek32
 			(fd, sizeof(t_location) * index + sizeof(bool) * 10,
 			 PSP_SEEK_SET) < sizeof(t_location) * index + sizeof(bool) * 10) {
-			sceIoClose(fd);
+			xrIoClose(fd);
 			return false;
 		}
 	}
@@ -139,10 +140,10 @@ extern bool location_set(dword index, char *comppath, char *shortpath,
 	STRCPY_S(t.shortpath, shortpath);
 	STRCPY_S(t.compname, compname);
 	t.isreading = isreading;
-	sceIoWrite(fd, &t, sizeof(t_location));
-	sceIoLseek32(fd, sizeof(bool) * index, PSP_SEEK_SET);
+	xrIoWrite(fd, &t, sizeof(t_location));
+	xrIoLseek32(fd, sizeof(bool) * index, PSP_SEEK_SET);
 	slot[index] = true;
-	sceIoWrite(fd, &slot[index], sizeof(bool));
-	sceIoClose(fd);
+	xrIoWrite(fd, &slot[index], sizeof(bool));
+	xrIoClose(fd);
 	return true;
 }

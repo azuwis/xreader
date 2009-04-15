@@ -35,6 +35,7 @@
 #include "fs.h"
 #include "archive.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 static bool auto_inc_wordspace_on_small_font = false;
 static pixel *vram_disp = NULL;
@@ -231,16 +232,16 @@ extern bool disp_has_zipped_font(const char *zipfile, const char *efont,
 
 extern bool disp_has_font(const char *efont, const char *cfont)
 {
-	int fd = sceIoOpen(efont, PSP_O_RDONLY, 0777);
+	int fd = xrIoOpen(efont, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
-	sceIoClose(fd);
+	xrIoClose(fd);
 
-	fd = sceIoOpen(cfont, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(cfont, PSP_O_RDONLY, 0777);
 	if (fd < 0)
 		return false;
-	sceIoClose(fd);
+	xrIoClose(fd);
 	return true;
 }
 
@@ -517,34 +518,34 @@ extern bool disp_load_font(const char *efont, const char *cfont)
 {
 	disp_free_font();
 	int size;
-	int fd = sceIoOpen(efont, PSP_O_RDONLY, 0777);
+	int fd = xrIoOpen(efont, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
-	size = sceIoLseek32(fd, 0, PSP_SEEK_END);
+	size = xrIoLseek32(fd, 0, PSP_SEEK_END);
 	if ((efont_buffer = calloc(1, size)) == NULL) {
-		sceIoClose(fd);
+		xrIoClose(fd);
 		return false;
 	}
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	sceIoRead(fd, efont_buffer, size);
-	sceIoClose(fd);
+	xrIoLseek32(fd, 0, PSP_SEEK_SET);
+	xrIoRead(fd, efont_buffer, size);
+	xrIoClose(fd);
 	book_efont_buffer = efont_buffer;
 
-	fd = sceIoOpen(cfont, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(cfont, PSP_O_RDONLY, 0777);
 	if (fd < 0) {
 		disp_free_font();
 		return false;
 	}
-	size = sceIoLseek32(fd, 0, PSP_SEEK_END);
+	size = xrIoLseek32(fd, 0, PSP_SEEK_END);
 	if ((cfont_buffer = calloc(1, size)) == NULL) {
 		disp_free_font();
-		sceIoClose(fd);
+		xrIoClose(fd);
 		return false;
 	}
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	sceIoRead(fd, cfont_buffer, size);
-	sceIoClose(fd);
+	xrIoLseek32(fd, 0, PSP_SEEK_SET);
+	xrIoRead(fd, cfont_buffer, size);
+	xrIoClose(fd);
 	book_cfont_buffer = cfont_buffer;
 
 	return true;
@@ -627,37 +628,37 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 		book_efont_buffer = NULL;
 	}
 	int size;
-	int fd = sceIoOpen(efont, PSP_O_RDONLY, 0777);
+	int fd = xrIoOpen(efont, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
-	size = sceIoLseek32(fd, 0, PSP_SEEK_END);
+	size = xrIoLseek32(fd, 0, PSP_SEEK_END);
 	if ((book_efont_buffer = calloc(1, size)) == NULL) {
-		sceIoClose(fd);
+		xrIoClose(fd);
 		return false;
 	}
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	sceIoRead(fd, book_efont_buffer, size);
-	sceIoClose(fd);
+	xrIoLseek32(fd, 0, PSP_SEEK_SET);
+	xrIoRead(fd, book_efont_buffer, size);
+	xrIoClose(fd);
 
 	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
 		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
-	fd = sceIoOpen(cfont, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(cfont, PSP_O_RDONLY, 0777);
 	if (fd < 0) {
 		disp_free_font();
 		return false;
 	}
-	size = sceIoLseek32(fd, 0, PSP_SEEK_END);
+	size = xrIoLseek32(fd, 0, PSP_SEEK_END);
 	if ((book_cfont_buffer = calloc(1, size)) == NULL) {
 		disp_free_font();
-		sceIoClose(fd);
+		xrIoClose(fd);
 		return false;
 	}
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	sceIoRead(fd, book_cfont_buffer, size);
-	sceIoClose(fd);
+	xrIoLseek32(fd, 0, PSP_SEEK_SET);
+	xrIoRead(fd, book_cfont_buffer, size);
+	xrIoClose(fd);
 
 	return true;
 }

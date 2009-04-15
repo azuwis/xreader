@@ -26,6 +26,7 @@
 #include "utils.h"
 #include "strsafe.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 extern dword utils_dword2string(dword dw, char *dest, dword width)
 {
@@ -94,14 +95,14 @@ extern bool utils_del_file(const char *file)
 	SceIoStat stat;
 
 	memset(&stat, 0, sizeof(SceIoStat));
-	result = sceIoGetstat(file, &stat);
+	result = xrIoGetstat(file, &stat);
 	if (result < 0)
 		return false;
 	stat.st_attr &= ~0x0F;
-	result = sceIoChstat(file, &stat, 3);
+	result = xrIoChstat(file, &stat, 3);
 	if (result < 0)
 		return false;
-	result = sceIoRemove(file);
+	result = xrIoRemove(file);
 	if (result < 0)
 		return false;
 
@@ -111,14 +112,14 @@ extern bool utils_del_file(const char *file)
 extern dword utils_del_dir(const char *dir)
 {
 	dword count = 0;
-	int dl = sceIoDopen(dir);
+	int dl = xrIoDopen(dir);
 
 	if (dl < 0)
 		return count;
 	SceIoDirent sid;
 
 	memset(&sid, 0, sizeof(SceIoDirent));
-	while (sceIoDread(dl, &sid)) {
+	while (xrIoDread(dl, &sid)) {
 		if (sid.d_name[0] == '.')
 			continue;
 		char compPath[260];
@@ -135,8 +136,8 @@ extern dword utils_del_dir(const char *dir)
 		}
 		memset(&sid, 0, sizeof(SceIoDirent));
 	}
-	sceIoDclose(dl);
-	sceIoRmdir(dir);
+	xrIoDclose(dl);
+	xrIoRmdir(dir);
 
 	return count;
 }
@@ -148,10 +149,10 @@ bool utils_is_file_exists(const char *filename)
 
 	SceUID uid;
 
-	uid = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+	uid = xrIoOpen(filename, PSP_O_RDONLY, 0777);
 	if (uid < 0)
 		return false;
-	sceIoClose(uid);
+	xrIoClose(uid);
 	return true;
 }
 

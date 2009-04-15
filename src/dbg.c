@@ -34,6 +34,7 @@
 #include "common/utils.h"
 #include "buffer.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 #ifdef _MSC_VER
 #define vsnprintf _vsnprintf
@@ -219,7 +220,7 @@ int dbg_open_psp_logfile(DBG * d, const char *logfile)
 	extern void dbg_write_psp_logfile(void *arg, const char *str);
 	extern void dbg_close_psp_logfile(void *arg);
 	SceUID fd =
-		sceIoOpen(logfile, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_APPEND, 0777);
+		xrIoOpen(logfile, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_APPEND, 0777);
 	if (fd < 0) {
 		return -1;
 	}
@@ -239,7 +240,7 @@ void dbg_write_psp_logfile(void *arg, const char *str)
 		newstr[l] = '\n';
 		newstr[l + 1] = '\0';
 	}
-	sceIoWrite(fd, newstr, l + 1);
+	xrIoWrite(fd, newstr, l + 1);
 	free(newstr);
 }
 
@@ -247,7 +248,7 @@ void dbg_close_psp_logfile(void *arg)
 {
 	SceUID fd = (SceUID) arg;
 
-	sceIoClose(fd);
+	xrIoClose(fd);
 }
 #endif
 

@@ -34,6 +34,7 @@
 #include "musicinfo.h"
 #include "tremor/ivorbisfile.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 #ifdef ENABLE_OGG
 
@@ -336,15 +337,15 @@ static int ogg_load(const char *spath, const char *lpath)
 	}
 
 	ov_clear(decoder);
-	g_ogg_fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	g_ogg_fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (g_ogg_fd < 0) {
 		__end();
 		return -1;
 	}
 
-	g_info.filesize = sceIoLseek32(g_ogg_fd, 0, PSP_SEEK_END);
-	sceIoLseek32(g_ogg_fd, 0, PSP_SEEK_SET);
+	g_info.filesize = xrIoLseek32(g_ogg_fd, 0, PSP_SEEK_END);
+	xrIoLseek32(g_ogg_fd, 0, PSP_SEEK_SET);
 
 	if (ov_open_callbacks((void*) &g_ogg_fd, decoder, NULL, 0, vorbis_callbacks) < 0)
 	{
@@ -440,7 +441,7 @@ static int ogg_end(void)
 	}
 
 	if (g_ogg_fd >= 0) {
-		sceIoClose(g_ogg_fd);
+		xrIoClose(g_ogg_fd);
 		g_ogg_fd = -1;
 	}
 
@@ -594,22 +595,22 @@ int ogg_init(void)
 
 static size_t ovcb_read(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
-	return sceIoRead(*((int*)datasource), ptr, size*nmemb);
+	return xrIoRead(*((int*)datasource), ptr, size*nmemb);
 }
 
 static int ovcb_seek(void *datasource, int64_t offset, int whence)
 {
-	return sceIoLseek32(*((int*)datasource), offset, whence);
+	return xrIoLseek32(*((int*)datasource), offset, whence);
 }
 
 static int ovcb_close(void *datasource)
 {
-	return sceIoClose(*((int*)datasource));
+	return xrIoClose(*((int*)datasource));
 }
 
 static long ovcb_tell(void *datasource)
 {
-	return sceIoLseek32(*((int*)datasource), 0, PSP_SEEK_CUR);
+	return xrIoLseek32(*((int*)datasource), 0, PSP_SEEK_CUR);
 }
 
 #endif

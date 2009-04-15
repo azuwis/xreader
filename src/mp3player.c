@@ -45,6 +45,7 @@
 #include "mp3info.h"
 #include "musicinfo.h"
 #include "common/utils.h"
+#include "xrhal.h"
 
 #ifdef ENABLE_MP3
 
@@ -186,7 +187,7 @@ static int mp3_seek_seconds_offset_brute(double npt)
 	if (data.use_buffer)
 		buffered_reader_seek(data.r, mp3info.frameoff[pos]);
 	else
-		sceIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
+		xrIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
 
 	mad_stream_finish(&stream);
 	mad_stream_init(&stream);
@@ -353,7 +354,7 @@ static int seek_valid_frame(void)
 			if (data.use_buffer)
 				bufsize = buffered_reader_read(data.r, read_start, read_size);
 			else
-				bufsize = sceIoRead(data.fd, read_start, read_size);
+				bufsize = xrIoRead(data.fd, read_start, read_size);
 
 			if (bufsize <= 0) {
 				return -1;
@@ -395,7 +396,7 @@ static int mp3_seek_seconds_offset(double npt)
 	if (data.use_buffer)
 		buffered_reader_seek(data.r, new_pos);
 	else
-		sceIoLseek(data.fd, new_pos, PSP_SEEK_SET);
+		xrIoLseek(data.fd, new_pos, PSP_SEEK_SET);
 
 	mad_stream_finish(&stream);
 	mad_stream_init(&stream);
@@ -411,7 +412,7 @@ static int mp3_seek_seconds_offset(double npt)
 		if (data.use_buffer)
 			cur_pos = buffered_reader_position(data.r);
 		else
-			cur_pos = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
+			cur_pos = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
 		g_play_time = g_info.duration * cur_pos / data.size;
 	} else {
 		g_play_time = npt;
@@ -624,7 +625,7 @@ static int mp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 					bufsize =
 						buffered_reader_read(data.r, read_start, read_size);
 				else
-					bufsize = sceIoRead(data.fd, read_start, read_size);
+					bufsize = xrIoRead(data.fd, read_start, read_size);
 
 				if (bufsize <= 0) {
 					__end();
@@ -796,7 +797,7 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 						buffered_reader_read(data.r, memp3_input_buf,
 											 frame_size);
 				else
-					ret = sceIoRead(data.fd, memp3_input_buf, frame_size);
+					ret = xrIoRead(data.fd, memp3_input_buf, frame_size);
 
 				if (ret < 0) {
 					__end();
@@ -964,13 +965,13 @@ static int mp3_load(const char *spath, const char *lpath)
 
 	data.use_buffer = use_buffer;
 
-	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (data.fd < 0)
 		return -1;
 
-	data.size = sceIoLseek(data.fd, 0, PSP_SEEK_END);
-	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
+	data.size = xrIoLseek(data.fd, 0, PSP_SEEK_END);
+	xrIoLseek(data.fd, 0, PSP_SEEK_SET);
 
 	g_info.filesize = data.size;
 
@@ -979,7 +980,7 @@ static int mp3_load(const char *spath, const char *lpath)
 	if (data.size < 0)
 		return data.size;
 
-	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
+	xrIoLseek(data.fd, 0, PSP_SEEK_SET);
 
 	mad_stream_init(&stream);
 	mad_frame_init(&frame);
@@ -1016,8 +1017,8 @@ static int mp3_load(const char *spath, const char *lpath)
 	generic_readtag(&g_info, spath);
 
 	if (data.use_buffer) {
-		SceOff cur = sceIoLseek(data.fd, 0, PSP_SEEK_CUR);
-		sceIoClose(data.fd);
+		SceOff cur = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
+		xrIoClose(data.fd);
 		data.fd = -1;
 		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
 		buffered_reader_seek(data.r, cur);
@@ -1274,7 +1275,7 @@ static int mp3_end(void)
 		}
 	} else {
 		if (data.fd >= 0) {
-			sceIoClose(data.fd);
+			xrIoClose(data.fd);
 			data.fd = -1;
 		}
 	}

@@ -10,6 +10,7 @@
 #include "apetaglib/APETag.h"
 #include "buffer.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 #define ID3v1_TAG_SIZE 128
 #define ID3v2_HEADER_SIZE 10
@@ -80,8 +81,8 @@ static int read_id3v1(MusicInfoInternalTag *tag, const MusicInfo *music_info, Sc
 	if (music_info->filesize > ID3v1_TAG_SIZE) {
 		uint8_t buf[ID3v1_TAG_SIZE];
 
-		sceIoLseek(fd, music_info->filesize - 128, PSP_SEEK_SET);
-		ret = sceIoRead(fd, buf, ID3v1_TAG_SIZE);
+		xrIoLseek(fd, music_info->filesize - 128, PSP_SEEK_SET);
+		ret = xrIoRead(fd, buf, ID3v1_TAG_SIZE);
 		if (ret == ID3v1_TAG_SIZE) {
 			id3v1_parse_tag(tag, fd, buf);
 		}
@@ -104,7 +105,7 @@ static void id3v2_read_ttag(SceUID fd, int taglen, char *dst, int dstlen, MusicT
 
 	uint8_t b;
 
-	if (sceIoRead(fd, &b, sizeof(b)) != sizeof(b)) {
+	if (xrIoRead(fd, &b, sizeof(b)) != sizeof(b)) {
 		return;
 	}
 
@@ -119,7 +120,7 @@ static void id3v2_read_ttag(SceUID fd, int taglen, char *dst, int dstlen, MusicT
 					return;
 				}
 
-				if (sceIoRead(fd, p, taglen) != taglen) {
+				if (xrIoRead(fd, p, taglen) != taglen) {
 					free(p);
 					return;
 				}
@@ -141,7 +142,7 @@ static void id3v2_read_ttag(SceUID fd, int taglen, char *dst, int dstlen, MusicT
 				if (buf == NULL)
 					return;
 
-				if (sceIoRead(fd, buf, taglen) != taglen) {
+				if (xrIoRead(fd, buf, taglen) != taglen) {
 					free(buf);
 					return;
 				}
@@ -164,7 +165,7 @@ static void id3v2_read_ttag(SceUID fd, int taglen, char *dst, int dstlen, MusicT
 		case 3:				/* UTF-8 */
 			info->encode = conf_encode_utf8;
 			len = min(taglen, dstlen - 1);
-			if (sceIoRead(fd, dst, len) < 0) {
+			if (xrIoRead(fd, dst, len) < 0) {
 				return;
 			}
 			dst[len] = 0;
@@ -178,7 +179,7 @@ static unsigned int id3v2_get_size(SceUID fd, int len)
 	uint8_t b;
 
 	while (len--) {
-		sceIoRead(fd, &b, sizeof(b));
+		xrIoRead(fd, &b, sizeof(b));
 		v = (v << 8) + (b);
 	}
 
@@ -189,7 +190,7 @@ static unsigned int get_be16(SceUID fd)
 {
 	uint16_t val;
 
-	sceIoRead(fd, &val, sizeof(val));
+	xrIoRead(fd, &val, sizeof(val));
 	val = ((val & 0xff) << 8) | (val >> 8);
 	return val;
 }
@@ -198,7 +199,7 @@ static unsigned int get_be32(SceUID fd)
 {
 	uint32_t val;
 
-	sceIoRead(fd, &val, sizeof(val));
+	xrIoRead(fd, &val, sizeof(val));
 	val = LB_CONV(val);
 	return val;
 }
@@ -207,7 +208,7 @@ static uint8_t get_byte(SceUID fd)
 {
 	uint8_t val;
 
-	sceIoRead(fd, &val, sizeof(val));
+	xrIoRead(fd, &val, sizeof(val));
 	return val;
 }
 
@@ -272,7 +273,7 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 #endif
 
 	if (isv34 && flags & 0x40) {	/* Extended header present, just skip over it */
-		sceIoLseek(fd, id3v2_get_size(fd, 4), PSP_SEEK_CUR);
+		xrIoLseek(fd, id3v2_get_size(fd, 4), PSP_SEEK_CUR);
 	}
 
 	while (len >= taghdrlen) {
@@ -289,7 +290,7 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 		if (len < 0)
 			break;
 
-		next = sceIoLseek(fd, 0, PSP_SEEK_CUR) + tlen;
+		next = xrIoLseek(fd, 0, PSP_SEEK_CUR) + tlen;
 
 		switch (tag) {
 			case MKBETAG('T', 'I', 'T', '2'):
@@ -322,13 +323,13 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 
 					tag_lyric = buffer_init();
 
-					sceIoLseek(fd, 1, PSP_SEEK_CUR);
+					xrIoLseek(fd, 1, PSP_SEEK_CUR);
 					desc[0] = '\0';
 
 					// Acount for text encoding byte
 					tlen--;
 
-					while (sceIoRead(fd, &ch, 1) == 1 && 
+					while (xrIoRead(fd, &ch, 1) == 1 && 
 							p - desc < sizeof(desc) &&
 						   	ch != '\0') {
 						*p++ = ch;
@@ -345,7 +346,7 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 							return;
 						}
 
-						if (sceIoRead(fd, p, tlen) != tlen) {
+						if (xrIoRead(fd, p, tlen) != tlen) {
 							free(p);
 							return;
 						}
@@ -358,22 +359,22 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 				break;
 			case 0:
 				/* padding, skip to end */
-				sceIoLseek(fd, len, PSP_SEEK_CUR);
+				xrIoLseek(fd, len, PSP_SEEK_CUR);
 				len = 0;
 				continue;
 		}
 		/* Skip to end of tag */
-		sceIoLseek(fd, next, PSP_SEEK_SET);
+		xrIoLseek(fd, next, PSP_SEEK_SET);
 	}
 
 	tag_info->type |= ID3V2;
 
 	if (version == 4 && flags & 0x10)	/* Footer preset, always 10 bytes, skip over it */
-		sceIoLseek(fd, 10, PSP_SEEK_CUR);
+		xrIoLseek(fd, 10, PSP_SEEK_CUR);
 	return;
 
   error:
-	sceIoLseek(fd, len, PSP_SEEK_CUR);
+	xrIoLseek(fd, len, PSP_SEEK_CUR);
 }
 
 static int read_id3v2_tag(MusicInfoInternalTag *tag, const MusicInfo *music_info, SceUID fd)
@@ -381,7 +382,7 @@ static int read_id3v2_tag(MusicInfoInternalTag *tag, const MusicInfo *music_info
 	uint8_t buf[ID3v2_HEADER_SIZE];
 	int len;
 
-	if (sceIoRead(fd, buf, sizeof(buf)) != sizeof(buf)) {
+	if (xrIoRead(fd, buf, sizeof(buf)) != sizeof(buf)) {
 		return -1;
 	}
 
@@ -391,7 +392,7 @@ static int read_id3v2_tag(MusicInfoInternalTag *tag, const MusicInfo *music_info
 			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
 		id3v2_parse(tag, fd, len, buf[3], buf[5]);
 	} else {
-		sceIoLseek(fd, 0, SEEK_SET);
+		xrIoLseek(fd, 0, SEEK_SET);
 	}
 
 	return 0;
@@ -447,7 +448,7 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 	memset(&tag, 0, sizeof(tag));
 	tag.type = NONE;
 
-	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
 		return -1;
@@ -456,14 +457,14 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 	// Search ID3v1
 	read_id3v1(&tag, music_info, fd);
 
-	sceIoLseek(fd, 0, PSP_SEEK_SET);
+	xrIoLseek(fd, 0, PSP_SEEK_SET);
 	
 	// Search ID3v2
 	read_id3v2_tag(&tag, music_info, fd);
 	
-	sceIoLseek(fd, 0, PSP_SEEK_SET);
+	xrIoLseek(fd, 0, PSP_SEEK_SET);
 	
-	sceIoClose(fd);
+	xrIoClose(fd);
 
 	// Search for APETag
 	read_ape_tag(&tag, spath);
@@ -496,7 +497,7 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 
 	tag.type = NONE;
 
-	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
 		return -1;
@@ -505,14 +506,14 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 	// Search ID3v1
 	read_id3v1(&tag, music_info, fd);
 
-	sceIoLseek(fd, 0, PSP_SEEK_SET);
+	xrIoLseek(fd, 0, PSP_SEEK_SET);
 	
 	// Search ID3v2
 	read_id3v2_tag(&tag, music_info, fd);
 	
-	sceIoLseek(fd, 0, PSP_SEEK_SET);
+	xrIoLseek(fd, 0, PSP_SEEK_SET);
 	
-	sceIoClose(fd);
+	xrIoClose(fd);
 
 	// Search for APETag
 	read_ape_tag(&tag, spath);

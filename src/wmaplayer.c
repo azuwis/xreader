@@ -37,6 +37,7 @@
 #include "ffmpeg/avcodec.h"
 #include "ffmpeg/avformat.h"
 #include "ffmpeg/metadata.h"
+#include "xrhal.h"
 
 #ifdef ENABLE_WMA
 
@@ -353,15 +354,15 @@ static int wma_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
 		__end();
 		return -1;
 	}
 
-	g_info.filesize = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	sceIoClose(fd);
+	g_info.filesize = xrIoLseek32(fd, 0, PSP_SEEK_END);
+	xrIoClose(fd);
 
 	decoder = calloc(1, sizeof(*decoder));
 

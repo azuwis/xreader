@@ -30,6 +30,7 @@
 #include "conf.h"
 #include "charsets.h"
 #include "lyric.h"
+#include "xrhal.h"
 
 __inline bool lyric_add(p_lyric l, dword sec, dword fra, const char *line,
 						dword size)
@@ -209,19 +210,19 @@ extern bool lyric_open(p_lyric l, const char *filename)
 	if (l == NULL)
 		return false;
 	memset(l, 0, sizeof(t_lyric));
-	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+	int fd = xrIoOpen(filename, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
-	l->size = sceIoLseek32(fd, 0, PSP_SEEK_END);
+	l->size = xrIoLseek32(fd, 0, PSP_SEEK_END);
 	if ((l->whole = malloc(l->size + 1)) == NULL) {
-		sceIoClose(fd);
+		xrIoClose(fd);
 		return false;
 	}
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
-	sceIoRead(fd, l->whole, l->size);
+	xrIoLseek32(fd, 0, PSP_SEEK_SET);
+	xrIoRead(fd, l->whole, l->size);
 	l->whole[l->size] = 0;
-	sceIoClose(fd);
+	xrIoClose(fd);
 
 	parse_lyric(l);
 

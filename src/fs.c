@@ -44,6 +44,7 @@
 #include "freq_lock.h"
 #include "musicdrv.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 typedef struct
 {
@@ -236,7 +237,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 	SceIoDirent info;
 	dword cur_count = 0;
 	p_win_menuitem item = NULL;
-	int fd = sceIoDopen(dir);
+	int fd = xrIoDopen(dir);
 
 	if (fd < 0) {
 		freq_leave(fid);
@@ -247,7 +248,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 	{
 		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
 		if (*mitem == NULL) {
-			sceIoDclose(fd);
+			xrIoDclose(fd);
 			freq_leave(fid);
 			return 0;
 		}
@@ -266,7 +267,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 
 	memset(&info, 0, sizeof(SceIoDirent));
 
-	while (sceIoDread(fd, &info) > 0) {
+	while (xrIoDread(fd, &info) > 0) {
 		if ((info.d_stat.st_mode & FIO_S_IFMT) == FIO_S_IFDIR) {
 			if (info.d_name[0] == '.' && info.d_name[1] == 0)
 				continue;
@@ -347,7 +348,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		cur_count++;
 	}
 
-	sceIoDclose(fd);
+	xrIoDclose(fd);
 	freq_leave(fid);
 
 	return cur_count;

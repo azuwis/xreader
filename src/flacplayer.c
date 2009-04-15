@@ -35,6 +35,7 @@
 #include "ssv.h"
 #include "genericplayer.h"
 #include "musicinfo.h"
+#include "xrhal.h"
 
 #ifdef ENABLE_FLAC
 
@@ -391,15 +392,15 @@ static int flac_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
 		__end();
 		return -1;
 	}
 
-	g_info.filesize = sceIoLseek(fd, 0, PSP_SEEK_END);
-	sceIoClose(fd);
+	g_info.filesize = xrIoLseek(fd, 0, PSP_SEEK_END);
+	xrIoClose(fd);
 
 	if ((g_decoder = FLAC__stream_decoder_new()) == NULL) {
 		__end();

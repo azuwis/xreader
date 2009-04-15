@@ -33,6 +33,7 @@
 #include "charsets.h"
 #include "dbg.h"
 #include "config.h"
+#include "xrhal.h"
 
 #if defined(ENABLE_MP3)|| defined(ENABLE_TTA)
 
@@ -174,7 +175,7 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 
 	frames = -1;
 
-	if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+	if (xrIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
 		return -1;
 	}
 
@@ -195,33 +196,33 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 	info->channels = ctx.nb_channels;
 	info->sample_freq = ctx.sample_rate;
 
-	sceIoLseek(data->fd, xing_offtbl[ctx.lsf == 1][ctx.nb_channels == 1],
+	xrIoLseek(data->fd, xing_offtbl[ctx.lsf == 1][ctx.nb_channels == 1],
 			   PSP_SEEK_CUR);
 
-	if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+	if (xrIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
 		return -1;
 	}
 	b = LB_CONV(b);
 
 	if (b == MKBETAG('X', 'i', 'n', 'g') || b == MKBETAG('I', 'n', 'f', 'o')) {
-		dword cur_pos = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+		dword cur_pos = xrIoLseek(data->fd, 0, PSP_SEEK_CUR);
 
-		if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+		if (xrIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
 			return -1;
 		}
 
 		b = LB_CONV(b);
 
 		if (b & 0x1) {
-			if (sceIoRead(data->fd, &frames, sizeof(frames)) != sizeof(frames)) {
+			if (xrIoRead(data->fd, &frames, sizeof(frames)) != sizeof(frames)) {
 				return -1;
 			}
 			frames = LB_CONV(frames);
 		}
 
-		sceIoLseek(data->fd, cur_pos + 140 - 20 - 4 - 4, PSP_SEEK_SET);
+		xrIoLseek(data->fd, cur_pos + 140 - 20 - 4 - 4, PSP_SEEK_SET);
 
-		if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+		if (xrIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
 			return -1;
 		}
 
@@ -231,7 +232,7 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 			info->lame_vbr_quality = (100 - b) / 10;
 		}
 
-		if (sceIoRead(data->fd, info->lame_str, sizeof(info->lame_str)) != sizeof(info->lame_str)) {
+		if (xrIoRead(data->fd, info->lame_str, sizeof(info->lame_str)) != sizeof(info->lame_str)) {
 			return -1;
 		}
 
@@ -269,8 +270,8 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 	}
 
 	/* Check for VBRI tag (always 32 bytes after end of mpegaudio header) */
-	sceIoLseek(data->fd, off + 4 + 32, PSP_SEEK_SET);
-	if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+	xrIoLseek(data->fd, off + 4 + 32, PSP_SEEK_SET);
+	if (xrIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
 		return -1;
 	}
 	b = LB_CONV(b);
@@ -278,15 +279,15 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 		uint16_t t;
 
 		/* Check tag version */
-		if (sceIoRead(data->fd, &t, sizeof(t)) != sizeof(t)) {
+		if (xrIoRead(data->fd, &t, sizeof(t)) != sizeof(t)) {
 			return -1;
 		}
 		t = ((t & 0xff) << 8) | (t >> 8);
 
 		if (t == 1) {
 			/* skip delay, quality and total bytes */
-			sceIoLseek(data->fd, 8, PSP_SEEK_CUR);
-			if (sceIoRead(data->fd, &frames, sizeof(frames)) != sizeof(frames)) {
+			xrIoLseek(data->fd, 8, PSP_SEEK_CUR);
+			if (xrIoRead(data->fd, &frames, sizeof(frames)) != sizeof(frames)) {
 				return -1;
 			}
 			frames = LB_CONV(frames);
@@ -364,7 +365,7 @@ static int calc_crc(int fd, size_t nbytes, uint16_t * crc_value)
 	if (bytes == NULL)
 		return -1;
 
-	if (sceIoRead(fd, bytes, nbytes) != nbytes) {
+	if (xrIoRead(fd, bytes, nbytes) != nbytes) {
 		free(bytes);
 		return -1;
 	}
@@ -444,14 +445,14 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 		offset_t offset;
 
 		crc_value = 0xffff;
-		offset = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
-		sceIoLseek(data->fd, start, PSP_SEEK_SET);
+		offset = xrIoLseek(data->fd, 0, PSP_SEEK_CUR);
+		xrIoLseek(data->fd, start, PSP_SEEK_SET);
 		crc16((uint8_t *) & h[2], 2, &crc_value);
-		sceIoLseek(data->fd, 4, PSP_SEEK_CUR);
+		xrIoLseek(data->fd, 4, PSP_SEEK_CUR);
 
-		if (sceIoRead(data->fd, &crc_frame, sizeof(crc_frame)) !=
+		if (xrIoRead(data->fd, &crc_frame, sizeof(crc_frame)) !=
 			sizeof(crc_frame)) {
-			sceIoLseek(data->fd, offset, PSP_SEEK_SET);
+			xrIoLseek(data->fd, offset, PSP_SEEK_SET);
 			return -1;
 		}
 
@@ -490,11 +491,11 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 			dbg_printf(d, "Checking crc failed: 0x%04x 0x%04x", crc_value,
 					   crc_frame);
 		  failed:
-			sceIoLseek(data->fd, offset, PSP_SEEK_SET);
+			xrIoLseek(data->fd, offset, PSP_SEEK_SET);
 			return -1;
 		}
 
-		sceIoLseek(data->fd, offset, PSP_SEEK_SET);
+		xrIoLseek(data->fd, offset, PSP_SEEK_SET);
 		info->have_crc = true;
 	}
 
@@ -529,7 +530,7 @@ int skip_id3v2_tag(mp3_reader_data * data)
 	if (data->fd < 0)
 		return -1;
 
-	if (sceIoRead(data->fd, buf, sizeof(buf)) != sizeof(buf)) {
+	if (xrIoRead(data->fd, buf, sizeof(buf)) != sizeof(buf)) {
 		return -1;
 	}
 
@@ -540,9 +541,9 @@ int skip_id3v2_tag(mp3_reader_data * data)
 		/* skip ID3v2 header */
 		len = ((buf[6] & 0x7f) << 21) |
 			((buf[7] & 0x7f) << 14) | ((buf[8] & 0x7f) << 7) | (buf[9] & 0x7f);
-		sceIoLseek(data->fd, len, PSP_SEEK_CUR);
+		xrIoLseek(data->fd, len, PSP_SEEK_CUR);
 	} else {
-		sceIoLseek(data->fd, 0, PSP_SEEK_SET);
+		xrIoLseek(data->fd, 0, PSP_SEEK_SET);
 	}
 
 	return 0;
@@ -564,14 +565,14 @@ int search_valid_frame_me(mp3_reader_data * data, int *brate)
 		return -1;
 
 	level = info->sample_freq = info->channels = info->frames = 0;
-	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+	off = xrIoLseek(data->fd, 0, PSP_SEEK_CUR);
 
-	if (sceIoRead(data->fd, buf, 4) != 4) {
+	if (xrIoRead(data->fd, buf, 4) != 4) {
 		return -1;
 	}
 
 	start = 0;
-	while ((end = sceIoRead(data->fd, &buf[4], sizeof(buf) - 4)) > 0) {
+	while ((end = xrIoRead(data->fd, &buf[4], sizeof(buf) - 4)) > 0) {
 		while (start < end) {
 			size =
 				parse_frame(buf + start, &level, brate, info, data,
@@ -595,7 +596,7 @@ int search_valid_frame_me(mp3_reader_data * data, int *brate)
 	}
 
   found:
-	sceIoLseek(data->fd, dcount * (sizeof(buf) - 4) + off + start,
+	xrIoLseek(data->fd, dcount * (sizeof(buf) - 4) + off + start,
 			   PSP_SEEK_SET);
 
 	return size;
@@ -611,7 +612,7 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	if (data->fd < 0)
 		return -1;
 
-	sceIoLseek(data->fd, 0, PSP_SEEK_SET);
+	xrIoLseek(data->fd, 0, PSP_SEEK_SET);
 
 	if (skip_id3v2_tag(data) == -1)
 		return -1;
@@ -623,10 +624,10 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	if (!buf)
 		return -1;
 
-	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
-	sceIoLseek(data->fd, 0, PSP_SEEK_SET);
+	off = xrIoLseek(data->fd, 0, PSP_SEEK_CUR);
+	xrIoLseek(data->fd, 0, PSP_SEEK_SET);
 
-	if (sceIoRead(data->fd, buf, 4) != 4) {
+	if (xrIoRead(data->fd, buf, 4) != 4) {
 		free(buf);
 		return -1;
 	}
@@ -636,7 +637,7 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	level = info->sample_freq = info->channels = info->frames = 0;
 	info->frameoff = NULL;
 
-	while ((end = sceIoRead(data->fd, &buf[4], 65536)) > 0) {
+	while ((end = xrIoRead(data->fd, &buf[4], 65536)) > 0) {
 		while (off < end) {
 			int brate = 0;
 
@@ -673,7 +674,7 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 		info->average_bitrate = (double) data->size * 8 / info->duration;
 	}
 
-	sceIoLseek(data->fd, first_frame, PSP_SEEK_SET);
+	xrIoLseek(data->fd, first_frame, PSP_SEEK_SET);
 	free(buf);
 
 	return 0;
@@ -688,7 +689,7 @@ int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 	if (skip_id3v2_tag(data) == -1)
 		return -1;
 
-	off = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+	off = xrIoLseek(data->fd, 0, PSP_SEEK_CUR);
 
 	if (mp3_parse_vbr_tags(data, info, off) < 0) {
 		dbg_printf(d, "%s: No Xing header found, use brute force search method",
@@ -696,7 +697,7 @@ int read_mp3_info(struct MP3Info *info, mp3_reader_data * data)
 		return read_mp3_info_brute(info, data);
 	}
 
-	sceIoLseek(data->fd, off, PSP_SEEK_SET);
+	xrIoLseek(data->fd, off, PSP_SEEK_SET);
 
 	return 0;
 }

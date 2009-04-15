@@ -53,6 +53,7 @@
 #include "buffer.h"
 #include "musicinfo.h"
 #include "power.h"
+#include "xrhal.h"
 
 struct music_list
 {
@@ -1031,7 +1032,7 @@ static bool music_is_file_exist(const char *filename)
 {
 	SceIoStat sta;
 
-	if (sceIoGetstat(filename, &sta) < 0) {
+	if (xrIoGetstat(filename, &sta) < 0) {
 		return false;
 	}
 

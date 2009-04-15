@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include "depdb.h"
 #include "dbg.h"
+#include "xrhal.h"
 
 bool m_littlendian;
 
@@ -55,9 +56,9 @@ DWord swap_DWord(DWord r)
 		return r;
 }
 
-#define GET_Word(fd,n)   { sceIoRead(fd, &n, 2); n = swap_Word ( n ); }
-#define GET_DWord(fd,n)  { sceIoRead(fd, &n, 4); n = swap_DWord( n ); }
-#define GET_DDWord(fd,n)  { sceIoRead(fd, &n, 4); n = swap_DWord( n ); int a;sceIoRead(fd, &a, 4);}
+#define GET_Word(fd,n)   { xrIoRead(fd, &n, 2); n = swap_Word ( n ); }
+#define GET_DWord(fd,n)  { xrIoRead(fd, &n, 4); n = swap_DWord( n ); }
+#define GET_DDWord(fd,n)  { xrIoRead(fd, &n, 4); n = swap_DWord( n ); int a;xrIoRead(fd, &a, 4);}
 
 static inline void _zero_fill(byte * p, int len)
 {
@@ -131,11 +132,11 @@ long read_pdb_data(const char *pdbfile, buffer ** pbuf)
 	selectSwap();
 	do {
 
-		if (sceIoGetstat(pdbfile, &sta) < 0) {
+		if (xrIoGetstat(pdbfile, &sta) < 0) {
 			//printf("stat file:%s error:%s\n",pdbfile,strerror(errno));
 			break;
 		}
-		if ((fd = sceIoOpen(pdbfile, PSP_O_RDONLY, 0777)) < 0) {
+		if ((fd = xrIoOpen(pdbfile, PSP_O_RDONLY, 0777)) < 0) {
 			printf("Could not open file :%s\n", pdbfile);
 			break;
 		}
@@ -143,7 +144,7 @@ long read_pdb_data(const char *pdbfile, buffer ** pbuf)
 		DWord file_size, offset, cur_size;
 		doc_record0 m_rec0;
 
-		if (sceIoRead(fd, &m_header, PDB_HEADER_SIZE) < 0) {
+		if (xrIoRead(fd, &m_header, PDB_HEADER_SIZE) < 0) {
 			//dbg_printf(d, "%s read umd file chunk error,ret:%d!",__func__,p->used);
 			break;
 		}
@@ -165,7 +166,7 @@ long read_pdb_data(const char *pdbfile, buffer ** pbuf)
 
 		for (i = 0; i < num_records; i++)
 			GET_DDWord(fd, p_records_offset[i]);
-		if (sceIoRead(fd, &m_rec0, sizeof(m_rec0)) < 0) {
+		if (xrIoRead(fd, &m_rec0, sizeof(m_rec0)) < 0) {
 			//dbg_printf(d, "%s read umd file chunk error,ret:%d!",__func__,p->used);
 			break;
 		}
@@ -184,7 +185,7 @@ long read_pdb_data(const char *pdbfile, buffer ** pbuf)
 			break;
 		cur_size = file_size - offset;
 		buffer_prepare_copy(pzbuf, cur_size * 2);
-		if ((cur_size = sceIoRead(fd, pzbuf->ptr, cur_size)) < 0) {
+		if ((cur_size = xrIoRead(fd, pzbuf->ptr, cur_size)) < 0) {
 			//dbg_printf(d, "%s read umd file chunk error,ret:%d!",__func__,p->used);
 			break;
 		}
@@ -204,7 +205,7 @@ long read_pdb_data(const char *pdbfile, buffer ** pbuf)
 	if (p_records_offset)
 		free(p_records_offset);
 	if (fd > -1)
-		sceIoClose(fd);
+		xrIoClose(fd);
 	if (ret < 0)
 		buffer_free(*pbuf);
 	return ret;

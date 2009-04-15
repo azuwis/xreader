@@ -33,6 +33,7 @@
 #include "ssv.h"
 #include "genericplayer.h"
 #include "musicinfo.h"
+#include "xrhal.h"
 
 #ifdef ENABLE_WAV
 
@@ -112,7 +113,7 @@ static int wav_seek_seconds(double seconds)
 	int ret;
 
 	ret =
-		sceIoLseek(data.fd,
+		xrIoLseek(data.fd,
 				   g_wav_data_offset +
 				   (uint32_t) (seconds * g_info.sample_freq) *
 				   g_wav_byte_per_frame, SEEK_SET);
@@ -200,7 +201,7 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				return -1;
 			}
 			ret =
-				sceIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
+				xrIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
 			if (ret <= 0) {
 				__end();
 				return -1;
@@ -243,7 +244,7 @@ static int __init(void)
 
 static int wave_get_16(SceUID fd, uint16_t * buf)
 {
-	int ret = sceIoRead(fd, buf, sizeof(*buf));
+	int ret = xrIoRead(fd, buf, sizeof(*buf));
 
 	if (ret == 2) {
 		return 0;
@@ -254,7 +255,7 @@ static int wave_get_16(SceUID fd, uint16_t * buf)
 
 static int wave_get_32(SceUID fd, uint32_t * buf)
 {
-	int ret = sceIoRead(fd, buf, sizeof(*buf));
+	int ret = xrIoRead(fd, buf, sizeof(*buf));
 
 	if (ret == 4) {
 		return 0;
@@ -265,7 +266,7 @@ static int wave_get_32(SceUID fd, uint32_t * buf)
 
 static int wave_skip_n_bytes(SceUID fd, int n)
 {
-	return sceIoLseek(fd, n, SEEK_CUR) >= 0 ? 0 : -1;
+	return xrIoLseek(fd, n, SEEK_CUR) >= 0 ? 0 : -1;
 }
 
 /**
@@ -290,15 +291,15 @@ static int wav_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	data.fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+	data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (data.fd < 0) {
 		__end();
 		return -1;
 	}
 
-	g_info.filesize = sceIoLseek(data.fd, 0, PSP_SEEK_END);
-	sceIoLseek(data.fd, 0, PSP_SEEK_SET);
+	g_info.filesize = xrIoLseek(data.fd, 0, PSP_SEEK_END);
+	xrIoLseek(data.fd, 0, PSP_SEEK_SET);
 
 	uint32_t temp;
 
@@ -447,7 +448,7 @@ static int __end(void)
 	generic_unlock();
 
 	if (data.fd >= 0) {
-		sceIoClose(data.fd);
+		xrIoClose(data.fd);
 		data.fd = -1;
 	}
 

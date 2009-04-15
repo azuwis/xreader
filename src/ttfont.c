@@ -41,6 +41,7 @@
 #include "text.h"
 #include "power.h"
 #include "freq_lock.h"
+#include "xrhal.h"
 
 static SceUID ttf_sema = -1;
 
@@ -120,23 +121,23 @@ static p_ttf ttf_open_file_to_memory(const char *filename, int size,
 	if (filename == NULL || size == 0)
 		return NULL;
 
-	fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(filename, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
 		return NULL;
 	}
 
-	fileSize = sceIoLseek32(fd, 0, PSP_SEEK_END);
-	sceIoLseek32(fd, 0, PSP_SEEK_SET);
+	fileSize = xrIoLseek32(fd, 0, PSP_SEEK_END);
+	xrIoLseek32(fd, 0, PSP_SEEK_SET);
 	buf = malloc(fileSize);
 
 	if (buf == NULL) {
-		sceIoClose(fd);
+		xrIoClose(fd);
 		return NULL;
 	}
 
-	sceIoRead(fd, buf, fileSize);
-	sceIoClose(fd);
+	xrIoRead(fd, buf, fileSize);
+	xrIoClose(fd);
 
 	ttf = ttf_open_buffer(buf, fileSize, size, ttfname);
 

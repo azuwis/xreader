@@ -59,6 +59,7 @@
 #include "simple_gettext.h"
 #include "osk.h"
 #include "freq_lock.h"
+#include "xrhal.h"
 
 #define MAX_TXT_KEY 14
 
@@ -95,7 +96,7 @@ static void update_auto_bookmark(void)
 #ifdef _DEBUG
 static void write_byte(int fd, unsigned char b)
 {
-	sceIoWrite(fd, &b, 1);
+	xrIoWrite(fd, &b, 1);
 }
 
 void get_screen_shot(void)
@@ -114,10 +115,10 @@ void get_screen_shot(void)
 		SPRINTF_S(filename, "ms0:/get_screen_shot%02d.tga", i++);
 	} while (utils_is_file_exists(filename));
 	int fd =
-		sceIoOpen(filename, PSP_O_CREAT | PSP_O_TRUNC | PSP_O_WRONLY, 0777);
+		xrIoOpen(filename, PSP_O_CREAT | PSP_O_TRUNC | PSP_O_WRONLY, 0777);
 	if (!fd)
 		return;
-	sceIoWrite(fd, tgaHeader, sizeof(tgaHeader));
+	xrIoWrite(fd, tgaHeader, sizeof(tgaHeader));
 	write_byte(fd, width & 0xff);
 	write_byte(fd, width >> 8);
 	write_byte(fd, height & 0xff);
@@ -135,9 +136,9 @@ void get_screen_shot(void)
 			lineBuffer[3 * x + 1] = green;
 			lineBuffer[3 * x + 2] = red;
 		}
-		sceIoWrite(fd, lineBuffer, width * 3);
+		xrIoWrite(fd, lineBuffer, width * 3);
 	}
-	sceIoClose(fd);
+	xrIoClose(fd);
 }
 #endif
 
