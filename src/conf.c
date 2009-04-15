@@ -284,7 +284,7 @@ static void conf_default(p_conf conf)
 	conf->linenum_style = false;
 	conf->infobar_align = conf_align_left;
 	SPRINTF_S(conf->musicdrv_opts,
-			  "mp3_brute_mode=off mp3_use_me=on mp3_check_crc=off mp3_buffered_io=on mp3_buffer_size=%d",
+			  "mp3_brute_mode=off mp3_use_me=on mp3_check_crc=off mp3_buffered_io=off mp3_buffer_size=%d",
 			  BUFFERED_READER_BUFFER_SIZE);
 	conf->magnetic_scrolling = true;
 }
