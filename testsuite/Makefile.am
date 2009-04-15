@@ -33,7 +33,7 @@ noinst_PROGRAMS = xTest.elf
 
 xTest_elf_SOURCES = \
 rar_speed_test.c rar_speed_test.h hprm_test.h hprm_test.c \
-music_test.c jpeg_speed_test.c jpeg_speed_test.h \
+music_test.c jpeg_speed_test.c jpeg_speed_test.h prx_test.h prx_test.c testprx/testprx.S \
 main.c \
 $(xrdir)/array.c $(xrdir)/array.h $(xrdir)/bg.c $(xrdir)/bg.h $(xrdir)/bookmark.c $(xrdir)/bookmark.h \
 $(xrdir)/buffer.c $(xrdir)/buffer.h $(xrdir)/charsets.c $(xrdir)/charsets.h $(xrdir)/conf.c $(xrdir)/conf.h $(xrdir)/copy.c \
@@ -61,7 +61,8 @@ $(xrdir)/musicdrv.c $(xrdir)/musicdrv.h $(xrdir)/musicmgr.c $(xrdir)/musicmgr.h 
 $(xrdir)/lyric.c $(xrdir)/lyric.h $(xrdir)/clock.c $(xrdir)/mp3info.c $(xrdir)/flacplayer.c $(xrdir)/flacplayer.h \
 $(xrdir)/mp3player.c $(xrdir)/mp3player.h $(xrdir)/mpcplayer.c $(xrdir)/mpcplayer.h $(xrdir)/wavplayer.c $(xrdir)/wavplayer.h $(xrdir)/ttaplayer.c $(xrdir)/ttaplayer.h \
 $(xrdir)/xmp3audiolib.c $(xrdir)/xmp3audiolib.h $(xrdir)/genericplayer.c $(xrdir)/genericplayer.h $(xrdir)/buffered_reader.c $(xrdir)/buffered_reader.h \
-$(xrdir)/mp3info_buffered.c $(xrdir)/musicinfo.c $(xrdir)/musicinfo.h
+$(xrdir)/mp3info_buffered.c $(xrdir)/musicinfo.c $(xrdir)/musicinfo.h \
+$(xrdir)/wmaplayer.c $(xrdir)/wmaplayer.h $(xrdir)/oggplayer.c $(xrdir)/oggplayer.h $(xrdir)/wvplayer.c $(xrdir)/wvplayer.h
 endif
 
 if NLS
@@ -85,7 +86,11 @@ PSP_LARGE_MEMORY = 1
 
 libdir = $(top_srcdir)/lib
 if MUSIC
-LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a -lmac
+LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a -lmac \
+	$(libdir)/libvorbisidec.a -lm \
+	$(libdir)/pmpmodavc/libavformat.a \
+	$(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a \
+	$(libdir)/libwavpack.a
 endif
 LIBS += \
 -L$(libdir) $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a \

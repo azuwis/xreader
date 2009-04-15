@@ -161,5 +161,6 @@ AC_CONFIG_FILES([Makefile
                  xrPrx/Makefile
                  xr_rdriver/Makefile
                  testsuite/Makefile
+                 testsuite/testprx/Makefile
                  ])
 AC_OUTPUT

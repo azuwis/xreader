@@ -10,12 +10,13 @@
 #include "jpeg_speed_test.h"
 #include "hprm_test.h"
 #include "music_test.h"
+#include "prx_test.h"
 #include "commons.h"
 #include "common/utils.h"
 
 PSP_MODULE_INFO("xTest", 0x0200, 1, 6);
 PSP_MAIN_THREAD_PARAMS(45, 256, PSP_THREAD_ATTR_USER);
-PSP_HEAP_SIZE_MAX();
+PSP_HEAP_SIZE_KB(32 * 1024);
 
 static int exit_callback(int arg1, int arg2, void *arg)
 {
@@ -70,7 +71,8 @@ int main_thr(unsigned int args, void *argp)
 	utils_del_file("ms0:/xTest.log");
 
 	while ( 1 ) {
-		jpeg_speed_test();
+		prx_test();
+//		jpeg_speed_test();
 //		rar_speed_test();
 //		hprm_test();
 //		music_test();
