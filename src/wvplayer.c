@@ -587,7 +587,7 @@ static int wv_probe(const char* spath)
 	p = utils_fileext(spath);
 
 	if (p) {
-		if (strnicmp(p, "wv", 3) == 0) {
+		if (stricmp(p, "wv") == 0) {
 			return 1;
 		}
 	}
