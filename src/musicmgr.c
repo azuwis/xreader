@@ -280,7 +280,7 @@ int music_add(const char *spath, const char *lpath)
 	if (spath == NULL || lpath == NULL)
 		return -EINVAL;
 
-	if (fs_is_music(spath) == NULL)
+	if (!fs_is_music(spath))
 		return -EINVAL;
 
 	tmp = &g_music_files;
