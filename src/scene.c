@@ -1777,10 +1777,14 @@ static int scene_bookmark_autosave(void)
 		return 0;
 	}
 
-	if (fs != NULL)
+	if (fs != NULL) {
+		/*
 		bookmark_autosave(cur_book_view.bookmarkname,
 						  (fs->rows[fs->crow >> 10] +
 						   (fs->crow & 0x3FF))->start - fs->buf);
+						   */
+		bookmark_save(g_bm);
+	}
 
 	return 1;
 }
