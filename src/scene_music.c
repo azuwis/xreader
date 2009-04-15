@@ -167,6 +167,7 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 #endif
 			return win_menu_op_ok;
 		case PSP_CTRL_SELECT:
+			ctrl_waitrelease();
 			return win_menu_op_cancel;
 	}
 	dword orgidx = *index;
@@ -314,6 +315,7 @@ void scene_mp3_list(void)
 		if (music_maxindex() == 0)
 			break;
 	memcpy(&g_predraw, &prev, sizeof(g_predraw));
+	ctrl_waitrelease();
 #endif
 }
 
