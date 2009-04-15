@@ -118,14 +118,14 @@ extern bool location_set(dword index, char *comppath, char *shortpath,
 		&& (fd = xrIoOpen(fn, PSP_O_CREAT | PSP_O_RDWR, 0777)) < 0)
 		return false;
 	dword pos = xrIoLseek32(fd, sizeof(t_location) * index + sizeof(bool) * 10,
-							 PSP_SEEK_SET);
+							PSP_SEEK_SET);
 
 	if (pos < sizeof(t_location) * index + sizeof(bool) * 10) {
 		byte tempdata[sizeof(t_location) * 10 + sizeof(bool) * 10 - pos];
 
 		memset(tempdata, 0, sizeof(t_location) * 10 + sizeof(bool) * 10 - pos);
 		xrIoWrite(fd, tempdata,
-				   sizeof(t_location) * 10 + sizeof(bool) * 10 - pos);
+				  sizeof(t_location) * 10 + sizeof(bool) * 10 - pos);
 		if (xrIoLseek32
 			(fd, sizeof(t_location) * index + sizeof(bool) * 10,
 			 PSP_SEEK_SET) < sizeof(t_location) * index + sizeof(bool) * 10) {

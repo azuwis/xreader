@@ -27,7 +27,8 @@
 
 typedef int64_t offset_t;
 
-typedef struct {
+typedef struct
+{
 	MusicInfoTagType type;
 
 	MusicTagInfo id3v1;
@@ -35,7 +36,7 @@ typedef struct {
 	MusicTagInfo apetag;
 } MusicInfoInternalTag, *PMusicInfoInternalTag;
 
-buffer * tag_lyric = NULL;
+buffer *tag_lyric = NULL;
 
 static void id3v1_get_string(char *str, int str_size,
 							 const uint8_t * buf, int buf_size)
@@ -57,13 +58,15 @@ static void id3v1_get_string(char *str, int str_size,
 	*q = '\0';
 }
 
-static int id3v1_parse_tag(MusicInfoInternalTag *tag, SceUID fd, const uint8_t * buf)
+static int id3v1_parse_tag(MusicInfoInternalTag * tag, SceUID fd,
+						   const uint8_t * buf)
 {
 	if (!(buf[0] == 'T' && buf[1] == 'A' && buf[2] == 'G'))
 		return -1;
 
 	id3v1_get_string(tag->id3v1.title, sizeof(tag->id3v1.title), buf + 3, 30);
-	id3v1_get_string(tag->id3v1.artist, sizeof(tag->id3v1.artist), buf + 33, 30);
+	id3v1_get_string(tag->id3v1.artist, sizeof(tag->id3v1.artist), buf + 33,
+					 30);
 	id3v1_get_string(tag->id3v1.album, sizeof(tag->id3v1.album), buf + 63, 30);
 	id3v1_get_string(tag->id3v1.comment, sizeof(tag->id3v1.comment), buf + 97,
 					 30);
@@ -74,7 +77,8 @@ static int id3v1_parse_tag(MusicInfoInternalTag *tag, SceUID fd, const uint8_t *
 	return 0;
 }
 
-static int read_id3v1(MusicInfoInternalTag *tag, const MusicInfo *music_info, SceUID fd)
+static int read_id3v1(MusicInfoInternalTag * tag, const MusicInfo * music_info,
+					  SceUID fd)
 {
 	int ret;
 
@@ -91,7 +95,8 @@ static int read_id3v1(MusicInfoInternalTag *tag, const MusicInfo *music_info, Sc
 	return 0;
 }
 
-static void id3v2_read_ttag(SceUID fd, int taglen, char *dst, int dstlen, MusicTagInfo *info)
+static void id3v2_read_ttag(SceUID fd, int taglen, char *dst, int dstlen,
+							MusicTagInfo * info)
 {
 	int len;
 
@@ -329,9 +334,8 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 					// Acount for text encoding byte
 					tlen--;
 
-					while (xrIoRead(fd, &ch, 1) == 1 && 
-							p - desc < sizeof(desc) &&
-						   	ch != '\0') {
+					while (xrIoRead(fd, &ch, 1) == 1 &&
+						   p - desc < sizeof(desc) && ch != '\0') {
 						*p++ = ch;
 						tlen--;
 					}
@@ -352,7 +356,7 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 						}
 
 						buffer_copy_string_len(tag_lyric, p, tlen);
-						
+
 						free(p);
 					}
 				}
@@ -377,7 +381,8 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 	xrIoLseek(fd, len, PSP_SEEK_CUR);
 }
 
-static int read_id3v2_tag(MusicInfoInternalTag *tag, const MusicInfo *music_info, SceUID fd)
+static int read_id3v2_tag(MusicInfoInternalTag * tag,
+						  const MusicInfo * music_info, SceUID fd)
 {
 	uint8_t buf[ID3v2_HEADER_SIZE];
 	int len;
@@ -398,7 +403,7 @@ static int read_id3v2_tag(MusicInfoInternalTag *tag, const MusicInfo *music_info
 	return 0;
 }
 
-void read_ape_tag(MusicInfoInternalTag *tag_info, const char *spath)
+void read_ape_tag(MusicInfoInternalTag * tag_info, const char *spath)
 {
 	APETag *tag = apetag_load(spath);
 
@@ -436,7 +441,7 @@ void read_ape_tag(MusicInfoInternalTag *tag_info, const char *spath)
 	}
 }
 
-int generic_readtag(MusicInfo *music_info, const char* spath)
+int generic_readtag(MusicInfo * music_info, const char *spath)
 {
 	SceUID fd;
 	MusicInfoInternalTag tag;
@@ -453,17 +458,16 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 	if (fd < 0) {
 		return -1;
 	}
-
 	// Search ID3v1
 	read_id3v1(&tag, music_info, fd);
 
 	xrIoLseek(fd, 0, PSP_SEEK_SET);
-	
+
 	// Search ID3v2
 	read_id3v2_tag(&tag, music_info, fd);
-	
+
 	xrIoLseek(fd, 0, PSP_SEEK_SET);
-	
+
 	xrIoClose(fd);
 
 	// Search for APETag
@@ -502,17 +506,16 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 	if (fd < 0) {
 		return -1;
 	}
-
 	// Search ID3v1
 	read_id3v1(&tag, music_info, fd);
 
 	xrIoLseek(fd, 0, PSP_SEEK_SET);
-	
+
 	// Search ID3v2
 	read_id3v2_tag(&tag, music_info, fd);
-	
+
 	xrIoLseek(fd, 0, PSP_SEEK_SET);
-	
+
 	xrIoClose(fd);
 
 	// Search for APETag

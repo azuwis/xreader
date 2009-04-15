@@ -96,7 +96,7 @@ extern "C"
 		int (*suspend) (void);
 		int (*resume) (const char *spath, const char *lpath);
 		int (*end) (void);
-		int (*probe) (const char* spath);
+		int (*probe) (const char *spath);
 
 		struct music_ops *next;
 	};

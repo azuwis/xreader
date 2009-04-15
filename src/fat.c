@@ -278,7 +278,7 @@ static bool fat_dir_list(u32 clus, u32 * count, p_fat_entry * entrys)
 			return false;
 		if (xrIoLseek(fatfd, root_pos, PSP_SEEK_SET) != root_pos
 			|| xrIoRead(fatfd, *entrys,
-						 *count * sizeof(t_fat_entry)) !=
+						*count * sizeof(t_fat_entry)) !=
 			*count * sizeof(t_fat_entry)) {
 			free(*entrys);
 			return false;
@@ -304,7 +304,7 @@ static bool fat_dir_list(u32 clus, u32 * count, p_fat_entry * entrys)
 
 			if (xrIoLseek(fatfd, epos, PSP_SEEK_SET) != epos
 				|| xrIoRead(fatfd, &(*entrys)[ep],
-							 bytes_per_clus) != bytes_per_clus) {
+							bytes_per_clus) != bytes_per_clus) {
 				free(*entrys);
 				return false;
 			}

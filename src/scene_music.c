@@ -343,7 +343,7 @@ const char *get_week_str(int day)
 static void scene_mp3bar_delay_action(void)
 {
 	xrKernelDelayThread(50000);
-	
+
 	if (config.dis_scrsave)
 		xrPowerTick(0);
 }
@@ -696,7 +696,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 				xrRtcGetCurrentTick(&end);
 				interval = pspDiffTime(&end, &start);
 			}
-			
+
 			if (interval >= 0.5) {
 				musicdrv_fbackward(5);
 				xrKernelDelayThread(200000);
@@ -710,7 +710,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 				xrRtcGetCurrentTick(&end);
 				interval = pspDiffTime(&end, &start);
 			}
-			
+
 			if (interval >= 0.5) {
 				musicdrv_fforward(5);
 				xrKernelDelayThread(200000);
@@ -770,7 +770,8 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			return 1;
 	}
 
-	if ((!(key == PSP_CTRL_LTRIGGER || key == PSP_CTRL_RTRIGGER)) && (oldkey == PSP_CTRL_LTRIGGER || oldkey == PSP_CTRL_RTRIGGER)) {
+	if ((!(key == PSP_CTRL_LTRIGGER || key == PSP_CTRL_RTRIGGER))
+		&& (oldkey == PSP_CTRL_LTRIGGER || oldkey == PSP_CTRL_RTRIGGER)) {
 		if (interval < 0.5) {
 			if (oldkey == PSP_CTRL_LTRIGGER)
 				music_prev();

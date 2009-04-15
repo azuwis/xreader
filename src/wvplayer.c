@@ -105,7 +105,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 	if (frames <= 0)
 		return;
-	
+
 	if (channels == 2) {
 		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 	} else {
@@ -205,7 +205,10 @@ static int wv_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 				if (ret > g_buff_size) {
 					g_buff_size = ret;
-					g_buff = safe_realloc(g_buff, g_buff_size * g_info.channels * sizeof(*g_buff));
+					g_buff =
+						safe_realloc(g_buff,
+									 g_buff_size * g_info.channels *
+									 sizeof(*g_buff));
 
 					if (g_buff == NULL) {
 						__end();
@@ -214,9 +217,9 @@ static int wv_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				}
 
 				int i;
-				uint8_t *output = (uint8_t*) g_buff;
+				uint8_t *output = (uint8_t *) g_buff;
 
-				for(i=0; i<ret; ++i) {
+				for (i = 0; i < ret; ++i) {
 					*output++ = wv_buffer[2 * i];
 					*output++ = wv_buffer[2 * i] >> 8;
 					*output++ = wv_buffer[2 * i + 1];
@@ -266,36 +269,42 @@ static int __init(void)
 static void wv_get_tag(void)
 {
 	int n;
-	
-	n = WavpackGetTagItem(g_decoder, "Title", g_info.tag.title, sizeof(g_info.tag.title));
+
+	n = WavpackGetTagItem(g_decoder, "Title", g_info.tag.title,
+						  sizeof(g_info.tag.title));
 
 	if (n != 0) {
 		g_info.tag.type = APETAG;
 		g_info.tag.encode = conf_encode_utf8;
 	} else {
-		WavpackGetTagItem(g_decoder, "title", g_info.tag.title, sizeof(g_info.tag.title));
+		WavpackGetTagItem(g_decoder, "title", g_info.tag.title,
+						  sizeof(g_info.tag.title));
 		g_info.tag.type = ID3V1;
 		g_info.tag.encode = config.mp3encode;
 	}
 
-	n = WavpackGetTagItem(g_decoder, "Artist", g_info.tag.artist, sizeof(g_info.tag.artist));
+	n = WavpackGetTagItem(g_decoder, "Artist", g_info.tag.artist,
+						  sizeof(g_info.tag.artist));
 
 	if (n != 0) {
 		g_info.tag.type = APETAG;
 		g_info.tag.encode = conf_encode_utf8;
 	} else {
-		WavpackGetTagItem(g_decoder, "artist", g_info.tag.artist, sizeof(g_info.tag.artist));
+		WavpackGetTagItem(g_decoder, "artist", g_info.tag.artist,
+						  sizeof(g_info.tag.artist));
 		g_info.tag.type = ID3V1;
 		g_info.tag.encode = config.mp3encode;
 	}
 
-	n = WavpackGetTagItem(g_decoder, "Album", g_info.tag.album, sizeof(g_info.tag.album));
+	n = WavpackGetTagItem(g_decoder, "Album", g_info.tag.album,
+						  sizeof(g_info.tag.album));
 
 	if (n != 0) {
 		g_info.tag.type = APETAG;
 		g_info.tag.encode = conf_encode_utf8;
 	} else {
-		WavpackGetTagItem(g_decoder, "album", g_info.tag.album, sizeof(g_info.tag.album));
+		WavpackGetTagItem(g_decoder, "album", g_info.tag.album,
+						  sizeof(g_info.tag.album));
 		g_info.tag.type = ID3V1;
 		g_info.tag.encode = config.mp3encode;
 	}
@@ -340,7 +349,10 @@ static int wv_load(const char *spath, const char *lpath)
 
 	char error[80];
 
-	g_decoder = WavpackOpenFileInput(spath, error, OPEN_WVC | OPEN_TAGS | OPEN_2CH_MAX | OPEN_NORMALIZE, 23);
+	g_decoder =
+		WavpackOpenFileInput(spath, error,
+							 OPEN_WVC | OPEN_TAGS | OPEN_2CH_MAX |
+							 OPEN_NORMALIZE, 23);
 
 	if (g_decoder == NULL) {
 		__end();
@@ -349,7 +361,7 @@ static int wv_load(const char *spath, const char *lpath)
 
 	g_wv_bits_per_sample = WavpackGetBitsPerSample(g_decoder);
 
-	if ( g_wv_bits_per_sample != 16 ) {
+	if (g_wv_bits_per_sample != 16) {
 		__end();
 		return -1;
 	}
@@ -426,10 +438,10 @@ static int wv_load(const char *spath, const char *lpath)
 	dbg_printf(d,
 			   "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d, encoder: %s, Ratio: %.3f]",
 			   g_info.channels, g_info.sample_freq, g_info.avg_bps / 1000,
-			   (int) (g_info.duration / 60), (int) g_info.duration % 60, g_encode_name,
-			   1.0 * g_info.filesize / (g_info.samples *
-										 g_info.channels *
-										 (g_wv_bits_per_sample / 8))
+			   (int) (g_info.duration / 60), (int) g_info.duration % 60,
+			   g_encode_name,
+			   1.0 * g_info.filesize / (g_info.samples * g_info.channels *
+										(g_wv_bits_per_sample / 8))
 		);
 
 	dbg_printf(d, "[%s - %s - %s, wv tag]", g_info.tag.artist, g_info.tag.album,
@@ -569,8 +581,8 @@ static int wv_get_info(struct music_info *pinfo)
 		if (show_encoder_msg) {
 			SPRINTF_S(pinfo->encode_msg, "%s Ratio: %.3f", g_encode_name,
 					  1.0 * g_info.filesize / (g_info.samples *
-												g_info.channels *
-												(g_wv_bits_per_sample / 8)));
+											   g_info.channels *
+											   (g_wv_bits_per_sample / 8)));
 		} else {
 			pinfo->encode_msg[0] = '\0';
 		}
@@ -586,7 +598,7 @@ static int wv_get_info(struct music_info *pinfo)
  *
  * @return 是WvPack文件返回1，否则返回0
  */
-static int wv_probe(const char* spath)
+static int wv_probe(const char *spath)
 {
 	const char *p;
 

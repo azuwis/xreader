@@ -202,7 +202,7 @@ int generic_fforward(int sec)
 
 	g_seek_seconds = sec;
 
-	xrRtcGetCurrentTick((u64*)&g_last_seek_tick);
+	xrRtcGetCurrentTick((u64 *) & g_last_seek_tick);
 	g_last_seek_is_forward = true;
 	g_seek_count++;
 	generic_unlock();
@@ -226,7 +226,7 @@ int generic_fbackward(int sec)
 
 	g_seek_seconds = sec;
 
-	xrRtcGetCurrentTick((u64*)&g_last_seek_tick);
+	xrRtcGetCurrentTick((u64 *) & g_last_seek_tick);
 	g_last_seek_is_forward = false;
 	g_seek_count++;
 	generic_unlock();
@@ -265,7 +265,6 @@ int generic_resume(const char *spath, const char *lpath)
 	generic_unlock();
 	g_suspend_status = ST_LOADED;
 
-
 	return 0;
 }
 
@@ -282,7 +281,7 @@ int generic_get_info(struct music_info *info)
 	if (g_status == ST_UNKNOWN) {
 		return -1;
 	}
-	
+
 	if (info->type & MD_GET_TITLE) {
 		info->encode = g_info.tag.encode;
 		STRCPY_S(info->title, g_info.tag.title);
@@ -314,4 +313,3 @@ int generic_get_info(struct music_info *info)
 
 	return 0;
 }
-

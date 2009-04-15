@@ -215,8 +215,7 @@ int xMP3AudioInit()
 		//xrAudioSetChannelDataLen(i, PSP_NUM_AUDIO_SAMPLES);
 		AudioStatus[i].threadhandle =
 			xrKernelCreateThread(str, (void *) &AudioChannelThread, 0x12,
-								  THREAD_STACK_SIZE, PSP_THREAD_ATTR_USER,
-								  NULL);
+								 THREAD_STACK_SIZE, PSP_THREAD_ATTR_USER, NULL);
 		if (AudioStatus[i].threadhandle < 0) {
 			AudioStatus[i].threadhandle = -1;
 			failed = 1;
@@ -291,4 +290,3 @@ void xMP3ClearSndBuf(void *buf, int frames)
 {
 	memset(buf, 0, frames * 2 * 2);
 }
-

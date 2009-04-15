@@ -44,7 +44,8 @@ typedef struct reader_data_t
 	long size;
 } mp3_reader_data;
 
-enum lame_mode {
+enum lame_mode
+{
 	CBR,
 	ABR,
 	VBR

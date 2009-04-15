@@ -96,7 +96,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 	if (frames <= 0)
 		return;
-	
+
 	if (channels == 2) {
 		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 	} else {
@@ -114,9 +114,9 @@ static int wav_seek_seconds(double seconds)
 
 	ret =
 		xrIoLseek(data.fd,
-				   g_wav_data_offset +
-				   (uint32_t) (seconds * g_info.sample_freq) *
-				   g_wav_byte_per_frame, SEEK_SET);
+				  g_wav_data_offset +
+				  (uint32_t) (seconds * g_info.sample_freq) *
+				  g_wav_byte_per_frame, SEEK_SET);
 
 	if (ret >= 0) {
 		g_buff_frame_size = g_buff_frame_start = 0;
@@ -200,8 +200,7 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				__end();
 				return -1;
 			}
-			ret =
-				xrIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
+			ret = xrIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
 			if (ret <= 0) {
 				__end();
 				return -1;
@@ -366,7 +365,8 @@ static int wav_load(const char *spath, const char *lpath)
 		__end();
 		return -1;
 	}
-	g_info.avg_bps = (double) temp * 8;
+	g_info.avg_bps = (double) temp *8;
+
 	// byte per sample
 	if (wave_get_16(data.fd, (uint16_t *) & g_wav_byte_per_frame) != 0) {
 		__end();
@@ -409,7 +409,8 @@ static int wav_load(const char *spath, const char *lpath)
 		return -1;
 	}
 	g_info.samples = temp / g_wav_byte_per_frame;
-	g_info.duration = (double) (temp) / g_wav_byte_per_frame / g_info.sample_freq;
+	g_info.duration =
+		(double) (temp) / g_wav_byte_per_frame / g_info.sample_freq;
 
 	generic_readtag(&g_info, spath);
 
@@ -563,7 +564,7 @@ static int wav_get_info(struct music_info *pinfo)
  *
  * @return 是WAV文件返回1，否则返回0
  */
-static int wav_probe(const char* spath)
+static int wav_probe(const char *spath)
 {
 	const char *p;
 

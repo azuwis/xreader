@@ -79,8 +79,7 @@ static int ovcb_seek(void *datasource, int64_t offset, int whence);
 static int ovcb_close(void *datasource);
 static long ovcb_tell(void *datasource);
 
-static ov_callbacks vorbis_callbacks = 
-{
+static ov_callbacks vorbis_callbacks = {
 	ovcb_read,
 	ovcb_seek,
 	ovcb_close,
@@ -105,7 +104,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 	if (frames <= 0)
 		return;
-	
+
 	if (channels == 2) {
 		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 	} else {
@@ -117,7 +116,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 }
 
-static void ogg_seek_seconds(OggVorbis_File *decoder, double npt)
+static void ogg_seek_seconds(OggVorbis_File * decoder, double npt)
 {
 	if (decoder)
 		ov_time_seek(decoder, npt * 1000);
@@ -131,10 +130,11 @@ static int ogg_process_single(void)
 	int bytes;
 	int current_section;
 
-	bytes = ov_read(decoder, (char*)g_buff, g_buff_size * sizeof(g_buff[0]), &current_section);
-	
-	switch (bytes)
-	{
+	bytes =
+		ov_read(decoder, (char *) g_buff, g_buff_size * sizeof(g_buff[0]),
+				&current_section);
+
+	switch (bytes) {
 		case 0:
 			/* EOF */
 			return -1;
@@ -290,14 +290,26 @@ static void get_ogg_tag(OggVorbis_File * decoder)
 	for (i = 0; i < comment->comments; i++) {
 		dbg_printf(d, "%s: %s", __func__, comment->user_comments[i]);
 
-		if (!strnicmp(comment->user_comments[i], "TITLE=", sizeof("TITLE=") - 1)) {
-			STRCPY_S(g_info.tag.title, comment->user_comments[i] + sizeof("TITLE=") - 1);
-		} else if (!strnicmp(comment->user_comments[i], "ALBUM=", sizeof("ALBUM=") - 1)) {
-			STRCPY_S(g_info.tag.album, comment->user_comments[i] + sizeof("ALBUM=") - 1);
-		} else if (!strnicmp(comment->user_comments[i], "ARTIST=", sizeof("ARTIST=") - 1)) {
-			STRCPY_S(g_info.tag.artist, comment->user_comments[i] + sizeof("ARTIST=") - 1);
-		} else if (!strnicmp(comment->user_comments[i], "COMMENT=", sizeof("COMMENT=") - 1)) {
-			STRCPY_S(g_info.tag.comment, comment->user_comments[i] + sizeof("COMMENT=") - 1);
+		if (!strnicmp
+			(comment->user_comments[i], "TITLE=", sizeof("TITLE=") - 1)) {
+			STRCPY_S(g_info.tag.title,
+					 comment->user_comments[i] + sizeof("TITLE=") - 1);
+		} else if (!strnicmp
+				   (comment->user_comments[i], "ALBUM=",
+					sizeof("ALBUM=") - 1)) {
+			STRCPY_S(g_info.tag.album,
+					 comment->user_comments[i] + sizeof("ALBUM=") - 1);
+		} else
+			if (!strnicmp
+				(comment->user_comments[i], "ARTIST=", sizeof("ARTIST=") - 1)) {
+			STRCPY_S(g_info.tag.artist,
+					 comment->user_comments[i] + sizeof("ARTIST=") - 1);
+		} else
+			if (!strnicmp
+				(comment->user_comments[i], "COMMENT=",
+				 sizeof("COMMENT=") - 1)) {
+			STRCPY_S(g_info.tag.comment,
+					 comment->user_comments[i] + sizeof("COMMENT=") - 1);
 		}
 	}
 
@@ -347,9 +359,9 @@ static int ogg_load(const char *spath, const char *lpath)
 	g_info.filesize = xrIoLseek32(g_ogg_fd, 0, PSP_SEEK_END);
 	xrIoLseek32(g_ogg_fd, 0, PSP_SEEK_SET);
 
-	if (ov_open_callbacks((void*) &g_ogg_fd, decoder, NULL, 0, vorbis_callbacks) < 0)
-	{
-		vorbis_callbacks.close_func((void*) &g_ogg_fd);
+	if (ov_open_callbacks
+		((void *) &g_ogg_fd, decoder, NULL, 0, vorbis_callbacks) < 0) {
+		vorbis_callbacks.close_func((void *) &g_ogg_fd);
 		__end();
 		return -1;
 	}
@@ -511,8 +523,7 @@ static int ogg_get_info(struct music_info *pinfo)
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
-		pinfo->psp_freq[0] =
-			66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
+		pinfo->psp_freq[0] = 66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
@@ -556,7 +567,7 @@ static int ogg_get_info(struct music_info *pinfo)
  *
  * @return 是MPC文件返回1，否则返回0
  */
-static int ogg_probe(const char* spath)
+static int ogg_probe(const char *spath)
 {
 	const char *p;
 
@@ -595,22 +606,22 @@ int ogg_init(void)
 
 static size_t ovcb_read(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
-	return xrIoRead(*((int*)datasource), ptr, size*nmemb);
+	return xrIoRead(*((int *) datasource), ptr, size * nmemb);
 }
 
 static int ovcb_seek(void *datasource, int64_t offset, int whence)
 {
-	return xrIoLseek32(*((int*)datasource), offset, whence);
+	return xrIoLseek32(*((int *) datasource), offset, whence);
 }
 
 static int ovcb_close(void *datasource)
 {
-	return xrIoClose(*((int*)datasource));
+	return xrIoClose(*((int *) datasource));
 }
 
 static long ovcb_tell(void *datasource)
 {
-	return xrIoLseek32(*((int*)datasource), 0, PSP_SEEK_CUR);
+	return xrIoLseek32(*((int *) datasource), 0, PSP_SEEK_CUR);
 }
 
 #endif

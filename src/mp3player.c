@@ -152,7 +152,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 	if (frames <= 0)
 		return;
-	
+
 	if (channels == 2) {
 		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 	} else {
@@ -1018,6 +1018,7 @@ static int mp3_load(const char *spath, const char *lpath)
 
 	if (data.use_buffer) {
 		SceOff cur = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
+
 		xrIoClose(data.fd);
 		data.fd = -1;
 		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
@@ -1040,37 +1041,32 @@ static int mp3_load(const char *spath, const char *lpath)
 			   g_info.samples, mp3info.have_crc ? ", crc passed" : "");
 
 #ifdef _DEBUG
-	if (mp3info.lame_encoded)
-	{
-			char lame_method[80];
-			char encode_msg[80];
+	if (mp3info.lame_encoded) {
+		char lame_method[80];
+		char encode_msg[80];
 
-			switch(mp3info.lame_mode)
-			{
-				case ABR:
-					STRCPY_S(lame_method, "ABR");
-					break;
-				case CBR:
-					STRCPY_S(lame_method, "CBR");
-					break;
-				case VBR:
-					SPRINTF_S(lame_method, "VBR V%1d", 
-							mp3info.lame_vbr_quality);
-					break;
-				default:
-					break;
-			}
+		switch (mp3info.lame_mode) {
+			case ABR:
+				STRCPY_S(lame_method, "ABR");
+				break;
+			case CBR:
+				STRCPY_S(lame_method, "CBR");
+				break;
+			case VBR:
+				SPRINTF_S(lame_method, "VBR V%1d", mp3info.lame_vbr_quality);
+				break;
+			default:
+				break;
+		}
 
-			if (mp3info.lame_str[strlen(mp3info.lame_str) - 1] == ' ')
-				SPRINTF_S(encode_msg,
-						"%s%s", mp3info.lame_str, lame_method);
-			else
-				SPRINTF_S(encode_msg,
-						"%s %s", mp3info.lame_str, lame_method);
-			dbg_printf(d, "[ %s ]", encode_msg);
+		if (mp3info.lame_str[strlen(mp3info.lame_str) - 1] == ' ')
+			SPRINTF_S(encode_msg, "%s%s", mp3info.lame_str, lame_method);
+		else
+			SPRINTF_S(encode_msg, "%s %s", mp3info.lame_str, lame_method);
+		dbg_printf(d, "[ %s ]", encode_msg);
 	}
 #endif
-	
+
 	ret = xMP3AudioInit();
 
 	if (ret < 0) {
@@ -1191,8 +1187,7 @@ static int mp3_get_info(struct music_info *info)
 
 			info->psp_freq[1] = 16;
 		} else {
-			info->psp_freq[0] =
-				66 + (133 - 66) * g_info.avg_bps / 1000 / 320;
+			info->psp_freq[0] = 66 + (133 - 66) * g_info.avg_bps / 1000 / 320;
 			info->psp_freq[1] = 111;
 		}
 	}
@@ -1207,8 +1202,7 @@ static int mp3_get_info(struct music_info *info)
 		if (show_encoder_msg && mp3info.lame_encoded) {
 			char lame_method[80];
 
-			switch(mp3info.lame_mode)
-			{
+			switch (mp3info.lame_mode) {
 				case ABR:
 					STRCPY_S(lame_method, "ABR");
 					break;
@@ -1216,7 +1210,8 @@ static int mp3_get_info(struct music_info *info)
 					STRCPY_S(lame_method, "CBR");
 					break;
 				case VBR:
-					SPRINTF_S(lame_method, "VBR V%1d", mp3info.lame_vbr_quality);
+					SPRINTF_S(lame_method, "VBR V%1d",
+							  mp3info.lame_vbr_quality);
 					break;
 				default:
 					break;
@@ -1224,10 +1219,10 @@ static int mp3_get_info(struct music_info *info)
 
 			if (mp3info.lame_str[strlen(mp3info.lame_str) - 1] == ' ')
 				SPRINTF_S(info->encode_msg,
-						"%s%s", mp3info.lame_str, lame_method);
+						  "%s%s", mp3info.lame_str, lame_method);
 			else
 				SPRINTF_S(info->encode_msg,
-						"%s %s", mp3info.lame_str, lame_method);
+						  "%s %s", mp3info.lame_str, lame_method);
 		} else {
 			info->encode_msg[0] = '\0';
 		}
@@ -1335,7 +1330,7 @@ static int mp3_resume(const char *spath, const char *lpath)
  *
  * @return 是MP3文件返回1，否则返回0
  */
-static int mp3_probe(const char* spath)
+static int mp3_probe(const char *spath)
 {
 	const char *p;
 

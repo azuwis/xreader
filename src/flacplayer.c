@@ -104,7 +104,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 	if (frames <= 0)
 		return;
-	
+
 	if (channels == 2) {
 		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 	} else {
@@ -178,13 +178,16 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 
 	if (frame->header.blocksize > g_buff_size) {
 		g_buff_size = frame->header.blocksize;
-		g_buff = safe_realloc(g_buff, g_buff_size * frame->header.channels * sizeof(*g_buff));
+		g_buff =
+			safe_realloc(g_buff,
+						 g_buff_size * frame->header.channels *
+						 sizeof(*g_buff));
 
 		if (g_buff == NULL)
 			return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
 
-	uint16_t *output = (uint16_t*) g_buff;
+	uint16_t *output = (uint16_t *) g_buff;
 
 	if (frame->header.channels == 2) {
 		for (i = 0; i < frame->header.blocksize; i++) {
@@ -489,14 +492,14 @@ static int flac_load(const char *spath, const char *lpath)
 	dbg_printf(d,
 			   "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d, encoder: %s, Ratio: %.3f]",
 			   g_info.channels, g_info.sample_freq, g_info.avg_bps / 1000,
-			   (int) (g_info.duration / 60), (int) g_info.duration % 60, g_encode_name,
-			   1.0 * g_info.filesize / (g_info.samples *
-										 g_info.channels *
-										 (g_flac_bits_per_sample / 8))
+			   (int) (g_info.duration / 60), (int) g_info.duration % 60,
+			   g_encode_name,
+			   1.0 * g_info.filesize / (g_info.samples * g_info.channels *
+										(g_flac_bits_per_sample / 8))
 		);
 
-	dbg_printf(d, "[%s - %s - %s, flac tag]", g_info.tag.artist, g_info.tag.album,
-			   g_info.tag.title);
+	dbg_printf(d, "[%s - %s - %s, flac tag]", g_info.tag.artist,
+			   g_info.tag.album, g_info.tag.title);
 
 	xMP3AudioSetChannelCallback(0, flac_audiocallback, NULL);
 
@@ -620,8 +623,8 @@ static int flac_get_info(struct music_info *pinfo)
 		if (show_encoder_msg) {
 			SPRINTF_S(pinfo->encode_msg, "%s Ratio: %.3f", g_encode_name,
 					  1.0 * g_info.filesize / (g_info.samples *
-												g_info.channels *
-												(g_flac_bits_per_sample / 8)));
+											   g_info.channels *
+											   (g_flac_bits_per_sample / 8)));
 		} else {
 			pinfo->encode_msg[0] = '\0';
 		}
@@ -637,7 +640,7 @@ static int flac_get_info(struct music_info *pinfo)
  *
  * @return 是FLAC文件返回1，否则返回0
  */
-static int flac_probe(const char* spath)
+static int flac_probe(const char *spath)
 {
 	const char *p;
 

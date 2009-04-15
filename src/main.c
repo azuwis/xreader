@@ -103,8 +103,8 @@ static int CallbackThread(unsigned int args, void *argp)
 static int SetupCallbacks(void)
 {
 	int thid = xrKernelCreateThread("Callback Thread", CallbackThread, 0x11,
-									 0x3F40,
-									 0, 0);
+									0x3F40,
+									0, 0);
 
 	if (thid >= 0) {
 		xrKernelStartThread(thid, 0, 0);
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 	SetupCallbacks();
 
 	int thid = xrKernelCreateThread("User Thread", main_thread, 45, 0x40000,
-									 PSP_THREAD_ATTR_USER, NULL);
+									PSP_THREAD_ATTR_USER, NULL);
 
 	if (thid < 0)
 		xrKernelSleepThread();

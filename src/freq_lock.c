@@ -11,7 +11,8 @@
 #include "dbg.h"
 #include "xrhal.h"
 
-struct _freq_lock_entry {
+struct _freq_lock_entry
+{
 	unsigned short cpu, bus;
 	int id;
 };
@@ -68,7 +69,7 @@ static int generate_id()
 		id++;
 		found = false;
 
-		for(i=0; i<freqs_cnt; ++i) {
+		for (i = 0; i < freqs_cnt; ++i) {
 			if (id == freqs[i].id) {
 				found = true;
 				break;
@@ -113,7 +114,7 @@ static int dump_freq(void)
 
 	sprintf(t, "[ ");
 
-	for(i = 0; i < freqs_cnt; ++i) {
+	for (i = 0; i < freqs_cnt; ++i) {
 		sprintf(t + strlen(t), "%d/%d ", freqs[i].cpu, freqs[i].bus);
 	}
 
@@ -141,7 +142,7 @@ static int update_freq(void)
 	if (freqs == NULL)
 		return -1;
 
-	for(i=0, max = 0, maxsum = -1; i<freqs_cnt; ++i) {
+	for (i = 0, max = 0, maxsum = -1; i < freqs_cnt; ++i) {
 		if (maxsum < freqs[i].cpu + freqs[i].bus) {
 			maxsum = freqs[i].cpu + freqs[i].bus;
 			max = i;
@@ -156,12 +157,13 @@ static int update_freq(void)
 	cpu = max(cpu, freq_list[config.freqs[0]][0]);
 	bus = max(bus, freq_list[config.freqs[0]][1]);
 
-//	dbg_printf(d, "%s: should set cpu/bus to %d/%d", __func__, cpu, bus);
+//  dbg_printf(d, "%s: should set cpu/bus to %d/%d", __func__, cpu, bus);
 
-	if (xrPowerGetCpuClockFrequency() != cpu || xrPowerGetBusClockFrequency() != bus) {
+	if (xrPowerGetCpuClockFrequency() != cpu
+		|| xrPowerGetBusClockFrequency() != bus) {
 		power_set_clock(cpu, bus);
 		{
-//			dbg_printf(d, "%s: cpu: %d, bus: %d", __func__, xrPowerGetCpuClockFrequency(), xrPowerGetBusClockFrequency());
+//          dbg_printf(d, "%s: cpu: %d, bus: %d", __func__, xrPowerGetCpuClockFrequency(), xrPowerGetBusClockFrequency());
 		}
 	}
 
@@ -181,7 +183,7 @@ int freq_enter(int cpu, int bus)
 {
 	int idx;
 
-//	dbg_printf(d, "%s: enter %d/%d", __func__, cpu, bus);
+//  dbg_printf(d, "%s: enter %d/%d", __func__, cpu, bus);
 
 	freq_lock();
 
@@ -201,16 +203,17 @@ int freq_enter(int cpu, int bus)
 
 int freq_leave(int freq_id)
 {
-//	dbg_printf(d, "%s: leave %d", __func__, freq_id);
-	
+//  dbg_printf(d, "%s: leave %d", __func__, freq_id);
+
 	int idx;
 
 	freq_lock();
 
-	for(idx=0; idx<freqs_cnt; ++idx) {
+	for (idx = 0; idx < freqs_cnt; ++idx) {
 		if (freqs[idx].id == freq_id) {
-//			dbg_printf(d, "%s: removing freqs: %d/%d", __func__, freqs[idx].cpu, freqs[idx].bus);
-			memmove(&freqs[idx], &freqs[idx+1], sizeof(freqs[0]) * (freqs_cnt - idx - 1));
+//          dbg_printf(d, "%s: removing freqs: %d/%d", __func__, freqs[idx].cpu, freqs[idx].bus);
+			memmove(&freqs[idx], &freqs[idx + 1],
+					sizeof(freqs[0]) * (freqs_cnt - idx - 1));
 			freqs = safe_realloc(freqs, sizeof(freqs[0]) * (freqs_cnt - 1));
 			freqs_cnt--;
 			break;
@@ -238,4 +241,3 @@ int freq_enter_hotzone(void)
 
 	return freq_enter(cpu, bus);
 }
-

@@ -41,7 +41,7 @@
 static int __end(void);
 
 static mpc_reader reader;
-static mpc_demux* demux;
+static mpc_demux *demux;
 static mpc_streaminfo info;
 
 /**
@@ -190,10 +190,10 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += avail_frame * 2;
 
 			mpc_frame_info frame;
-			frame.buffer = (MPC_SAMPLE_FORMAT*)g_buff;
 
-			ret =
-				mpc_demux_decode(demux, &frame);
+			frame.buffer = (MPC_SAMPLE_FORMAT *) g_buff;
+
+			ret = mpc_demux_decode(demux, &frame);
 
 			if (frame.bits == -1) {
 				__end();
@@ -260,11 +260,12 @@ static int mpc_load(const char *spath, const char *lpath)
 	}
 
 	reader_inited = true;
-    demux = mpc_demux_init(&reader);
+	demux = mpc_demux_init(&reader);
 	mpc_demux_get_info(demux, &info);
 
 	if (info.average_bitrate != 0) {
-		g_info.duration = (double) info.total_file_length * 8 / info.average_bitrate;
+		g_info.duration =
+			(double) info.total_file_length * 8 / info.average_bitrate;
 	}
 
 	g_info.avg_bps = info.average_bitrate;
@@ -276,9 +277,11 @@ static int mpc_load(const char *spath, const char *lpath)
 
 #if 0
 	if (gain_on)
-		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_TRUE, MPC_TRUE, MPC_TRUE);
+		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_TRUE, MPC_TRUE,
+							 MPC_TRUE);
 	else
-		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_FALSE, MPC_FALSE, MPC_FALSE);
+		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_FALSE, MPC_FALSE,
+							 MPC_FALSE);
 #endif
 
 	gain_on = !gain_on;
@@ -337,7 +340,7 @@ static int mpc_end(void)
 
 	g_status = ST_STOPPED;
 
-	if (demux != NULL) { 
+	if (demux != NULL) {
 		mpc_demux_exit(demux);
 		demux = NULL;
 	}
@@ -407,8 +410,7 @@ static int mpc_get_info(struct music_info *pinfo)
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
-		pinfo->psp_freq[0] =
-			66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
+		pinfo->psp_freq[0] = 66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
@@ -438,7 +440,7 @@ static int mpc_get_info(struct music_info *pinfo)
  *
  * @return 是MPC文件返回1，否则返回0
  */
-static int mpc_probe(const char* spath)
+static int mpc_probe(const char *spath)
 {
 	const char *p;
 

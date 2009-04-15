@@ -89,7 +89,8 @@ static inline int calc_gi(void)
 static void update_auto_bookmark(void)
 {
 	if (g_bm != NULL) {
-		g_bm->row[0] =  (fs->rows[fs-> crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
+		g_bm->row[0] =
+			(fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
 	}
 }
 
@@ -114,8 +115,8 @@ void get_screen_shot(void)
 	do {
 		SPRINTF_S(filename, "ms0:/get_screen_shot%02d.tga", i++);
 	} while (utils_is_file_exists(filename));
-	int fd =
-		xrIoOpen(filename, PSP_O_CREAT | PSP_O_TRUNC | PSP_O_WRONLY, 0777);
+	int fd = xrIoOpen(filename, PSP_O_CREAT | PSP_O_TRUNC | PSP_O_WRONLY, 0777);
+
 	if (!fd)
 		return;
 	xrIoWrite(fd, tgaHeader, sizeof(tgaHeader));
@@ -1478,7 +1479,8 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 		case PSP_CTRL_SQUARE:
 			STRCPY_S(item[*index].name, "       ");
 			g_bm->row[(*index) + 1] = *(dword *) item[0].data;
-			utils_dword2string(g_bm->row[(*index) + 1] / 2, item[*index].name, 7);
+			utils_dword2string(g_bm->row[(*index) + 1] / 2, item[*index].name,
+							   7);
 			bookmark_save(g_bm);
 			return win_menu_op_redraw;
 		case PSP_CTRL_TRIANGLE:
@@ -1563,7 +1565,7 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 
 bool scene_bookmark(PBookViewData pView)
 {
-	dword * orgp = &pView->rrow;
+	dword *orgp = &pView->rrow;
 
 	if (g_bm == NULL) {
 		win_msg(_("无法打开书签!"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
@@ -1612,6 +1614,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 	} else if (key == ctlkey[11] || key == ctlkey2[11]
 			   || key == CTRL_PLAYPAUSE) {
 		int fid = freq_enter_hotzone();
+
 		if (config.autobm)
 			update_auto_bookmark();
 		text_close(fs);
@@ -1644,14 +1647,15 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 				break;
 			case 1:
 				{
-				int fid = freq_enter_hotzone();
-				if (config.autobm)
-					update_auto_bookmark();
-				text_close(fs);
-				fs = NULL;
-				disp_duptocachealpha(50);
-				freq_leave(fid);
-				return *selidx;
+					int fid = freq_enter_hotzone();
+
+					if (config.autobm)
+						update_auto_bookmark();
+					text_close(fs);
+					fs = NULL;
+					disp_duptocachealpha(50);
+					freq_leave(fid);
+					return *selidx;
 				}
 		}
 		scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
@@ -2053,7 +2057,7 @@ dword scene_readbook(dword selidx)
 				if (scene_autopage(&cur_book_view, &selidx))
 					goto redraw;
 			}
-			
+
 			scene_text_delay_action();
 		}
 		int ret;
@@ -2071,6 +2075,7 @@ dword scene_readbook(dword selidx)
 		;
 	}
 	int fid = freq_enter_hotzone();
+
 	if (config.autobm)
 		update_auto_bookmark();
 	text_close(fs);

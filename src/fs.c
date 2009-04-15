@@ -243,7 +243,6 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		freq_leave(fid);
 		return 0;
 	}
-
 	//  if(stricmp(dir, "ms0:/") == 0)
 	{
 		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
@@ -950,7 +949,7 @@ extern t_fs_filetype fs_file_get_type(const char *filename)
 	if (fs_is_music(filename, filename)) {
 		return fs_filetype_music;
 	}
-	
+
 	return fs_filetype_unknown;
 }
 
@@ -970,7 +969,7 @@ extern bool fs_is_txtbook(t_fs_filetype ft)
 }
 
 #ifdef ENABLE_MUSIC
-extern bool fs_is_music(const char* spath, const char *lpath)
+extern bool fs_is_music(const char *spath, const char *lpath)
 {
 	bool res;
 

@@ -189,6 +189,7 @@ bool scene_load_font(void)
 	SPRINTF_S(efontfile, "ASC%d", config.fontsize);
 	SPRINTF_S(cfontfile, "GBK%d", config.fontsize);
 	int fid = freq_enter_hotzone();
+
 	if (!disp_load_zipped_font(fontzipfile, efontfile, cfontfile)) {
 		SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(), config.fontsize);
 		SPRINTF_S(cfontfile, "%sfonts/GBK%d", scene_appdir(), config.fontsize);
@@ -231,6 +232,7 @@ bool scene_load_book_font(void)
 #ifdef ENABLE_TTF
 	if (config.usettf) {
 		int fid = freq_enter_hotzone();
+
 		loaded =
 			disp_load_zipped_truetype_book_font(config.ettfarch,
 												config.cttfarch,
@@ -253,6 +255,7 @@ bool scene_load_book_font(void)
 		SPRINTF_S(efontfile, "ASC%d", config.bookfontsize);
 		SPRINTF_S(cfontfile, "GBK%d", config.bookfontsize);
 		int fid = freq_enter_hotzone();
+
 		if (!disp_load_zipped_book_font(fontzipfile, efontfile, cfontfile)) {
 			SPRINTF_S(efontfile, "%sfonts/ASC%d", scene_appdir(),
 					  config.bookfontsize);
@@ -1779,7 +1782,8 @@ static int scene_bookmark_autosave(void)
 	}
 
 	if (fs != NULL && g_bm != NULL) {
-		g_bm->row[0] =  (fs->rows[fs-> crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
+		g_bm->row[0] =
+			(fs->rows[fs->crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
 		bookmark_save(g_bm);
 	}
 

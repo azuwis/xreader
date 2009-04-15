@@ -43,9 +43,10 @@
 
 #define WMA_MAX_BUF_SIZE 12288
 
-typedef struct wmadec_context {
-	AVCodecContext *avc_context ;
-	AVFormatContext *avf_context ;
+typedef struct wmadec_context
+{
+	AVCodecContext *avc_context;
+	AVFormatContext *avf_context;
 	int wma_idx;
 	AVPacket pkt;
 	uint8_t *inbuf_ptr;
@@ -98,7 +99,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 	if (frames <= 0)
 		return;
-	
+
 	if (channels == 2) {
 		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 	} else {
@@ -110,7 +111,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 }
 
-static void wma_seek_seconds(wmadec_context *decoder, double npt)
+static void wma_seek_seconds(wmadec_context * decoder, double npt)
 {
 	av_seek_frame(decoder->avf_context, -1, npt * AV_TIME_BASE, 0);
 	decoder->inbuf_size = 0;
@@ -124,24 +125,26 @@ static int wma_process_single(void)
 {
 	wmadec_context *p_context = decoder;
 
-redo:
-	if ( p_context->inbuf_size <= 0 ) {
-		if(av_read_frame(p_context->avf_context, &(p_context->pkt)) < 0) 
+  redo:
+	if (p_context->inbuf_size <= 0) {
+		if (av_read_frame(p_context->avf_context, &(p_context->pkt)) < 0)
 			return -1;
 		p_context->inbuf_size = p_context->pkt.size;
 		p_context->inbuf_ptr = p_context->pkt.data;
 	}
 
-	if(p_context->inbuf_size == 0) 
+	if (p_context->inbuf_size == 0)
 		return -1;
 
 	int use_len, outbuf_size = sizeof(p_context->outbuf);
 
-	use_len = avcodec_decode_audio2(p_context->avc_context, (short *)(p_context->outbuf), &outbuf_size,
-			p_context->inbuf_ptr, p_context->inbuf_size);
+	use_len =
+		avcodec_decode_audio2(p_context->avc_context,
+							  (short *) (p_context->outbuf), &outbuf_size,
+							  p_context->inbuf_ptr, p_context->inbuf_size);
 
-	if(use_len < 0) {
-		if(p_context->pkt.data)
+	if (use_len < 0) {
+		if (p_context->pkt.data)
 			av_free_packet(&(p_context->pkt));
 
 		decoder->inbuf_size = 0;
@@ -149,20 +152,21 @@ redo:
 		goto redo;
 	}
 
-	if(outbuf_size <= 0) {
+	if (outbuf_size <= 0) {
 		p_context->inbuf_size = 0;
 		p_context->inbuf_ptr = NULL;
-		if(p_context->pkt.data) av_free_packet(&(p_context->pkt));
+		if (p_context->pkt.data)
+			av_free_packet(&(p_context->pkt));
 		return 0;
 	}
 
 	p_context->inbuf_size -= use_len;
 	p_context->inbuf_ptr += use_len;
 
-	if(p_context->inbuf_size <= 0){
+	if (p_context->inbuf_size <= 0) {
 		p_context->inbuf_size = 0;
 		p_context->inbuf_ptr = NULL;
-		if(p_context->pkt.data) 
+		if (p_context->pkt.data)
 			av_free_packet(&(p_context->pkt));
 	}
 
@@ -171,7 +175,8 @@ redo:
 	if (samplesdecoded * g_info.channels > g_buff_size) {
 		g_buff_size = samplesdecoded * g_info.channels;
 		g_buff = safe_realloc(g_buff, g_buff_size * sizeof(*g_buff));
-		dbg_printf(d, "realloc g_buff to %u bytes",  g_buff_size * sizeof(*g_buff));
+		dbg_printf(d, "realloc g_buff to %u bytes",
+				   g_buff_size * sizeof(*g_buff));
 
 		if (g_buff == NULL)
 			return -1;
@@ -302,19 +307,25 @@ static void get_wma_tag(void)
 
 	AVMetadataTag *tag;
 
-	tag = av_metadata_get(decoder->avf_context->metadata, "title", NULL, AV_METADATA_IGNORE_SUFFIX);
+	tag =
+		av_metadata_get(decoder->avf_context->metadata, "title", NULL,
+						AV_METADATA_IGNORE_SUFFIX);
 
 	if (tag != NULL) {
 		STRCPY_S(g_info.tag.title, tag->value);
 	}
 
-	tag = av_metadata_get(decoder->avf_context->metadata, "author", NULL, AV_METADATA_IGNORE_SUFFIX);
+	tag =
+		av_metadata_get(decoder->avf_context->metadata, "author", NULL,
+						AV_METADATA_IGNORE_SUFFIX);
 
 	if (tag != NULL) {
 		STRCPY_S(g_info.tag.artist, tag->value);
 	}
 
-	tag = av_metadata_get(decoder->avf_context->metadata, "AlbumTitle", NULL, AV_METADATA_IGNORE_SUFFIX);
+	tag =
+		av_metadata_get(decoder->avf_context->metadata, "AlbumTitle", NULL,
+						AV_METADATA_IGNORE_SUFFIX);
 
 	if (tag != NULL) {
 		STRCPY_S(g_info.tag.album, tag->value);
@@ -322,9 +333,11 @@ static void get_wma_tag(void)
 
 	int i;
 
-	for(i=0; i<decoder->avf_context->metadata->count; ++i) {
-		dbg_printf(d, "%s: key %s value %s", __func__, decoder->avf_context->metadata->elems[i].key, decoder->avf_context->metadata->elems[i].value);
-	}	
+	for (i = 0; i < decoder->avf_context->metadata->count; ++i) {
+		dbg_printf(d, "%s: key %s value %s", __func__,
+				   decoder->avf_context->metadata->elems[i].key,
+				   decoder->avf_context->metadata->elems[i].value);
+	}
 }
 
 /**
@@ -370,21 +383,25 @@ static int wma_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	if(av_open_input_file(&(decoder->avf_context), spath, NULL, 0, NULL) < 0) {
+	if (av_open_input_file(&(decoder->avf_context), spath, NULL, 0, NULL) < 0) {
 		dbg_printf(d, "av_open_input_file failed");
 		__end();
 		return -1;
 	}
 
-	for(decoder->wma_idx = 0; decoder->wma_idx < decoder->avf_context->nb_streams; decoder->wma_idx++) {
-		decoder->avc_context = (decoder->avf_context->streams[decoder->wma_idx]->codec);
-		if(decoder->avc_context->codec_type == CODEC_TYPE_AUDIO)
+	for (decoder->wma_idx = 0;
+		 decoder->wma_idx < decoder->avf_context->nb_streams;
+		 decoder->wma_idx++) {
+		decoder->avc_context =
+			(decoder->avf_context->streams[decoder->wma_idx]->codec);
+		if (decoder->avc_context->codec_type == CODEC_TYPE_AUDIO)
 			break;
 	}
 
-	if ( decoder->wma_idx >= decoder->avf_context->nb_streams ) {
-		dbg_printf(d, "decoder->wma_idx >= decoder->avf_context->nb_streams failed");
-		
+	if (decoder->wma_idx >= decoder->avf_context->nb_streams) {
+		dbg_printf(d,
+				   "decoder->wma_idx >= decoder->avf_context->nb_streams failed");
+
 		__end();
 		return -1;
 	}
@@ -392,18 +409,19 @@ static int wma_load(const char *spath, const char *lpath)
 	av_find_stream_info(decoder->avf_context);
 
 	AVCodec *codec;
+
 	codec = avcodec_find_decoder(decoder->avc_context->codec_id);
-	
-	if ( !codec ) {
+
+	if (!codec) {
 		dbg_printf(d, "avcodec_find_decoder failed");
-		
+
 		__end();
 		return -1;
 	}
-	
-	if(avcodec_open(decoder->avc_context, codec) < 0) {
+
+	if (avcodec_open(decoder->avc_context, codec) < 0) {
 		dbg_printf(d, "avcodec_open failed");
-		
+
 		__end();
 		return -1;
 	}
@@ -415,7 +433,7 @@ static int wma_load(const char *spath, const char *lpath)
 		__end();
 		return -1;
 	}
-	
+
 	g_info.duration = (double) decoder->avf_context->duration / 1000000L;
 	g_info.avg_bps = (double) decoder->avf_context->bit_rate;
 
@@ -475,10 +493,10 @@ static int wma_end(void)
 	g_status = ST_STOPPED;
 
 	if (decoder != NULL) {
-		if(decoder->avc_context) 
+		if (decoder->avc_context)
 			avcodec_close(decoder->avc_context);
 
-		if(decoder->avf_context) 
+		if (decoder->avf_context)
 			av_close_input_file(decoder->avf_context);
 
 		free(decoder);
@@ -574,7 +592,7 @@ static int wma_get_info(struct music_info *pinfo)
  *
  * @return 是MPC文件返回1，否则返回0
  */
-static int wma_probe(const char* spath)
+static int wma_probe(const char *spath)
 {
 	const char *p;
 

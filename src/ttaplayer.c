@@ -92,7 +92,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 	if (frames <= 0)
 		return;
-	
+
 	if (channels == 2) {
 		memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 	} else {
@@ -280,7 +280,7 @@ static int tta_load(const char *spath, const char *lpath)
 	}
 
 	g_info.samples = ttainfo.DATALENGTH;
-	g_info.duration = (double)ttainfo.LENGTH;
+	g_info.duration = (double) ttainfo.LENGTH;
 	g_info.sample_freq = ttainfo.SAMPLERATE;
 	g_info.channels = ttainfo.NCH;
 	g_info.filesize = ttainfo.FILESIZE;
@@ -457,7 +457,7 @@ static int tta_get_info(struct music_info *pinfo)
  *
  * @return 是TTA文件返回1，否则返回0
  */
-static int tta_probe(const char* spath)
+static int tta_probe(const char *spath)
 {
 	const char *p;
 

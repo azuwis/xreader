@@ -197,7 +197,7 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 	info->sample_freq = ctx.sample_rate;
 
 	xrIoLseek(data->fd, xing_offtbl[ctx.lsf == 1][ctx.nb_channels == 1],
-			   PSP_SEEK_CUR);
+			  PSP_SEEK_CUR);
 
 	if (xrIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
 		return -1;
@@ -232,12 +232,12 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 			info->lame_vbr_quality = (100 - b) / 10;
 		}
 
-		if (xrIoRead(data->fd, info->lame_str, sizeof(info->lame_str)) != sizeof(info->lame_str)) {
+		if (xrIoRead(data->fd, info->lame_str, sizeof(info->lame_str)) !=
+			sizeof(info->lame_str)) {
 			return -1;
 		}
 
-		switch (info->lame_str[9] & 0xf)
-		{
+		switch (info->lame_str[9] & 0xf) {
 			case 1:
 			case 8:
 				info->lame_mode = CBR;
@@ -265,7 +265,8 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 				*p = '\0';
 		}
 
-		if (!strncmp(info->lame_str, "LAME", 4) || !strncmp(info->lame_str, "GOGO", 4))
+		if (!strncmp(info->lame_str, "LAME", 4)
+			|| !strncmp(info->lame_str, "GOGO", 4))
 			info->lame_encoded = true;
 	}
 
@@ -596,8 +597,7 @@ int search_valid_frame_me(mp3_reader_data * data, int *brate)
 	}
 
   found:
-	xrIoLseek(data->fd, dcount * (sizeof(buf) - 4) + off + start,
-			   PSP_SEEK_SET);
+	xrIoLseek(data->fd, dcount * (sizeof(buf) - 4) + off + start, PSP_SEEK_SET);
 
 	return size;
 }

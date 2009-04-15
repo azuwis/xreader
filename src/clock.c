@@ -49,4 +49,3 @@ void xrSetCpuClock(int cpu, int bus)
 		}
 	}
 }
-

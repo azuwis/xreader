@@ -99,7 +99,7 @@ extern void disp_init(void)
 	vram_disp = (pixel *) 0x04000000;
 	vram_draw = (pixel *) (0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
 	xrDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
-						  PSP_DISPLAY_SETBUF_NEXTFRAME);
+						 PSP_DISPLAY_SETBUF_NEXTFRAME);
 }
 
 unsigned int __attribute__ ((aligned(16))) list[262144];
@@ -110,10 +110,10 @@ extern void init_gu(void)
 
 	xrGuStart(GU_DIRECT, list);
 	xrGuDrawBuffer(GU_PSM_8888,
-					(void *) 0 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES, 512);
+				   (void *) 0 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES, 512);
 	xrGuDispBuffer(PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, (void *) 0, 512);
 	xrGuDepthBuffer((void *) 0 + (u32) 4 * 512 * PSP_SCREEN_HEIGHT +
-					 (u32) 2 * 512 * PSP_SCREEN_HEIGHT, 512);
+					(u32) 2 * 512 * PSP_SCREEN_HEIGHT, 512);
 	xrGuOffset(2048 - (PSP_SCREEN_WIDTH / 2), 2048 - (PSP_SCREEN_HEIGHT / 2));
 	xrGuViewport(2048, 2048, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 	xrGuDepthRange(65535, 0);
@@ -699,7 +699,7 @@ extern void disp_flip(void)
 		(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
 	disp_waitv();
 	xrDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
-						  PSP_DISPLAY_SETBUF_IMMEDIATE);
+						 PSP_DISPLAY_SETBUF_IMMEDIATE);
 	framebuffer = xrGuSwapBuffers();
 }
 
@@ -768,8 +768,8 @@ extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
 	vertices[1].z = 0;
 	vertices[1].color = 0;
 	xrGuDrawArray(GU_SPRITES,
-				   GU_TEXTURE_16BIT | GU_COLOR_8888 | GU_VERTEX_16BIT |
-				   GU_TRANSFORM_2D, 2, 0, vertices);
+				  GU_TEXTURE_16BIT | GU_COLOR_8888 | GU_VERTEX_16BIT |
+				  GU_TRANSFORM_2D, 2, 0, vertices);
 	xrGuFinish();
 	xrGuSync(0, 0);
 }
@@ -861,7 +861,7 @@ extern void disp_fix_osk(void *buffer)
 			(pixel *) 0x44000000 + (vram_page ? 0 : (512 * PSP_SCREEN_HEIGHT));
 	}
 	xrDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
-						  PSP_DISPLAY_SETBUF_IMMEDIATE);
+						 PSP_DISPLAY_SETBUF_IMMEDIATE);
 }
 
 extern void disp_rectduptocache(dword x1, dword y1, dword x2, dword y2)
@@ -1884,8 +1884,8 @@ extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 	xrGuDisable(GU_TEXTURE_2D);
 	xrGuDrawArray(GU_SPRITES,
-				   GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0,
-				   vertices);
+				  GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0,
+				  vertices);
 	xrGuEnable(GU_TEXTURE_2D);
 
 	xrGuFinish();
@@ -1905,8 +1905,8 @@ extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 	xrGuDisable(GU_TEXTURE_2D);
 	xrGuDrawArray(GU_LINE_STRIP,
-				   GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 5, 0,
-				   vertices);
+				  GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 5, 0,
+				  vertices);
 	xrGuEnable(GU_TEXTURE_2D);
 
 	xrGuFinish();
@@ -1923,8 +1923,8 @@ extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 	xrGuDisable(GU_TEXTURE_2D);
 	xrGuDrawArray(GU_LINES,
-				   GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0,
-				   vertices);
+				  GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0,
+				  vertices);
 	xrGuEnable(GU_TEXTURE_2D);
 
 	xrGuFinish();

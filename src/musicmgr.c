@@ -401,8 +401,8 @@ int music_fbackward(int sec)
 
 static int music_setupdriver(const char *spath, const char *lpath)
 {
-	struct music_ops * ops = musicdrv_chk_file(spath);
-	struct music_ops * dev = NULL;
+	struct music_ops *ops = musicdrv_chk_file(spath);
+	struct music_ops *dev = NULL;
 
 	if (ops) {
 		dev = set_musicdrv(ops->name);
@@ -415,7 +415,9 @@ static int music_setupdriver(const char *spath, const char *lpath)
 	}
 
 	if (dev != ops) {
-		dbg_printf(d, "%s: set musicdrv dev (0x%08x) != ops(0x%08x), but they have same name.", __func__, (unsigned int)dev, (unsigned int)ops);
+		dbg_printf(d,
+				   "%s: set musicdrv dev (0x%08x) != ops(0x%08x), but they have same name.",
+				   __func__, (unsigned int) dev, (unsigned int) ops);
 	}
 
 	return dev ? 0 : -ENODEV;
@@ -713,7 +715,8 @@ static int music_thread(SceSize arg, void *argp)
 			xrRtcGetCurrentTick(&end);
 			interval = pspDiffTime(&end, &start);
 
-			if (key == PSP_HPRM_FORWARD || key == PSP_HPRM_BACK || key == PSP_HPRM_PLAYPAUSE) {
+			if (key == PSP_HPRM_FORWARD || key == PSP_HPRM_BACK
+				|| key == PSP_HPRM_PLAYPAUSE) {
 				if (key != oldkey) {
 					xrRtcGetCurrentTick(&start);
 					xrRtcGetCurrentTick(&end);
@@ -728,16 +731,17 @@ static int music_thread(SceSize arg, void *argp)
 						musicdrv_fbackward(5);
 						xrKernelDelayThread(200000);
 					}
-				} 
+				}
 
 				oldkey = key;
-				
+
 				if (key == PSP_HPRM_PLAYPAUSE && interval >= 4.0) {
 					power_down();
 					xrPowerRequestSuspend();
 				}
 			} else {
-				if ((oldkey == PSP_HPRM_FORWARD || oldkey == PSP_HPRM_BACK || oldkey == PSP_HPRM_PLAYPAUSE)) {
+				if ((oldkey == PSP_HPRM_FORWARD || oldkey == PSP_HPRM_BACK
+					 || oldkey == PSP_HPRM_PLAYPAUSE)) {
 					if (interval < 0.5) {
 						if (oldkey == PSP_HPRM_FORWARD)
 							music_next();
@@ -811,8 +815,7 @@ int music_init(void)
 	g_shuffle.first_time = true;
 	stack_init(&played);
 	g_music_thread = xrKernelCreateThread("Music Thread",
-										   music_thread,
-										   0x12, 0x10000, 0, NULL);
+										  music_thread, 0x12, 0x10000, 0, NULL);
 
 	if (g_music_thread < 0) {
 		return -EBUSY;
