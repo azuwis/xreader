@@ -15,7 +15,8 @@ typedef enum {
 	ID3V1  =  0x1,
 	ID3V2  =  0x2,
 	APETAG =  0x4,
-	VORBIS =  0x8
+	VORBIS =  0x8,
+	WMATAG =  0x10
 } MusicInfoTagType;
 
 typedef struct {
