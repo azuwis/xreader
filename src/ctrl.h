@@ -42,6 +42,7 @@ extern void ctrl_analog(int *x, int *y);
 #endif
 extern dword ctrl_read_cont(void);
 extern dword ctrl_read(void);
+extern dword ctrl_read_raw(void);
 extern void ctrl_waitreleaseintime(int i);
 extern void ctrl_waitrelease(void);
 extern dword ctrl_waitany(void);
