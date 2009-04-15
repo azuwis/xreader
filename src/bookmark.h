@@ -39,5 +39,6 @@ extern dword bookmark_autoload(const char *filename);
 extern void bookmark_autosave(const char *filename, dword row);
 extern bool bookmark_export(p_bookmark bm, const char *filename);
 extern bool bookmark_import(const char *filename);
+extern void bookmark_rows_dbg(p_bookmark bm);
 
 #endif

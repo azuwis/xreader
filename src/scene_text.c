@@ -1434,8 +1434,8 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 		case (PSP_CTRL_SELECT | PSP_CTRL_START):
 			return exit_confirm();
 		case PSP_CTRL_SELECT:
-			bookmark_delete(bm);
-			memset(&bm->row[0], 0xFF, 10 * sizeof(dword));
+			bookmark_delete(g_bm);
+			memset(&g_bm->row[0], 0xFF, 10 * sizeof(dword));
 			win_msg(_("已删除书签!"), COLOR_WHITE, COLOR_WHITE,
 					config.msgbcolor);
 			return win_menu_op_cancel;
@@ -1452,7 +1452,7 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 				} else
 					STRCPY_S(bmfn, fs->filename);
 				STRCAT_S(bmfn, ".ebm");
-				bool ret = bookmark_export(bm, bmfn);
+				bool ret = bookmark_export(g_bm, bmfn);
 
 				if (ret) {
 					win_msg(_("已导出书签!"), COLOR_WHITE, COLOR_WHITE,
@@ -1465,18 +1465,18 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 			return win_menu_op_force_redraw;
 		case PSP_CTRL_SQUARE:
 			STRCPY_S(item[*index].name, "       ");
-			bm->row[(*index) + 1] = *(dword *) item[0].data;
-			utils_dword2string(bm->row[(*index) + 1] / 2, item[*index].name, 7);
-			bookmark_save(bm);
+			g_bm->row[(*index) + 1] = *(dword *) item[0].data;
+			utils_dword2string(g_bm->row[(*index) + 1] / 2, item[*index].name, 7);
+			bookmark_save(g_bm);
 			return win_menu_op_redraw;
 		case PSP_CTRL_TRIANGLE:
-			bm->row[(*index) + 1] = INVALID;
+			g_bm->row[(*index) + 1] = INVALID;
 			STRCPY_S(item[*index].name, _("  NONE "));
-			bookmark_save(bm);
+			bookmark_save(g_bm);
 			return win_menu_op_redraw;
 		case PSP_CTRL_CIRCLE:
-			if (bm->row[(*index) + 1] != INVALID) {
-				*(dword *) item[0].data = bm->row[(*index) + 1];
+			if (g_bm->row[(*index) + 1] != INVALID) {
+				*(dword *) item[0].data = g_bm->row[(*index) + 1];
 				item[1].data = (void *) true;
 				return win_menu_op_ok;
 			} else
@@ -1507,12 +1507,12 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 	++index;
 	disp_putstring(64, 65 + (1 + DISP_FONTSIZE) * 9, COLOR_WHITE, (const byte *)
 				   _("SELECT 删除全部书签    START 导出书签"));
-	if (bm->row[index] < fs->size
+	if (g_bm->row[index] < fs->size
 		&& fs_file_get_type(fs->filename) != fs_filetype_unknown) {
 		t_text preview;
 
 		memset(&preview, 0, sizeof(t_text));
-		preview.buf = fs->buf + min(fs->size, bm->row[index]);
+		preview.buf = fs->buf + min(fs->size, g_bm->row[index]);
 		if (fs->buf + fs->size - preview.buf <
 			8 * ((347 - 7 * DISP_FONTSIZE / 2) / (DISP_FONTSIZE / 2)))
 			preview.size = fs->buf + fs->size - preview.buf;
@@ -1553,9 +1553,9 @@ bool scene_bookmark(PBookViewData pView)
 {
 	dword * orgp = &pView->rrow;
 
-	bm = bookmark_open(pView->bookmarkname);
+	g_bm = bookmark_open(pView->bookmarkname);
 
-	if (bm == NULL) {
+	if (g_bm == NULL) {
 		win_msg(_("无法打开书签!"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		return 0;
 	}
@@ -1563,9 +1563,9 @@ bool scene_bookmark(PBookViewData pView)
 	t_win_menuitem item[9];
 
 	for (i = 0; i < 9; i++) {
-		if (bm->row[i + 1] != INVALID) {
+		if (g_bm->row[i + 1] != INVALID) {
 			STRCPY_S(item[i].name, "       ");
-			utils_dword2string(bm->row[i + 1] / 2, item[i].name, 7);
+			utils_dword2string(g_bm->row[i + 1] / 2, item[i].name, 7);
 		} else
 			STRCPY_S(item[i].name, _("  NONE "));
 		item[i].width = 7;
@@ -1585,8 +1585,8 @@ bool scene_bookmark(PBookViewData pView)
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  menubcolor, true, scene_bookmark_predraw, NULL,
 				  scene_bookmark_menucb)) != INVALID);
-	bookmark_close(bm);
-	bm = NULL;
+	bookmark_close(g_bm);
+	g_bm = NULL;
 	return (bool) item[1].data;
 }
 

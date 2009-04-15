@@ -101,7 +101,7 @@ static p_bookmark bookmark_open_hash(dword hash)
 				bm->index = i * 32 + j;
 				sceIoLseek(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
 				cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
-				dbg_printf(d, "%s: Reading bookmark at 0x%08x", __func__, cur_pos);
+				dbg_printf(d, "%s: Reading bookmark at 0x%08lx", __func__, cur_pos);
 				sceIoRead(fd, &bm->row[0], 10 * sizeof(dword));
 				sceIoClose(fd);
 				return bm;
@@ -140,7 +140,7 @@ extern void bookmark_save(p_bookmark bm)
 
 		memset(temp, 0, 32 * 10 * sizeof(dword));
 		dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
-		dbg_printf(d, "%s: Writing bookmark at 0x%08x", __func__, cur_pos);
+		dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
 		sceIoWrite(fd, temp, 32 * 10 * sizeof(dword));
 		free(temp);
 	}
@@ -166,7 +166,7 @@ extern void bookmark_save(p_bookmark bm)
 					sceIoWrite(fd, &bi, sizeof(t_bm_index));
 					sceIoLseek(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
 					dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
-					dbg_printf(d, "%s: Writing bookmark at 0x%08x", __func__, cur_pos);
+					dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
 					sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 					break;
 				}
@@ -181,7 +181,7 @@ extern void bookmark_save(p_bookmark bm)
 			bm->index = count * 32;
 			sceIoWrite(fd, &bi, sizeof(t_bm_index));
 			dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
-			dbg_printf(d, "%s: Writing bookmark at 0x%08x", __func__, cur_pos);
+			dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
 			sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 			dword *temp = calloc(31 * 10, sizeof(*temp));
 
@@ -201,14 +201,17 @@ extern void bookmark_save(p_bookmark bm)
 				   ((bm->index % 32) * 10 * sizeof(dword)), PSP_SEEK_SET);
 
 		dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
-		dbg_printf(d, "%s: Writing bookmark at 0x%08x", __func__, cur_pos);
-		int ret = sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
+		dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
+		int ret;
+
+		ret = sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 
 		if (ret < 0)
 		{
 			dbg_printf(d, "%s: writing failed %08x", __func__, ret);
 		}
 	}
+
 	sceIoClose(fd);
 }
 
@@ -242,6 +245,17 @@ extern void bookmark_close(p_bookmark bm)
 		free(bm);
 }
 
+void bookmark_rows_dbg(p_bookmark bm)
+{
+	int i;
+
+	dbg_printf(d, "Dumping bm(%p) hash: %08lx", bm, bm->hash);
+
+	for (i=0; i<10; ++i) {
+		dbg_printf(d, "BM%02d: %lu", i, bm->row[i]);
+	}
+}
+
 extern dword bookmark_autoload(const char *filename)
 {
 	dword row;
@@ -249,6 +263,9 @@ extern dword bookmark_autoload(const char *filename)
 
 	if (bm == NULL)
 		return 0;
+
+	bookmark_rows_dbg(bm);
+
 	if (bm->row[0] == INVALID)
 		row = 0;
 	else
@@ -269,6 +286,8 @@ extern void bookmark_autosave(const char *filename, dword row)
 
 	if (bm == NULL)
 		return;
+
+	bookmark_rows_dbg(bm);
 	bm->row[0] = row;
 	bookmark_save(bm);
 	bookmark_close(bm);

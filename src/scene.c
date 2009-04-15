@@ -76,7 +76,7 @@ char appdir[PATH_MAX], copydir[PATH_MAX], cutdir[PATH_MAX];
 bool copy_archmode = false;
 int copy_where = scene_in_dir;
 dword drperpage, rowsperpage, pixelsperrow;
-p_bookmark bm = NULL;
+p_bookmark g_bm = NULL;
 p_text fs = NULL;
 t_conf config;
 p_win_menuitem filelist = NULL, copylist = NULL, cutlist = NULL;
@@ -1770,6 +1770,9 @@ static void recalc_size(dword * drperpage, dword * rowsperpage,
 
 static int scene_bookmark_autosave(void)
 {
+	if (!config.isreading)
+		return 0;
+
 	if (!config.autobm || scene_readbook_in_raw_mode) {
 		return 0;
 	}
@@ -5757,10 +5760,12 @@ extern void scene_exit(void)
 
 	free_passwords();
 
+#if 0
 	if (bm != NULL) {
 		bookmark_close(bm);
 		bm = NULL;
 	}
+#endif
 
 	if (fs != NULL) {
 		scene_bookmark_autosave();
