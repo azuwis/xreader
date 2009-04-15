@@ -4,6 +4,7 @@
 #include <pspsdk.h>
 #include <pspkernel.h>
 #include <psptypes.h>
+#include <pspgu.h>
 
 static inline
 SceUID xrIoOpen(const char *file, int flags, SceMode mode)
@@ -111,6 +112,168 @@ static inline
 int xrIoRemove(const char *file)
 {
 	return sceIoRemove(file);
+}
+
+static inline
+void xrGuAmbientColor(unsigned int color)
+{
+	sceGuAmbientColor(color);
+}
+
+static inline
+void xrGuClear(int flags)
+{
+	sceGuClear(flags);
+}
+
+static inline
+void xrGuClearColor(unsigned int color)
+{
+	sceGuClearColor(color);
+}
+
+static inline
+void xrGuDepthBuffer(void* zbp, int zbw)
+{
+	sceGuDepthBuffer(zbp, zbw);
+}
+
+static inline
+void xrGuDepthRange(int near, int far)
+{
+	sceGuDepthRange(near, far);
+}
+
+static inline
+void xrGuDisable(int state)
+{
+	sceGuDisable(state);
+}
+
+static inline
+void xrGuDispBuffer(int width, int height, void* dispbp, int dispbw)
+{
+	sceGuDispBuffer(width, height, dispbp, dispbw);
+}
+
+static inline
+int xrGuDisplay(int state)
+{
+	return sceGuDisplay(state);
+}
+
+static inline
+void xrGuDrawArray(int prim, int vtype, int count, const void* indices, const void* vertices)
+{
+	sceGuDrawArray(prim, vtype, count, indices, vertices);
+}
+
+static inline
+void xrGuDrawBuffer(int psm, void* fbp, int fbw)
+{
+	sceGuDrawBuffer(psm, fbp, fbw);
+}
+
+static inline
+void xrGuEnable(int state)
+{
+	sceGuEnable(state);
+}
+
+static inline
+int xrGuFinish(void)
+{
+	return sceGuFinish();
+}
+
+static inline
+void xrGuFrontFace(int order)
+{
+	sceGuFrontFace(order);
+}
+
+static inline
+void* xrGuGetMemory(int size)
+{
+	return sceGuGetMemory(size);
+}
+
+static inline
+void xrGuInit(void)
+{
+	sceGuInit();
+}
+
+static inline
+void xrGuOffset(unsigned int x, unsigned int y)
+{
+	return sceGuOffset(x, y);
+}
+
+static inline
+void xrGuScissor(int x, int y, int w, int h)
+{
+	sceGuScissor(x, y, w, h);
+}
+
+static inline
+void xrGuShadeModel(int mode)
+{
+	sceGuShadeModel(mode);
+}
+
+static inline
+void xrGuStart(int cid, void* list)
+{
+	sceGuStart(cid, list);
+}
+
+static inline
+void* xrGuSwapBuffers(void)
+{
+	return sceGuSwapBuffers();
+}
+
+static inline
+int xrGuSync(int mode, int what)
+{
+	return sceGuSync(mode, what);
+}
+
+static inline
+void xrGuTerm(void)
+{
+	sceGuTerm();
+}
+
+static inline
+void xrGuTexFilter(int min, int mag)
+{
+	sceGuTexFilter(min, mag);
+}
+
+static inline
+void xrGuTexFunc(int tfx, int tcc)
+{
+	sceGuTexFunc(tfx, tcc);
+}
+
+static inline
+void xrGuTexImage(int mipmap, int width, int height, int tbw, const void* tbp)
+{
+	sceGuTexImage(mipmap, width, height, tbw, tbp);
+}
+
+static inline
+void xrGuTexMode(int tpsm, int maxmips, int a2, int swizzle)
+{
+	sceGuTexMode(tpsm, maxmips, a2, swizzle);
+}
+
+static inline
+void xrGuViewport(int cx, int cy, int width, int height)
+{
+	sceGuViewport(cx, cy, width, height);
 }
 
 #endif
