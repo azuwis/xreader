@@ -1594,8 +1594,7 @@ bool scene_bookmark(PBookViewData pView)
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  menubcolor, true, scene_bookmark_predraw, NULL,
 				  scene_bookmark_menucb)) != INVALID);
-//	bookmark_close(g_bm);
-//	g_bm = NULL;
+
 	return (bool) item[1].data;
 }
 
