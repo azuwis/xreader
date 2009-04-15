@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <psptypes.h>
 #include "dbg.h"
+#include "scene.h"
 
 struct _bm_index
 {
@@ -49,6 +50,7 @@ static dword flagbits[32] = {
 };
 
 static char bmfile[PATH_MAX];
+static t_bookmark g_oldbm;
 
 extern dword bookmark_encode(const char *filename)
 {
@@ -77,7 +79,10 @@ static p_bookmark bookmark_open_hash(dword hash)
 	memset(bm->row, 0xFF, 10 * sizeof(dword));
 	bm->index = INVALID;
 	bm->hash = hash;
+
+	sceIoSync("msfat0:", 0);
 	fd = sceIoOpen(bmfile, PSP_O_RDONLY, 0777);
+
 	if (fd < 0)
 		return bm;
 	dword count;
@@ -112,17 +117,45 @@ static p_bookmark bookmark_open_hash(dword hash)
 	return bm;
 }
 
+static void cache_invalidate_hack(void)
+{
+	int fd;
+	int t[20];
+	char conffile[PATH_MAX];
+
+	SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", 0, ".ini");
+
+	fd = sceIoOpen(conffile, PSP_O_RDONLY, 0777);
+
+	if (fd >= 0) {
+		sceIoRead(fd, t, sizeof(t));
+		sceIoClose(fd);
+	}
+}
+
 extern p_bookmark bookmark_open(const char *filename)
 {
+	p_bookmark bm;
+
 	if (!filename)
 		return NULL;
-	return bookmark_open_hash(bookmark_encode(filename));
+
+	cache_invalidate_hack();
+	bm = bookmark_open_hash(bookmark_encode(filename));
+	bookmark_rows_dbg(bm);
+	memcpy(&g_oldbm, bm, sizeof(g_oldbm));
+	return bm;
 }
 
 extern void bookmark_save(p_bookmark bm)
 {
 	if (!bm)
 		return;
+
+	if (!memcmp(&g_oldbm, bm, sizeof(g_oldbm)))
+		return;
+
+	sceIoSync("msfat0:", 0);
 	int fd = sceIoOpen(bmfile, PSP_O_CREAT | PSP_O_RDWR, 0777);
 
 	if (fd < 0)
@@ -141,6 +174,7 @@ extern void bookmark_save(p_bookmark bm)
 		memset(temp, 0, 32 * 10 * sizeof(dword));
 		dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
 		dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
+		bookmark_rows_dbg(bm);
 		sceIoWrite(fd, temp, 32 * 10 * sizeof(dword));
 		free(temp);
 	}
@@ -168,6 +202,7 @@ extern void bookmark_save(p_bookmark bm)
 					dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
 					dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
 					sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
+					bookmark_rows_dbg(bm);
 					break;
 				}
 		} else {
@@ -191,6 +226,7 @@ extern void bookmark_save(p_bookmark bm)
 			sceIoLseek(fd, 0, PSP_SEEK_SET);
 			count++;
 			sceIoWrite(fd, &count, sizeof(dword));
+			bookmark_rows_dbg(bm);
 		}
 	} else {
 		sceIoLseek(fd,
@@ -210,6 +246,8 @@ extern void bookmark_save(p_bookmark bm)
 		{
 			dbg_printf(d, "%s: writing failed %08x", __func__, ret);
 		}
+
+		bookmark_rows_dbg(bm);
 	}
 
 	sceIoClose(fd);
@@ -217,6 +255,7 @@ extern void bookmark_save(p_bookmark bm)
 
 extern void bookmark_delete(p_bookmark bm)
 {
+	sceIoSync("msfat0:", 0);
 	int fd = sceIoOpen(bmfile, PSP_O_RDWR, 0777);
 
 	if (fd < 0)
@@ -297,6 +336,8 @@ extern bool bookmark_export(p_bookmark bm, const char *filename)
 {
 	if (!bm || !filename)
 		return false;
+
+	sceIoSync("msfat0:", 0);
 	int fd = sceIoOpen(filename, PSP_O_CREAT | PSP_O_WRONLY, 0777);
 
 	if (fd < 0)
@@ -313,6 +354,7 @@ extern bool bookmark_import(const char *filename)
 	if (!filename)
 		return false;
 
+	sceIoSync("msfat0:", 0);
 	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)

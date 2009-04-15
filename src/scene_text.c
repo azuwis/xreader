@@ -85,17 +85,17 @@ static inline int calc_gi(void)
 	return tr->GI;
 }
 
-#ifdef _DEBUG
-static void write_byte(int fd, unsigned char b)
-{
-	sceIoWrite(fd, &b, 1);
-}
-
 static void update_auto_bookmark(void)
 {
 	if (g_bm != NULL) {
 		g_bm->row[0] =  (fs->rows[fs-> crow >> 10] + (fs->crow & 0x3FF))->start - fs->buf;
 	}
+}
+
+#ifdef _DEBUG
+static void write_byte(int fd, unsigned char b)
+{
+	sceIoWrite(fd, &b, 1);
 }
 
 void get_screen_shot(void)
@@ -1564,8 +1564,6 @@ bool scene_bookmark(PBookViewData pView)
 {
 	dword * orgp = &pView->rrow;
 
-//	g_bm = bookmark_open(pView->bookmarkname);
-
 	if (g_bm == NULL) {
 		win_msg(_("无法打开书签!"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		return 0;
@@ -2047,6 +2045,7 @@ dword scene_readbook(dword selidx)
 
 		if (ret != -1) {
 			free_infobar_image();
+			bookmark_save(g_bm);
 			bookmark_close(g_bm);
 			g_bm = NULL;
 			return ret;
