@@ -641,7 +641,7 @@ static int flac_probe(const char* spath)
 	p = utils_fileext(spath);
 
 	if (p) {
-		if (strnicmp(p, "flac", 3) == 0) {
+		if (stricmp(p, "flac") == 0) {
 			return 1;
 		}
 	}
