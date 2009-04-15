@@ -271,6 +271,15 @@ static int mpc_load(const char *spath, const char *lpath)
 	g_info.channels = info.channels;
 	g_info.filesize = info.total_file_length;
 
+	static bool gain_on = true;
+
+	if (gain_on)
+		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_TRUE, MPC_TRUE, MPC_TRUE);
+	else
+		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_FALSE, MPC_FALSE, MPC_FALSE);
+
+	gain_on = !gain_on;
+
 	generic_readtag(&g_info, spath);
 	if (xMP3AudioInit() < 0) {
 		__end();
