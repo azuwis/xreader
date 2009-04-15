@@ -1008,6 +1008,12 @@ static int mp3_load(const char *spath, const char *lpath)
 		buffered_reader_seek(data.r, cur);
 	}
 
+	g_info.channels = mp3info.channels;
+	g_info.sample_freq = mp3info.sample_freq;
+	g_info.avg_bps = mp3info.average_bitrate;
+	g_info.samples = mp3info.frames;
+	g_info.duration = mp3info.duration;
+
 	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%sframes %d%s]",
 			   g_info.channels, g_info.sample_freq,
 			   g_info.avg_bps / 1000,

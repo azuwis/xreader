@@ -532,6 +532,15 @@ static int wav_get_info(struct music_info *pinfo)
 		pinfo->psp_freq[0] = 33;
 		pinfo->psp_freq[1] = 16;
 	}
+	if (pinfo->type & MD_GET_FREQ) {
+		pinfo->freq = g_info.sample_freq;
+	}
+	if (pinfo->type & MD_GET_CHANNELS) {
+		pinfo->channels = g_info.channels;
+	}
+	if (pinfo->type & MD_GET_AVGKBPS) {
+		pinfo->avg_kbps = g_info.avg_bps / 1000;
+	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "wave");
 	}
