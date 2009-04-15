@@ -1037,6 +1037,39 @@ static int mp3_load(const char *spath, const char *lpath)
 			   (int) (g_info.duration / 60), (int) g_info.duration % 60,
 			   mp3info.frameoff != NULL ? ", frame table, " : ", ",
 			   g_info.samples, mp3info.have_crc ? ", crc passed" : "");
+
+#ifdef _DEBUG
+	if (mp3info.lame_encoded)
+	{
+			char lame_method[80];
+			char encode_msg[80];
+
+			switch(mp3info.lame_mode)
+			{
+				case ABR:
+					STRCPY_S(lame_method, "ABR");
+					break;
+				case CBR:
+					STRCPY_S(lame_method, "CBR");
+					break;
+				case VBR:
+					SPRINTF_S(lame_method, "VBR V%1d", 
+							mp3info.lame_vbr_quality);
+					break;
+				default:
+					break;
+			}
+
+			if (mp3info.lame_str[strlen(mp3info.lame_str) - 1] == ' ')
+				SPRINTF_S(encode_msg,
+						"%s%s", mp3info.lame_str, lame_method);
+			else
+				SPRINTF_S(encode_msg,
+						"%s %s", mp3info.lame_str, lame_method);
+			dbg_printf(d, "[ %s ]", encode_msg);
+	}
+#endif
+	
 	ret = xMP3AudioInit();
 
 	if (ret < 0) {
@@ -1166,7 +1199,33 @@ static int mp3_get_info(struct music_info *info)
 		}
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
-		info->encode_msg[0] = '\0';
+		if (show_encoder_msg && mp3info.lame_encoded) {
+			char lame_method[80];
+
+			switch(mp3info.lame_mode)
+			{
+				case ABR:
+					STRCPY_S(lame_method, "ABR");
+					break;
+				case CBR:
+					STRCPY_S(lame_method, "CBR");
+					break;
+				case VBR:
+					SPRINTF_S(lame_method, "VBR V%1d", mp3info.lame_vbr_quality);
+					break;
+				default:
+					break;
+			}
+
+			if (mp3info.lame_str[strlen(mp3info.lame_str) - 1] == ' ')
+				SPRINTF_S(info->encode_msg,
+						"%s%s", mp3info.lame_str, lame_method);
+			else
+				SPRINTF_S(info->encode_msg,
+						"%s %s", mp3info.lame_str, lame_method);
+		} else {
+			info->encode_msg[0] = '\0';
+		}
 	}
 	if (info->type & MD_GET_INSKBPS) {
 		info->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;

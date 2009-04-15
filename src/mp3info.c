@@ -204,16 +204,68 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 	b = LB_CONV(b);
 
 	if (b == MKBETAG('X', 'i', 'n', 'g') || b == MKBETAG('I', 'n', 'f', 'o')) {
+		dword cur_pos = sceIoLseek(data->fd, 0, PSP_SEEK_CUR);
+
 		if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
 			return -1;
 		}
+
 		b = LB_CONV(b);
+
 		if (b & 0x1) {
 			if (sceIoRead(data->fd, &frames, sizeof(frames)) != sizeof(frames)) {
 				return -1;
 			}
 			frames = LB_CONV(frames);
 		}
+
+		sceIoLseek(data->fd, cur_pos + 140 - 20 - 4 - 4, PSP_SEEK_SET);
+
+		if (sceIoRead(data->fd, &b, sizeof(b)) != sizeof(b)) {
+			return -1;
+		}
+
+		b = LB_CONV(b);
+
+		if (b != 0) {
+			info->lame_vbr_quality = (100 - b) / 10;
+		}
+
+		if (sceIoRead(data->fd, info->lame_str, sizeof(info->lame_str)) != sizeof(info->lame_str)) {
+			return -1;
+		}
+
+		switch (info->lame_str[9] & 0xf)
+		{
+			case 1:
+			case 8:
+				info->lame_mode = CBR;
+				break;
+			case 2:
+			case 9:
+				info->lame_mode = ABR;
+				break;
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+				info->lame_mode = VBR;
+				break;
+		}
+
+		info->lame_str[9] = '\0';
+
+		char *p;
+
+		p = &info->lame_str[strlen(info->lame_str) - 1];
+
+		if (p >= info->lame_str) {
+			if (*p == '.')
+				*p = '\0';
+		}
+
+		if (!strncmp(info->lame_str, "LAME", 4) || !strncmp(info->lame_str, "GOGO", 4))
+			info->lame_encoded = true;
 	}
 
 	/* Check for VBRI tag (always 32 bytes after end of mpegaudio header) */

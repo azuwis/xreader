@@ -44,6 +44,12 @@ typedef struct reader_data_t
 	long size;
 } mp3_reader_data;
 
+enum lame_mode {
+	CBR,
+	ABR,
+	VBR
+};
+
 struct MP3Info
 {
 	bool is_mpeg1or2;
@@ -55,6 +61,10 @@ struct MP3Info
 	double duration;
 	double average_bitrate;
 	dword *frameoff;
+	bool lame_encoded;
+	short lame_mode;
+	short lame_vbr_quality;
+	char lame_str[20];
 };
 
 int read_mp3_info(struct MP3Info *info, mp3_reader_data * data);
