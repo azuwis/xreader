@@ -802,7 +802,7 @@ void scene_mp3bar(void)
 
 		scene_draw_mp3bar(&firstdup);
 		disp_flip();
-		dword key = ctrl_read_raw();
+		dword key = ctrl_read_cont();
 
 		if (key != 0) {
 			secticks = 0;

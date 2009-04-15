@@ -171,48 +171,6 @@ extern dword ctrl_read(void)
 	return last_btn;
 }
 
-extern dword ctrl_read_raw(void)
-{
-	SceCtrlData ctl;
-
-#ifdef ENABLE_HPRM
-	if (hprmenable && sceHprmIsRemoteExist()) {
-		u32 key;
-
-		sceHprmPeekCurrentKey(&key);
-
-		if (key > 0) {
-			switch (key) {
-				case PSP_HPRM_FORWARD:
-					if (key == lastkhprmkey)
-						break;
-					lastkhprmkey = key;
-					return CTRL_FORWARD;
-				case PSP_HPRM_BACK:
-					if (key == lastkhprmkey)
-						break;
-					lastkhprmkey = key;
-					return CTRL_BACK;
-				case PSP_HPRM_PLAYPAUSE:
-					if (key == lastkhprmkey)
-						break;
-					lastkhprmkey = key;
-					return CTRL_PLAYPAUSE;
-			}
-		} else
-			lastkhprmkey = 0;
-	}
-#endif
-
-	sceCtrlReadBufferPositive(&ctl, 1);
-
-#ifdef ENABLE_ANALOG
-	if (ctl.Lx < 65 || ctl.Lx > 191 || ctl.Ly < 65 || ctl.Ly > 191)
-		return CTRL_ANALOG;
-#endif
-	return ctl.Buttons;
-}
-
 extern void ctrl_waitreleaseintime(int i)
 {
 	SceCtrlData ctl;
