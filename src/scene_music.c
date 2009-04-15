@@ -67,6 +67,8 @@ static int g_ins_kbps;
 
 static volatile int secticks = 0;
 
+static u64 start, end;
+
 // 获取PSP剩余内存，单位为Bytes
 // 作者:诗诺比
 static unsigned int get_free_mem(void)
@@ -337,6 +339,8 @@ const char *get_week_str(int day)
 
 static void scene_mp3bar_delay_action(void)
 {
+	sceKernelDelayThread(50000);
+	
 	if (config.dis_scrsave)
 		scePowerTick(0);
 }
@@ -612,6 +616,12 @@ static void scene_draw_mp3bar(bool * firstdup)
 
 static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 {
+	double interval;
+	static dword oldkey;
+
+	sceRtcGetCurrentTick(&end);
+	interval = pspDiffTime(&end, &start);
+
 	switch (key) {
 		case PSP_CTRL_LTRIGGER | PSP_CTRL_RTRIGGER:
 			if (win_msgbox
@@ -671,22 +681,42 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			break;
 		case PSP_CTRL_LTRIGGER:
 #ifdef ENABLE_MUSIC
-			music_prev();
+			if (key != oldkey) {
+				sceRtcGetCurrentTick(&start);
+				sceRtcGetCurrentTick(&end);
+				interval = pspDiffTime(&end, &start);
+			}
+			
+			if (interval >= 0.5) {
+				musicdrv_fbackward(5);
+				sceKernelDelayThread(200000);
+			}
 #endif
 			break;
 		case PSP_CTRL_RTRIGGER:
 #ifdef ENABLE_MUSIC
-			music_next();
+			if (key != oldkey) {
+				sceRtcGetCurrentTick(&start);
+				sceRtcGetCurrentTick(&end);
+				interval = pspDiffTime(&end, &start);
+			}
+			
+			if (interval >= 0.5) {
+				musicdrv_fforward(5);
+				sceKernelDelayThread(200000);
+			}
 #endif
 			break;
 		case PSP_CTRL_LEFT:
 #ifdef ENABLE_MUSIC
 			musicdrv_fbackward(5);
+			sceKernelDelayThread(200000);
 #endif
 			break;
 		case PSP_CTRL_RIGHT:
 #ifdef ENABLE_MUSIC
 			musicdrv_fforward(5);
+			sceKernelDelayThread(200000);
 #endif
 			break;
 		case PSP_CTRL_SELECT:
@@ -718,6 +748,19 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			return 1;
 	}
 
+	if ((!(key == PSP_CTRL_LTRIGGER || key == PSP_CTRL_RTRIGGER)) && (oldkey == PSP_CTRL_LTRIGGER || oldkey == PSP_CTRL_RTRIGGER)) {
+		if (interval < 0.5) {
+			if (oldkey == PSP_CTRL_LTRIGGER)
+				music_prev();
+			else if (oldkey == PSP_CTRL_RTRIGGER)
+				music_next();
+		}
+
+		sceRtcGetCurrentTick(&start);
+	}
+
+	oldkey = key;
+
 	return 0;
 }
 
@@ -731,7 +774,10 @@ void scene_mp3bar(void)
 		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 	u64 timer_start, timer_end;
 
+	sceRtcGetCurrentTick(&start);
+	sceRtcGetCurrentTick(&end);
 	sceRtcGetCurrentTick(&timer_start);
+
 	while (1) {
 		sceRtcGetCurrentTick(&timer_end);
 		if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
@@ -749,7 +795,7 @@ void scene_mp3bar(void)
 
 		scene_draw_mp3bar(&firstdup);
 		disp_flip();
-		dword key = ctrl_read();
+		dword key = ctrl_read_raw();
 
 		if (key != 0) {
 			secticks = 0;
@@ -763,7 +809,7 @@ void scene_mp3bar(void)
 			scePowerRequestSuspend();
 			secticks = 0;
 		}
-		sceKernelDelayThread(50000);
+
 		scene_mp3bar_delay_action();
 	}
 }

@@ -696,17 +696,21 @@ static int music_thread(SceSize arg, void *argp)
 			interval = pspDiffTime(&end, &start);
 
 			if (key == PSP_HPRM_FORWARD || key == PSP_HPRM_BACK || key == PSP_HPRM_PLAYPAUSE) {
-				if (interval >= 0.5) {
-					if (key == PSP_HPRM_FORWARD) {
-						musicdrv_fforward(2);
-					} else if (key == PSP_HPRM_BACK) {
-						musicdrv_fbackward(2);
-					}
-				} 
-
 				if (key != oldkey) {
 					sceRtcGetCurrentTick(&start);
+					sceRtcGetCurrentTick(&end);
+					interval = pspDiffTime(&end, &start);
 				}
+
+				if (interval >= 0.5) {
+					if (key == PSP_HPRM_FORWARD) {
+						musicdrv_fforward(5);
+						sceKernelDelayThread(200000);
+					} else if (key == PSP_HPRM_BACK) {
+						musicdrv_fbackward(5);
+						sceKernelDelayThread(200000);
+					}
+				} 
 
 				oldkey = key;
 				
