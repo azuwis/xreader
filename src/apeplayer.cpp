@@ -23,7 +23,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#define ENABLE_MUSIC
 #include "scene.h"
 #include "xmp3audiolib.h"
 #include "musicmgr.h"
@@ -38,6 +37,7 @@
 #include "musicinfo.h"
 #include "dbg.h"
 #include "ssv.h"
+#include "config.h"
 
 #ifdef ENABLE_APE
 

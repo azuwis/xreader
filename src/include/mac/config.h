@@ -55,28 +55,28 @@
 /* #undef LSTAT_FOLLOWS_SLASHED_SYMLINK */
 
 /* Name of package */
-#define PACKAGE "mac"
+// #define PACKAGE "mac"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "mac"
+// #define PACKAGE_NAME "mac"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "mac 3.99-u4-b4"
+// #define PACKAGE_STRING "mac 3.99-u4-b4"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "mac"
+// #define PACKAGE_TARNAME "mac"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.99-u4-b4"
+// #define PACKAGE_VERSION "3.99-u4-b4"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "3.99-u4-b4"
+// #define VERSION "3.99-u4-b4"
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */

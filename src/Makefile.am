@@ -101,7 +101,7 @@ endif
 
 if APE
 xReader_elf_SOURCES += \
-apeplayer.c apeplayer.h
+apeplayer.cpp apeplayer.h
 endif
 
 endif
