@@ -47,7 +47,6 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 						 size_t size, t_fs_filetype ft);
 extern void scene_mountrbkey(dword * ctlkey, dword * ctlkey2, dword * ku,
 							 dword * kd, dword * kl, dword * kr);
-extern bool scene_bookmark(dword * orgp);
 extern dword scene_options(dword * selidx);
 extern void scene_mp3bar(void);
 extern int scene_get_infobar_height(void);

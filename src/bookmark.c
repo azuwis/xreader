@@ -29,6 +29,7 @@
 #include "bookmark.h"
 #include <stdio.h>
 #include <psptypes.h>
+#include "dbg.h"
 
 struct _bm_index
 {
@@ -95,8 +96,12 @@ static p_bookmark bookmark_open_hash(dword hash)
 		}
 		for (j = 0; j < 32; j++)
 			if ((bi.flag & flagbits[j]) > 0 && bi.hash[j] == bm->hash) {
+				dword cur_pos;
+
 				bm->index = i * 32 + j;
 				sceIoLseek(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
+				cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
+				dbg_printf(d, "%s: Reading bookmark at 0x%08x", __func__, cur_pos);
 				sceIoRead(fd, &bm->row[0], 10 * sizeof(dword));
 				sceIoClose(fd);
 				return bm;
@@ -134,6 +139,8 @@ extern void bookmark_save(p_bookmark bm)
 		dword *temp = calloc(32 * 10, sizeof(*temp));
 
 		memset(temp, 0, 32 * 10 * sizeof(dword));
+		dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
+		dbg_printf(d, "%s: Writing bookmark at 0x%08x", __func__, cur_pos);
 		sceIoWrite(fd, temp, 32 * 10 * sizeof(dword));
 		free(temp);
 	}
@@ -158,6 +165,8 @@ extern void bookmark_save(p_bookmark bm)
 								32 * 10 * sizeof(dword)), PSP_SEEK_SET);
 					sceIoWrite(fd, &bi, sizeof(t_bm_index));
 					sceIoLseek(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
+					dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
+					dbg_printf(d, "%s: Writing bookmark at 0x%08x", __func__, cur_pos);
 					sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 					break;
 				}
@@ -171,6 +180,8 @@ extern void bookmark_save(p_bookmark bm)
 			bi.hash[0] = bm->hash;
 			bm->index = count * 32;
 			sceIoWrite(fd, &bi, sizeof(t_bm_index));
+			dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
+			dbg_printf(d, "%s: Writing bookmark at 0x%08x", __func__, cur_pos);
 			sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 			dword *temp = calloc(31 * 10, sizeof(*temp));
 
@@ -188,7 +199,15 @@ extern void bookmark_save(p_bookmark bm)
 									   32 * 10 * sizeof(dword)) +
 				   sizeof(t_bm_index) +
 				   ((bm->index % 32) * 10 * sizeof(dword)), PSP_SEEK_SET);
-		sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
+
+		dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
+		dbg_printf(d, "%s: Writing bookmark at 0x%08x", __func__, cur_pos);
+		int ret = sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
+
+		if (ret < 0)
+		{
+			dbg_printf(d, "%s: writing failed %08x", __func__, ret);
+		}
 	}
 	sceIoClose(fd);
 }
