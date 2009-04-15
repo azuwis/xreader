@@ -1940,15 +1940,21 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 					redraw_infobar(selidx);
 				}
 
-				if (config.autopage) {
+				if (config.autopage && config.autopagetype == 0) {
 					if (scene_autopage(&cur_book_view, &selidx))
 						goto redraw;
 				}
 			}
+
 			if (config.autosleep != 0 && secticks > 60 * config.autosleep) {
 				power_down();
 				scePowerRequestSuspend();
 				secticks = 0;
+			}
+
+			if (config.autopage && config.autopagetype == 1) {
+				if (scene_autopage(&cur_book_view, &selidx))
+					goto redraw;
 			}
 
 			scene_text_delay_action();
@@ -2024,7 +2030,13 @@ dword scene_readbook(dword selidx)
 			if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
 				sceRtcGetCurrentTick(&timer_start);
 				secticks++;
+
 				if (config.autopage) {
+					if (scene_autopage(&cur_book_view, &selidx))
+						goto redraw;
+				}
+
+				if (config.autopage && config.autopagetype == 0) {
 					if (scene_autopage(&cur_book_view, &selidx))
 						goto redraw;
 				}
@@ -2036,6 +2048,11 @@ dword scene_readbook(dword selidx)
 				secticks = 0;
 			}
 
+			if (config.autopage && config.autopagetype == 1) {
+				if (scene_autopage(&cur_book_view, &selidx))
+					goto redraw;
+			}
+			
 			scene_text_delay_action();
 		}
 		int ret;
