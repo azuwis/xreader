@@ -492,5 +492,39 @@ int generic_readtag(MusicInfo *music_info, const char* spath)
 		}
 	}
 
+	memset(&tag, 0, sizeof(tag));
+
+	fd = sceIoOpen(spath, PSP_O_RDONLY, 0777);
+
+	if (fd < 0) {
+		return -1;
+	}
+
+	// Search ID3v1
+	read_id3v1(&tag, music_info, fd);
+
+	sceIoLseek(fd, 0, PSP_SEEK_SET);
+	
+	// Search ID3v2
+	read_id3v2_tag(&tag, music_info, fd);
+	
+	sceIoLseek(fd, 0, PSP_SEEK_SET);
+	
+	sceIoClose(fd);
+
+	// Search for APETag
+	read_ape_tag(&tag, spath);
+
+	if (tag.type & APETAG) {
+		memcpy(&music_info->tag, &tag.apetag, sizeof(music_info->tag));
+	} else if (tag.type & ID3V2) {
+		memcpy(&music_info->tag, &tag.id3v2, sizeof(music_info->tag));
+	} else if (tag.type & ID3V1) {
+		memcpy(&music_info->tag, &tag.id3v1, sizeof(music_info->tag));
+	} else {
+		memset(&music_info->tag, 0, sizeof(music_info->tag));
+		music_info->tag.type = NONE;
+	}
+
 	return 0;
 }

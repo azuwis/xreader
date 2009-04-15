@@ -270,7 +270,6 @@ static int mpc_load(const char *spath, const char *lpath)
 	g_info.filesize = info.total_file_length;
 
 	generic_readtag(&g_info, spath);
-
 	if (xMP3AudioInit() < 0) {
 		__end();
 		return -1;
