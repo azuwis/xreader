@@ -273,10 +273,12 @@ static int mpc_load(const char *spath, const char *lpath)
 
 	static bool gain_on = true;
 
+#if 0
 	if (gain_on)
 		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_TRUE, MPC_TRUE, MPC_TRUE);
 	else
 		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_FALSE, MPC_FALSE, MPC_FALSE);
+#endif
 
 	gain_on = !gain_on;
 
