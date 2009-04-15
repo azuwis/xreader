@@ -162,6 +162,7 @@ static void report_image_error(int status)
 
 	SPRINTF_S(infomsg, _("图像无法装载, 原因: %s"), errstr);
 	win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
+	ctrl_waitrelease();
 	dbg_printf(d,
 			   _
 			   ("图像无法装载，原因: %s where = %d config.path %s filename %s"),
@@ -1015,7 +1016,7 @@ static bool z_mode_down(void)
 
 static bool z_mode_left(void)
 {
-	destx = curleft - MAX(imgh - (int) config.imgpagereserve, 0);
+	destx = curleft - MAX(PSP_SCREEN_WIDTH - (int) config.imgpagereserve, 0);
 
 	if (destx < 0) {
 		destx = 0;
@@ -1035,7 +1036,7 @@ static bool z_mode_left(void)
 
 static bool z_mode_right(void)
 {
-	destx = curleft + MAX(imgh - (int) config.imgpagereserve, 0);
+	destx = curleft + MAX(PSP_SCREEN_WIDTH - (int) config.imgpagereserve, 0);
 
 	if (destx + PSP_SCREEN_WIDTH > width_rotated) {
 		destx = width_rotated - PSP_SCREEN_WIDTH;
@@ -1409,6 +1410,7 @@ static int image_handle_input(dword * selidx, dword key)
 			slideshow = false;
 			win_msg(_("幻灯片播放已经停止！"), COLOR_WHITE,
 					COLOR_WHITE, config.msgbcolor);
+			ctrl_waitrelease();
 		}
 	} else if (key == config.imgkey[7] || key == config.imgkey2[7]) {
 		SceCtrlData ctl;
@@ -1438,6 +1440,7 @@ static int image_handle_input(dword * selidx, dword key)
 			slideshow = false;
 			win_msg(_("幻灯片播放已经停止！"), COLOR_WHITE,
 					COLOR_WHITE, config.msgbcolor);
+			ctrl_waitrelease();
 		} else {
 			imgreading = false;
 			reset_image_ptr();
