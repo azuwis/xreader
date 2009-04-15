@@ -111,7 +111,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 static void wma_seek_seconds(wmadec_context *decoder, double npt)
 {
-	av_seek_frame(decoder->avf_context, -1, npt * AV_TIME_BASE, AVSEEK_FLAG_ANY);
+	av_seek_frame(decoder->avf_context, -1, npt * AV_TIME_BASE, 0);
 	decoder->inbuf_size = 0;
 	decoder->inbuf_ptr = NULL;
 }
@@ -123,6 +123,7 @@ static int wma_process_single(void)
 {
 	wmadec_context *p_context = decoder;
 
+redo:
 	if ( p_context->inbuf_size <= 0 ) {
 		if(av_read_frame(p_context->avf_context, &(p_context->pkt)) < 0) 
 			return -1;
@@ -141,7 +142,10 @@ static int wma_process_single(void)
 	if(use_len < 0) {
 		if(p_context->pkt.data)
 			av_free_packet(&(p_context->pkt));
-		return -1;
+
+		decoder->inbuf_size = 0;
+		decoder->inbuf_ptr = NULL;
+		goto redo;
 	}
 
 	if(outbuf_size <= 0) {
