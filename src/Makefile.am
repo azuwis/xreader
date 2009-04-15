@@ -80,7 +80,7 @@ PSP_LARGE_MEMORY = 1
 libdir = $(top_srcdir)/lib
 if MUSIC
 LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a -lmac \
-	$(libdir)/libvorbisidec.a $(libdir)/libwmadec.a \
+	$(libdir)/libvorbisidec.a \
 	$(libdir)/pmpmodavc/pmpmodavclib.a $(libdir)/pmpmodavc/libavformat.a \
 	$(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a $(libdir)/pmpmodavc/pmpmodavclib.a
 endif

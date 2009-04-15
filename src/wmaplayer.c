@@ -22,7 +22,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <wmadec.h>
 #include "config.h"
 #include "ssv.h"
 #include "scene.h"
@@ -34,6 +33,20 @@
 #include "genericplayer.h"
 #include "musicinfo.h"
 #include "dbg.h"
+#include "ffmpeg/avcodec.h"
+#include "ffmpeg/avformat.h"
+
+#define WMA_MAX_BUF_SIZE 12288
+
+typedef struct wmadec_context {
+	AVCodecContext *avc_context ;
+	AVFormatContext *avf_context ;
+	int wma_idx;
+	AVPacket pkt;
+	uint8_t *inbuf_ptr;
+	int inbuf_size;
+	char outbuf[AVCODEC_MAX_AUDIO_FRAME_SIZE];
+} wmadec_context;
 
 static int __end(void);
 
@@ -60,7 +73,7 @@ static int g_buff_frame_start;
 /**
  * WMA解码器
  */
-static WmaFile *decoder = NULL;
+static wmadec_context *decoder = NULL;
 
 /**
  * 复制数据到声音缓冲区
@@ -81,10 +94,84 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 	memcpy(buf, srcbuf, frames * channels * sizeof(*srcbuf));
 }
 
-static void wma_seek_seconds(WmaFile *decoder, double npt)
+static void wma_seek_seconds(wmadec_context *decoder, double npt)
 {
-	if (decoder)
-		wma_seek(decoder, (long long)npt);
+	av_seek_frame(decoder->avf_context, decoder->wma_idx, npt * 1000000LL, AVSEEK_FLAG_ANY);
+	decoder->inbuf_size = 0;
+	decoder->inbuf_ptr = NULL;
+}
+
+/**
+ * 解码WMA
+ */
+static int wma_process_single(void)
+{
+	wmadec_context *p_context = decoder;
+
+	if ( p_context->inbuf_size <= 0 ) {
+		if(av_read_frame(p_context->avf_context, &(p_context->pkt)) < 0) 
+			return -1;
+		p_context->inbuf_size = p_context->pkt.size;
+		p_context->inbuf_ptr = p_context->pkt.data;
+	}
+
+	if(p_context->inbuf_size == 0) 
+		return -1;
+
+	int use_len, outbuf_size;
+
+	use_len = avcodec_decode_audio(p_context->avc_context, (short *)(p_context->outbuf), &outbuf_size,
+			p_context->inbuf_ptr, p_context->inbuf_size);
+
+	if(use_len < 0) {
+		if(p_context->pkt.data)
+			av_free_packet(&(p_context->pkt));
+		return -1;
+	}
+
+	if(outbuf_size <= 0) {
+		p_context->inbuf_size = 0;
+		p_context->inbuf_ptr = NULL;
+		if(p_context->pkt.data) av_free_packet(&(p_context->pkt));
+		return 0;
+	}
+
+	p_context->inbuf_size -= use_len;
+	p_context->inbuf_ptr += use_len;
+
+	if(p_context->inbuf_size <= 0){
+		p_context->inbuf_size = 0;
+		p_context->inbuf_ptr = NULL;
+		if(p_context->pkt.data) 
+			av_free_packet(&(p_context->pkt));
+	}
+
+	int samplesdecoded = outbuf_size / 2 / g_info.channels;
+
+	if (samplesdecoded > g_buff_size) {
+		g_buff_size = samplesdecoded;
+		g_buff = safe_realloc(g_buff, g_buff_size * g_info.channels * sizeof(*g_buff));
+		dbg_printf(d, "realloc g_buff to %u bytes",  g_buff_size * g_info.channels * sizeof(*g_buff));
+
+		if (g_buff == NULL)
+			return -1;
+	}
+
+	if (g_info.channels == 2) {
+		memcpy(g_buff, p_context->outbuf, samplesdecoded * 4);
+	} else {
+		int i;
+		uint8_t *output = (uint8_t*) g_buff;
+
+		for(i=0; i<samplesdecoded; ++i) {
+			*output++ = p_context->outbuf[i * 2];
+			*output++ = p_context->outbuf[i * 2 + 1];
+			*output++ = p_context->outbuf[i * 2];
+			*output++ = p_context->outbuf[i * 2 + 1];
+		}
+	}
+
+	return samplesdecoded;
 }
 
 /**
@@ -156,40 +243,18 @@ static int wma_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-			uint8_t *buf = (uint8_t *) wma_decode_frame(decoder, &ret);
+			ret = wma_process_single();
 
-			if (buf == NULL) {
+			if (ret == -1) {
 				__end();
-
 				return -1;
 			}
 
-			int samplesdecoded = ret / 2 / g_info.channels;
-
-			if (decoder->channels == 2) {
-				memcpy((uint8_t*) g_buff, buf, samplesdecoded * 4);
-			} else {
-				int i;
-				uint8_t *output = (uint8_t*) g_buff;
-
-				for(i=0; i<samplesdecoded; ++i) {
-					*output++ = buf[i * 2];
-					*output++ = buf[i * 2 + 1];
-					*output++ = buf[i * 2];
-					*output++ = buf[i * 2 + 1];
-				}
-			}
-
-			g_buff_frame_size = samplesdecoded;
+			g_buff_frame_size = ret;
 			g_buff_frame_start = 0;
 
-			incr = (double) samplesdecoded / g_info.sample_freq;
+			incr = (double) ret / g_info.sample_freq;
 			g_play_time += incr;
-#if 0
-			add_bitrate(&g_inst_br,
-						ret * 8 * g_info.sample_freq / WMA_MAX_BUF_SIZE,
-						incr);
-#endif
 		}
 	}
 
@@ -229,20 +294,26 @@ static void get_wma_tag(void)
 	g_info.tag.encode = config.mp3encode;
 
 	dbg_printf(d, "Dump title:");
-	dbg_hexdump_ascii(d, decoder->title, sizeof(decoder->title));
+	dbg_hexdump_ascii(d, (uint8_t*)decoder->avf_context->title, sizeof(decoder->avf_context->title));
 
-	if (decoder->title)
-		STRCPY_S(g_info.tag.title, decoder->title);
+	if (decoder->avf_context->title)
+		STRCPY_S(g_info.tag.title, decoder->avf_context->title);
 	else
 		STRCPY_S(g_info.tag.title, "");
 	
-	STRCPY_S(g_info.tag.album, "");
+	dbg_printf(d, "Dump album:");
+	dbg_hexdump_ascii(d, (uint8_t*)decoder->avf_context->album, sizeof(decoder->avf_context->album));
 	
+	if (decoder->avf_context->album)
+		STRCPY_S(g_info.tag.album, decoder->avf_context->album);
+	else
+		STRCPY_S(g_info.tag.album, "");
+
 	dbg_printf(d, "Dump author:");
-	dbg_hexdump_ascii(d, decoder->author, sizeof(decoder->author));
+	dbg_hexdump_ascii(d, (uint8_t*)decoder->avf_context->author, sizeof(decoder->avf_context->author));
 	
-	if (decoder->author)
-		STRCPY_S(g_info.tag.artist, decoder->author);
+	if (decoder->avf_context->author)
+		STRCPY_S(g_info.tag.artist, decoder->avf_context->author);
 	else
 		STRCPY_S(g_info.tag.artist, "");
 }
@@ -262,8 +333,11 @@ static int wma_load(const char *spath, const char *lpath)
 
 	__init();
 
-	wma_init();
-	g_buff_size = WMA_MAX_BUF_SIZE / 2;
+	avcodec_init();
+	avcodec_register_all();
+	av_register_all();
+
+	g_buff_size = WMA_MAX_BUF_SIZE;
 	g_buff = calloc(1, g_buff_size * sizeof(g_buff[0]));
 
 	if (g_buff == NULL) {
@@ -281,22 +355,59 @@ static int wma_load(const char *spath, const char *lpath)
 	g_info.filesize = sceIoLseek32(fd, 0, PSP_SEEK_END);
 	sceIoClose(fd);
 
-	decoder = wma_open(spath);
+	decoder = calloc(1, sizeof(*decoder));
 
 	if (decoder == NULL) {
 		__end();
 		return -1;
 	}
 
-	if (decoder->channels > 2 || decoder->channels <= 0) {
+	if(av_open_input_file(&(decoder->avf_context), spath, NULL, 0, NULL) < 0) {
 		__end();
 		return -1;
 	}
 
-	g_info.sample_freq = decoder->samplerate;
-	g_info.channels = decoder->channels;
-	g_info.duration = (double) decoder->duration / 1000;
-	g_info.avg_bps = decoder->bitrate;
+	for(decoder->wma_idx = 0; decoder->wma_idx < decoder->avf_context->nb_streams; decoder->wma_idx++) {
+		decoder->avc_context = (decoder->avf_context->streams[decoder->wma_idx]->codec);
+		if(decoder->avc_context->codec_type == CODEC_TYPE_AUDIO)
+			break;
+	}
+
+	if ( decoder->wma_idx >= decoder->avf_context->nb_streams ) {
+		__end();
+		return -1;
+	}
+
+	av_find_stream_info(decoder->avf_context);
+
+	AVCodec *codec;
+	codec = avcodec_find_decoder(decoder->avc_context->codec_id);
+	
+	if ( !codec ) {
+		__end();
+		return -1;
+	}
+	
+	if(avcodec_open(decoder->avc_context, codec) < 0) {
+		__end();
+		return -1;
+	}
+
+	g_info.sample_freq = decoder->avc_context->sample_rate;
+	g_info.channels = decoder->avc_context->channels;
+
+	if (g_info.channels > 2 || g_info.channels <= 0) {
+		__end();
+		return -1;
+	}
+	
+	g_info.duration = (double) decoder->avf_context->duration / 1000000L;
+
+	if (g_info.duration != 0) {
+		g_info.avg_bps = (double) g_info.filesize * 8 / g_info.duration;
+	} else {
+		g_info.avg_bps = 0;
+	}
 
 	get_wma_tag();
 
@@ -354,7 +465,13 @@ static int wma_end(void)
 	g_status = ST_STOPPED;
 
 	if (decoder != NULL) {
-		wma_close(decoder);
+		if(decoder->avc_context) 
+			avcodec_close(decoder->avc_context);
+
+		if(decoder->avf_context) 
+			av_close_input_file(decoder->avf_context);
+
+		free(decoder);
 		decoder = NULL;
 	}
 
