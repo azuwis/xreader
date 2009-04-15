@@ -219,6 +219,9 @@ static int wv_audiocallback(void *buf, unsigned int reqn, void *pdata)
 					*output++ = wv_buffer[2 * i + 1];
 					*output++ = wv_buffer[2 * i + 1] >> 8;
 				}
+			} else {
+				__end();
+				return -1;
 			}
 
 			g_buff_frame_size = ret;
