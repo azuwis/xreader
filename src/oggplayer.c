@@ -32,8 +32,7 @@
 #include "common/utils.h"
 #include "genericplayer.h"
 #include "musicinfo.h"
-#include <vorbis/codec.h>
-#include <vorbis/vorbisfile.h>
+#include "tremor/ivorbisfile.h"
 #include "dbg.h"
 
 #define OGG_BUFF_SIZE (6400 * 4)
@@ -64,6 +63,8 @@ static int g_buff_frame_start;
  * OGG解码器
  */
 static OggVorbis_File *decoder = NULL;
+
+static char g_vendor_str[80];
 
 /**
  * OGG文件句柄
@@ -105,20 +106,19 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 static void ogg_seek_seconds(OggVorbis_File *decoder, double npt)
 {
 	if (decoder)
-		ov_time_seek(decoder, npt);
+		ov_time_seek(decoder, npt * 1000);
 }
 
 /**
  * 解码Ogg
  */
-static int ogg_process_single(int *current_section)
+static int ogg_process_single(void)
 {
 	int bytes;
 	char pcmout[OGG_BUFF_SIZE / 2];
-	const int bep = 0;
+	int current_section;
 
-	bytes = ov_read(decoder, pcmout, sizeof(pcmout), bep, 2, 1,
-				current_section);
+	bytes = ov_read(decoder, pcmout, sizeof(pcmout), &current_section);
 	
 	switch (bytes)
 	{
@@ -154,7 +154,7 @@ static int ogg_process_single(int *current_section)
 		}
 	}
 
-	return bytes;
+	return samplesdecoded;
 }
 
 /**
@@ -220,15 +220,13 @@ static int ogg_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
-			int decoded_bits = 0;
-
 			send_to_sndbuf(audio_buf,
 						   &g_buff[g_buff_frame_start * g_info.channels],
 						   avail_frame, g_info.channels);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-			ret = ogg_process_single(&decoded_bits);
+			ret = ogg_process_single();
 
 			if (ret == -1) {
 				__end();
@@ -240,9 +238,6 @@ static int ogg_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 			incr = (double) ret / g_info.sample_freq;
 			g_play_time += incr;
-			add_bitrate(&g_inst_br,
-						decoded_bits * g_info.sample_freq / ret,
-						incr);
 		}
 	}
 
@@ -272,24 +267,37 @@ static int __init(void)
 	g_ogg_fd = -1;
 	g_buff = NULL;
 	g_buff_size = 0;
+	memset(g_vendor_str, 0, sizeof(g_vendor_str));
 
 	return 0;
 }
 
-void get_ogg_tag(OggVorbis_File * decoder)
+static void get_ogg_tag(OggVorbis_File * decoder)
 {
 	int i;
 
 	vorbis_comment *comment = ov_comment(decoder, -1);
 
+	if (comment == NULL) {
+		return;
+	}
+
+	if (comment->vendor) {
+		STRCPY_S(g_vendor_str, comment->vendor);
+	} else {
+		STRCPY_S(g_vendor_str, "");
+	}
+
 	for (i = 0; i < comment->comments; i++) {
-		if (!strncmp(comment->user_comments[i], "TITLE=", sizeof("TITLE=") - 1)) {
+		dbg_printf(d, "%s: %s", __func__, comment->user_comments[i]);
+
+		if (!strnicmp(comment->user_comments[i], "TITLE=", sizeof("TITLE=") - 1)) {
 			STRCPY_S(g_info.tag.title, comment->user_comments[i] + sizeof("TITLE=") - 1);
-		} else if (!strncmp(comment->user_comments[i], "ALBUM=", sizeof("ALBUM=") - 1)) {
+		} else if (!strnicmp(comment->user_comments[i], "ALBUM=", sizeof("ALBUM=") - 1)) {
 			STRCPY_S(g_info.tag.album, comment->user_comments[i] + sizeof("ALBUM=") - 1);
-		} else if (!strncmp(comment->user_comments[i], "ARTIST=", sizeof("ARTIST=") - 1)) {
+		} else if (!strnicmp(comment->user_comments[i], "ARTIST=", sizeof("ARTIST=") - 1)) {
 			STRCPY_S(g_info.tag.artist, comment->user_comments[i] + sizeof("ARTIST=") - 1);
-		} else if (!strncmp(comment->user_comments[i], "COMMENT=", sizeof("COMMENT=") - 1)) {
+		} else if (!strnicmp(comment->user_comments[i], "COMMENT=", sizeof("COMMENT=") - 1)) {
 			STRCPY_S(g_info.tag.comment, comment->user_comments[i] + sizeof("COMMENT=") - 1);
 		}
 	}
@@ -322,7 +330,7 @@ static int ogg_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	decoder = calloc(1, sizeof(decoder));
+	decoder = calloc(1, sizeof(*decoder));
 
 	if (decoder == NULL) {
 		__end();
@@ -356,8 +364,22 @@ static int ogg_load(const char *spath, const char *lpath)
 
 	g_info.sample_freq = vi->rate;
 	g_info.channels = vi->channels;
-	g_info.duration = ov_time_total(decoder, -1) * 100;
-	g_info.avg_bps = (double) g_info.filesize * 8 / g_info.duration;
+
+	ogg_int64_t duration;
+
+	duration = ov_time_total(decoder, -1);
+
+	if (duration == OV_EINVAL) {
+		g_info.duration = 0;
+	} else {
+		g_info.duration = (double) duration / 1000;
+	}
+
+	if (g_info.duration != 0) {
+		g_info.avg_bps = (double) g_info.filesize * 8 / g_info.duration;
+	} else {
+		g_info.avg_bps = 0;
+	}
 
 	get_ogg_tag(decoder);
 
@@ -495,19 +517,31 @@ static int ogg_get_info(struct music_info *pinfo)
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
-		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
+		if (decoder) {
+			static long old_bitrate = 0;
+			long bitrate;
+
+			bitrate = ov_bitrate_instant(decoder);
+
+			if (bitrate == 0) {
+				bitrate = old_bitrate;
+			} else if (bitrate == OV_FALSE || bitrate == OV_EINVAL) {
+				bitrate = g_info.avg_bps;
+			} else {
+				old_bitrate = bitrate;
+			}
+
+			pinfo->ins_kbps = bitrate / 1000;
+		} else {
+			pinfo->ins_kbps = 0;
+		}
 	}
 	if (pinfo->type & MD_GET_DECODERNAME) {
 		STRCPY_S(pinfo->decoder_name, "ogg");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
 		if (show_encoder_msg) {
-#if 0
-			SPRINTF_S(pinfo->encode_msg,
-					  "SV %lu.%lu, Profile %s (%s)", info.stream_version & 15,
-					  info.stream_version >> 4, info.profile_name,
-					  info.encoder);
-#endif
+			STRCPY_S(pinfo->encode_msg, g_vendor_str);
 		} else {
 			pinfo->encode_msg[0] = '\0';
 		}
