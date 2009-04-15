@@ -947,7 +947,7 @@ extern t_fs_filetype fs_file_get_type(const char *filename)
 		entry2++;
 	}
 
-	if (fs_is_music(filename)) {
+	if (fs_is_music(filename, filename)) {
 		return fs_filetype_music;
 	}
 	
@@ -970,8 +970,17 @@ extern bool fs_is_txtbook(t_fs_filetype ft)
 }
 
 #ifdef ENABLE_MUSIC
-extern bool fs_is_music(const char* spath)
+extern bool fs_is_music(const char* spath, const char *lpath)
 {
-	return musicdrv_chk_file(spath) != NULL ? true : false;
+	bool res;
+
+	res = musicdrv_chk_file(spath) != NULL ? true : false;
+
+	if (res)
+		return res;
+
+	res = musicdrv_chk_file(lpath) != NULL ? true : false;
+
+	return res;
 }
 #endif

@@ -281,7 +281,7 @@ int music_add(const char *spath, const char *lpath)
 	if (spath == NULL || lpath == NULL)
 		return -EINVAL;
 
-	if (!fs_is_music(spath))
+	if (!fs_is_music(spath, lpath))
 		return -EINVAL;
 
 	tmp = &g_music_files;
@@ -406,6 +406,12 @@ static int music_setupdriver(const char *spath, const char *lpath)
 
 	if (ops) {
 		dev = set_musicdrv(ops->name);
+	} else {
+		ops = musicdrv_chk_file(lpath);
+
+		if (ops) {
+			dev = set_musicdrv(ops->name);
+		}
 	}
 
 	if (dev != ops) {
@@ -440,6 +446,12 @@ int music_directplay(const char *spath, const char *lpath)
 	music_add(spath, lpath);
 	music_lock();
 	pos = music_find(spath, lpath);
+
+	if (pos < 0) {
+		music_unlock();
+		return -1;
+	}
+
 	g_list.curr_pos = pos;
 	ret = music_play(pos);
 
@@ -971,7 +983,7 @@ int music_add_dir(const char *spath, const char *lpath)
 			music_add_dir(spath2, lpath2);
 			continue;
 		}
-		if (fs_is_music(info[i].filename) == false)
+		if (fs_is_music(info[i].filename, info[i].longname) == false)
 			continue;
 		char sfn[PATH_MAX];
 		char lfn[PATH_MAX];

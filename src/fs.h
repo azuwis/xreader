@@ -85,6 +85,6 @@ p_win_menuitem fs_empty_dir(dword * filecount, dword icolor,
 extern t_fs_filetype fs_file_get_type(const char *filename);
 extern bool fs_is_image(t_fs_filetype ft);
 extern bool fs_is_txtbook(t_fs_filetype ft);
-extern bool fs_is_music(const char* spath);
+extern bool fs_is_music(const char* spath, const char* lpath);
 
 #endif
