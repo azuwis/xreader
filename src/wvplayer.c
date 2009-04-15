@@ -80,6 +80,11 @@ static WavpackContext *g_decoder = NULL;
 static int32_t *wv_buffer = NULL;
 
 /**
+ * WvPack解码模式
+ */
+static int g_mode = 0;
+
+/**
  * 复制数据到声音缓冲区
  *
  * @note 声音缓存区的格式为双声道，16位低字序
@@ -247,6 +252,7 @@ static int __init(void)
 	wv_buffer = NULL;
 	g_decoder = NULL;
 	g_encode_name[0] = '\0';
+	g_mode = 0;
 
 	return 0;
 }
@@ -367,33 +373,33 @@ static int wv_load(const char *spath, const char *lpath)
 
 	g_info.avg_bps = WavpackGetAverageBitrate(g_decoder, 1);
 
-	int mode = WavpackGetMode(g_decoder);
+	g_mode = WavpackGetMode(g_decoder);
 
-	if (mode & MODE_VALID_TAG) {
+	if (g_mode & MODE_VALID_TAG) {
 		wv_get_tag();
 	}
 
 	g_encode_name[0] = '\0';
 
-	if (mode & MODE_WVC) {
+	if (g_mode & MODE_WVC) {
 		STRCAT_S(g_encode_name, " WVC");
 	}
 
-	if (mode & MODE_HYBRID) {
+	if (g_mode & MODE_HYBRID) {
 		STRCAT_S(g_encode_name, " HYBRID");
 	}
 
-	if (mode & MODE_LOSSLESS) {
+	if (g_mode & MODE_LOSSLESS) {
 		STRCAT_S(g_encode_name, " LOSSLESS");
 	} else {
 		STRCAT_S(g_encode_name, " LOSSY");
 	}
 
-	if (mode & MODE_HIGH) {
+	if (g_mode & MODE_HIGH) {
 		STRCAT_S(g_encode_name, " HIGH");
 	}
 
-	if (mode & MODE_FAST) {
+	if (g_mode & MODE_FAST) {
 		STRCAT_S(g_encode_name, " FAST");
 	}
 
@@ -537,7 +543,11 @@ static int wv_get_info(struct music_info *pinfo)
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
-		pinfo->psp_freq[0] = 222;
+		if (g_mode & MODE_WVC)
+			pinfo->psp_freq[0] = 266;
+		else
+			pinfo->psp_freq[0] = 222;
+
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
