@@ -80,7 +80,6 @@ static p_bookmark bookmark_open_hash(dword hash)
 	bm->index = INVALID;
 	bm->hash = hash;
 
-	sceIoSync("msfat0:", 0);
 	fd = sceIoOpen(bmfile, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
@@ -142,7 +141,6 @@ extern p_bookmark bookmark_open(const char *filename)
 
 	cache_invalidate_hack();
 	bm = bookmark_open_hash(bookmark_encode(filename));
-	bookmark_rows_dbg(bm);
 	memcpy(&g_oldbm, bm, sizeof(g_oldbm));
 	return bm;
 }
@@ -155,7 +153,6 @@ extern void bookmark_save(p_bookmark bm)
 	if (!memcmp(&g_oldbm, bm, sizeof(g_oldbm)))
 		return;
 
-	sceIoSync("msfat0:", 0);
 	int fd = sceIoOpen(bmfile, PSP_O_CREAT | PSP_O_RDWR, 0777);
 
 	if (fd < 0)
@@ -174,7 +171,6 @@ extern void bookmark_save(p_bookmark bm)
 		memset(temp, 0, 32 * 10 * sizeof(dword));
 		dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
 		dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
-		bookmark_rows_dbg(bm);
 		sceIoWrite(fd, temp, 32 * 10 * sizeof(dword));
 		free(temp);
 	}
@@ -202,7 +198,6 @@ extern void bookmark_save(p_bookmark bm)
 					dword cur_pos = sceIoLseek(fd, 0, PSP_SEEK_CUR);
 					dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
 					sceIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
-					bookmark_rows_dbg(bm);
 					break;
 				}
 		} else {
@@ -226,7 +221,6 @@ extern void bookmark_save(p_bookmark bm)
 			sceIoLseek(fd, 0, PSP_SEEK_SET);
 			count++;
 			sceIoWrite(fd, &count, sizeof(dword));
-			bookmark_rows_dbg(bm);
 		}
 	} else {
 		sceIoLseek(fd,
@@ -246,8 +240,6 @@ extern void bookmark_save(p_bookmark bm)
 		{
 			dbg_printf(d, "%s: writing failed %08x", __func__, ret);
 		}
-
-		bookmark_rows_dbg(bm);
 	}
 
 	sceIoClose(fd);
@@ -255,7 +247,6 @@ extern void bookmark_save(p_bookmark bm)
 
 extern void bookmark_delete(p_bookmark bm)
 {
-	sceIoSync("msfat0:", 0);
 	int fd = sceIoOpen(bmfile, PSP_O_RDWR, 0777);
 
 	if (fd < 0)
@@ -284,17 +275,6 @@ extern void bookmark_close(p_bookmark bm)
 		free(bm);
 }
 
-void bookmark_rows_dbg(p_bookmark bm)
-{
-	int i;
-
-	dbg_printf(d, "Dumping bm(%p) hash: %08lx", bm, bm->hash);
-
-	for (i=0; i<10; ++i) {
-		dbg_printf(d, "BM%02d: %lu", i, bm->row[i]);
-	}
-}
-
 extern dword bookmark_autoload(const char *filename)
 {
 	dword row;
@@ -302,8 +282,6 @@ extern dword bookmark_autoload(const char *filename)
 
 	if (bm == NULL)
 		return 0;
-
-	bookmark_rows_dbg(bm);
 
 	if (bm->row[0] == INVALID)
 		row = 0;
@@ -326,7 +304,6 @@ extern void bookmark_autosave(const char *filename, dword row)
 	if (bm == NULL)
 		return;
 
-	bookmark_rows_dbg(bm);
 	bm->row[0] = row;
 	bookmark_save(bm);
 	bookmark_close(bm);
@@ -337,7 +314,6 @@ extern bool bookmark_export(p_bookmark bm, const char *filename)
 	if (!bm || !filename)
 		return false;
 
-	sceIoSync("msfat0:", 0);
 	int fd = sceIoOpen(filename, PSP_O_CREAT | PSP_O_WRONLY, 0777);
 
 	if (fd < 0)
@@ -354,7 +330,6 @@ extern bool bookmark_import(const char *filename)
 	if (!filename)
 		return false;
 
-	sceIoSync("msfat0:", 0);
 	int fd = sceIoOpen(filename, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
