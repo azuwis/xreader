@@ -32,6 +32,9 @@
 #include "crc16.h"
 #include "charsets.h"
 #include "dbg.h"
+#include "config.h"
+
+#if defined(ENABLE_MP3)|| defined(ENABLE_TTA)
 
 typedef int64_t offset_t;
 
@@ -327,3 +330,4 @@ int search_valid_frame_me_buffered(mp3_reader_data * data, int *brate)
 	return size;
 }
 
+#endif

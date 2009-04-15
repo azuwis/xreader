@@ -35,6 +35,8 @@
 #include "tremor/ivorbisfile.h"
 #include "dbg.h"
 
+#ifdef ENABLE_OGG
+
 #define OGG_BUFF_SIZE (6400 * 4)
 
 static int __end(void);
@@ -610,3 +612,4 @@ static long ovcb_tell(void *datasource)
 	return sceIoLseek32(*((int*)datasource), 0, PSP_SEEK_CUR);
 }
 
+#endif

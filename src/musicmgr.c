@@ -280,6 +280,9 @@ int music_add(const char *spath, const char *lpath)
 	if (spath == NULL || lpath == NULL)
 		return -EINVAL;
 
+	if (fs_is_music(spath) == NULL)
+		return -EINVAL;
+
 	tmp = &g_music_files;
 	count = 0;
 
@@ -753,16 +756,43 @@ int music_init(void)
 	sceRtcGetCurrentClockLocalTime(&tm);
 	srand(tm.microseconds);
 	music_sema = sceKernelCreateSema("Music Sema", 0, 1, 1, NULL);
+
+#ifdef ENABLE_MPC
 	mpc_init();
+#endif
+
+#ifdef ENABLE_WAV
 	wav_init();
+#endif
+
+#ifdef ENABLE_TTA
 	tta_init();
+#endif
+
+#ifdef ENABLE_APE
 	ape_init();
+#endif
+
+#ifdef ENABLE_MP3
 	mp3_init();
+#endif
+
+#ifdef ENABLE_FLAC
 	flac_init();
+#endif
+
+#ifdef ENABLE_OGG
 	ogg_init();
+#endif
+
+#ifdef ENABLE_WMA
 	wmadrv_init();
+#endif
+
+#ifdef ENABLE_WAVPACK
 	wv_init();
-	set_musicdrv("musepack");
+#endif
+
 	memset(&g_list, 0, sizeof(g_list));
 	g_list.first_time = true;
 	g_shuffle.first_time = true;

@@ -39,6 +39,8 @@
 #include "dbg.h"
 #include "ssv.h"
 
+#ifdef ENABLE_APE
+
 #define BLOCKS_PER_DECODE (4096 / 4)
 #define NUM_AUDIO_SAMPLES (BLOCKS_PER_DECODE * 4)
 
@@ -600,3 +602,5 @@ extern "C" int ape_init(void)
 {
 	return register_musicdrv(&ape_ops);
 }
+
+#endif

@@ -36,8 +36,24 @@ AC_ARG_ENABLE(analog, [  --enable-analog   Enable analog input option	default is
 analog="$enableval", analog=yes)
 AC_ARG_ENABLE(music, [  --enable-music   Enable music option	default is enabled],
 music="$enableval", music=yes)
-AC_ARG_ENABLE(wma, [  --enable-wma   Enable wma option	default is disable],
-wma="$enableval", wma=no)
+AC_ARG_ENABLE(mp3, [  --enable-mp3   Enable mp3 option	default is enabled when music is enabled],
+mp3="$enableval", mp3=$music)
+AC_ARG_ENABLE(mpc, [  --enable-mpc   Enable mpc option	default is enabled when music is enabled],
+mpc="$enableval", mpc=$music)
+AC_ARG_ENABLE(ogg, [  --enable-ogg   Enable ogg option	default is enabled when music is enabled],
+ogg="$enableval", ogg=$music)
+AC_ARG_ENABLE(wma, [  --enable-wma   Enable wma option	default is enabled when music is enabled],
+wma="$enableval", wma=$music)
+AC_ARG_ENABLE(wav, [  --enable-wav   Enable wav option	default is enabled when music is enabled],
+wav="$enableval", wav=$music)
+AC_ARG_ENABLE(ape, [  --enable-ape   Enable ape option	default is enabled when music is enabled],
+ape="$enableval", ape=$music)
+AC_ARG_ENABLE(tta, [  --enable-tta   Enable tta option	default is enabled when music is enabled],
+tta="$enableval", tta=$music)
+AC_ARG_ENABLE(wv, [  --enable-wv   Enable wavpack option	default is enabled when music is enabled],
+wv="$enableval", wv=$music)
+AC_ARG_ENABLE(flac, [  --enable-flac   Enable flac option	default is enabled when music is enabled],
+flac="$enableval", flac=$music)
 AC_ARG_ENABLE(lyric, [  --enable-lyric   Enable lyric option	default is enabled],
 lyric="$enableval", lyric=yes)
 AC_ARG_ENABLE(ttf, [  --enable-ttf   Enable ttf option	default is enabled],
@@ -85,14 +101,48 @@ if test $music = "yes"; then
 	AC_DEFINE([ENABLE_MUSIC], 1, [Enable music option])
 fi
 AM_CONDITIONAL([MUSIC], [test x$music = "xyes"])
+if test $mp3 = "yes"; then
+	AC_DEFINE([ENABLE_MP3], 1, [Enable mp3 option])
+fi
+AM_CONDITIONAL([MP3], [test x$mp3 = "xyes"])
+if test $mpc = "yes"; then
+	AC_DEFINE([ENABLE_MPC], 1, [Enable mpc option])
+fi
+AM_CONDITIONAL([MPC], [test x$mpc = "xyes"])
+if test $ogg = "yes"; then
+	AC_DEFINE([ENABLE_OGG], 1, [Enable ogg option])
+fi
+AM_CONDITIONAL([OGG], [test x$ogg = "xyes"])
 if test $wma = "yes"; then
 	AC_DEFINE([ENABLE_WMA], 1, [Enable wma option])
 fi
+AM_CONDITIONAL([WMA], [test x$wma = "xyes"])
+if test $flac = "yes"; then
+	AC_DEFINE([ENABLE_FLAC], 1, [Enable flac option])
+fi
+AM_CONDITIONAL([FLAC], [test x$flac = "xyes"])
+if test $tta = "yes"; then
+	AC_DEFINE([ENABLE_TTA], 1, [Enable tta option])
+fi
+AM_CONDITIONAL([TTA], [test x$tta = "xyes"])
+if test $wav = "yes"; then
+	AC_DEFINE([ENABLE_WAV], 1, [Enable wav option])
+fi
+AM_CONDITIONAL([WAV], [test x$wav = "xyes"])
+if test $wv = "yes"; then
+	AC_DEFINE([ENABLE_WAVPACK], 1, [Enable wma option])
+fi
+AM_CONDITIONAL([WAVPACK], [test x$wv = "xyes"])
+if test $flac = "yes"; then
+	AC_DEFINE([ENABLE_FLAC], 1, [Enable flac option])
+fi
+AM_CONDITIONAL([FLAC], [test x$flac = "xyes"])
+if test $ape = "yes"; then
+	AC_DEFINE([ENABLE_APE], 1, [Enable ape option])
+fi
+AM_CONDITIONAL([APE], [test x$ape = "xyes"])
 if test $lyric = "yes"; then
 	AC_DEFINE([ENABLE_LYRIC], 1, [Enable lyric option])
-fi
-if test $wma = "yes"; then
-	AC_DEFINE([ENABLE_WMA], 1, [Enable wma option])
 fi
 if test $ttf = "yes"; then
 	AC_DEFINE([ENABLE_TTF], 1, [Enable ttf option])

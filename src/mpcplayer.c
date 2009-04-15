@@ -35,6 +35,8 @@
 #include "musicinfo.h"
 #include "dbg.h"
 
+#ifdef ENABLE_MPC
+
 static int __end(void);
 
 static mpc_reader reader;
@@ -466,3 +468,5 @@ int mpc_init(void)
 {
 	return register_musicdrv(&mpc_ops);
 }
+
+#endif

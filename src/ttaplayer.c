@@ -37,6 +37,8 @@
 #include "musicinfo.h"
 #include "genericplayer.h"
 
+#ifdef ENABLE_TTA
+
 static int __end(void);
 
 #define TTA_BUFFER_SIZE (PCM_BUFFER_LENGTH * MAX_NCH)
@@ -490,3 +492,5 @@ int tta_init(void)
 {
 	return register_musicdrv(&tta_ops);
 }
+
+#endif

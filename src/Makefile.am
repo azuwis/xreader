@@ -12,7 +12,7 @@ AM_CPPFLAGS = \
 -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_srcdir)/xrPrx -I$(top_srcdir)/xr_rdriver \
 -I$(PSPSDK)/include
 
-if MUSIC
+if APE
 AM_CPPFLAGS += -I $(srcdir)/include/mac
 endif
 
@@ -52,17 +52,58 @@ xrPrx.o: $(top_builddir)/xrPrx/xrPrx.S
 xr_RDLib.o: $(top_builddir)/xr_rdriver/xr_RDLib.S
 	$(CC) -I$(PSPSDK)/include -c -o $@ $^
 
-xReader_elf_SOURCES += \
-tta/filter.h tta/ttadec.h tta/ttadec.c tta/ttalib.h
-
 if MUSIC
 xReader_elf_SOURCES += \
-musicdrv.c musicdrv.h musicmgr.c musicmgr.h  apeplayer.cpp apeplayer.h \
-lyric.c lyric.h clock.c mp3info.c flacplayer.c flacplayer.h \
-mp3player.c mp3player.h mpcplayer.c mpcplayer.h wavplayer.c wavplayer.h ttaplayer.c ttaplayer.h oggplayer.c oggplayer.h \
-wmaplayer.c wmaplayer.h wvplayer.c wvplayer.h \
-xmp3audiolib.c xmp3audiolib.h genericplayer.c genericplayer.h buffered_reader.c buffered_reader.h \
-mp3info_buffered.c musicinfo.c musicinfo.h
+musicdrv.c musicdrv.h musicmgr.c musicmgr.h xmp3audiolib.c xmp3audiolib.h \
+genericplayer.c genericplayer.h buffered_reader.c buffered_reader.h mp3info.h mp3info.c mp3info_buffered.c lyric.c lyric.h clock.c \
+musicinfo.c musicinfo.h
+
+if MP3
+xReader_elf_SOURCES += \
+mp3player.c mp3player.h
+endif
+
+if MPC
+xReader_elf_SOURCES += \
+mpcplayer.c mpcplayer.h
+endif
+
+if OGG
+xReader_elf_SOURCES += \
+oggplayer.c oggplayer.h
+endif
+
+if WMA
+xReader_elf_SOURCES += \
+wmaplayer.c wmaplayer.h
+endif
+
+if WAV
+xReader_elf_SOURCES += \
+wavplayer.c wavplayer.h
+endif
+
+if FLAC
+xReader_elf_SOURCES += \
+flacplayer.c flacplayer.h
+endif
+
+if TTA
+xReader_elf_SOURCES += \
+ttaplayer.c ttaplayer.h \
+tta/filter.h tta/ttadec.h tta/ttadec.c tta/ttalib.h
+endif
+
+if WAVPACK
+xReader_elf_SOURCES += \
+wvplayer.c wvplayer.h
+endif
+
+if APE
+xReader_elf_SOURCES += \
+apeplayer.c apeplayer.h
+endif
+
 endif
 
 if NLS
@@ -79,16 +120,43 @@ PSP_LARGE_MEMORY = 1
 
 libdir = $(top_srcdir)/lib
 if MUSIC
-LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a -lmac \
-	$(libdir)/libvorbisidec.a -lm \
-	$(libdir)/pmpmodavc/libavformat.a \
-	$(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a \
-	$(libdir)/libwavpack.a
+
+if MPC
+LIBS += $(libdir)/libmpcdec.a
 endif
+
+if MP3
+LIBS += $(libdir)/libmad.a
+endif
+
+if OGG
+LIBS += $(libdir)/libvorbisidec.a
+endif
+
+if WMA
+LIBS += \
+	$(libdir)/pmpmodavc/libavformat.a \
+	$(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a
+endif
+
+if APE
+LIBS += -lmac
+endif
+
+if FLAC
+LIBS += $(libdir)/libFLAC.a
+endif
+
+if WAVPACK
+LIBS += $(libdir)/libwavpack.a
+endif
+
+endif
+
 LIBS += \
 -L$(libdir) $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a \
 $(libdir)/libpng.a $(libdir)/libgif.a $(libdir)/libjpeg.a $(libdir)/libbmp.a \
-$(libdir)/libtga.a $(libdir)/libmad.a $(libdir)/libz.a \
+$(libdir)/libtga.a $(libdir)/libz.a \
 $(libdir)/libfreetype.a -lexif -lm -lpspkubridge -lpspsystemctrl_user \
 -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc -lpspusb \
 -lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg -lpsputility 

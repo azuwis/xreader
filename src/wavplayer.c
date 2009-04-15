@@ -34,6 +34,8 @@
 #include "genericplayer.h"
 #include "musicinfo.h"
 
+#ifdef ENABLE_WAV
+
 typedef struct reader_data_t
 {
 	SceUID fd;
@@ -596,3 +598,5 @@ int wav_init(void)
 {
 	return register_musicdrv(&wav_ops);
 }
+
+#endif

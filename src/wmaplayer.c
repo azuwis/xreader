@@ -38,6 +38,8 @@
 #include "ffmpeg/avformat.h"
 #include "ffmpeg/metadata.h"
 
+#ifdef ENABLE_WMA
+
 #define WMA_MAX_BUF_SIZE 12288
 
 typedef struct wmadec_context {
@@ -645,3 +647,4 @@ extern long long llrint(double x)
 	return rint(x);
 }
 
+#endif

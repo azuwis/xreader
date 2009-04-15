@@ -35,6 +35,8 @@
 #include "wavpack/wavpack.h"
 #include "musicinfo.h"
 
+#ifdef ENABLE_WAVPACK
+
 static int __end(void);
 
 #define MAX_BLOCK_SIZE (1024 * 8)
@@ -620,3 +622,4 @@ int wv_init(void)
 	return register_musicdrv(&wv_ops);
 }
 
+#endif

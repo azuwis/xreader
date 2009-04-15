@@ -32,6 +32,9 @@
 #include "crc16.h"
 #include "charsets.h"
 #include "dbg.h"
+#include "config.h"
+
+#if defined(ENABLE_MP3)|| defined(ENABLE_TTA)
 
 #define ID3v2_HEADER_SIZE 10
 
@@ -655,3 +658,5 @@ int free_mp3_info(struct MP3Info *info)
 
 	return 0;
 }
+
+#endif

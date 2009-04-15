@@ -36,6 +36,8 @@
 #include "genericplayer.h"
 #include "musicinfo.h"
 
+#ifdef ENABLE_FLAC
+
 #define NUM_AUDIO_SAMPLES (1024 * 8)
 
 static int __end(void);
@@ -689,3 +691,5 @@ int utime(const char *filename, const void *buf)
 {
 	return 0;
 }
+
+#endif

@@ -46,6 +46,8 @@
 #include "musicinfo.h"
 #include "common/utils.h"
 
+#ifdef ENABLE_MP3
+
 #define MP3_FRAME_SIZE 2889
 
 #define LB_CONV(x)	\
@@ -1336,3 +1338,5 @@ static int __end(void)
 
 	return 0;
 }
+
+#endif
