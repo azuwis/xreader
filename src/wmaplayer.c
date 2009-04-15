@@ -582,6 +582,9 @@ static int wma_probe(const char* spath)
 	p = utils_fileext(spath);
 
 	if (p) {
+		if (stricmp(p, "asf") == 0) {
+			return 1;
+		}
 		if (stricmp(p, "wma") == 0) {
 			return 1;
 		}

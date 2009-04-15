@@ -1354,7 +1354,7 @@ static int mp3_probe(const char* spath)
 		if (stricmp(p, "mpa") == 0) {
 			return 1;
 		}
-		if (strnicmp(p, "mpeg", 3) == 0) {
+		if (stricmp(p, "mpeg") == 0) {
 			return 1;
 		}
 	}

@@ -570,7 +570,10 @@ static int wav_probe(const char* spath)
 	p = utils_fileext(spath);
 
 	if (p) {
-		if (strnicmp(p, "wav", 3) == 0) {
+		if (stricmp(p, "wav") == 0) {
+			return 1;
+		}
+		if (stricmp(p, "wave") == 0) {
 			return 1;
 		}
 	}
