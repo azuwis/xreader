@@ -1183,7 +1183,11 @@ static int mp3_get_info(struct music_info *info)
 	}
 	if (info->type & MD_GET_CPUFREQ) {
 		if (use_me) {
-			info->psp_freq[0] = 33;
+			if (data.use_buffer)
+				info->psp_freq[0] = 49;
+			else
+				info->psp_freq[0] = 33;
+
 			info->psp_freq[1] = 16;
 		} else {
 			info->psp_freq[0] =
