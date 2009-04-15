@@ -428,12 +428,7 @@ static int wma_load(const char *spath, const char *lpath)
 	}
 	
 	g_info.duration = (double) decoder->avf_context->duration / 1000000L;
-
-	if (g_info.duration != 0) {
-		g_info.avg_bps = (double) g_info.filesize * 8 / g_info.duration;
-	} else {
-		g_info.avg_bps = 0;
-	}
+	g_info.avg_bps = (double) decoder->avf_context->bit_rate;
 
 	get_wma_tag();
 
