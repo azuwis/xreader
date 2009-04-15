@@ -7,6 +7,7 @@
 #include "conf.h"
 #include "freq_lock.h"
 #include "rar_speed_test.h"
+#include "bookmark_test.h"
 #include "jpeg_speed_test.h"
 #include "hprm_test.h"
 #include "music_test.h"
@@ -71,7 +72,8 @@ int main_thr(unsigned int args, void *argp)
 	utils_del_file("ms0:/xTest.log");
 
 	while ( 1 ) {
-		prx_test();
+		bookmark_test();
+//		prx_test();
 //		jpeg_speed_test();
 //		rar_speed_test();
 //		hprm_test();

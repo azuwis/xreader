@@ -32,6 +32,7 @@ CCASFLAGS = $(CFLAGS) $(INCLUDES)
 noinst_PROGRAMS = xTest.elf
 
 xTest_elf_SOURCES = \
+bookmark_test.c bookmark_test.h \
 rar_speed_test.c rar_speed_test.h hprm_test.h hprm_test.c \
 music_test.c jpeg_speed_test.c jpeg_speed_test.h prx_test.h prx_test.c testprx/testprx.S \
 main.c \
