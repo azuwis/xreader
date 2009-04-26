@@ -475,7 +475,6 @@ int music_directplay(const char *spath, const char *lpath)
 
 	if (ret == 0) {
 		g_list.is_list_playing = true;
-		rebuild_shuffle_data();
 		g_list.first_time = false;
 	}
 
@@ -1114,8 +1113,6 @@ int music_set_cycle_mode(int mode)
 	music_lock();
 	if (mode >= 0 && mode <= conf_cycle_random)
 		g_list.cycle_mode = mode;
-
-	rebuild_shuffle_data();
 
 	music_unlock();
 	return g_list.cycle_mode;
