@@ -2,6 +2,7 @@
 #include <pspkernel.h>
 #include <pspsdk.h>
 #include <psprtc.h>
+#include <pspsdk.h>
 #include <stdio.h>
 #include <string.h>
 #include "config.h"

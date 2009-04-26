@@ -7,20 +7,24 @@
 #include "conf.h"
 #include "freq_lock.h"
 #include "rar_speed_test.h"
-#include "bookmark_test.h"
 #include "jpeg_speed_test.h"
 #include "hprm_test.h"
+#include "display.h"
+#include "image_queue.h"
 #include "music_test.h"
+#include "bookmark_test.h"
 #include "prx_test.h"
 #include "commons.h"
 #include "common/utils.h"
 
 PSP_MODULE_INFO("xTest", 0x0200, 1, 6);
 PSP_MAIN_THREAD_PARAMS(45, 256, PSP_THREAD_ATTR_USER);
-PSP_HEAP_SIZE_KB(32 * 1024);
+PSP_HEAP_SIZE_MAX();
 
 static int exit_callback(int arg1, int arg2, void *arg)
 {
+	cache_free();
+
 	dbg_close(d);
 	d = NULL;
 	sceKernelExitGame();
@@ -65,15 +69,17 @@ int main_thr(unsigned int args, void *argp)
 	d = dbg_init();
 	dbg_open_file(d, "ms0:/xTest.log");
 	dbg_open_psp(d);
+	dbg_open_stream(d, stderr);
 	dbg_switch(d, 1);
 
 	dbg_printf(d, "Start xTest testing...");
 
 	utils_del_file("ms0:/xTest.log");
 
+	freq_enter(222, 111);
+
 	while ( 1 ) {
-		bookmark_test();
-//		prx_test();
+		image_queue_test();
 //		jpeg_speed_test();
 //		rar_speed_test();
 //		hprm_test();

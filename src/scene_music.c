@@ -72,7 +72,7 @@ static u64 start, end;
 
 // 获取PSP剩余内存，单位为Bytes
 // 作者:诗诺比
-static unsigned int get_free_mem(void)
+extern unsigned int get_free_mem(void)
 {
 	void *p[30];
 	unsigned int block_size = 0x04000000;	//最大内存:64MB,必需是2的N次方

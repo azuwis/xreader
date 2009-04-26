@@ -50,12 +50,14 @@ int bookmark_test()
 	dword row;
 
 	dbg_switch(d, 0);
+#if 0
 	bookmark_autosave(fn, tmpbm.row[0]);
 
 	if ((row = bookmark_autoload(fn)) != tmpbm.row[0]) {
 		dbg_switch(d, 1);
 		dbg_printf(d, "bookmark autosave / load MISMATCHED %08lx %08lx", row, tmpbm.row[0]);
 	}
+#endif
 
 	dbg_switch(d, 1);
 
