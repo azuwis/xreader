@@ -354,7 +354,6 @@ static void id3v2_parse(MusicInfoInternalTag * tag_info, SceUID fd,
 						}
 
 						buffer_copy_string_len(tag_lyric, p, tlen);
-
 						free(p);
 					}
 				}
