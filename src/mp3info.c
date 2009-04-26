@@ -188,10 +188,8 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 
 	if (ctx.layer != 3) {
 		info->is_mpeg1or2 = true;
-		return 0;
-	}
-	if (ctx.layer != 3)
 		return -1;
+	}
 
 	info->channels = ctx.nb_channels;
 	info->sample_freq = ctx.sample_rate;
