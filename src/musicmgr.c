@@ -179,6 +179,8 @@ static int rebuild_shuffle_data(void)
 	g_shuffle.index = 0;
 	g_shuffle.size = music_maxindex();
 
+	dbg_printf(d, "%s: rebuild shuffle data", __func__);
+
 	if (g_shuffle.table != NULL) {
 		free(g_shuffle.table);
 		g_shuffle.table = NULL;
@@ -201,14 +203,22 @@ static int rebuild_shuffle_data(void)
 		g_shuffle.first_time = false;
 	}
 
+	dbg_printf(d, "Dump table:");
+
+	int i;
+	for (i = 0; i < g_shuffle.size; ++i) {
+		dbg_printf_raw(d, "%d ", g_shuffle.table[i]);
+	}
+
+	dbg_printf_raw(d, "\n");
+
 	return 0;
 }
 
 static int shuffle_next(void)
 {
 	if (g_list.cycle_mode == conf_cycle_random) {
-		if (g_list.is_list_playing)
-			stack_push(&played, g_list.curr_pos);
+		stack_push(&played, g_list.curr_pos);
 
 		if (g_shuffle.index == g_shuffle.size ||
 			g_shuffle.size != music_maxindex()
@@ -216,6 +226,7 @@ static int shuffle_next(void)
 			rebuild_shuffle_data();
 		}
 
+		dbg_printf(d, "%s: g_shuffle index %d, pos %d", __func__, g_shuffle.index, g_shuffle.table[g_shuffle.index]);
 		g_list.curr_pos = g_shuffle.table[g_shuffle.index++];
 	}
 
