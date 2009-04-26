@@ -434,7 +434,12 @@ static int music_play(int i)
 {
 	int ret;
 
-	music_load(i);
+	ret = music_load(i);
+	
+	if (ret < 0) {
+		return ret;
+	}
+
 	ret = musicdrv_play();
 
 	return ret;
@@ -862,6 +867,8 @@ int music_free(void)
 
 int music_prev(void)
 {
+	int ret;
+
 	music_lock();
 
 	switch (g_list.cycle_mode) {
@@ -914,13 +921,17 @@ int music_prev(void)
 
   end:
 	if (g_list.is_list_playing)
-		music_play(g_list.curr_pos);
+		ret = music_play(g_list.curr_pos);
+
 	music_unlock();
-	return 0;
+
+	return ret;
 }
 
 int music_next(void)
 {
+	int ret;
+
 	music_lock();
 
 	switch (g_list.cycle_mode) {
@@ -958,10 +969,10 @@ int music_next(void)
 	if (!g_list.is_list_playing)
 		g_list.is_list_playing = true;
 
-	music_play(g_list.curr_pos);
+	ret = music_play(g_list.curr_pos);
 
 	music_unlock();
-	return 0;
+	return ret;
 }
 
 int music_add_dir(const char *spath, const char *lpath)
