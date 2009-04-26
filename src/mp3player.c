@@ -975,8 +975,6 @@ static int mp3_load(const char *spath, const char *lpath)
 
 	g_info.filesize = data.size;
 
-	g_info.filesize = data.size;
-
 	if (data.size < 0)
 		return data.size;
 
@@ -1024,14 +1022,6 @@ static int mp3_load(const char *spath, const char *lpath)
 		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
 		buffered_reader_seek(data.r, cur);
 	}
-
-	g_info.channels = mp3info.channels;
-	g_info.sample_freq = mp3info.sample_freq;
-	g_info.avg_bps = mp3info.average_bitrate;
-	g_info.samples = mp3info.frames;
-	g_info.duration = mp3info.duration;
-
-	generic_readtag(&g_info, spath);
 
 	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%sframes %d%s]",
 			   g_info.channels, g_info.sample_freq,
