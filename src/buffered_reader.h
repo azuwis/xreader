@@ -27,7 +27,7 @@ extern "C"
 {
 #endif
 
-#define BUFFERED_READER_BUFFER_SIZE 262144	//131072//65536 //262144
+#define BUFFERED_READER_BUFFER_SIZE 65536	//131072//65536 //262144
 
 	typedef void *buffered_reader_t;
 
