@@ -329,6 +329,10 @@ void free_bitrate(struct instant_bitrate *inst)
 	if (inst == NULL)
 		return;
 
-	free(inst->frames);
+	if (inst->frames != NULL) {
+		free(inst->frames);
+		inst->frames = NULL;
+	}
+
 	memset(inst, 0, sizeof(*inst));
 }
