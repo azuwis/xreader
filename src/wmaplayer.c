@@ -42,6 +42,8 @@
 #ifdef ENABLE_WMA
 
 #define WMA_MAX_BUF_SIZE 12288
+#define DEFAULT_AUDIO_SAMPLERATE 44100
+#define STEPACCURACY 32
 
 typedef struct wmadec_context
 {
@@ -80,6 +82,11 @@ static int g_buff_frame_start;
  * WMA解码器
  */
 static wmadec_context *decoder = NULL;
+
+/**
+ * 需要重新采样到44100MHz?
+ */
+static bool need_resample = false;
 
 /**
  * 复制数据到声音缓冲区
@@ -182,7 +189,63 @@ static int wma_process_single(void)
 			return -1;
 	}
 
-	memcpy(g_buff, p_context->outbuf, outbuf_size);
+	if ( need_resample ) {
+		if (g_info.channels == 1) {
+			uint64_t step = ((uint64_t)g_info.sample_freq<<STEPACCURACY)/(uint64_t)DEFAULT_AUDIO_SAMPLERATE+1LL;
+			uint64_t pt = 0LL;
+			uint64_t end   = (((uint64_t)samplesdecoded)<<STEPACCURACY);
+			int16_t* in16 = (int16_t*)p_context->outbuf;
+			int16_t* out16 = (int16_t*)malloc((samplesdecoded*DEFAULT_AUDIO_SAMPLERATE/g_info.sample_freq+1)*sizeof(int16_t));
+			uint32_t len = 0;
+			while(pt < end){
+				out16[len++]=in16[pt>>STEPACCURACY];    	    
+				pt+=step;
+			}
+
+			if (len > g_buff_size) {
+				g_buff_size = len;
+				g_buff = safe_realloc(g_buff, g_buff_size * sizeof(*g_buff));
+				dbg_printf(d, "resampler: realloc g_buff to %u bytes",
+						g_buff_size * sizeof(*g_buff));
+
+				if (g_buff == NULL)
+					return -1;
+			}
+
+			memcpy(g_buff, out16, len * sizeof(*out16));
+
+			free(out16);
+			samplesdecoded = len;	
+		} else {
+			uint64_t step = ((uint64_t)g_info.sample_freq<<STEPACCURACY)/(uint64_t)DEFAULT_AUDIO_SAMPLERATE+1LL;
+			uint64_t pt = 0LL;
+			uint64_t end   = (((uint64_t)samplesdecoded)<<STEPACCURACY);
+			int32_t* in32 = (int32_t*)p_context->outbuf;
+			int32_t* out32 = (int32_t*)malloc((samplesdecoded*DEFAULT_AUDIO_SAMPLERATE/g_info.sample_freq+1)*sizeof(int32_t));
+			uint32_t len = 0;
+
+			while(pt < end) {
+				out32[len++]=in32[pt>>STEPACCURACY];    	    
+				pt+=step;
+			}
+
+			if (len > g_buff_size) {
+				g_buff_size = len;
+				g_buff = safe_realloc(g_buff, g_buff_size * sizeof(*g_buff));
+				dbg_printf(d, "resampler: realloc g_buff to %u bytes",
+						g_buff_size * sizeof(*g_buff));
+
+				if (g_buff == NULL)
+					return -1;
+			}
+
+			memcpy(g_buff, out32, len * sizeof(*out32));
+			free(out32);
+			samplesdecoded = len;	
+		}
+	} else {
+		memcpy(g_buff, p_context->outbuf, outbuf_size);
+	}
 
 	return samplesdecoded;
 }
@@ -296,6 +359,8 @@ static int __init(void)
 	decoder = NULL;
 	g_buff = NULL;
 	g_buff_size = 0;
+
+	need_resample = false;
 
 	return 0;
 }
@@ -427,6 +492,12 @@ static int wma_load(const char *spath, const char *lpath)
 	}
 
 	g_info.sample_freq = decoder->avc_context->sample_rate;
+
+	if (g_info.sample_freq != 44100) {
+		need_resample = true;
+		dbg_printf(d, "%s: need resample", __func__);
+	}
+
 	g_info.channels = decoder->avc_context->channels;
 
 	if (g_info.channels > 2 || g_info.channels <= 0) {
@@ -439,12 +510,14 @@ static int wma_load(const char *spath, const char *lpath)
 
 	get_wma_tag();
 
+	xMP3SetUseAudioChReserve(true);
+
 	if (xMP3AudioInit() < 0) {
 		__end();
 		return -1;
 	}
 
-	if (xMP3AudioSetFrequency(g_info.sample_freq) < 0) {
+	if (xMP3AudioSetFrequency(DEFAULT_AUDIO_SAMPLERATE) < 0) {
 		__end();
 		return -1;
 	}
@@ -569,7 +642,7 @@ static int wma_get_info(struct music_info *pinfo)
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
-		pinfo->psp_freq[0] = 266;
+		pinfo->psp_freq[0] = 222;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
