@@ -912,7 +912,7 @@ int music_prev(void)
 		case conf_cycle_random:
 			{
 				if (shuffle_prev() != 0) {
-					int ret = music_stop();
+					ret = music_stop();
 
 					if (ret < 0) {
 						music_unlock();
