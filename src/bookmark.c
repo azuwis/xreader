@@ -59,7 +59,7 @@ extern dword bookmark_encode(const char *filename)
 
 	for (h = 5381; *filename != 0; ++filename) {
 		h += h << 5;
-		h ^= *filename;
+		h ^= *(const unsigned char*)filename;
 	}
 
 	return h;
