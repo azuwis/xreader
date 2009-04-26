@@ -206,6 +206,7 @@ static int rebuild_shuffle_data(void)
 	dbg_printf(d, "Dump table:");
 
 	int i;
+
 	for (i = 0; i < g_shuffle.size; ++i) {
 		dbg_printf_raw(d, "%d ", g_shuffle.table[i]);
 	}
@@ -226,7 +227,8 @@ static int shuffle_next(void)
 			rebuild_shuffle_data();
 		}
 
-		dbg_printf(d, "%s: g_shuffle index %d, pos %d", __func__, g_shuffle.index, g_shuffle.table[g_shuffle.index]);
+		dbg_printf(d, "%s: g_shuffle index %d, pos %d", __func__,
+				   g_shuffle.index, g_shuffle.table[g_shuffle.index]);
 		g_list.curr_pos = g_shuffle.table[g_shuffle.index++];
 	}
 
@@ -446,7 +448,7 @@ static int music_play(int i)
 	int ret;
 
 	ret = music_load(i);
-	
+
 	if (ret < 0) {
 		return ret;
 	}

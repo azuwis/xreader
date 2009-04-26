@@ -613,20 +613,19 @@ static inline int xrUtilityOskUpdate(int n)
 	return sceUtilityOskUpdate(n);
 }
 
-static inline
-int xrAudioChRelease(int channel)
+static inline int xrAudioChRelease(int channel)
 {
 	return sceAudioChRelease(channel);
 }
 
-static inline
-int xrAudioChReserve(int channel, int samplecount, int format)
+static inline int xrAudioChReserve(int channel, int samplecount, int format)
 {
 	return sceAudioChReserve(channel, samplecount, format);
 }
 
 static inline
-int xrAudioOutputPannedBlocking(int channel, int leftvol, int rightvol, void *buf)
+	int xrAudioOutputPannedBlocking(int channel, int leftvol, int rightvol,
+									void *buf)
 {
 	return sceAudioOutputPannedBlocking(channel, leftvol, rightvol, buf);
 }

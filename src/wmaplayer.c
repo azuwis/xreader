@@ -189,24 +189,29 @@ static int wma_process_single(void)
 			return -1;
 	}
 
-	if ( need_resample ) {
+	if (need_resample) {
 		if (g_info.channels == 1) {
-			uint64_t step = ((uint64_t)g_info.sample_freq<<STEPACCURACY)/(uint64_t)DEFAULT_AUDIO_SAMPLERATE+1LL;
+			uint64_t step =
+				((uint64_t) g_info.sample_freq << STEPACCURACY) /
+				(uint64_t) DEFAULT_AUDIO_SAMPLERATE + 1LL;
 			uint64_t pt = 0LL;
-			uint64_t end   = (((uint64_t)samplesdecoded)<<STEPACCURACY);
-			int16_t* in16 = (int16_t*)p_context->outbuf;
-			int16_t* out16 = (int16_t*)malloc((samplesdecoded*DEFAULT_AUDIO_SAMPLERATE/g_info.sample_freq+1)*sizeof(int16_t));
+			uint64_t end = (((uint64_t) samplesdecoded) << STEPACCURACY);
+			int16_t *in16 = (int16_t *) p_context->outbuf;
+			int16_t *out16 = (int16_t *)
+				malloc((samplesdecoded * DEFAULT_AUDIO_SAMPLERATE /
+						g_info.sample_freq + 1) * sizeof(int16_t));
 			uint32_t len = 0;
-			while(pt < end){
-				out16[len++]=in16[pt>>STEPACCURACY];    	    
-				pt+=step;
+
+			while (pt < end) {
+				out16[len++] = in16[pt >> STEPACCURACY];
+				pt += step;
 			}
 
 			if (len > g_buff_size) {
 				g_buff_size = len;
 				g_buff = safe_realloc(g_buff, g_buff_size * sizeof(*g_buff));
 				dbg_printf(d, "resampler: realloc g_buff to %u bytes",
-						g_buff_size * sizeof(*g_buff));
+						   g_buff_size * sizeof(*g_buff));
 
 				if (g_buff == NULL)
 					return -1;
@@ -215,25 +220,29 @@ static int wma_process_single(void)
 			memcpy(g_buff, out16, len * sizeof(*out16));
 
 			free(out16);
-			samplesdecoded = len;	
+			samplesdecoded = len;
 		} else {
-			uint64_t step = ((uint64_t)g_info.sample_freq<<STEPACCURACY)/(uint64_t)DEFAULT_AUDIO_SAMPLERATE+1LL;
+			uint64_t step =
+				((uint64_t) g_info.sample_freq << STEPACCURACY) /
+				(uint64_t) DEFAULT_AUDIO_SAMPLERATE + 1LL;
 			uint64_t pt = 0LL;
-			uint64_t end   = (((uint64_t)samplesdecoded)<<STEPACCURACY);
-			int32_t* in32 = (int32_t*)p_context->outbuf;
-			int32_t* out32 = (int32_t*)malloc((samplesdecoded*DEFAULT_AUDIO_SAMPLERATE/g_info.sample_freq+1)*sizeof(int32_t));
+			uint64_t end = (((uint64_t) samplesdecoded) << STEPACCURACY);
+			int32_t *in32 = (int32_t *) p_context->outbuf;
+			int32_t *out32 = (int32_t *)
+				malloc((samplesdecoded * DEFAULT_AUDIO_SAMPLERATE /
+						g_info.sample_freq + 1) * sizeof(int32_t));
 			uint32_t len = 0;
 
-			while(pt < end) {
-				out32[len++]=in32[pt>>STEPACCURACY];    	    
-				pt+=step;
+			while (pt < end) {
+				out32[len++] = in32[pt >> STEPACCURACY];
+				pt += step;
 			}
 
 			if (len > g_buff_size) {
 				g_buff_size = len;
 				g_buff = safe_realloc(g_buff, g_buff_size * sizeof(*g_buff));
 				dbg_printf(d, "resampler: realloc g_buff to %u bytes",
-						g_buff_size * sizeof(*g_buff));
+						   g_buff_size * sizeof(*g_buff));
 
 				if (g_buff == NULL)
 					return -1;
@@ -241,7 +250,7 @@ static int wma_process_single(void)
 
 			memcpy(g_buff, out32, len * sizeof(*out32));
 			free(out32);
-			samplesdecoded = len;	
+			samplesdecoded = len;
 		}
 	} else {
 		memcpy(g_buff, p_context->outbuf, outbuf_size);

@@ -64,21 +64,24 @@ int setFrequency(unsigned short samples, unsigned short freq, char car)
 			xrAudioChRelease(g_AudioCh);
 		}
 
-		g_AudioCh = xrAudioChReserve(PSP_AUDIO_NEXT_CHANNEL, WMA_AUDIO_SAMPLE_MAX, PSP_AUDIO_FORMAT_STEREO);
+		g_AudioCh =
+			xrAudioChReserve(PSP_AUDIO_NEXT_CHANNEL, WMA_AUDIO_SAMPLE_MAX,
+							 PSP_AUDIO_FORMAT_STEREO);
 
 		if (g_AudioCh < 0) {
-			dbg_printf(d, "%s: xrAudioChReserve failed 0x%08x", __func__, g_AudioCh);
+			dbg_printf(d, "%s: xrAudioChReserve failed 0x%08x", __func__,
+					   g_AudioCh);
 		}
-		
+
 		return g_AudioCh;
 	}
 }
 
 int xMP3SetUseAudioChReserve(int use)
 {
-	int prev = (int)g_useAudioChReserve;
+	int prev = (int) g_useAudioChReserve;
 
-	g_useAudioChReserve = (bool)use;
+	g_useAudioChReserve = (bool) use;
 
 	return prev;
 }
@@ -92,7 +95,7 @@ int xMP3ReleaseAudio(void)
 		int ret = 0;
 
 		if (g_AudioCh >= 0) {
-//			while (xrAudioGetChannelRestLength(g_AudioCh) > 0);
+//          while (xrAudioGetChannelRestLength(g_AudioCh) > 0);
 
 			ret = xrAudioChRelease(g_AudioCh);
 
@@ -175,7 +178,8 @@ static int AudioChannelThread(int args, void *argp)
 		xMP3AudioCallback_t callback;
 		int size;
 
-		size = g_useAudioChReserve ? WMA_AUDIO_SAMPLE_MAX : PSP_NUM_AUDIO_SAMPLES;
+		size =
+			g_useAudioChReserve ? WMA_AUDIO_SAMPLE_MAX : PSP_NUM_AUDIO_SAMPLES;
 
 		callback = AudioStatus[channel].callback;
 		if (callback) {

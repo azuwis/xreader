@@ -455,7 +455,6 @@ int generic_readtag(MusicInfo * music_info, const char *spath)
 	if (fd < 0) {
 		return -1;
 	}
-
 	// Search ID3v1
 	read_id3v1(&tag, music_info, fd);
 
