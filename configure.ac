@@ -56,6 +56,8 @@ AC_ARG_ENABLE(flac, [  --enable-flac   Enable flac option	default is enabled whe
 flac="$enableval", flac=$music)
 AC_ARG_ENABLE(at3, [  --enable-at3   Enable at3 option	default is enabled when music is enabled],
 at3="$enableval", at3=$music)
+AC_ARG_ENABLE(aa3, [  --enable-aa3   Enable aa3 option	default is enabled when music is enabled],
+aa3="$enableval", aa3=$music)
 AC_ARG_ENABLE(lyric, [  --enable-lyric   Enable lyric option	default is enabled],
 lyric="$enableval", lyric=yes)
 AC_ARG_ENABLE(ttf, [  --enable-ttf   Enable ttf option	default is enabled],
@@ -143,6 +145,10 @@ if test $at3 = "yes"; then
 	AC_DEFINE([ENABLE_AT3], 1, [Enable at3 option])
 fi
 AM_CONDITIONAL([AT3], [test x$at3 = "xyes"])
+if test $aa3 = "yes"; then
+	AC_DEFINE([ENABLE_AA3], 1, [Enable aa3 option])
+fi
+AM_CONDITIONAL([AA3], [test x$aa3 = "xyes"])
 if test $lyric = "yes"; then
 	AC_DEFINE([ENABLE_LYRIC], 1, [Enable lyric option])
 fi

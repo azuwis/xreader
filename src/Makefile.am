@@ -110,6 +110,11 @@ if AT3
 xReader_elf_SOURCES += \
 at3player.c at3player.h
 endif
+
+if AA3 
+xReader_elf_SOURCES += \
+aa3player.c aa3player.h
+endif
 endif
 
 if NLS
