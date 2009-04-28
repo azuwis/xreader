@@ -72,9 +72,9 @@ static int g_buff_frame_start;
 /**
  * Media Engine buffer»º´æ
  */
-static unsigned long aac_codec_buffer[65] __attribute__((aligned(64)));
+static unsigned long aac_codec_buffer[65] __attribute__ ((aligned(64)));
 
-static short aac_mix_buffer[2048 * 2] __attribute__((aligned(64)));
+static short aac_mix_buffer[2048 * 2] __attribute__ ((aligned(64)));
 
 static u16 aac_data_align;
 static u32 aac_data_start;
@@ -107,7 +107,7 @@ static int __init(void)
 	aac_data_size = 0;
 	aac_getEDRAM = false;
 
-	aac_sample_per_frame = 1024; 
+	aac_sample_per_frame = 1024;
 
 	g_aac_handle = -1;
 
@@ -187,7 +187,7 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 		generic_set_playback(true);
 		generic_unlock();
 	}
-	
+
 	if (g_status == ST_PAUSED) {
 		xMP3ClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
@@ -211,43 +211,48 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += avail_frame * 2;
 
 			int samplesdecoded;
+
 			memset(aac_mix_buffer, 0, sizeof(aac_mix_buffer));
 
-			unsigned char aac_header_buf[7]; 
-			if ( xrIoRead( g_aac_handle, aac_header_buf, 7 ) != 7 ) { 
+			unsigned char aac_header_buf[7];
+
+			if (xrIoRead(g_aac_handle, aac_header_buf, 7) != 7) {
 				__end();
 				return -1;
-			} 
+			}
 
-			int aac_header = aac_header_buf[3]; 
-			aac_header = (aac_header<<8) | aac_header_buf[4]; 
-			aac_header = (aac_header<<8) | aac_header_buf[5]; 
-			aac_header = (aac_header<<8) | aac_header_buf[6]; 
+			int aac_header = aac_header_buf[3];
 
-			int frame_size = aac_header & 67100672; 
-			frame_size = frame_size >> 13; 
-			frame_size = frame_size - 7; 
+			aac_header = (aac_header << 8) | aac_header_buf[4];
+			aac_header = (aac_header << 8) | aac_header_buf[5];
+			aac_header = (aac_header << 8) | aac_header_buf[6];
 
-			u8* aac_data_buffer = (u8*)memalign(64, frame_size); 
+			int frame_size = aac_header & 67100672;
 
-			if ( xrIoRead( g_aac_handle, aac_data_buffer, frame_size ) != frame_size ) { 
+			frame_size = frame_size >> 13;
+			frame_size = frame_size - 7;
+
+			u8 *aac_data_buffer = (u8 *) memalign(64, frame_size);
+
+			if (xrIoRead(g_aac_handle, aac_data_buffer, frame_size) !=
+				frame_size) {
 				free(aac_data_buffer);
 				__end();
 				return -1;
-			} 
-       
+			}
+
 			int res;
 
-			aac_codec_buffer[6] = (unsigned long)aac_data_buffer;
-			aac_codec_buffer[8] = (unsigned long)aac_mix_buffer;
+			aac_codec_buffer[6] = (unsigned long) aac_data_buffer;
+			aac_codec_buffer[8] = (unsigned long) aac_mix_buffer;
 			aac_codec_buffer[7] = frame_size;
-			aac_codec_buffer[9] = aac_sample_per_frame * 4; 
+			aac_codec_buffer[9] = aac_sample_per_frame * 4;
 
 			res = xrAudiocodecDecode(aac_codec_buffer, 0x1003);
 
 			free(aac_data_buffer);
 
-			if ( res < 0 ) {
+			if (res < 0) {
 				__end();
 				return -1;
 			}
@@ -323,28 +328,28 @@ static int aac_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-	if(!strncmp((const char*)aac_buffer, "ID3", 3)){
+	if (!strncmp((const char *) aac_buffer, "ID3", 3)) {
 		int size = 0;
 
 		fseek(aacfp, 0, SEEK_SET);
-		size = (aac_buffer[6]<<21) | (aac_buffer[7]<<14) | (aac_buffer[8]<<7) | aac_buffer[9];
-		size+=10;
+		size =
+			(aac_buffer[6] << 21) | (aac_buffer[7] << 14) | (aac_buffer[8] << 7)
+			| aac_buffer[9];
+		size += 10;
 		fread(aac_buffer, 1, size, aacfp);
 		buffervalid = fread(aac_buffer, 1, AAC_BUFFER_SIZE, aacfp);
 	}
 
 	unsigned long tempsamplerate;
 	unsigned char tempchannels;
-	
+
 	bufferconsumed = NeAACDecInit(decoder,
-				 aac_buffer,
-				 buffervalid,
-				 &tempsamplerate,
-				 &tempchannels);
+								  aac_buffer,
+								  buffervalid, &tempsamplerate, &tempchannels);
 	g_info.channels = tempchannels;
 	g_info.sample_freq = tempsamplerate;
 
-	if ( g_info.channels <= 0 || g_info.channels > 2){
+	if (g_info.channels <= 0 || g_info.channels > 2) {
 		goto failed;
 	}
 
@@ -371,69 +376,69 @@ static int aac_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-   ret = load_me_prx();
-   
-   if (ret < 0) {
-	   dbg_printf(d, "%s: load_me_prx failed", __func__);
-	   goto failed;
-   }
-   
-   memset(aac_codec_buffer, 0, sizeof(aac_codec_buffer));
+	ret = load_me_prx();
 
-   if ( xrAudiocodecCheckNeedMem(aac_codec_buffer, 0x1003) < 0 ) {
-	   goto failed;
-   }
-
-   if ( xrAudiocodecGetEDRAM(aac_codec_buffer, 0x1003) < 0 ) {
-	   goto failed; 
-   }
-
-   aac_getEDRAM = true; 
-
-   aac_codec_buffer[10] = g_info.sample_freq; 
-   if ( xrAudiocodecInit(aac_codec_buffer, 0x1003) < 0 ) { 
-	   goto failed; 
-   } 
-
-   g_info.avg_bps = 0;
-   g_info.duration = 0;
-
-   ret = xMP3AudioInit();
-
-   if (ret < 0) {
+	if (ret < 0) {
+		dbg_printf(d, "%s: load_me_prx failed", __func__);
 		goto failed;
-   }
+	}
 
-   ret = xMP3AudioSetFrequency(g_info.sample_freq);
+	memset(aac_codec_buffer, 0, sizeof(aac_codec_buffer));
 
-   if (ret < 0) {
+	if (xrAudiocodecCheckNeedMem(aac_codec_buffer, 0x1003) < 0) {
 		goto failed;
-   }
+	}
 
-   xMP3AudioSetChannelCallback(0, aac_audiocallback, NULL);
+	if (xrAudiocodecGetEDRAM(aac_codec_buffer, 0x1003) < 0) {
+		goto failed;
+	}
 
-   return 0;
-   
-failed:
-   if (aacfp != NULL) {
-	   fclose(aacfp);
-	   aacfp = NULL;
-   }
+	aac_getEDRAM = true;
 
-   if (decoder != NULL) {
-	   NeAACDecClose(decoder);
-	   decoder = NULL;
-   }
+	aac_codec_buffer[10] = g_info.sample_freq;
+	if (xrAudiocodecInit(aac_codec_buffer, 0x1003) < 0) {
+		goto failed;
+	}
 
-   if (aac_buffer != NULL) {
-	   free(aac_buffer);
-	   aac_buffer = NULL;
-   }
+	g_info.avg_bps = 0;
+	g_info.duration = 0;
 
-   aac_config = NULL;
+	ret = xMP3AudioInit();
 
-   __end();
-   return -1;
+	if (ret < 0) {
+		goto failed;
+	}
+
+	ret = xMP3AudioSetFrequency(g_info.sample_freq);
+
+	if (ret < 0) {
+		goto failed;
+	}
+
+	xMP3AudioSetChannelCallback(0, aac_audiocallback, NULL);
+
+	return 0;
+
+  failed:
+	if (aacfp != NULL) {
+		fclose(aacfp);
+		aacfp = NULL;
+	}
+
+	if (decoder != NULL) {
+		NeAACDecClose(decoder);
+		decoder = NULL;
+	}
+
+	if (aac_buffer != NULL) {
+		free(aac_buffer);
+		aac_buffer = NULL;
+	}
+
+	aac_config = NULL;
+
+	__end();
+	return -1;
 }
 
 static int aac_end(void)

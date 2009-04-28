@@ -79,7 +79,6 @@ static unsigned g_buff_frame_size;
  */
 static int g_buff_frame_start;
 
-
 /** ÊÇ·ñÊ¹ÓÃ»º³åIO */
 static bool use_buffer = true;
 
@@ -91,9 +90,9 @@ static int g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
 /**
  * Media Engine buffer»º´æ
  */
-static unsigned long aa3_codec_buffer[65] __attribute__((aligned(64)));
+static unsigned long aa3_codec_buffer[65] __attribute__ ((aligned(64)));
 
-static short aa3_mix_buffer[2048 * 2] __attribute__((aligned(64)));
+static short aa3_mix_buffer[2048 * 2] __attribute__ ((aligned(64)));
 
 #define TYPE_ATRAC3 0x270
 #define TYPE_ATRAC3PLUS 0xFFFE
@@ -105,7 +104,7 @@ static u32 aa3_data_size;
 static u8 aa3_aa3plus_flagdata[2];
 static u16 aa3_channel_mode;
 static u32 aa3_sample_per_frame;
-static u8* aa3_data_buffer;
+static u8 *aa3_data_buffer;
 static bool aa3_getEDRAM;
 
 /**
@@ -170,17 +169,17 @@ static int aa3_seek_seconds(double seconds)
 		return -1;
 	}
 
-	frame_index = (u32)(seconds * g_info.sample_freq / aa3_sample_per_frame);
+	frame_index = (u32) (seconds * g_info.sample_freq / aa3_sample_per_frame);
 	pos = aa3_data_start;
 	pos += frame_index * aa3_data_align;
 
-	dbg_printf(d, "%s: jump to frame %u pos 0x%08x", __func__, frame_index, pos);
+	dbg_printf(d, "%s: jump to frame %u pos 0x%08x", __func__, frame_index,
+			   pos);
 
 	if (data.use_buffer) {
 		ret = buffered_reader_seek(data.r, pos);
 	} else {
-		ret =
-			xrIoLseek(data.fd, pos, SEEK_SET);
+		ret = xrIoLseek(data.fd, pos, SEEK_SET);
 	}
 
 	if (ret >= 0) {
@@ -286,38 +285,47 @@ static int aa3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += avail_frame * 2;
 
 			int samplesdecoded;
-			memset(aa3_mix_buffer, 0, 2048*2*2);
+
+			memset(aa3_mix_buffer, 0, 2048 * 2 * 2);
 			unsigned long decode_type = 0x1001;
-			if ( aa3_type == TYPE_ATRAC3 ) {
-				memset( aa3_data_buffer, 0, 0x180);
+
+			if (aa3_type == TYPE_ATRAC3) {
+				memset(aa3_data_buffer, 0, 0x180);
 				if (data.use_buffer) {
-					if (buffered_reader_read(data.r, aa3_data_buffer, aa3_data_align) != aa3_data_align) {
+					if (buffered_reader_read
+						(data.r, aa3_data_buffer,
+						 aa3_data_align) != aa3_data_align) {
 						__end();
 						return -1;
 					}
 				} else {
-					if (xrIoRead( data.fd, aa3_data_buffer, aa3_data_align ) != aa3_data_align) {
+					if (xrIoRead(data.fd, aa3_data_buffer, aa3_data_align) !=
+						aa3_data_align) {
 						__end();
 						return -1;
 					}
 				}
-				if ( aa3_channel_mode ) {
-					memcpy(aa3_data_buffer+aa3_data_align, aa3_data_buffer, aa3_data_align);
+				if (aa3_channel_mode) {
+					memcpy(aa3_data_buffer + aa3_data_align, aa3_data_buffer,
+						   aa3_data_align);
 				}
 				decode_type = 0x1001;
 			} else {
-				memset( aa3_data_buffer, 0, aa3_data_align+8);
+				memset(aa3_data_buffer, 0, aa3_data_align + 8);
 				aa3_data_buffer[0] = 0x0F;
 				aa3_data_buffer[1] = 0xD0;
 				aa3_data_buffer[2] = aa3_aa3plus_flagdata[0];
 				aa3_data_buffer[3] = aa3_aa3plus_flagdata[1];
 				if (data.use_buffer) {
-					if (buffered_reader_read(data.r, aa3_data_buffer+8, aa3_data_align) != aa3_data_align) {
+					if (buffered_reader_read
+						(data.r, aa3_data_buffer + 8,
+						 aa3_data_align) != aa3_data_align) {
 						__end();
 						return -1;
 					}
 				} else {
-					if (xrIoRead( data.fd, aa3_data_buffer+8, aa3_data_align ) != aa3_data_align) {
+					if (xrIoRead(data.fd, aa3_data_buffer + 8, aa3_data_align)
+						!= aa3_data_align) {
 						__end();
 						return -1;
 					}
@@ -325,12 +333,12 @@ static int aa3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				decode_type = 0x1000;
 			}
 
-			aa3_codec_buffer[6] = (unsigned long)aa3_data_buffer;
-			aa3_codec_buffer[8] = (unsigned long)aa3_mix_buffer;
+			aa3_codec_buffer[6] = (unsigned long) aa3_data_buffer;
+			aa3_codec_buffer[8] = (unsigned long) aa3_mix_buffer;
 
 			int res = xrAudiocodecDecode(aa3_codec_buffer, decode_type);
 
-			if ( res < 0 ) {
+			if (res < 0) {
 				__end();
 				return -1;
 			}
@@ -362,142 +370,153 @@ static int aa3_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-   xrIoLseek32(data.fd, 0x0C00, PSP_SEEK_SET);
+	xrIoLseek32(data.fd, 0x0C00, PSP_SEEK_SET);
 
-   u8 ea3_header[0x60];
-   if ( xrIoRead( data.fd, ea3_header, 0x60 ) != 0x60 )
-      goto wait;
-   if ( ea3_header[0] != 0x45 || ea3_header[1] != 0x41 || ea3_header[2] != 0x33 || ea3_header[3] != 0x01 )
-      goto wait;
+	u8 ea3_header[0x60];
 
-   aa3_type = (ea3_header[0x22] == 0x20) ? TYPE_ATRAC3 : ((ea3_header[0x22] == 0x28) ? TYPE_ATRAC3PLUS : 0x0);
-
-   if ( aa3_type != TYPE_ATRAC3 && aa3_type != TYPE_ATRAC3PLUS )
-      goto wait;
-   
-   g_info.channels = 2;
-   g_info.sample_freq = 44100;
-
-   if ( aa3_type == TYPE_ATRAC3 )
-      aa3_data_align = ea3_header[0x23]*8;
-   else
-      aa3_data_align = (ea3_header[0x23]+1)*8;
-
-   aa3_data_start = 0x0C60;
-   aa3_data_size = xrIoLseek32(data.fd, 0, PSP_SEEK_END) - aa3_data_start;
-
-   if (aa3_data_size % aa3_data_align != 0 ) {
-	   dbg_printf(d, "%s: aa3_data_size %d aa3_data_align %d not align", __func__, aa3_data_size, aa3_data_align);
+	if (xrIoRead(data.fd, ea3_header, 0x60) != 0x60)
 		goto failed;
-   }
-
-   ret = load_me_prx();
-   
-   if (ret < 0) {
-	   dbg_printf(d, "%s: load_me_prx failed", __func__);
-	   goto failed;
-   }
-
-   if ( aa3_type == TYPE_ATRAC3 ) {
-      aa3_channel_mode = 0x0;
-	  // atract3 have 3 bitrate, 132k,105k,66k, 132k align=0x180, 105k align = 0x130, 66k align = 0xc0
-      
-	  if ( aa3_data_align == 0xC0 )
-         aa3_channel_mode = 0x1;
-
-      aa3_sample_per_frame = 1024;
-      aa3_data_buffer = (u8*)memalign(64, 0x180);
-
-      if ( aa3_data_buffer == NULL)
-         goto failed;
-
-      aa3_codec_buffer[26] = 0x20;
-
-      if ( xrAudiocodecCheckNeedMem(aa3_codec_buffer, 0x1001) < 0 )
-         goto failed;
-
-      if ( xrAudiocodecGetEDRAM(aa3_codec_buffer, 0x1001) < 0 )
-         goto failed;
-
-      aa3_getEDRAM = true;
-      aa3_codec_buffer[10] = 4;
-      aa3_codec_buffer[44] = 2;
-
-      if ( aa3_data_align == 0x130 )
-         aa3_codec_buffer[10] = 6;
-
-      if ( xrAudiocodecInit(aa3_codec_buffer, 0x1001) < 0 ) {
-         goto failed;
-      }
-   } else if ( aa3_type == TYPE_ATRAC3PLUS ) {
-      aa3_sample_per_frame = 2048;
-      int temp_size = aa3_data_align+8;
-      int mod_64 = temp_size & 0x3f;
-      if (mod_64 != 0) temp_size += 64 - mod_64;
-      aa3_data_buffer = (u8*)memalign(64, temp_size);
-
-      if ( aa3_data_buffer == NULL)
-         goto failed;
-
-      aa3_codec_buffer[5] = 0x1;
-      aa3_codec_buffer[10] = aa3_aa3plus_flagdata[1];
-      aa3_codec_buffer[10] = (aa3_codec_buffer[10] << 8 ) | aa3_aa3plus_flagdata[0];
-      aa3_codec_buffer[12] = 0x1;
-      aa3_codec_buffer[14] = 0x1;
-
-      if ( xrAudiocodecCheckNeedMem(aa3_codec_buffer, 0x1000) < 0 )
-         goto failed;
-
-      if ( xrAudiocodecGetEDRAM(aa3_codec_buffer, 0x1000) < 0 )
-         goto failed;
-
-      aa3_getEDRAM = true;
-
-      if ( xrAudiocodecInit(aa3_codec_buffer, 0x1000) < 0 ) {
-         goto failed;
-      }
-   } else {
-      goto failed;
-   }
-
-   g_info.duration = 0;
-   g_info.avg_bps = 0;
-   
-   if (g_info.sample_freq != 0 && aa3_data_align != 0) {
-	   g_info.duration = (double)aa3_data_size * aa3_sample_per_frame / aa3_data_align / g_info.sample_freq;
-	   if (g_info.duration != 0) {
-		   g_info.avg_bps = (double) aa3_data_size * 8 / g_info.duration;
-	   }
-   }
-
-   if (data.use_buffer) {
-	   SceOff cur = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
-
-	   xrIoClose(data.fd);
-	   data.fd = -1;
-	   data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
-	   buffered_reader_seek(data.r, cur);
-   }
-
-   ret = xMP3AudioInit();
-
-   if (ret < 0) {
+	if (ea3_header[0] != 0x45 || ea3_header[1] != 0x41 || ea3_header[2] != 0x33
+		|| ea3_header[3] != 0x01)
 		goto failed;
-   }
 
-   ret = xMP3AudioSetFrequency(g_info.sample_freq);
+	aa3_type =
+		(ea3_header[0x22] ==
+		 0x20) ? TYPE_ATRAC3 : ((ea3_header[0x22] ==
+								 0x28) ? TYPE_ATRAC3PLUS : 0x0);
 
-   if (ret < 0) {
+	if (aa3_type != TYPE_ATRAC3 && aa3_type != TYPE_ATRAC3PLUS)
 		goto failed;
-   }
 
-   xMP3AudioSetChannelCallback(0, aa3_audiocallback, NULL);
+	g_info.channels = 2;
+	g_info.sample_freq = 44100;
 
-   return 0;
-   
-failed:
-   __end();
-   return -1;
+	if (aa3_type == TYPE_ATRAC3)
+		aa3_data_align = ea3_header[0x23] * 8;
+	else
+		aa3_data_align = (ea3_header[0x23] + 1) * 8;
+
+	aa3_data_start = 0x0C60;
+	aa3_data_size = xrIoLseek32(data.fd, 0, PSP_SEEK_END) - aa3_data_start;
+
+	if (aa3_data_size % aa3_data_align != 0) {
+		dbg_printf(d, "%s: aa3_data_size %d aa3_data_align %d not align",
+				   __func__, aa3_data_size, aa3_data_align);
+		goto failed;
+	}
+
+	ret = load_me_prx();
+
+	if (ret < 0) {
+		dbg_printf(d, "%s: load_me_prx failed", __func__);
+		goto failed;
+	}
+
+	if (aa3_type == TYPE_ATRAC3) {
+		aa3_channel_mode = 0x0;
+		// atract3 have 3 bitrate, 132k,105k,66k, 132k align=0x180, 105k align = 0x130, 66k align = 0xc0
+
+		if (aa3_data_align == 0xC0)
+			aa3_channel_mode = 0x1;
+
+		aa3_sample_per_frame = 1024;
+		aa3_data_buffer = (u8 *) memalign(64, 0x180);
+
+		if (aa3_data_buffer == NULL)
+			goto failed;
+
+		aa3_codec_buffer[26] = 0x20;
+
+		if (xrAudiocodecCheckNeedMem(aa3_codec_buffer, 0x1001) < 0)
+			goto failed;
+
+		if (xrAudiocodecGetEDRAM(aa3_codec_buffer, 0x1001) < 0)
+			goto failed;
+
+		aa3_getEDRAM = true;
+		aa3_codec_buffer[10] = 4;
+		aa3_codec_buffer[44] = 2;
+
+		if (aa3_data_align == 0x130)
+			aa3_codec_buffer[10] = 6;
+
+		if (xrAudiocodecInit(aa3_codec_buffer, 0x1001) < 0) {
+			goto failed;
+		}
+	} else if (aa3_type == TYPE_ATRAC3PLUS) {
+		aa3_sample_per_frame = 2048;
+		int temp_size = aa3_data_align + 8;
+		int mod_64 = temp_size & 0x3f;
+
+		if (mod_64 != 0)
+			temp_size += 64 - mod_64;
+		aa3_data_buffer = (u8 *) memalign(64, temp_size);
+
+		if (aa3_data_buffer == NULL)
+			goto failed;
+
+		aa3_codec_buffer[5] = 0x1;
+		aa3_codec_buffer[10] = aa3_aa3plus_flagdata[1];
+		aa3_codec_buffer[10] =
+			(aa3_codec_buffer[10] << 8) | aa3_aa3plus_flagdata[0];
+		aa3_codec_buffer[12] = 0x1;
+		aa3_codec_buffer[14] = 0x1;
+
+		if (xrAudiocodecCheckNeedMem(aa3_codec_buffer, 0x1000) < 0)
+			goto failed;
+
+		if (xrAudiocodecGetEDRAM(aa3_codec_buffer, 0x1000) < 0)
+			goto failed;
+
+		aa3_getEDRAM = true;
+
+		if (xrAudiocodecInit(aa3_codec_buffer, 0x1000) < 0) {
+			goto failed;
+		}
+	} else {
+		goto failed;
+	}
+
+	g_info.duration = 0;
+	g_info.avg_bps = 0;
+
+	if (g_info.sample_freq != 0 && aa3_data_align != 0) {
+		g_info.duration =
+			(double) aa3_data_size *aa3_sample_per_frame / aa3_data_align /
+			g_info.sample_freq;
+		if (g_info.duration != 0) {
+			g_info.avg_bps = (double) aa3_data_size *8 / g_info.duration;
+		}
+	}
+
+	if (data.use_buffer) {
+		SceOff cur = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
+
+		xrIoClose(data.fd);
+		data.fd = -1;
+		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
+		buffered_reader_seek(data.r, cur);
+	}
+
+	ret = xMP3AudioInit();
+
+	if (ret < 0) {
+		goto failed;
+	}
+
+	ret = xMP3AudioSetFrequency(g_info.sample_freq);
+
+	if (ret < 0) {
+		goto failed;
+	}
+
+	xMP3AudioSetChannelCallback(0, aa3_audiocallback, NULL);
+
+	return 0;
+
+  failed:
+	__end();
+	return -1;
 }
 
 static int aa3_end(void)
@@ -511,17 +530,17 @@ static int aa3_end(void)
 	g_status = ST_STOPPED;
 	generic_end();
 
-	if ( data.use_buffer && data.r != NULL) {
+	if (data.use_buffer && data.r != NULL) {
 		buffered_reader_close(data.r);
 		data.r = NULL;
 	}
 
-	if ( data.fd >= 0) {
+	if (data.fd >= 0) {
 		xrIoClose(data.fd);
 		data.fd = -1;
 	}
 
-	if ( aa3_data_buffer) {
+	if (aa3_data_buffer) {
 		free(aa3_data_buffer);
 		aa3_data_buffer = NULL;
 	}

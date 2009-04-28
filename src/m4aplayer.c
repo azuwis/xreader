@@ -74,9 +74,9 @@ static int g_buff_frame_start;
 /**
  * Media Engine buffer»º´æ
  */
-static unsigned long aac_codec_buffer[65] __attribute__((aligned(64)));
+static unsigned long aac_codec_buffer[65] __attribute__ ((aligned(64)));
 
-static short aac_mix_buffer[2048 * 2] __attribute__((aligned(64)));
+static short aac_mix_buffer[2048 * 2] __attribute__ ((aligned(64)));
 
 static u16 aac_data_align;
 static u32 aac_data_start;
@@ -113,7 +113,7 @@ static int __init(void)
 	aac_data_size = 0;
 	aac_getEDRAM = false;
 
-	aac_sample_per_frame = 1024; 
+	aac_sample_per_frame = 1024;
 	mp4sample_id = 1;
 	g_vendor_str[0] = '\0';
 
@@ -141,10 +141,12 @@ static int __end(void)
 
 static int m4a_seek_seconds(double seconds)
 {
-	mp4sample_id = MP4GetSampleIdFromTime(mp4file, mp4track, seconds * g_info.sample_freq, 0);
+	mp4sample_id =
+		MP4GetSampleIdFromTime(mp4file, mp4track, seconds * g_info.sample_freq,
+							   0);
 
 	dbg_printf(d, "%s: jump to frame %d", __func__, mp4sample_id);
-	
+
 	return 0;
 }
 
@@ -241,6 +243,7 @@ static int m4a_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += avail_frame * 2;
 
 			int samplesdecoded;
+
 			memset(aac_mix_buffer, 0, sizeof(aac_mix_buffer));
 
 			int res;
@@ -248,16 +251,10 @@ static int m4a_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			u_int8_t *buffer = NULL;
 			u_int32_t buffer_size = 0;
 
-			res = MP4ReadSample(
-					mp4file,
-					mp4track,
-					mp4sample_id++,
-					&buffer,
-					&buffer_size,
-					NULL,
-					NULL,
-					NULL,
-					NULL);
+			res = MP4ReadSample(mp4file,
+								mp4track,
+								mp4sample_id++,
+								&buffer, &buffer_size, NULL, NULL, NULL, NULL);
 
 			if (res == 0 || buffer == NULL) {
 				if (buffer != NULL) {
@@ -268,18 +265,18 @@ static int m4a_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				return -1;
 			}
 
-			aac_codec_buffer[6] = (unsigned long)buffer;
-			aac_codec_buffer[8] = (unsigned long)aac_mix_buffer;
-			aac_codec_buffer[7] = buffer_size; 
-			aac_codec_buffer[9] = aac_sample_per_frame * 4; 
+			aac_codec_buffer[6] = (unsigned long) buffer;
+			aac_codec_buffer[8] = (unsigned long) aac_mix_buffer;
+			aac_codec_buffer[7] = buffer_size;
+			aac_codec_buffer[9] = aac_sample_per_frame * 4;
 
 			res = xrAudiocodecDecode(aac_codec_buffer, 0x1003);
 
-			if ( res < 0 ) {
+			if (res < 0) {
 				if (buffer != NULL) {
 					free(buffer);
 				}
-				
+
 				__end();
 				return -1;
 			}
@@ -308,14 +305,15 @@ static int get_aac_track(MP4FileHandle file)
 	int n_tracks = MP4GetNumberOfTracks(file, NULL, 0);
 	int i = 0;
 
-	for(i=0;i<n_tracks;i++) {
+	for (i = 0; i < n_tracks; i++) {
 		MP4TrackId track_id = MP4FindTrackId(file, i, NULL, 0);
 		const char *track_type = MP4GetTrackType(file, track_id);
 
-		if(!strcmp(track_type, MP4_AUDIO_TRACK_TYPE)) {
+		if (!strcmp(track_type, MP4_AUDIO_TRACK_TYPE)) {
 			//we found audio track !
 			u_int8_t audio_type = MP4GetTrackAudioMpeg4Type(file, track_id);
-			if(audio_type !=0)
+
+			if (audio_type != 0)
 				return track_id;
 			else
 				return -1;
@@ -369,9 +367,10 @@ static void m4a_get_tag()
 	i = 0;
 
 	while (MP4GetMetadataByIndex(mp4file, i, &name, &buffer, &buffer_size)) {
-		if (*(unsigned long*)name == 0x6f6f74a9) {
+		if (*(unsigned long *) name == 0x6f6f74a9) {
 			memset(g_vendor_str, 0, sizeof(g_vendor_str));
-			strncpy_s(g_vendor_str, sizeof(g_vendor_str), (const char*) buffer, buffer_size);
+			strncpy_s(g_vendor_str, sizeof(g_vendor_str), (const char *) buffer,
+					  buffer_size);
 			dbg_printf(d, "%s: Encoder %s", __func__, g_vendor_str);
 			break;
 		}
@@ -430,13 +429,15 @@ static int m4a_load(const char *spath, const char *lpath)
 
 	MP4GetTrackESConfiguration(mp4file, mp4track, &buffer, &buffer_size);
 
-	if(buffer == NULL){
+	if (buffer == NULL) {
 		free(buffer);
 		NeAACDecClose(decoder);
 		goto failed;
 	}
 
-	if(NeAACDecInit2(decoder, buffer, buffer_size, (unsigned long *)&(g_info.sample_freq), (unsigned char *)&(g_info.channels))<0){
+	if (NeAACDecInit2
+		(decoder, buffer, buffer_size, (unsigned long *) &(g_info.sample_freq),
+		 (unsigned char *) &(g_info.channels)) < 0) {
 		free(buffer);
 		NeAACDecClose(decoder);
 		goto failed;
@@ -445,7 +446,10 @@ static int m4a_load(const char *spath, const char *lpath)
 	free(buffer);
 	NeAACDecClose(decoder);
 
-	uint64_t ms_duration = MP4ConvertFromTrackDuration(mp4file, mp4track, MP4GetTrackDuration(mp4file, mp4track), MP4_MSECS_TIME_SCALE);
+	uint64_t ms_duration = MP4ConvertFromTrackDuration(mp4file, mp4track,
+													   MP4GetTrackDuration
+													   (mp4file, mp4track),
+													   MP4_MSECS_TIME_SCALE);
 
 	g_info.duration = ms_duration / 1000.0;
 	g_info.channels = MP4GetTrackAudioChannels(mp4file, mp4track);
@@ -456,51 +460,51 @@ static int m4a_load(const char *spath, const char *lpath)
 
 	m4a_get_tag();
 
-   ret = load_me_prx();
-   
-   if (ret < 0) {
-	   dbg_printf(d, "%s: load_me_prx failed", __func__);
-	   goto failed;
-   }
-   
-   memset(aac_codec_buffer, 0, sizeof(aac_codec_buffer));
+	ret = load_me_prx();
 
-   if ( xrAudiocodecCheckNeedMem(aac_codec_buffer, 0x1003) < 0 ) {
-	   goto failed;
-   }
-
-   if ( xrAudiocodecGetEDRAM(aac_codec_buffer, 0x1003) < 0 ) {
-	   goto failed; 
-   }
-
-   aac_getEDRAM = true; 
-
-   aac_codec_buffer[10] = g_info.sample_freq; 
-   if ( xrAudiocodecInit(aac_codec_buffer, 0x1003) < 0 ) { 
-	   goto failed; 
-   } 
-
-   g_info.avg_bps = MP4GetTrackBitRate(mp4file, mp4track);
-
-   ret = xMP3AudioInit();
-
-   if (ret < 0) {
+	if (ret < 0) {
+		dbg_printf(d, "%s: load_me_prx failed", __func__);
 		goto failed;
-   }
+	}
 
-   ret = xMP3AudioSetFrequency(g_info.sample_freq);
+	memset(aac_codec_buffer, 0, sizeof(aac_codec_buffer));
 
-   if (ret < 0) {
+	if (xrAudiocodecCheckNeedMem(aac_codec_buffer, 0x1003) < 0) {
 		goto failed;
-   }
+	}
 
-   xMP3AudioSetChannelCallback(0, m4a_audiocallback, NULL);
+	if (xrAudiocodecGetEDRAM(aac_codec_buffer, 0x1003) < 0) {
+		goto failed;
+	}
 
-   return 0;
-   
-failed:
-   __end();
-   return -1;
+	aac_getEDRAM = true;
+
+	aac_codec_buffer[10] = g_info.sample_freq;
+	if (xrAudiocodecInit(aac_codec_buffer, 0x1003) < 0) {
+		goto failed;
+	}
+
+	g_info.avg_bps = MP4GetTrackBitRate(mp4file, mp4track);
+
+	ret = xMP3AudioInit();
+
+	if (ret < 0) {
+		goto failed;
+	}
+
+	ret = xMP3AudioSetFrequency(g_info.sample_freq);
+
+	if (ret < 0) {
+		goto failed;
+	}
+
+	xMP3AudioSetChannelCallback(0, m4a_audiocallback, NULL);
+
+	return 0;
+
+  failed:
+	__end();
+	return -1;
 }
 
 static int m4a_end(void)
