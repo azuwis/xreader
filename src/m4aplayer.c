@@ -88,6 +88,8 @@ static MP4FileHandle mp4file;
 static gint mp4track;
 static int mp4sample_id;
 
+static char g_vendor_str[80];
+
 /**
  * 初始化驱动变量资源等
  *
@@ -111,10 +113,9 @@ static int __init(void)
 	aac_data_size = 0;
 	aac_getEDRAM = false;
 
-	// ????
 	aac_sample_per_frame = 1024; 
-
 	mp4sample_id = 1;
+	g_vendor_str[0] = '\0';
 
 	return 0;
 }
@@ -324,6 +325,74 @@ static int get_aac_track(MP4FileHandle file)
 	return -1;
 }
 
+static void m4a_get_tag()
+{
+	char *s = NULL;
+
+	g_info.tag.encode = conf_encode_utf8;
+
+	if (MP4GetMetadataName(mp4file, &s)) {
+		STRCPY_S(g_info.tag.title, s);
+	}
+
+	if (s != NULL) {
+		free(s);
+		s = NULL;
+	}
+
+	if (MP4GetMetadataArtist(mp4file, &s)) {
+		STRCPY_S(g_info.tag.artist, s);
+	}
+
+	if (s != NULL) {
+		free(s);
+		s = NULL;
+	}
+
+	if (MP4GetMetadataAlbum(mp4file, &s)) {
+		STRCPY_S(g_info.tag.album, s);
+	}
+
+	if (s != NULL) {
+		free(s);
+		s = NULL;
+	}
+
+	const char *name;
+	u_int8_t *buffer;
+	u_int32_t buffer_size;
+	int i;
+
+	name = NULL;
+	buffer = NULL;
+	buffer_size = 0;
+	i = 0;
+
+	while (MP4GetMetadataByIndex(mp4file, i, &name, &buffer, &buffer_size)) {
+		if (*(unsigned long*)name == 0x6f6f74a9) {
+			memset(g_vendor_str, 0, sizeof(g_vendor_str));
+			strncpy_s(g_vendor_str, sizeof(g_vendor_str), (const char*) buffer, buffer_size);
+			dbg_printf(d, "%s: Encoder %s", __func__, g_vendor_str);
+			break;
+		}
+
+		name = NULL;
+
+		if (buffer != NULL) {
+			free(buffer);
+			buffer = NULL;
+		}
+
+		buffer_size = 0;
+		++i;
+	}
+
+	if (buffer != NULL) {
+		free(buffer);
+		buffer = NULL;
+	}
+}
+
 static int m4a_load(const char *spath, const char *lpath)
 {
 	int ret;
@@ -384,6 +453,8 @@ static int m4a_load(const char *spath, const char *lpath)
 	if (g_info.channels == 0 || g_info.channels > 2) {
 		goto failed;
 	}
+
+	m4a_get_tag();
 
    ret = load_me_prx();
    
@@ -469,7 +540,11 @@ static int m4a_get_info(struct music_info *info)
 		STRCPY_S(info->decoder_name, "AAC LC");
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
-		info->encode_msg[0] = '\0';
+		if (show_encoder_msg) {
+			STRCPY_S(info->encode_msg, g_vendor_str);
+		} else {
+			info->encode_msg[0] = '\0';
+		}
 	}
 
 	return generic_get_info(info);
