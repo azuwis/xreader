@@ -121,6 +121,11 @@ xReader_elf_SOURCES += \
 m4aplayer.c m4aplayer.h
 endif
 
+if AAC
+xReader_elf_SOURCES += \
+aacplayer.c aacplayer.h
+endif
+
 endif
 
 if NLS
