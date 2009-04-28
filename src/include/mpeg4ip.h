@@ -365,32 +365,6 @@ typedef uint8_t  u_int8_t;
 #define TRUE 1
 #endif
 
-#ifndef __cplusplus
-
-#ifndef bool
- #if SIZEOF_BOOL == 8
-  typedef uint64_t bool;
- #else
-   #if SIZEOF_BOOL == 4
-    typedef uint32_t bool;
-   #else
-     #if SIZEOF_BOOL == 2
-      typedef uint16_t bool;
-     #else
-      typedef unsigned char bool;
-     #endif
-   #endif
- #endif
- #ifndef false
- #define false FALSE
- #endif
- #ifndef true
- #define true TRUE
- #endif
-#endif
-
-#endif
-
 #ifndef ROUND
 # ifdef HAVE_RINT
 # define ROUND(f) rint(f)

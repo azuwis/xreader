@@ -168,6 +168,10 @@ if WAVPACK
 LIBS += $(libdir)/libwavpack.a
 endif
 
+if M4A
+LIBS += $(libdir)/libmp4v2.a $(libdir)/libfaad2.a
+endif
+
 endif
 
 LIBS += \

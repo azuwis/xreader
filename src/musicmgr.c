@@ -45,6 +45,7 @@
 #include "wmaplayer.h"
 #include "wvplayer.h"
 #include "at3player.h"
+#include "m4aplayer.h"
 #include "dbg.h"
 #include "config.h"
 #include "mad.h"
@@ -830,6 +831,10 @@ int music_init(void)
 
 #ifdef ENABLE_AT3
 	at3_init();
+#endif
+
+#ifdef ENABLE_M4A
+	m4a_init();
 #endif
 
 	memset(&g_list, 0, sizeof(g_list));
