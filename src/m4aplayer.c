@@ -465,18 +465,18 @@ static int m4a_load(const char *spath, const char *lpath)
    
    memset(aac_codec_buffer, 0, sizeof(aac_codec_buffer));
 
-   if ( sceAudiocodecCheckNeedMem(aac_codec_buffer, 0x1003) < 0 ) {
+   if ( xrAudiocodecCheckNeedMem(aac_codec_buffer, 0x1003) < 0 ) {
 	   goto failed;
    }
 
-   if ( sceAudiocodecGetEDRAM(aac_codec_buffer, 0x1003) < 0 ) {
+   if ( xrAudiocodecGetEDRAM(aac_codec_buffer, 0x1003) < 0 ) {
 	   goto failed; 
    }
 
    aac_getEDRAM = true; 
 
    aac_codec_buffer[10] = g_info.sample_freq; 
-   if ( sceAudiocodecInit(aac_codec_buffer, 0x1003) < 0 ) { 
+   if ( xrAudiocodecInit(aac_codec_buffer, 0x1003) < 0 ) { 
 	   goto failed; 
    } 
 

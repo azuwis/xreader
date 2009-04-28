@@ -362,10 +362,10 @@ static int aa3_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-   sceIoLseek32(data.fd, 0x0C00, PSP_SEEK_SET);
+   xrIoLseek32(data.fd, 0x0C00, PSP_SEEK_SET);
 
    u8 ea3_header[0x60];
-   if ( sceIoRead( data.fd, ea3_header, 0x60 ) != 0x60 )
+   if ( xrIoRead( data.fd, ea3_header, 0x60 ) != 0x60 )
       goto wait;
    if ( ea3_header[0] != 0x45 || ea3_header[1] != 0x41 || ea3_header[2] != 0x33 || ea3_header[3] != 0x01 )
       goto wait;
@@ -384,7 +384,7 @@ static int aa3_load(const char *spath, const char *lpath)
       aa3_data_align = (ea3_header[0x23]+1)*8;
 
    aa3_data_start = 0x0C60;
-   aa3_data_size = sceIoLseek32(data.fd, 0, PSP_SEEK_END) - aa3_data_start;
+   aa3_data_size = xrIoLseek32(data.fd, 0, PSP_SEEK_END) - aa3_data_start;
 
    if (aa3_data_size % aa3_data_align != 0 ) {
 	   dbg_printf(d, "%s: aa3_data_size %d aa3_data_align %d not align", __func__, aa3_data_size, aa3_data_align);

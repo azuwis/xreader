@@ -38,6 +38,7 @@
 #include "dbg.h"
 #include "ssv.h"
 #include "config.h"
+#include "xrhal.h"
 
 #ifdef ENABLE_APE
 
@@ -149,7 +150,7 @@ static int handle_seek(void)
 	if (1) {
 
 		if (g_status == ST_FFORWARD) {
-			sceRtcGetCurrentTick(&timer_end);
+			xrRtcGetCurrentTick(&timer_end);
 
 			generic_lock();
 			if (g_last_seek_is_forward) {
@@ -169,7 +170,7 @@ static int handle_seek(void)
 						return -1;
 					}
 
-					sceKernelDelayThread(100000);
+					xrKernelDelayThread(100000);
 				} else {
 					generic_lock();
 
@@ -184,13 +185,13 @@ static int handle_seek(void)
 					g_status = ST_PLAYING;
 
 					generic_unlock();
-					sceKernelDelayThread(100000);
+					xrKernelDelayThread(100000);
 				}
 			} else {
 				generic_unlock();
 			}
 		} else if (g_status == ST_FBACKWARD) {
-			sceRtcGetCurrentTick(&timer_end);
+			xrRtcGetCurrentTick(&timer_end);
 
 			generic_lock();
 			if (!g_last_seek_is_forward) {
@@ -210,7 +211,7 @@ static int handle_seek(void)
 						g_play_time = 0;
 					}
 
-					sceKernelDelayThread(100000);
+					xrKernelDelayThread(100000);
 				} else {
 					generic_lock();
 
@@ -225,7 +226,7 @@ static int handle_seek(void)
 					g_status = ST_PLAYING;
 
 					generic_unlock();
-					sceKernelDelayThread(100000);
+					xrKernelDelayThread(100000);
 				}
 			} else {
 				generic_unlock();
@@ -279,7 +280,7 @@ static int ape_audiocallback(void *buf, unsigned int reqn, void *pdata)
 		}
 
 		xMP3ClearSndBuf(buf, snd_buf_frame_size);
-		sceKernelDelayThread(100000);
+		xrKernelDelayThread(100000);
 		return 0;
 	}
 
