@@ -114,6 +114,7 @@ t_fs_filetype_entry ft_table[] = {
 	{"gif", fs_filetype_gif},
 	{"jpg", fs_filetype_jpg},
 	{"jpeg", fs_filetype_jpg},
+	{"thm", fs_filetype_jpg},
 	{"bmp", fs_filetype_bmp},
 	{"tga", fs_filetype_tga},
 #endif
