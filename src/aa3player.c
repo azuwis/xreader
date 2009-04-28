@@ -370,16 +370,14 @@ static int aa3_load(const char *spath, const char *lpath)
    if ( ea3_header[0] != 0x45 || ea3_header[1] != 0x41 || ea3_header[2] != 0x33 || ea3_header[3] != 0x01 )
       goto wait;
 
-   aa3_at3plus_flagdata[0] = ea3_header[0x22];
-   aa3_at3plus_flagdata[1] = ea3_header[0x23];
-
    aa3_type = (ea3_header[0x22] == 0x20) ? TYPE_ATRAC3 : ((ea3_header[0x22] == 0x28) ? TYPE_ATRAC3PLUS : 0x0);
 
    if ( aa3_type != TYPE_ATRAC3 && aa3_type != TYPE_ATRAC3PLUS )
       goto wait;
    
-   aa3_channels = 2;
-   aa3_samplerate = 44100;
+   g_info.channels = 2;
+   g_info.sample_freq = 44100;
+
    if ( aa3_type == TYPE_ATRAC3 )
       aa3_data_align = ea3_header[0x23]*8;
    else
