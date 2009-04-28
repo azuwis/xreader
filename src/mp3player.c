@@ -1185,7 +1185,7 @@ static int mp3_get_info(struct music_info *info)
 		if (use_me) {
 			STRCPY_S(info->decoder_name, "mp3");
 		} else {
-			STRCPY_S(info->decoder_name, "mp3");
+			STRCPY_S(info->decoder_name, "madmp3");
 		}
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
