@@ -498,13 +498,15 @@ static int at3_load(const char *spath, const char *lpath)
       goto failed;
    }
 
+   g_info.duration = 0;
+   g_info.avg_bps = 0;
+
    if (g_info.sample_freq != 0 && at3_data_align != 0) {
 	   g_info.duration = (double)at3_data_size * at3_sample_per_frame / at3_data_align / g_info.sample_freq;
-   } else {
-	   g_info.duration = 0;
+	   if (g_info.duration != 0) {
+		   g_info.avg_bps = (double) at3_data_size * 8 / g_info.duration;
+	   }
    }
-
-   g_info.avg_bps = (double) at3_data_size * 8 / g_info.duration;
 
    if (data.use_buffer) {
 	   SceOff cur = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
@@ -572,10 +574,6 @@ static int at3_end(void)
 
 static int at3_get_info(struct music_info *info)
 {
-	if (g_status == ST_UNKNOWN) {
-		return -1;
-	}
-
 	if (info->type & MD_GET_CURTIME) {
 		info->cur_time = g_play_time;
 	}

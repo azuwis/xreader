@@ -278,10 +278,6 @@ int generic_suspend(void)
 
 int generic_get_info(struct music_info *info)
 {
-	if (g_status == ST_UNKNOWN) {
-		return -1;
-	}
-
 	if (info->type & MD_GET_TITLE) {
 		info->encode = g_info.tag.encode;
 		STRCPY_S(info->title, g_info.tag.title);

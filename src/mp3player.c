@@ -1131,10 +1131,6 @@ static int mp3_set_opt(const char *unused, const char *values)
 
 static int mp3_get_info(struct music_info *info)
 {
-	if (g_status == ST_UNKNOWN) {
-		return -1;
-	}
-
 	if (info->type & MD_GET_CURTIME) {
 		info->cur_time = g_play_time;
 	}
