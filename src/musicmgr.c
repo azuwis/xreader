@@ -205,16 +205,6 @@ static int rebuild_shuffle_data(void)
 		g_shuffle.first_time = false;
 	}
 
-	dbg_printf(d, "Dump table:");
-
-	int i;
-
-	for (i = 0; i < g_shuffle.size; ++i) {
-		dbg_printf_raw(d, "%d ", g_shuffle.table[i]);
-	}
-
-	dbg_printf_raw(d, "\n");
-
 	return 0;
 }
 
