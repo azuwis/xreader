@@ -115,6 +115,12 @@ if AA3
 xReader_elf_SOURCES += \
 aa3player.c aa3player.h
 endif
+
+if M4A
+xReader_elf_SOURCES += \
+m4aplayer.c m4aplayer.h
+endif
+
 endif
 
 if NLS
