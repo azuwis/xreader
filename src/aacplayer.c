@@ -181,6 +181,19 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 	UNUSED(pdata);
 
+	if (g_status == ST_FFORWARD || g_status == ST_FBACKWARD) {
+		generic_lock();
+		g_status = ST_PLAYING;
+		generic_set_playback(true);
+		generic_unlock();
+	}
+	
+	if (g_status == ST_PAUSED) {
+		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xrKernelDelayThread(100000);
+		return 0;
+	}
+
 	while (snd_buf_frame_size > 0) {
 		avail_frame = g_buff_frame_size - g_buff_frame_start;
 
