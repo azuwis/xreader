@@ -44,6 +44,7 @@
 #include "oggplayer.h"
 #include "wmaplayer.h"
 #include "wvplayer.h"
+#include "at3player.h"
 #include "dbg.h"
 #include "config.h"
 #include "mad.h"
@@ -825,6 +826,10 @@ int music_init(void)
 
 #ifdef ENABLE_WAVPACK
 	wv_init();
+#endif
+
+#ifdef ENABLE_AT3
+	at3_init();
 #endif
 
 	memset(&g_list, 0, sizeof(g_list));

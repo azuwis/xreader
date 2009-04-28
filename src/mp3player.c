@@ -46,6 +46,7 @@
 #include "musicinfo.h"
 #include "common/utils.h"
 #include "xrhal.h"
+#include "mediaengine.h"
 
 #ifdef ENABLE_MP3
 
@@ -844,37 +845,6 @@ static int __init(void)
 	g_play_time = 0.;
 	memset(&mp3info, 0, sizeof(mp3info));
 	memset(&g_info, 0, sizeof(g_info));
-
-	return 0;
-}
-
-static bool me_prx_loaded = false;
-
-static int load_me_prx(void)
-{
-	int result;
-
-	if (me_prx_loaded)
-		return 0;
-
-#if (PSP_FW_VERSION >= 300)
-	result = xrUtilityLoadAvModule(PSP_AV_MODULE_AVCODEC);
-#else
-	result =
-		pspSdkLoadStartModule("flash0:/kd/avcodec.prx",
-							  PSP_MEMORY_PARTITION_KERNEL);
-#endif
-
-	if (result < 0)
-		return -1;
-
-#if (PSP_FW_VERSION >= 300)
-	result = xrUtilityLoadAvModule(PSP_AV_MODULE_ATRAC3PLUS);
-	if (result < 0)
-		return -2;
-#endif
-
-	me_prx_loaded = true;
 
 	return 0;
 }

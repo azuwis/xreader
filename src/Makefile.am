@@ -58,7 +58,7 @@ if MUSIC
 xReader_elf_SOURCES += \
 musicdrv.c musicdrv.h musicmgr.c musicmgr.h xmp3audiolib.c xmp3audiolib.h \
 genericplayer.c genericplayer.h buffered_reader.c buffered_reader.h mp3info.h mp3info.c mp3info_buffered.c lyric.c lyric.h clock.c \
-musicinfo.c musicinfo.h
+musicinfo.c musicinfo.h mediaengine.c medaiengine.h
 
 if MP3
 xReader_elf_SOURCES += \
@@ -106,6 +106,10 @@ xReader_elf_SOURCES += \
 apeplayer.cpp apeplayer.h
 endif
 
+if AT3 
+xReader_elf_SOURCES += \
+at3player.c at3player.h
+endif
 endif
 
 if NLS
