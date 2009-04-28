@@ -620,7 +620,7 @@ static int flac_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "flac");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg) {
+		if (show_encoder_msg && g_status != ST_UNKNOWN) {
 			SPRINTF_S(pinfo->encode_msg, "%s Ratio: %.3f", g_encode_name,
 					  1.0 * g_info.filesize / (g_info.samples *
 											   g_info.channels *
