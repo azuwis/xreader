@@ -261,6 +261,12 @@ static int mpc_load(const char *spath, const char *lpath)
 
 	reader_inited = true;
 	demux = mpc_demux_init(&reader);
+
+	if (demux == NULL) {
+		__end();
+		return -1;
+	}
+
 	mpc_demux_get_info(demux, &info);
 
 	if (info.average_bitrate != 0) {
