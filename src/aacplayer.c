@@ -275,6 +275,12 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 static int aac_load(const char *spath, const char *lpath)
 {
 	int ret;
+	FILE *aacfp = NULL;
+	unsigned char *aac_buffer = NULL;
+	NeAACDecHandle decoder = NULL;
+	NeAACDecConfigurationPtr aac_config = NULL;
+	unsigned long buffervalid;
+	unsigned long bufferconsumed;
 
 	__init();
 
@@ -288,19 +294,11 @@ static int aac_load(const char *spath, const char *lpath)
 
 	xrIoClose(fd);
 
-	FILE *aacfp = NULL;
-	unsigned char *aac_buffer = NULL;
-
 	aacfp = fopen(spath, "rb");
 
 	if (aacfp == NULL) {
 		goto failed;
 	}
-
-	NeAACDecHandle decoder = NULL;
-	NeAACDecConfigurationPtr aac_config = NULL;
-	unsigned long buffervalid;
-	unsigned long bufferconsumed;
 
 	aac_config = NULL;
 	buffervalid = bufferconsumed = 0;
