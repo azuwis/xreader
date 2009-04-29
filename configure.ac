@@ -217,6 +217,7 @@ DX_INIT_DOXYGEN(xReader, doxygen.cfg, doc)
 CFLAGS=""
 PSPSDK_CFLAGS="$CFLAGS -G0 -Wall"
 PSPSDK_CXXFLAGS="$PSPSDK_CFLAGS -fno-exceptions -fno-rtti"
+AC_SUBST([xReader_version])
 AC_SUBST(PSPSDK_CFLAGS)
 AC_SUBST(PSPSDK_CXXFLAGS)
 

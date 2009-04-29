@@ -190,7 +190,7 @@ $(libdir)/libfreetype.a -lexif -lm -lpspkubridge -lpspsystemctrl_user \
 TARGET = xReader
 EXTRA_TARGETS = EBOOT.PBP
 EXTRA_CLEAN = -r __SCE__xReader %__SCE__xReader xReader xReader% xReader.prx
-PSP_EBOOT_TITLE = xReader
+PSP_EBOOT_TITLE = xReader $(xReader_version)
 PSP_EBOOT_ICON = $(top_srcdir)/resource/ICON0.png
 
 include $(PSPSDK)/lib/build.mak
