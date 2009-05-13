@@ -31,13 +31,14 @@ BUILD_PRX=1
 USE_KERNEL_LIBC = 1
 # Use only kernel libraries
 USE_KERNEL_LIBS = 1
+PRX_EXPORTS = cooleyesBridge.exp
 
 PSPSDK=$(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak
 
-all: cooleyesBridge.S
-cooleyesBridge.S: cooleyesBridge.exp
-	psp-build-exports -s $^
+cooleyesBridge.o: cooleyesBridge.exp
+	psp-build-exports -b $^ > cooleyesBridge.c
+	$(CC) $(CFLAGS) -c -o $@ cooleyesBridge.c
 
 clean-local:
-	$(RM) cooleyesBridge.prx cooleyesBridge.S
+	$(RM) cooleyesBridge.prx cooleyesBridge.S cooleyesBridge.c
