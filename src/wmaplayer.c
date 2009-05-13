@@ -1186,7 +1186,7 @@ static int wma_end(void)
 
 	g_buff_size = 0;
 	free_bitrate(&g_inst_br);
-	cooleyesMeBootStart(xrKernelDevkitVersion(), 0);
+	cooleyesMeBootStart(xrKernelDevkitVersion(), 4);
 	unload_modules();
 	generic_end();
 
