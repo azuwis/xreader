@@ -119,11 +119,13 @@ t_fs_filetype_entry ft_table[] = {
 	{"tga", fs_filetype_tga},
 #endif
 	{"zip", fs_filetype_zip},
+	{"cbz", fs_filetype_zip},
 	{"gz", fs_filetype_gz},
 	{"umd", fs_filetype_umd},
 	{"pdb", fs_filetype_pdb},
 	{"chm", fs_filetype_chm},
 	{"rar", fs_filetype_rar},
+	{"cbr", fs_filetype_rar},
 	{"pbp", fs_filetype_prog},
 	{"ebm", fs_filetype_ebm},
 	{"iso", fs_filetype_iso},
