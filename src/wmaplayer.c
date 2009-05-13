@@ -40,6 +40,7 @@
 #include "kubridge.h"
 #include "mediaengine.h"
 #include "cooleyesBridge.h"
+#include "buffered_reader.h"
 #include "xrhal.h"
 
 #ifdef ENABLE_WMA
@@ -83,10 +84,24 @@ static unsigned g_buff_frame_size;
  */
 static int g_buff_frame_start;
 
+typedef struct reader_data_t
+{
+	buffered_reader_t *r;
+	int fd;
+	bool use_buffer;
+} wma_reader_data;
+
 /**
- * WMA文件句柄
+ * 使用缓冲IO
  */
-static int g_wma_fd = -1;
+static bool use_buffer = true;
+
+/**
+ * 默认缓冲IO缓冲字节大小，最低不小于8192
+ */
+static int g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+
+static wma_reader_data data;
 
 static SceAsfParser asfparser __attribute__((aligned(64)));
 
@@ -107,7 +122,14 @@ static int g_asfparser_mod_id = -1;
 
 static int64_t asf_read_cb(void *userdata, void *buf, SceSize size)
 {
-	int ret = xrIoRead((int)userdata, buf, size);
+	int ret;
+	wma_reader_data *reader = (wma_reader_data*) userdata;
+   
+	if (reader->use_buffer) {
+		ret	= buffered_reader_read(reader->r, buf, size);
+	} else {
+		ret = xrIoRead(reader->fd, buf, size);
+	}
 
 //	dbg_printf(d, "%s 0x%08x %d", __func__, (u32)buf, size);
 
@@ -117,8 +139,17 @@ static int64_t asf_read_cb(void *userdata, void *buf, SceSize size)
 static int64_t asf_seek_cb(void *userdata, void *buf, int offset, int dummy, int whence)
 {
 	int ret = -1;
+	wma_reader_data *reader = (wma_reader_data*) userdata;
 
-	ret = xrIoLseek((int)userdata, offset, whence);
+	if (reader->use_buffer) {
+		if (whence == PSP_SEEK_SET) {
+			ret = buffered_reader_seek(reader->r, offset);
+		} else if (whence == PSP_SEEK_CUR) {
+			ret = buffered_reader_seek(reader->r, offset + buffered_reader_position(reader->r));
+		}
+	} else {
+		ret = xrIoLseek(reader->fd, offset, whence);
+	}
 
 //	dbg_printf(d, "%s@0x%08x 0x%08x %d", __func__, ret, offset, whence);
 
@@ -345,17 +376,18 @@ static int __init(void)
 	g_buff = NULL;
 	g_buff_size = 0;
 
-	g_wma_fd = -1;
 	codecdata = NULL;
 
 	memset(wma_mix_buffer, 0, sizeof(wma_mix_buffer));
+	memset(&data, 0, sizeof(data));
+	data.fd = -1;
 
 	g_asfparser_mod_id = -1;
 
 	return 0;
 }
 
-static int parse_standard_tag(int g_wma_fd, struct WMAStdTag *tag)
+static int parse_standard_tag(struct WMAStdTag *tag)
 {
 	u32 ms = 0;
 	int ret;
@@ -382,8 +414,8 @@ static int parse_standard_tag(int g_wma_fd, struct WMAStdTag *tag)
 		return -1;
 	}
 
-	asf_seek_cb((void*)g_wma_fd, NULL, start, 0, PSP_SEEK_SET);
-	asf_read_cb((void*)g_wma_fd, framedata, size);
+	asf_seek_cb(&data, NULL, start, 0, PSP_SEEK_SET);
+	asf_read_cb(&data, framedata, size);
 
 #if 0
 	dbg_printf(d, "frame data: ");
@@ -487,7 +519,7 @@ static int parse_standard_tag(int g_wma_fd, struct WMAStdTag *tag)
 	return 0;
 }
 
-static int parse_ex_tag(int g_wma_fd, struct WMAExTag *tag)
+static int parse_ex_tag(struct WMAExTag *tag)
 {
 	u32 ms = 0;
 	int ret;
@@ -515,8 +547,8 @@ static int parse_ex_tag(int g_wma_fd, struct WMAExTag *tag)
 		return -1;
 	}
 
-	asf_seek_cb((void*)g_wma_fd, NULL, start, 0, PSP_SEEK_SET);
-	asf_read_cb((void*)g_wma_fd, framedata, size);
+	asf_seek_cb(&data, NULL, start, 0, PSP_SEEK_SET);
+	asf_read_cb(&data, framedata, size);
 
 #if 0
 	dbg_printf(d, "frame data: ");
@@ -722,8 +754,8 @@ static void get_wma_tag(void)
 	struct WMAStdTag tag;
 	struct WMAExTag ex_tag;
 	
-	parse_standard_tag(g_wma_fd, &tag);
-	parse_ex_tag(g_wma_fd, &ex_tag);
+	parse_standard_tag(&tag);
+	parse_ex_tag(&ex_tag);
 
 	g_info.tag.type = WMATAG;
 	g_info.tag.encode = conf_encode_ucs;
@@ -896,6 +928,50 @@ static int init_audiocodec()
 	return 0;
 }
 
+static int wma_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	use_buffer = false;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+				(argv[i], "wma_buffered_io",
+				 sizeof("wma_buffered_io") - 1)) {
+			if (opt_is_on(argv[i])) {
+				use_buffer = true;
+			} else {
+				use_buffer = false;
+			}
+		} else if (!strncasecmp
+				(argv[i], "wma_buffer_size",
+				 sizeof("wma_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	generic_set_opt(unused, values);
+
+	return 0;
+}
+
 /**
  * 装载WMA音乐文件 
  *
@@ -918,15 +994,28 @@ static int wma_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	g_wma_fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
+	data.use_buffer = use_buffer;
 
-	if (g_wma_fd < 0) {
-		__end();
-		return -1;
+	if (data.use_buffer) {
+		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
+
+		if (data.r == NULL) {
+			__end();
+			return -1;
+		}
+
+		g_info.filesize = buffered_reader_length(data.r);
+	} else {
+		data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
+
+		if (data.fd < 0) {
+			__end();
+			return -1;
+		}
+
+		g_info.filesize = xrIoLseek(data.fd, 0, PSP_SEEK_END);
+		xrIoLseek(data.fd, 0, PSP_SEEK_SET);
 	}
-
-	g_info.filesize = xrIoLseek(g_wma_fd, 0, PSP_SEEK_END);
-	xrIoLseek(g_wma_fd, 0, PSP_SEEK_SET);
 
 	if (load_modules() < 0) {
 		__end();
@@ -959,7 +1048,7 @@ static int wma_load(const char *spath, const char *lpath)
 
 	init_asf_codecdata2(&asfparser);
 
-	ret = xrAsfInitParser(&asfparser, (void*) g_wma_fd, &asf_read_cb, &asf_seek_cb);
+	ret = xrAsfInitParser(&asfparser, &data, &asf_read_cb, &asf_seek_cb);
 
 	if (ret < 0) {
 		dbg_printf(d, "xrAsfInitParser = 0x%08x", ret);
@@ -1046,9 +1135,16 @@ static int wma_end(void)
 
 	g_status = ST_STOPPED;
 
-	if (g_wma_fd >= 0) {
-		xrIoClose(g_wma_fd);
-		g_wma_fd = -1;
+	if (data.use_buffer) {
+		if (data.r != NULL) {
+			buffered_reader_close(data.r);
+			data.r = NULL;
+		}
+	} else {
+		if (data.fd >= 0) {
+			xrIoClose(data.fd);
+			data.fd = -1;
+		}
 	}
 
 	if ( wma_getEDRAM ) {
@@ -1179,7 +1275,7 @@ static int wma_probe(const char *spath)
 
 static struct music_ops wma_ops = {
 	.name = "wma",
-	.set_opt = NULL,
+	.set_opt = wma_set_opt,
 	.load = wma_load,
 	.play = NULL,
 	.pause = NULL,

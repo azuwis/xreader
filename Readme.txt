@@ -186,7 +186,7 @@ mp3_buffered_io=on/off
 mp3_use_me=on/off
 是否使用MP3硬件解码(Media Engine）功能，否则使用libMAD进行软件解码。默认为是
 mp3_buffer_size=262144
-装载MP3数据的缓冲区字节大小，不得小于8192字节，默认为262144字节
+装载MP3数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
 
 WAV:
 暂无
@@ -194,6 +194,12 @@ WAV:
 TTA:
 show_encoder_msg=y/n
 是否显示编码器信息
+
+WMA:
+wma_buffered_io=on/off
+是否使用缓冲装载MP3数据，默认为是
+wma_buffer_size=262144
+装载WMA数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
 
 将它们写成一行，如:
 musicdrv_opts=show_encoder_msg=on mp3_brute_mode=on mp3_use_me=on
