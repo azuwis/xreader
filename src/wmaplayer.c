@@ -683,12 +683,28 @@ static void free_standard_tag(struct WMAStdTag *tag)
 
 static void free_ex_tag(struct WMAExTag *tag)
 {
+	int i;
+
 	if (tag->key) {
+		for(i=0; i<tag->tag_size; ++i) {
+			if (tag->key[i] != NULL) {
+				free(tag->key[i]);
+				tag->key[i] = NULL;
+			}
+		}
+
 		free(tag->key);
 		tag->key = NULL;
 	}
 
 	if (tag->value) {
+		for(i=0; i<tag->tag_size; ++i) {
+			if (tag->value[i] != NULL) {
+				free(tag->value[i]);
+				tag->value[i] = NULL;
+			}
+		}
+		
 		free(tag->value);
 		tag->value = NULL;
 	}
