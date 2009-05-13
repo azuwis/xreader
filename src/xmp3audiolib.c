@@ -40,7 +40,7 @@
 #include "xmp3audiolib.h"
 #include "xrhal.h"
 
-#define THREAD_STACK_SIZE (128 * 1024)
+#define THREAD_STACK_SIZE (64 * 1024)
 
 int setFrequency(unsigned short samples, unsigned short freq, char car)
 {
