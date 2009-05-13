@@ -29,17 +29,6 @@ extern "C" {
 
 void xrPlayerSetSpeed(int cpu, int bus);
 
-/**
-  * Set audio sampling frequency
-  *
-  * @param frequency - Sampling frequency to set audio output to - either 44100 or 48000.
-  *
-  * @returns 0 on success, an error if less than 0.
-  */
-int cooleyesAudioSetFrequency(int devkitVersion, int frequency);
-
-int cooleyesMeBootStart(int devkitVersion, int mebooterType);
-
 #ifdef __cplusplus
 }
 #endif
