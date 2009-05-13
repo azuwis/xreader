@@ -16,6 +16,7 @@
 #include <pspusbstor.h>
 #include <psputility.h>
 #include <psputility_osk.h>
+#include "pspasfparser.h"
 
 static inline SceUID xrIoOpen(const char *file, int flags, SceMode mode)
 {
@@ -628,6 +629,36 @@ static inline
 									void *buf)
 {
 	return sceAudioOutputPannedBlocking(channel, leftvol, rightvol, buf);
+}
+
+static inline int xrAsfSeekTime(SceAsfParser * asf, int unk, u32 *ms)
+{
+	return sceAsfSeekTime(asf, unk, ms);
+}
+
+static inline int xrAsfParser_C6D98C54(void *arg1, void *arg2, void *arg3, void *arg4)
+{
+	return sceAsfParser_C6D98C54(arg1, arg2, arg3, arg4);
+}
+
+static inline int xrAsfCheckNeedMem(SceAsfParser * asf)
+{
+	return sceAsfCheckNeedMem(asf);
+}
+
+static inline int xrAsfGetFrameData(SceAsfParser * asf, int unk, SceAsfFrame *frame)
+{
+	return sceAsfGetFrameData(asf, unk, frame);
+}
+
+static inline int xrAsfInitParser(SceAsfParser * asf, void* userdata, SceAsfParserReadCB read_cb, SceAsfParserSeekCB seek_cb)
+{
+	return sceAsfInitParser(asf, userdata, read_cb, seek_cb);
+}
+
+static inline int xrAsfParser_685E0DA7(SceAsfParser * asf, void *ptr, int flag, void *arg4, u64 *arg5, u64 *arg6)
+{
+	return sceAsfParser_685E0DA7(asf, ptr, flag, arg4, arg5, arg6);
 }
 
 #endif
