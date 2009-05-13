@@ -38,6 +38,8 @@ if [ x"$DEBUG" = xy ]; then
 fi
 echo "\t\txrPrx.prx"
 cp -u "$BUILDDIR/../xrPrx/xrPrx.prx" "$DESTDIR/"
+echo "\t\tcooleyesBridge.prx"
+cp -u "$BUILDDIR/../cooleyesBridge/cooleyesBridge.prx" "$DESTDIR/"
 #echo "\t\txr_rdriver.prx"
 #cp -u "$BUILDDIR/../xr_rdriver/xr_rdriver.prx" "$DESTDIR/"
 echo "\t\tfonts.zip"
