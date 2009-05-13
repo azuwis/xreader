@@ -3,10 +3,10 @@
 AUTHOR=hrimfaxi
 EMAIL=outmatch@gmail.com
 DIRS="msg fonts"
-SRCDIR=$HOME/xreader/src
-ROOTDIR=$HOME/xreader/PSP/
-DESTDIR=$HOME/xreader/PSP/PSP/GAME/xReader
-DESTDIR2=$HOME/xreader/PSP/seplugins
+SRCDIR=$HOME/svn_xreader/src
+ROOTDIR=$HOME/svn_xreader/PSP/
+DESTDIR=$HOME/svn_xreader/PSP/PSP/GAME/xReader
+DESTDIR2=$HOME/svn_xreader/PSP/seplugins
 LITE=n
 
 echo "xReader transfer script"
@@ -36,7 +36,7 @@ cp -u "$SRCDIR/../xrPrx/xrPrx.prx" "$DESTDIR/"
 echo "\t\txr_rdriver.prx"
 cp -u "$SRCDIR/../xr_rdriver/xr_rdriver.prx" "$DESTDIR2/"
 echo "\t\tcooleyesBridge.prx"
-cp -u "$SRCDIR/..cooleyesBridge/cooleyesBridge.prx" "$DESTDIR2/"
+cp -u "$SRCDIR/../cooleyesBridge/cooleyesBridge.prx" "$DESTDIR/"
 echo "\t\tfonts.zip"
 cp -u "$SRCDIR/../fonts/fonts.zip" "$DESTDIR/"
 echo "\t\tReadme.txt"
