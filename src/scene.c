@@ -5747,17 +5747,22 @@ extern void scene_init(void)
 	scene_filelist();
 }
 
+/// @note we only have a small amount of stack memory
 extern void scene_exit(void)
 {
 	power_set_clock(222, 111);
 
 #ifdef ENABLE_MUSIC
 	music_list_stop();
-	char mp3conf[PATH_MAX];
 
-	STRCPY_S(mp3conf, scene_appdir());
-	STRCAT_S(mp3conf, "music.lst");
-	music_list_save(mp3conf);
+	{
+		char mp3conf[PATH_MAX];
+
+		STRCPY_S(mp3conf, scene_appdir());
+		STRCAT_S(mp3conf, "music.lst");
+		music_list_save(mp3conf);
+	}
+
 	music_free();
 #endif
 	if (config.save_password)
@@ -5768,11 +5773,15 @@ extern void scene_exit(void)
 	if (fs != NULL) {
 		scene_bookmark_autosave();
 	}
-	// always save to config0.ini
-	char conffile[PATH_MAX];
 
-	SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", 0, ".ini");
-	conf_set_file(conffile);
+	{
+		// always save to config0.ini
+		char conffile[PATH_MAX];
+
+		SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", 0, ".ini");
+		conf_set_file(conffile);
+	}
+
 	load_fontsize_to_config();
 	conf_save(&config);
 
