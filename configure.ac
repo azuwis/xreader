@@ -228,6 +228,7 @@ fi
 
 #AC_CONFIG_SUBDIRS([src/GenIndex])
 AC_CONFIG_FILES([Makefile
+				 cooleyesBridge/Makefile
                  src/Makefile
                  xrPrx/Makefile
                  xr_rdriver/Makefile
