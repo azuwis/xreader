@@ -18,7 +18,7 @@ LDFLAGS = -mno-crt0 -nostartfiles
 	
 noinst_PROGRAMS= xrPrx.elf
 
-xrPrx_elf_SOURCES = main.c exception_asm.S xrPrx.h exports.exp sceMeCore_driver3xx.S sceAudio_driver3xx.S
+xrPrx_elf_SOURCES = main.c exception_asm.S xrPrx.h exports.exp
 
 TARGET = xrPrx
 
