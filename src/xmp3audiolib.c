@@ -36,89 +36,30 @@
 #include <string.h>
 #include <pspthreadman.h>
 #include <pspaudio.h>
-#include <pspaudio_kernel.h>
 
 #include "xmp3audiolib.h"
 #include "xrhal.h"
-#include "common/datatype.h"
-#include <stdio.h>
-#include "dbg.h"
 
 #define THREAD_STACK_SIZE (128 * 1024)
-#define WMA_AUDIO_SAMPLE_MAX (30720)
-
-static bool g_useAudioChReserve = false;
-static int g_AudioCh = -1;
 
 int setFrequency(unsigned short samples, unsigned short freq, char car)
 {
-	if (!g_useAudioChReserve)
-		return xrAudioSRCChReserve(samples, freq, car);
-	else {
-		// Only support 44100 now
-		if (freq != 44100) {
-			return -1;
-		}
-
-		if (g_AudioCh >= 0) {
-			xrAudioChRelease(g_AudioCh);
-		}
-
-		g_AudioCh =
-			xrAudioChReserve(PSP_AUDIO_NEXT_CHANNEL, WMA_AUDIO_SAMPLE_MAX,
-							 PSP_AUDIO_FORMAT_STEREO);
-
-		if (g_AudioCh < 0) {
-			dbg_printf(d, "%s: xrAudioChReserve failed 0x%08x", __func__,
-					   g_AudioCh);
-		}
-
-		return g_AudioCh;
-	}
-}
-
-int xMP3SetUseAudioChReserve(int use)
-{
-	int prev = (int) g_useAudioChReserve;
-
-	g_useAudioChReserve = (bool) use;
-
-	return prev;
+	return xrAudioSRCChReserve(samples, freq, car);
 }
 
 int xMP3ReleaseAudio(void)
 {
-	if (!g_useAudioChReserve) {
-		while (xrAudioOutput2GetRestSample() > 0);
-		return xrAudioSRCChRelease();
-	} else {
-		int ret = 0;
-
-		if (g_AudioCh >= 0) {
-//          while (xrAudioGetChannelRestLength(g_AudioCh) > 0);
-
-			ret = xrAudioChRelease(g_AudioCh);
-
-			if (ret == 0) {
-				g_AudioCh = -1;
-			}
-		}
-
-		return ret;
-	}
+	while (xrAudioOutput2GetRestSample() > 0);
+	return xrAudioSRCChRelease();
 }
 
 int audioOutpuBlocking(int volume, void *buffer)
 {
-	if (!g_useAudioChReserve) {
-		return xrAudioSRCOutputBlocking(volume, buffer);
-	} else {
-		return xrAudioOutputPannedBlocking(g_AudioCh, volume, volume, buffer);
-	}
+	return xrAudioSRCOutputBlocking(volume, buffer);
 }
 
 static int audio_ready = 0;
-static short audio_sndbuf[PSP_NUM_AUDIO_CHANNELS][2][WMA_AUDIO_SAMPLE_MAX][2];
+static short audio_sndbuf[PSP_NUM_AUDIO_CHANNELS][2][PSP_NUM_AUDIO_SAMPLES][2];
 static psp_audio_channelinfo AudioStatus[PSP_NUM_AUDIO_CHANNELS];
 static volatile int audio_terminate = 0;
 
@@ -176,15 +117,10 @@ static int AudioChannelThread(int args, void *argp)
 	while (audio_terminate == 0) {
 		void *bufptr = &audio_sndbuf[channel][bufidx];
 		xMP3AudioCallback_t callback;
-		int size;
-
-		size =
-			g_useAudioChReserve ? WMA_AUDIO_SAMPLE_MAX : PSP_NUM_AUDIO_SAMPLES;
 
 		callback = AudioStatus[channel].callback;
 		if (callback) {
-
-			int ret = callback(bufptr, size,
+			int ret = callback(bufptr, PSP_NUM_AUDIO_SAMPLES,
 							   AudioStatus[channel].pdata);
 
 			if (ret != 0) {
@@ -194,7 +130,7 @@ static int AudioChannelThread(int args, void *argp)
 			unsigned int *ptr = bufptr;
 			int i;
 
-			for (i = 0; i < size; ++i)
+			for (i = 0; i < PSP_NUM_AUDIO_SAMPLES; ++i)
 				*(ptr++) = 0;
 		}
 		//xMP3AudioOutBlocking(channel,AudioStatus[channel].volumeleft,AudioStatus[channel].volumeright,bufptr);
@@ -281,7 +217,6 @@ int xMP3AudioInit()
 			xrKernelCreateThread(str, (void *) &AudioChannelThread, 0x12,
 								 THREAD_STACK_SIZE, PSP_THREAD_ATTR_USER, NULL);
 		if (AudioStatus[i].threadhandle < 0) {
-			dbg_printf(d, "%s: xrKernelCreateThread@0x%08x", __func__, AudioStatus[i].threadhandle);
 			AudioStatus[i].threadhandle = -1;
 			failed = 1;
 			break;
@@ -343,8 +278,6 @@ void xMP3AudioEnd()
 		xrKernelDeleteSema(play_sema);
 		play_sema = -1;
 	}
-
-	g_useAudioChReserve = false;
 }
 
 /**

@@ -79,8 +79,6 @@ extern "C"
 
 	void xMP3ClearSndBuf(void *buf, int frames);
 
-	int xMP3SetUseAudioChReserve(int use);
-
 #ifdef __cplusplus
 }
 #endif
