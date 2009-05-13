@@ -36,6 +36,9 @@ PRX_EXPORTS = cooleyesBridge.exp
 PSPSDK=$(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak
 
+all: cooleyesBridge.S
+cooleyesBridge.S: cooleyesBridge.exp
+	psp-build-exports -s $^
 cooleyesBridge.o: cooleyesBridge.exp
 	psp-build-exports -b $^ > cooleyesBridge.c
 	$(CC) $(CFLAGS) -c -o $@ cooleyesBridge.c
