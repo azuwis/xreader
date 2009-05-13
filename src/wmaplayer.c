@@ -754,6 +754,9 @@ static void get_wma_tag(void)
 	struct WMAStdTag tag;
 	struct WMAExTag ex_tag;
 	
+	memset(&tag, 0, sizeof(tag));
+	memset(&ex_tag, 0, sizeof(ex_tag));
+
 	parse_standard_tag(&tag);
 	parse_ex_tag(&ex_tag);
 
@@ -786,8 +789,6 @@ static void get_wma_tag(void)
 
 static int load_modules()
 {
-	int result;
-	
 	if (load_me_prx() < 0) {
 		return -1;
 	}
@@ -810,7 +811,7 @@ static int load_modules()
 	int modid = pspSdkLoadStartModule("flash0:/kd/libasfparser.prx", PSP_MEMORY_PARTITION_USER);
 
 	if (modid < 0 && (u32)modid != 0x80020139) {
-		dbg_printf(d, "pspSdkLoadStartModule(libasfparser) = 0x%08x", result);
+		dbg_printf(d, "pspSdkLoadStartModule(libasfparser) = 0x%08x", modid);
 		return -1;
 	}
 	
