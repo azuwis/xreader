@@ -77,7 +77,7 @@ endif
 
 if WMA
 xReader_elf_SOURCES += \
-wmaplayer.c wmaplayer.h
+wmaplayer.c wmaplayer.h sceAsfParser.S cooleyesBridge.S
 endif
 
 if WAV
@@ -156,9 +156,6 @@ LIBS += $(libdir)/libvorbisidec.a
 endif
 
 if WMA
-LIBS += \
-	$(libdir)/pmpmodavc/libavformat.a \
-	$(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a
 endif
 
 if APE
@@ -185,7 +182,7 @@ $(libdir)/libpng.a $(libdir)/libgif.a $(libdir)/libjpeg.a $(libdir)/libbmp.a \
 $(libdir)/libtga.a $(libdir)/libz.a \
 $(libdir)/libfreetype.a -lexif -lm -lpspkubridge -lpspsystemctrl_user \
 -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc -lpspusb \
--lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg -lpsputility 
+-lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpsputility 
 
 TARGET = xReader
 EXTRA_TARGETS = EBOOT.PBP

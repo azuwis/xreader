@@ -333,6 +333,23 @@ static inline
 	return sceKernelLoadModule(path, flags, option);
 }
 
+static inline
+int xrKernelStopModule (SceUID modid,
+		SceSize argsize,
+		void *argp,
+		int *status,
+		SceKernelSMOption*option
+		)
+{
+	return sceKernelStopModule(modid, argsize, argp, status, option);
+}
+
+static inline
+int xrKernelUnloadModule(SceUID modid)   	
+{
+	return sceKernelUnloadModule(modid);
+}
+
 static inline void xrKernelExitGame(void)
 {
 	sceKernelExitGame();

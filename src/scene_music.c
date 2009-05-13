@@ -463,6 +463,9 @@ static void scene_draw_mp3bar_music_staff(void)
 				charsets_utf8_conv((const byte *) info.album,
 								   sizeof(info.album), (byte *) info.album,
 								   sizeof(info.album));
+				charsets_utf8_conv((const byte *) info.comment,
+								   sizeof(info.comment), (byte *) info.comment,
+								   sizeof(info.comment));
 				break;
 			case conf_encode_big5:
 				charsets_big5_conv((const byte *) info.artist,
@@ -474,6 +477,9 @@ static void scene_draw_mp3bar_music_staff(void)
 				charsets_big5_conv((const byte *) info.album,
 								   sizeof(info.album), (byte *) info.album,
 								   sizeof(info.album));
+				charsets_big5_conv((const byte *) info.comment,
+								   sizeof(info.comment), (byte *) info.comment,
+								   sizeof(info.comment));
 				break;
 			case conf_encode_sjis:
 				{
@@ -498,9 +504,31 @@ static void scene_draw_mp3bar_music_staff(void)
 					strncpy_s(info.album, sizeof(info.album),
 							  (const char *) temp, size);
 					free(temp);
+					temp = NULL, size = strlen(info.comment);
+					charsets_sjis_conv((const byte *) info.comment,
+									   (byte **) & temp, (dword *) & size);
+					strncpy_s(info.comment, sizeof(info.comment),
+							  (const char *) temp, size);
+					free(temp);
 				}
 				break;
 			case conf_encode_gbk:
+				break;
+			case conf_encode_ucs:
+				{
+					charsets_ucs_conv((const byte *) info.artist,
+									   sizeof(info.artist), (byte *) info.artist,
+									   sizeof(info.artist));
+					charsets_ucs_conv((const byte *) info.title,
+									   sizeof(info.title), (byte *) info.title,
+									   sizeof(info.title));
+					charsets_ucs_conv((const byte *) info.album,
+									   sizeof(info.album), (byte *) info.album,
+									   sizeof(info.album));
+					charsets_ucs_conv((const byte *) info.comment,
+									   sizeof(info.comment), (byte *) info.comment,
+									   sizeof(info.comment));
+				}
 				break;
 			default:
 				break;

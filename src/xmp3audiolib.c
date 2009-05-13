@@ -281,6 +281,7 @@ int xMP3AudioInit()
 			xrKernelCreateThread(str, (void *) &AudioChannelThread, 0x12,
 								 THREAD_STACK_SIZE, PSP_THREAD_ATTR_USER, NULL);
 		if (AudioStatus[i].threadhandle < 0) {
+			dbg_printf(d, "%s: xrKernelCreateThread@0x%08x", __func__, AudioStatus[i].threadhandle);
 			AudioStatus[i].threadhandle = -1;
 			failed = 1;
 			break;
