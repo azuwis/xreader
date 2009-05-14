@@ -134,7 +134,7 @@ if test $wav = "yes"; then
 fi
 AM_CONDITIONAL([WAV], [test x$wav = "xyes"])
 if test $wv = "yes"; then
-	AC_DEFINE([ENABLE_WAVPACK], 1, [Enable wma option])
+	AC_DEFINE([ENABLE_WAVPACK], 1, [Enable wavpack option])
 fi
 AM_CONDITIONAL([WAVPACK], [test x$wv = "xyes"])
 if test $flac = "yes"; then
