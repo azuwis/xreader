@@ -279,7 +279,6 @@ int generic_resume(const char *spath, const char *lpath)
 	generic_unlock();
 	g_suspend_status = ST_LOADED;
 
-
 	return 0;
 }
 
