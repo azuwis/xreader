@@ -502,7 +502,7 @@ static int aac_get_info(struct music_info *info)
 		info->psp_freq[1] = 16;
 	}
 	if (info->type & MD_GET_DECODERNAME) {
-		STRCPY_S(info->decoder_name, "AAC LC");
+		STRCPY_S(info->decoder_name, "AAC");
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
 		info->encode_msg[0] = '\0';

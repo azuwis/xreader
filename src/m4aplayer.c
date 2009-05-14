@@ -90,6 +90,8 @@ static int mp4sample_id;
 
 static char g_vendor_str[80];
 
+static bool g_force_up_sampling = false;
+
 /**
  * 初始化驱动变量资源等
  *
@@ -435,6 +437,15 @@ static int m4a_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
+	mp4AudioSpecificConfig cfg;
+
+	memset(&cfg, 0, sizeof(cfg));
+	if (NeAACDecAudioSpecificConfig(buffer, buffer_size, &cfg) < 0) {
+		free(buffer);
+		NeAACDecClose(decoder);
+		goto failed;
+	}
+
 	if (NeAACDecInit2
 		(decoder, buffer, buffer_size, (unsigned long *) &(g_info.sample_freq),
 		 (unsigned char *) &(g_info.channels)) < 0) {
@@ -442,6 +453,9 @@ static int m4a_load(const char *spath, const char *lpath)
 		NeAACDecClose(decoder);
 		goto failed;
 	}
+
+	g_force_up_sampling = cfg.forceUpSampling;
+	dbg_printf(d, "forceUpSampling is %s", g_force_up_sampling ? "true" : "false");
 
 	free(buffer);
 	NeAACDecClose(decoder);
@@ -479,7 +493,12 @@ static int m4a_load(const char *spath, const char *lpath)
 
 	aac_getEDRAM = true;
 
-	aac_codec_buffer[10] = g_info.sample_freq;
+	if (g_force_up_sampling) {
+		aac_codec_buffer[10] = g_info.sample_freq / 2;
+	} else {
+		aac_codec_buffer[10] = g_info.sample_freq;
+	}
+
 	if (xrAudiocodecInit(aac_codec_buffer, 0x1003) < 0) {
 		goto failed;
 	}
@@ -492,7 +511,11 @@ static int m4a_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-	ret = xMP3AudioSetFrequency(g_info.sample_freq);
+	if (g_force_up_sampling) {
+		ret = xMP3AudioSetFrequency(g_info.sample_freq / 2);
+	} else {
+		ret = xMP3AudioSetFrequency(g_info.sample_freq);
+	}
 
 	if (ret < 0) {
 		goto failed;
@@ -541,7 +564,7 @@ static int m4a_get_info(struct music_info *info)
 		info->psp_freq[1] = 16;
 	}
 	if (info->type & MD_GET_DECODERNAME) {
-		STRCPY_S(info->decoder_name, "AAC LC");
+		STRCPY_S(info->decoder_name, "AAC");
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
 		if (show_encoder_msg) {
