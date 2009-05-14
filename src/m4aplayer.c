@@ -467,7 +467,6 @@ static int m4a_load(const char *spath, const char *lpath)
 													   MP4_MSECS_TIME_SCALE);
 
 	g_info.duration = ms_duration / 1000.0;
-	g_info.channels = MP4GetTrackAudioChannels(mp4file, mp4track);
 
 	if (g_info.channels == 0 || g_info.channels > 2) {
 		goto failed;

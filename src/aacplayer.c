@@ -316,6 +316,7 @@ static int aac_load(const char *spath, const char *lpath)
 
 	aac_config = NeAACDecGetCurrentConfiguration(decoder);
 	aac_config->useOldADTSFormat = 0;
+	aac_config->dontUpSampleImplicitSBR = 1;
 
 	NeAACDecSetConfiguration(decoder, aac_config);
 
