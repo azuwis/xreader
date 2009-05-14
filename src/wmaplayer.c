@@ -84,25 +84,6 @@ static unsigned g_buff_frame_size;
  */
 static int g_buff_frame_start;
 
-typedef struct reader_data_t
-{
-	buffered_reader_t *r;
-	int fd;
-	bool use_buffer;
-} wma_reader_data;
-
-/**
- * 使用缓冲IO
- */
-static bool use_buffer = true;
-
-/**
- * 默认缓冲IO缓冲字节大小，最低不小于8192
- */
-static int g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
-
-static wma_reader_data data;
-
 static SceAsfParser asfparser __attribute__((aligned(64)));
 
 static unsigned long wma_codec_buffer[65] __attribute__((aligned(64)));
@@ -123,7 +104,7 @@ static int g_asfparser_mod_id = -1;
 static int64_t asf_read_cb(void *userdata, void *buf, SceSize size)
 {
 	int ret;
-	wma_reader_data *reader = (wma_reader_data*) userdata;
+	reader_data *reader = (reader_data*) userdata;
    
 	if (reader->use_buffer) {
 		ret	= buffered_reader_read(reader->r, buf, size);
@@ -139,7 +120,7 @@ static int64_t asf_read_cb(void *userdata, void *buf, SceSize size)
 static int64_t asf_seek_cb(void *userdata, void *buf, int offset, int dummy, int whence)
 {
 	int ret = -1;
-	wma_reader_data *reader = (wma_reader_data*) userdata;
+	reader_data *reader = (reader_data*) userdata;
 
 	if (reader->use_buffer) {
 		if (whence == PSP_SEEK_SET) {
@@ -950,7 +931,7 @@ static int wma_set_opt(const char *unused, const char *values)
 	int argc, i;
 	char **argv;
 
-	use_buffer = false;
+	g_use_buffer = false;
 
 	dbg_printf(d, "%s: options are %s", __func__, values);
 
@@ -961,9 +942,9 @@ static int wma_set_opt(const char *unused, const char *values)
 				(argv[i], "wma_buffered_io",
 				 sizeof("wma_buffered_io") - 1)) {
 			if (opt_is_on(argv[i])) {
-				use_buffer = true;
+				g_use_buffer = true;
 			} else {
-				use_buffer = false;
+				g_use_buffer = false;
 			}
 		} else if (!strncasecmp
 				(argv[i], "wma_buffer_size",
@@ -1011,7 +992,7 @@ static int wma_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	data.use_buffer = use_buffer;
+	data.use_buffer = g_use_buffer;
 
 	if (data.use_buffer) {
 		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);

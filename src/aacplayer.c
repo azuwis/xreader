@@ -82,8 +82,6 @@ static u32 aac_data_size;
 static u32 aac_sample_per_frame;
 static bool aac_getEDRAM;
 
-static SceUID g_aac_handle;
-
 /**
  * 初始化驱动变量资源等
  *
@@ -109,7 +107,8 @@ static int __init(void)
 
 	aac_sample_per_frame = 1024;
 
-	g_aac_handle = -1;
+	memset(&data, 0, sizeof(data));
+	data.fd = -1;
 
 	return 0;
 }
@@ -216,9 +215,16 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 			unsigned char aac_header_buf[7];
 
-			if (xrIoRead(g_aac_handle, aac_header_buf, 7) != 7) {
-				__end();
-				return -1;
+			if (data.use_buffer) {
+				if (buffered_reader_read(data.r, aac_header_buf, 7) != 7) {
+					__end();
+					return -1;
+				}
+			} else {
+				if (xrIoRead(data.fd, aac_header_buf, 7) != 7) {
+					__end();
+					return -1;
+				}
 			}
 
 			int aac_header = aac_header_buf[3];
@@ -234,11 +240,20 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 			u8 *aac_data_buffer = (u8 *) memalign(64, frame_size);
 
-			if (xrIoRead(g_aac_handle, aac_data_buffer, frame_size) !=
-				frame_size) {
-				free(aac_data_buffer);
-				__end();
-				return -1;
+			if (data.use_buffer) {
+				if (buffered_reader_read(data.r, aac_data_buffer, frame_size) !=
+						frame_size) {
+					free(aac_data_buffer);
+					__end();
+					return -1;
+				}
+			} else {
+				if (xrIoRead(data.fd, aac_data_buffer, frame_size) !=
+						frame_size) {
+					free(aac_data_buffer);
+					__end();
+					return -1;
+				}
 			}
 
 			int res;
@@ -283,16 +298,6 @@ static int aac_load(const char *spath, const char *lpath)
 	unsigned long bufferconsumed;
 
 	__init();
-
-	int fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
-
-	if (fd < 0) {
-		goto failed;
-	}
-
-	g_info.filesize = xrIoLseek(fd, 0, PSP_SEEK_END);
-
-	xrIoClose(fd);
 
 	aacfp = fopen(spath, "rb");
 
@@ -368,10 +373,27 @@ static int aac_load(const char *spath, const char *lpath)
 
 	aac_config = NULL;
 
-	g_aac_handle = xrIoOpen(spath, PSP_O_RDONLY, 0777);
+	data.use_buffer = g_use_buffer;
 
-	if (g_aac_handle < 0) {
-		goto failed;
+	if (data.use_buffer) {
+		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
+
+		if (data.r == NULL) {
+			__end();
+			return -1;
+		}
+
+		g_info.filesize = buffered_reader_length(data.r);
+	} else {
+		data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
+
+		if (data.fd < 0) {
+			__end();
+			return -1;
+		}
+
+		g_info.filesize = xrIoLseek(data.fd, 0, PSP_SEEK_END);
+		xrIoLseek(data.fd, 0, PSP_SEEK_SET);
 	}
 
 	ret = load_me_prx();
@@ -455,9 +477,16 @@ static int aac_end(void)
 		aac_getEDRAM = false;
 	}
 
-	if (g_aac_handle >= 0) {
-		xrIoClose(g_aac_handle);
-		g_aac_handle = -1;
+	if (data.use_buffer) {
+		if (data.r != NULL) {
+			buffered_reader_close(data.r);
+			data.r = NULL;
+		}
+	} else {
+		if (data.fd >= 0) {
+			xrIoClose(data.fd);
+			data.fd = -1;
+		}
 	}
 
 	return 0;
@@ -541,9 +570,53 @@ static int aac_resume(const char *spath, const char *lpath)
 	return 0;
 }
 
+static int aac_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	g_use_buffer = false;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+				(argv[i], "aac_buffered_io",
+				 sizeof("aac_buffered_io") - 1)) {
+			if (opt_is_on(argv[i])) {
+				g_use_buffer = true;
+			} else {
+				g_use_buffer = false;
+			}
+		} else if (!strncasecmp
+				(argv[i], "aac_buffer_size",
+				 sizeof("aac_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	generic_set_opt(unused, values);
+
+	return 0;
+}
+
 static struct music_ops aac_ops = {
 	.name = "aac",
-	.set_opt = NULL,
+	.set_opt = aac_set_opt,
 	.load = aac_load,
 	.play = NULL,
 	.pause = NULL,

@@ -36,6 +36,8 @@
 #include "freq_lock.h"
 #include "musicinfo.h"
 #include "dbg.h"
+#include "buffered_reader.h"
+#include "genericplayer.h"
 #include "xrhal.h"
 
 /**
@@ -92,6 +94,18 @@ int g_fid = -1;
  * 当前播放音乐文件信息
  */
 MusicInfo g_info = { 0 };
+
+/**
+ * 使用缓冲IO
+ */
+bool g_use_buffer = true;
+
+/**
+ * 默认缓冲IO缓冲字节大小，最低不小于8192
+ */
+int g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+
+reader_data data;
 
 /**
  * 加锁

@@ -36,7 +36,7 @@
 #define MODE_EXT_MS_STEREO   2
 #define MPA_MONO   3
 
-typedef struct reader_data_t
+typedef struct mp3_reader_data_t
 {
 	buffered_reader_t *r;
 	int fd;

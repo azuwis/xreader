@@ -181,15 +181,24 @@ mp3_brute_mode=on/off
 是否使用暴力法解码MP3，如果MP3播放有问题，试试这个，默认为否
 mp3_check_crc=on/off
 是否总是检查MP3的CRC检验消息，默认为否
-mp3_buffered_io=on/off
-是否使用缓冲装载MP3数据，默认为是
 mp3_use_me=on/off
 是否使用MP3硬件解码(Media Engine）功能，否则使用libMAD进行软件解码。默认为是
+mp3_buffered_io=on/off
+是否使用缓冲装载MP3数据，默认为否
 mp3_buffer_size=262144
 装载MP3数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
 
+AAC:
+aac_buffered_io=on/off
+是否使用缓冲装载AAC数据，默认为否
+aac_buffer_size=262144
+装载AAC数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
+
 WAV:
-暂无
+wav_buffered_io=on/off
+是否使用缓冲装载WAVE数据，默认为否
+wav_buffer_size=262144
+装载WAVE数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
 
 TTA:
 show_encoder_msg=y/n
@@ -197,7 +206,7 @@ show_encoder_msg=y/n
 
 WMA:
 wma_buffered_io=on/off
-是否使用缓冲装载MP3数据，默认为是
+是否使用缓冲装载WMA数据，默认为否
 wma_buffer_size=262144
 装载WMA数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
 

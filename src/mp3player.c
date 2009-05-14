@@ -61,7 +61,7 @@
 #define UNUSED(x) ((void)(x))
 #define BUFF_SIZE	8*1152
 
-static mp3_reader_data data;
+static mp3_reader_data mp3_data;
 
 static int __end(void);
 
@@ -110,21 +110,11 @@ static bool check_crc = false;
 static bool use_me = true;
 
 /**
- * 使用缓冲IO
- */
-static bool use_buffer = true;
-
-/**
  * Media Engine buffer缓存
  */
 static unsigned long mp3_codec_buffer[65] __attribute__ ((aligned(64)));
 
 static bool mp3_getEDRAM = false;
-
-/**
- * 默认缓冲IO缓冲字节大小，最低不小于8192
- */
-static int g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
 
 static signed short MadFixedToSshort(mad_fixed_t Fixed)
 {
@@ -185,10 +175,10 @@ static int mp3_seek_seconds_offset_brute(double npt)
 		return -1;
 	}
 
-	if (data.use_buffer)
-		buffered_reader_seek(data.r, mp3info.frameoff[pos]);
+	if (mp3_data.use_buffer)
+		buffered_reader_seek(mp3_data.r, mp3info.frameoff[pos]);
 	else
-		xrIoLseek(data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
+		xrIoLseek(mp3_data.fd, mp3info.frameoff[pos], PSP_SEEK_SET);
 
 	mad_stream_finish(&stream);
 	mad_stream_init(&stream);
@@ -352,10 +342,10 @@ static int seek_valid_frame(void)
 				remaining = 0;
 			}
 
-			if (data.use_buffer)
-				bufsize = buffered_reader_read(data.r, read_start, read_size);
+			if (mp3_data.use_buffer)
+				bufsize = buffered_reader_read(mp3_data.r, read_start, read_size);
 			else
-				bufsize = xrIoRead(data.fd, read_start, read_size);
+				bufsize = xrIoRead(mp3_data.fd, read_start, read_size);
 
 			if (bufsize <= 0) {
 				return -1;
@@ -394,10 +384,10 @@ static int mp3_seek_seconds_offset(double npt)
 		new_pos = 0;
 	}
 
-	if (data.use_buffer)
-		buffered_reader_seek(data.r, new_pos);
+	if (mp3_data.use_buffer)
+		buffered_reader_seek(mp3_data.r, new_pos);
 	else
-		xrIoLseek(data.fd, new_pos, PSP_SEEK_SET);
+		xrIoLseek(mp3_data.fd, new_pos, PSP_SEEK_SET);
 
 	mad_stream_finish(&stream);
 	mad_stream_init(&stream);
@@ -407,14 +397,14 @@ static int mp3_seek_seconds_offset(double npt)
 		return -1;
 	}
 
-	if (data.size > 0) {
+	if (g_info.filesize > 0) {
 		long cur_pos;
 
-		if (data.use_buffer)
-			cur_pos = buffered_reader_position(data.r);
+		if (mp3_data.use_buffer)
+			cur_pos = buffered_reader_position(mp3_data.r);
 		else
-			cur_pos = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
-		g_play_time = g_info.duration * cur_pos / data.size;
+			cur_pos = xrIoLseek(mp3_data.fd, 0, PSP_SEEK_CUR);
+		g_play_time = g_info.duration * cur_pos / g_info.filesize;
 	} else {
 		g_play_time = npt;
 	}
@@ -451,7 +441,7 @@ static int handle_seek(void)
 {
 	u64 timer_end;
 
-	if (data.use_buffer) {
+	if (mp3_data.use_buffer) {
 
 		if (g_status == ST_FFORWARD) {
 			xrRtcGetCurrentTick(&timer_end);
@@ -460,7 +450,7 @@ static int handle_seek(void)
 			if (g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.5) {
+				if (pspDiffTime(&timer_end, (u64*)&g_last_seek_tick) <= 0.5) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -502,7 +492,7 @@ static int handle_seek(void)
 			if (!g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 0.5) {
+				if (pspDiffTime(&timer_end, (u64*)&g_last_seek_tick) <= 0.5) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -622,11 +612,11 @@ static int mp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 					remaining = 0;
 				}
 
-				if (data.use_buffer)
+				if (mp3_data.use_buffer)
 					bufsize =
-						buffered_reader_read(data.r, read_start, read_size);
+						buffered_reader_read(mp3_data.r, read_start, read_size);
 				else
-					bufsize = xrIoRead(data.fd, read_start, read_size);
+					bufsize = xrIoRead(mp3_data.fd, read_start, read_size);
 
 				if (bufsize <= 0) {
 					__end();
@@ -780,25 +770,25 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			int frame_size, ret, brate = 0;
 
 			do {
-				if (data.use_buffer) {
+				if (mp3_data.use_buffer) {
 					if ((frame_size =
-						 search_valid_frame_me_buffered(&data, &brate)) < 0) {
+						 search_valid_frame_me_buffered(&mp3_data, &brate)) < 0) {
 						__end();
 						return -1;
 					}
 				} else {
-					if ((frame_size = search_valid_frame_me(&data, &brate)) < 0) {
+					if ((frame_size = search_valid_frame_me(&mp3_data, &brate)) < 0) {
 						__end();
 						return -1;
 					}
 				}
 
-				if (data.use_buffer)
+				if (mp3_data.use_buffer)
 					ret =
-						buffered_reader_read(data.r, memp3_input_buf,
+						buffered_reader_read(mp3_data.r, memp3_input_buf,
 											 frame_size);
 				else
-					ret = xrIoRead(data.fd, memp3_input_buf, frame_size);
+					ret = xrIoRead(mp3_data.fd, memp3_input_buf, frame_size);
 
 				if (ret < 0) {
 					__end();
@@ -933,22 +923,21 @@ static int mp3_load(const char *spath, const char *lpath)
 	dbg_printf(d, "%s: loading %s", __func__, spath);
 	g_status = ST_UNKNOWN;
 
-	data.use_buffer = use_buffer;
+	mp3_data.use_buffer = g_use_buffer;
 
-	data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
+	mp3_data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
-	if (data.fd < 0)
+	if (mp3_data.fd < 0)
 		return -1;
 
-	data.size = xrIoLseek(data.fd, 0, PSP_SEEK_END);
-	xrIoLseek(data.fd, 0, PSP_SEEK_SET);
+	g_info.filesize = xrIoLseek(mp3_data.fd, 0, PSP_SEEK_END);
+	xrIoLseek(mp3_data.fd, 0, PSP_SEEK_SET);
+	mp3_data.size = g_info.filesize;
 
-	g_info.filesize = data.size;
+	if (g_info.filesize < 0)
+		return g_info.filesize;
 
-	if (data.size < 0)
-		return data.size;
-
-	xrIoLseek(data.fd, 0, PSP_SEEK_SET);
+	xrIoLseek(mp3_data.fd, 0, PSP_SEEK_SET);
 
 	mad_stream_init(&stream);
 	mad_frame_init(&frame);
@@ -965,12 +954,12 @@ static int mp3_load(const char *spath, const char *lpath)
 	mp3info.have_crc = false;
 
 	if (use_brute_method) {
-		if (read_mp3_info_brute(&mp3info, &data) < 0) {
+		if (read_mp3_info_brute(&mp3info, &mp3_data) < 0) {
 			__end();
 			return -1;
 		}
 	} else {
-		if (read_mp3_info(&mp3info, &data) < 0) {
+		if (read_mp3_info(&mp3info, &mp3_data) < 0) {
 			__end();
 			return -1;
 		}
@@ -984,13 +973,13 @@ static int mp3_load(const char *spath, const char *lpath)
 
 	generic_readtag(&g_info, spath);
 
-	if (data.use_buffer) {
-		SceOff cur = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
+	if (mp3_data.use_buffer) {
+		SceOff cur = xrIoLseek(mp3_data.fd, 0, PSP_SEEK_CUR);
 
-		xrIoClose(data.fd);
-		data.fd = -1;
-		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
-		buffered_reader_seek(data.r, cur);
+		xrIoClose(mp3_data.fd);
+		mp3_data.fd = -1;
+		mp3_data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
+		buffered_reader_seek(mp3_data.r, cur);
 	}
 
 	dbg_printf(d, "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d%sframes %d%s]",
@@ -1095,9 +1084,9 @@ static int mp3_set_opt(const char *unused, const char *values)
 				   (argv[i], "mp3_buffered_io",
 					sizeof("mp3_buffered_io") - 1)) {
 			if (opt_is_on(argv[i])) {
-				use_buffer = true;
+				g_use_buffer = true;
 			} else {
-				use_buffer = false;
+				g_use_buffer = false;
 			}
 		} else if (!strncasecmp
 				   (argv[i], "mp3_buffer_size",
@@ -1136,7 +1125,7 @@ static int mp3_get_info(struct music_info *info)
 	}
 	if (info->type & MD_GET_CPUFREQ) {
 		if (use_me) {
-			if (data.use_buffer)
+			if (mp3_data.use_buffer)
 				info->psp_freq[0] = 49;
 			else
 				info->psp_freq[0] = 33;
@@ -1219,15 +1208,15 @@ static int mp3_end(void)
 	free_mp3_info(&mp3info);
 	free_bitrate(&g_inst_br);
 
-	if (data.use_buffer) {
-		if (data.r != NULL) {
-			buffered_reader_close(data.r);
-			data.r = NULL;
+	if (mp3_data.use_buffer) {
+		if (mp3_data.r != NULL) {
+			buffered_reader_close(mp3_data.r);
+			mp3_data.r = NULL;
 		}
 	} else {
-		if (data.fd >= 0) {
-			xrIoClose(data.fd);
-			data.fd = -1;
+		if (mp3_data.fd >= 0) {
+			xrIoClose(mp3_data.fd);
+			mp3_data.fd = -1;
 		}
 	}
 

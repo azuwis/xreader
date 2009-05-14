@@ -37,14 +37,7 @@
 
 #ifdef ENABLE_WAV
 
-typedef struct reader_data_t
-{
-	SceUID fd;
-} reader_data;
-
 static int __end(void);
-
-static reader_data data;
 
 #define WAVE_BUFFER_SIZE (1024 * 95)
 
@@ -112,11 +105,18 @@ static int wav_seek_seconds(double seconds)
 {
 	int ret;
 
-	ret =
-		xrIoLseek(data.fd,
-				  g_wav_data_offset +
-				  (uint32_t) (seconds * g_info.sample_freq) *
-				  g_wav_byte_per_frame, SEEK_SET);
+	if (data.use_buffer) {
+		ret = buffered_reader_seek(data.r, 
+				g_wav_data_offset +
+				(uint32_t) (seconds * g_info.sample_freq) *
+				g_wav_byte_per_frame);
+	} else {
+		ret =
+			xrIoLseek(data.fd,
+					  g_wav_data_offset +
+					  (uint32_t) (seconds * g_info.sample_freq) *
+					  g_wav_byte_per_frame, SEEK_SET);
+	}
 
 	if (ret >= 0) {
 		g_buff_frame_size = g_buff_frame_start = 0;
@@ -200,7 +200,13 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				__end();
 				return -1;
 			}
-			ret = xrIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
+
+			if (data.use_buffer) {
+				ret = buffered_reader_read(data.r, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
+			} else {
+				ret = xrIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
+			}
+
 			if (ret <= 0) {
 				__end();
 				return -1;
@@ -290,6 +296,7 @@ static int wav_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
+	data.use_buffer = g_use_buffer;
 	data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (data.fd < 0) {
@@ -408,6 +415,24 @@ static int wav_load(const char *spath, const char *lpath)
 		__end();
 		return -1;
 	}
+
+	if (data.use_buffer) {
+		dword cur_pos;
+
+	   	cur_pos = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
+		xrIoClose(data.fd);
+		data.fd = -1;
+
+		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
+
+		if (data.r == NULL) {
+			__end();
+			return -1;
+		}
+
+		buffered_reader_seek(data.r, cur_pos);
+	}
+
 	g_info.samples = temp / g_wav_byte_per_frame;
 	g_info.duration =
 		(double) (temp) / g_wav_byte_per_frame / g_info.sample_freq;
@@ -448,9 +473,16 @@ static int __end(void)
 	g_status = ST_STOPPED;
 	generic_unlock();
 
-	if (data.fd >= 0) {
-		xrIoClose(data.fd);
-		data.fd = -1;
+	if (data.use_buffer) {
+		if (data.r != NULL) {
+			buffered_reader_close(data.r);
+			data.r = NULL;
+		}
+	} else {
+		if (data.fd >= 0) {
+			xrIoClose(data.fd);
+			data.fd = -1;
+		}
 	}
 
 	g_play_time = 0.;
@@ -582,9 +614,53 @@ static int wav_probe(const char *spath)
 	return 0;
 }
 
+static int wav_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	g_use_buffer = false;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+				(argv[i], "wav_buffered_io",
+				 sizeof("wav_buffered_io") - 1)) {
+			if (opt_is_on(argv[i])) {
+				g_use_buffer = true;
+			} else {
+				g_use_buffer = false;
+			}
+		} else if (!strncasecmp
+				(argv[i], "wav_buffer_size",
+				 sizeof("wav_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	generic_set_opt(unused, values);
+
+	return 0;
+}
+
 static struct music_ops wav_ops = {
 	.name = "wave",
-	.set_opt = NULL,
+	.set_opt = wav_set_opt,
 	.load = wav_load,
 	.play = NULL,
 	.pause = NULL,

@@ -156,7 +156,7 @@ static int handle_seek(void)
 			if (g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 1.0) {
+				if (pspDiffTime(&timer_end, (u64*)&g_last_seek_tick) <= 1.0) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -197,7 +197,7 @@ static int handle_seek(void)
 			if (!g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, &g_last_seek_tick) <= 1.0) {
+				if (pspDiffTime(&timer_end, (u64*)&g_last_seek_tick) <= 1.0) {
 					generic_lock();
 
 					if (g_seek_count > 0) {

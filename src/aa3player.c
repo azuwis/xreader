@@ -54,16 +54,6 @@
 
 #define BUFF_SIZE	8*1152
 
-typedef struct reader_data_t
-{
-	buffered_reader_t *r;
-	int fd;
-	bool use_buffer;
-	long size;
-} aa3_reader_data;
-
-static aa3_reader_data data;
-
 /**
  * MP3音乐播放缓冲
  */
@@ -78,14 +68,6 @@ static unsigned g_buff_frame_size;
  * MP3音乐播放缓冲当前位置，以帧数计
  */
 static int g_buff_frame_start;
-
-/** 是否使用缓冲IO */
-static bool use_buffer = true;
-
-/**
- * 默认缓冲IO缓冲字节大小，最低不小于8192
- */
-static int g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
 
 /**
  * Media Engine buffer缓存
@@ -127,7 +109,7 @@ static int __init(void)
 	memset(g_buff, 0, sizeof(g_buff));
 
 	data.fd = -1;
-	data.use_buffer = use_buffer;
+	data.use_buffer = g_use_buffer;
 
 	aa3_type = 0;
 	aa3_data_align = 0;
