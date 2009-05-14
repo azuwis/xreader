@@ -231,6 +231,7 @@ int freq_enter_hotzone(void)
 {
 	int cpu, bus;
 
+#ifdef ENABLE_MUSIC
 	if (music_curr_playing()) {
 		cpu = freq_list[config.freqs[2]][0];
 		bus = freq_list[config.freqs[2]][1];
@@ -238,6 +239,10 @@ int freq_enter_hotzone(void)
 		cpu = freq_list[config.freqs[1]][0];
 		bus = freq_list[config.freqs[1]][1];
 	}
+#else
+	cpu = freq_list[config.freqs[1]][0];
+	bus = freq_list[config.freqs[1]][1];
+#endif
 
 	return freq_enter(cpu, bus);
 }

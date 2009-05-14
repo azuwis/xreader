@@ -949,9 +949,11 @@ extern t_fs_filetype fs_file_get_type(const char *filename)
 		entry2++;
 	}
 
+#ifdef ENABLE_MUSIC
 	if (fs_is_music(filename, filename)) {
 		return fs_filetype_music;
 	}
+#endif
 
 	return fs_filetype_unknown;
 }

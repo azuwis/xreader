@@ -64,7 +64,9 @@
 
 extern win_menu_predraw_data g_predraw;
 
+#ifdef ENABLE_MUSIC
 static int g_ins_kbps;
+#endif
 
 static volatile int secticks = 0;
 
@@ -648,12 +650,15 @@ static void scene_draw_mp3bar(bool * firstdup)
 static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 {
 	double interval;
+#ifdef ENABLE_MUSIC
 	static dword oldkey;
+#endif
 
 	xrRtcGetCurrentTick(&end);
 	interval = pspDiffTime(&end, &start);
 
 	switch (key) {
+#ifdef ENABLE_MUSIC
 		case PSP_CTRL_LTRIGGER | PSP_CTRL_RTRIGGER:
 			if (win_msgbox
 				(_("重启音频系统"), _("是"), _("否"), COLOR_WHITE,
@@ -665,8 +670,11 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 				power_up();
 				power_up();
 				power_up();
+				ctrl_waitrelease();
+				oldkey = 0;
 			}
 			break;
+#endif
 		case (PSP_CTRL_SELECT | PSP_CTRL_START):
 			if (win_msgbox
 				(_("是否退出软件?"), _("是"), _("否"), COLOR_WHITE,
@@ -798,6 +806,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 			return 1;
 	}
 
+#ifdef ENABLE_MUSIC
 	if ((!(key == PSP_CTRL_LTRIGGER || key == PSP_CTRL_RTRIGGER))
 		&& (oldkey == PSP_CTRL_LTRIGGER || oldkey == PSP_CTRL_RTRIGGER)) {
 		if (interval < 0.5) {
@@ -811,6 +820,7 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 	}
 
 	oldkey = key;
+#endif
 
 	return 0;
 }
@@ -831,6 +841,7 @@ void scene_mp3bar(void)
 
 	while (1) {
 		xrRtcGetCurrentTick(&timer_end);
+#ifdef ENABLE_MUSIC
 		if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
 			struct music_info info;
 
@@ -843,6 +854,7 @@ void scene_mp3bar(void)
 			xrRtcGetCurrentTick(&timer_start);
 			secticks++;
 		}
+#endif
 
 		scene_draw_mp3bar(&firstdup);
 		disp_flip();
