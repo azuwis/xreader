@@ -103,7 +103,7 @@ static int CallbackThread(unsigned int args, void *argp)
 static int SetupCallbacks(void)
 {
 	int thid = xrKernelCreateThread("Callback Thread", CallbackThread, 0x11,
-									0x4000,
+									0x10000,
 									0, 0);
 
 	if (thid >= 0) {
