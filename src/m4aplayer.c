@@ -440,6 +440,7 @@ static int m4a_load(const char *spath, const char *lpath)
 	mp4AudioSpecificConfig cfg;
 
 	memset(&cfg, 0, sizeof(cfg));
+
 	if (NeAACDecAudioSpecificConfig(buffer, buffer_size, &cfg) < 0) {
 		free(buffer);
 		NeAACDecClose(decoder);
