@@ -5673,8 +5673,11 @@ extern void scene_init(void)
 	music_set_hprm(!config.hprmctrl);
 #endif
 	music_set_cycle_mode(config.mp3cycle);
-	if (config.autoplay)
-		music_resume();
+
+	if (config.autoplay) {
+		music_list_play();
+	}
+
 	xrRtcGetCurrentTick(&dbgnow);
 #endif
 
