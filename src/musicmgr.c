@@ -73,13 +73,8 @@ static int g_thread_exited = 0;
 static t_lyric lyric;
 static bool g_music_hprm_enable = false;
 static SceUID music_sema = -1;
-static volatile bool should_suspend = false;
-static volatile bool should_resume = false;
-static int prev_is_playing = 0;
 
 static int music_play(int i);
-static int music_resume(void);
-static int music_suspend(void);
 
 struct shuffle_data
 {
@@ -696,17 +691,6 @@ static int music_thread(SceSize arg, void *argp)
 
 	while (g_thread_actived) {
 		music_lock();
-
-		if (should_suspend ) {
-			music_suspend();
-			should_suspend = false;
-		}
-
-		if (should_resume) {
-			music_resume();
-			should_resume = false;
-		}
-
 		if (g_list.is_list_playing) {
 			if (musicdrv_has_stop()) {
 				if (g_list.first_time) {
@@ -1221,28 +1205,32 @@ int music_set_hprm(bool enable)
 	return 0;
 }
 
-static int music_suspend(void)
+static int prev_is_playing = 0;
+
+int music_suspend(void)
 {
 	int ret;
 
 	dbg_printf(d, "%s", __func__);
 
-	prev_is_playing = g_list.is_list_playing;
-	g_list.is_list_playing = 0;
-
+	music_lock();
 	ret = musicdrv_suspend();
 
 	if (ret < 0) {
 		dbg_printf(d, "%s: Suspend failed!", __func__);
 		musicdrv_end();
+		music_unlock();
 		return ret;
 	}
+
+	prev_is_playing = g_list.is_list_playing;
+	g_list.is_list_playing = 0;
 
 	// now music module is locked
 	return 0;
 }
 
-static int music_resume(void)
+int music_resume(void)
 {
 	struct music_file *fl = music_get(g_list.curr_pos);
 	int ret;
@@ -1251,6 +1239,7 @@ static int music_resume(void)
 
 	if (fl == NULL) {
 		dbg_printf(d, "%s: Resume failed!", __func__);
+		music_unlock();
 
 		return -1;
 	}
@@ -1259,28 +1248,12 @@ static int music_resume(void)
 
 	if (ret < 0) {
 		dbg_printf(d, "%s %d: Resume failed!", __func__, __LINE__);
+		music_unlock();
 
 		return ret;
 	}
 
 	g_list.is_list_playing = prev_is_playing;
-
-	return 0;
-}
-
-int music_request_suspend()
-{
-	music_lock();
-	should_suspend = true;
-	music_unlock();
-
-	return 0;
-}
-
-int music_request_resume()
-{
-	music_lock();
-	should_resume = true;
 	music_unlock();
 
 	return 0;
