@@ -48,6 +48,7 @@
 #include "aa3player.h"
 #include "buffered_reader.h"
 #include "malloc.h"
+#include "musicinfo.h"
 #include "mediaengine.h"
 
 #ifdef ENABLE_AA3
@@ -83,7 +84,7 @@ static u16 aa3_type;
 static u16 aa3_data_align;
 static u32 aa3_data_start;
 static u32 aa3_data_size;
-static u8 aa3_aa3plus_flagdata[2];
+static u8 atrac3_plus_flag[2];
 static u16 aa3_channel_mode;
 static u32 aa3_sample_per_frame;
 static u8 *aa3_data_buffer;
@@ -296,8 +297,8 @@ static int aa3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				memset(aa3_data_buffer, 0, aa3_data_align + 8);
 				aa3_data_buffer[0] = 0x0F;
 				aa3_data_buffer[1] = 0xD0;
-				aa3_data_buffer[2] = aa3_aa3plus_flagdata[0];
-				aa3_data_buffer[3] = aa3_aa3plus_flagdata[1];
+				aa3_data_buffer[2] = atrac3_plus_flag[0];
+				aa3_data_buffer[3] = atrac3_plus_flag[1];
 				if (data.use_buffer) {
 					if (buffered_reader_read
 						(data.r, aa3_data_buffer + 8,
@@ -346,40 +347,110 @@ static int aa3_load(const char *spath, const char *lpath)
 
 	__init();
 
+	generic_readtag(&g_info, spath);
+
 	data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (data.fd < 0) {
 		goto failed;
 	}
 
-	xrIoLseek32(data.fd, 0x0C00, PSP_SEEK_SET);
+	u8 aa3_header_buffer[4];
 
-	u8 ea3_header[0x60];
-
-	if (xrIoRead(data.fd, ea3_header, 0x60) != 0x60)
+	if (xrIoRead(data.fd, aa3_header_buffer, 4) != 4) {
 		goto failed;
-	if (ea3_header[0] != 0x45 || ea3_header[1] != 0x41 || ea3_header[2] != 0x33
-		|| ea3_header[3] != 0x01)
-		goto failed;
+	}
 
-	aa3_type =
-		(ea3_header[0x22] ==
-		 0x20) ? TYPE_ATRAC3 : ((ea3_header[0x22] ==
-								 0x28) ? TYPE_ATRAC3PLUS : 0x0);
+	while ( 1 ) {
+		if ( aa3_header_buffer[0] == 'e' && aa3_header_buffer[1] == 'a' && aa3_header_buffer[2] == '3' ) {
+			u8 id3v2_buffer[6];
 
-	if (aa3_type != TYPE_ATRAC3 && aa3_type != TYPE_ATRAC3PLUS)
-		goto failed;
+			if ( xrIoRead(data.fd, id3v2_buffer, 6) != 6 ) {
+				goto failed;
+			}
 
-	g_info.channels = 2;
-	g_info.sample_freq = 44100;
+			u32 id3v2_size, temp_value;
 
-	if (aa3_type == TYPE_ATRAC3)
-		aa3_data_align = ea3_header[0x23] * 8;
-	else
-		aa3_data_align = (ea3_header[0x23] + 1) * 8;
+			temp_value = id3v2_buffer[2];
+			temp_value = ( temp_value & 0x7F ) << 21;
+			id3v2_size = temp_value;
+			temp_value = id3v2_buffer[3];
+			temp_value = ( temp_value & 0x7F ) << 14;
+			id3v2_size = id3v2_size | temp_value;
+			temp_value = id3v2_buffer[4];
+			temp_value = ( temp_value & 0x7F ) << 7;
+			id3v2_size = id3v2_size | temp_value;
+			temp_value = id3v2_buffer[5];
+			temp_value = ( temp_value & 0x7F ) ;
+			id3v2_size = id3v2_size | temp_value;
 
-	aa3_data_start = 0x0C60;
-	aa3_data_size = xrIoLseek32(data.fd, 0, PSP_SEEK_END) - aa3_data_start;
+			xrIoLseek(data.fd, id3v2_size, PSP_SEEK_CUR);
+
+			if ( xrIoRead(data.fd, aa3_header_buffer, 4) != 4 ) {
+				goto failed;
+			}
+
+			continue;
+		}
+
+		if ( aa3_header_buffer[0] != 0x45 || aa3_header_buffer[1] != 0x41 || aa3_header_buffer[2] != 0x33 || aa3_header_buffer[3] != 0x01 ) {
+			goto failed;
+		}
+
+		uint8_t ea3_header[0x5C];
+		if ( xrIoRead( data.fd, ea3_header, 0x5C ) != 0x5C ) {
+			goto failed;
+		}
+
+		atrac3_plus_flag[0] = ea3_header[0x1E];
+		atrac3_plus_flag[1] = ea3_header[0x1F];
+	
+		aa3_type = (ea3_header[0x1C] == 0x00) ? 0x270 : ((ea3_header[0x1C] == 0x01) ? 0xFFFE : 0x0);
+	
+		if ( aa3_type != 0x270 && aa3_type != 0xFFFE ) {
+			goto failed;
+		}
+		
+		uint32_t ea3_info = ea3_header[0x1D];
+
+		ea3_info = (ea3_info << 8) | ea3_header[0x1E];
+		ea3_info = (ea3_info << 8) | ea3_header[0x1F];
+	
+		g_info.channels = 2;
+		
+		switch ((ea3_info >> 13) & 7) {
+			case 0:
+				g_info.sample_freq = 32000;
+				break;
+			case 1:
+				g_info.sample_freq = 44100;
+				break;
+			case 2:
+				g_info.sample_freq = 48000;
+				break;
+			default:
+				g_info.sample_freq = 0;
+		} 
+	
+//		init_data.sample_bits = 0x10;
+		if (aa3_type == 0x270 )
+			aa3_sample_per_frame = 1024;
+		else
+			aa3_sample_per_frame = 2048;
+	
+		if (aa3_type == 0xFFFE ) {
+			aa3_data_align = 8ul * (1ul + (ea3_info & 0x03FF));
+		}
+		else {
+			aa3_data_align = 8ul * (ea3_info & 0x03FF);
+		}
+
+		aa3_data_start = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
+		break;
+	}
+
+	aa3_data_size = xrIoLseek(data.fd, 0, PSP_SEEK_END) - aa3_data_start;
+	xrIoLseek(data.fd, aa3_data_start, PSP_SEEK_SET);
 
 	if (aa3_data_size % aa3_data_align != 0) {
 		dbg_printf(d, "%s: aa3_data_size %d aa3_data_align %d not align",
@@ -438,9 +509,9 @@ static int aa3_load(const char *spath, const char *lpath)
 			goto failed;
 
 		aa3_codec_buffer[5] = 0x1;
-		aa3_codec_buffer[10] = aa3_aa3plus_flagdata[1];
+		aa3_codec_buffer[10] = atrac3_plus_flag[1];
 		aa3_codec_buffer[10] =
-			(aa3_codec_buffer[10] << 8) | aa3_aa3plus_flagdata[0];
+			(aa3_codec_buffer[10] << 8) | atrac3_plus_flag[0];
 		aa3_codec_buffer[12] = 0x1;
 		aa3_codec_buffer[14] = 0x1;
 

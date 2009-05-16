@@ -47,6 +47,7 @@
 #include "at3player.h"
 #include "m4aplayer.h"
 #include "aacplayer.h"
+#include "aa3player.h"
 #include "dbg.h"
 #include "config.h"
 #include "mad.h"
@@ -830,6 +831,10 @@ int music_init(void)
 
 #ifdef ENABLE_AAC
 	aac_init();
+#endif
+
+#ifdef ENABLE_AA3
+	aa3_init();
 #endif
 
 	memset(&g_list, 0, sizeof(g_list));
