@@ -242,14 +242,14 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 
 			if (data.use_buffer) {
 				if (buffered_reader_read(data.r, aac_data_buffer, frame_size) !=
-						frame_size) {
+					frame_size) {
 					free(aac_data_buffer);
 					__end();
 					return -1;
 				}
 			} else {
 				if (xrIoRead(data.fd, aac_data_buffer, frame_size) !=
-						frame_size) {
+					frame_size) {
 					free(aac_data_buffer);
 					__end();
 					return -1;
@@ -584,16 +584,15 @@ static int aac_set_opt(const char *unused, const char *values)
 
 	for (i = 0; i < argc; ++i) {
 		if (!strncasecmp
-				(argv[i], "aac_buffered_io",
-				 sizeof("aac_buffered_io") - 1)) {
+			(argv[i], "aac_buffered_io", sizeof("aac_buffered_io") - 1)) {
 			if (opt_is_on(argv[i])) {
 				g_use_buffer = true;
 			} else {
 				g_use_buffer = false;
 			}
 		} else if (!strncasecmp
-				(argv[i], "aac_buffer_size",
-				 sizeof("aac_buffer_size") - 1)) {
+				   (argv[i], "aac_buffer_size",
+					sizeof("aac_buffer_size") - 1)) {
 			const char *p = argv[i];
 
 			if ((p = strrchr(p, '=')) != NULL) {

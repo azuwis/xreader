@@ -96,7 +96,7 @@ static int read_id3v1(MusicInfoInternalTag * tag, const MusicInfo * music_info,
 }
 
 /** Convert bytes endian */
-static int big2little_endian(uint8_t *p, size_t n)
+static int big2little_endian(uint8_t * p, size_t n)
 {
 #if 1
 	size_t i;
@@ -106,10 +106,10 @@ static int big2little_endian(uint8_t *p, size_t n)
 		return -1;
 	}
 
-	for (i=0; i<n; i += 2) {
+	for (i = 0; i < n; i += 2) {
 		t = p[i];
-		p[i] = p[i+1];
-		p[i+1] = t;
+		p[i] = p[i + 1];
+		p[i + 1] = t;
 	}
 #endif
 
@@ -276,11 +276,10 @@ static unsigned int get_be24(SceUID fd)
 static int id3v2_match(const uint8_t * buf)
 {
 	return ((buf[0] == 'I' &&
-		buf[1] == 'D' &&
-		buf[2] == '3') || (
-		buf[0] == 'e' && 
-		buf[1] == 'a' && 
-		buf[2] == '3')) &&
+			 buf[1] == 'D' &&
+			 buf[2] == '3') || (buf[0] == 'e' &&
+								buf[1] == 'a' &&
+								buf[2] == '3')) &&
 		buf[3] != 0xff &&
 		buf[4] != 0xff &&
 		(buf[6] & 0x80) == 0 &&

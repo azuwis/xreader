@@ -519,17 +519,18 @@ static void scene_draw_mp3bar_music_staff(void)
 			case conf_encode_ucs:
 				{
 					charsets_ucs_conv((const byte *) info.artist,
-									   sizeof(info.artist), (byte *) info.artist,
-									   sizeof(info.artist));
+									  sizeof(info.artist), (byte *) info.artist,
+									  sizeof(info.artist));
 					charsets_ucs_conv((const byte *) info.title,
-									   sizeof(info.title), (byte *) info.title,
-									   sizeof(info.title));
+									  sizeof(info.title), (byte *) info.title,
+									  sizeof(info.title));
 					charsets_ucs_conv((const byte *) info.album,
-									   sizeof(info.album), (byte *) info.album,
-									   sizeof(info.album));
+									  sizeof(info.album), (byte *) info.album,
+									  sizeof(info.album));
 					charsets_ucs_conv((const byte *) info.comment,
-									   sizeof(info.comment), (byte *) info.comment,
-									   sizeof(info.comment));
+									  sizeof(info.comment),
+									  (byte *) info.comment,
+									  sizeof(info.comment));
 				}
 				break;
 			default:
@@ -650,6 +651,7 @@ static void scene_draw_mp3bar(bool * firstdup)
 static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 {
 	double interval;
+
 #ifdef ENABLE_MUSIC
 	static dword oldkey;
 #endif

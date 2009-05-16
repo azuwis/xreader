@@ -334,18 +334,14 @@ static inline
 }
 
 static inline
-int xrKernelStopModule (SceUID modid,
-		SceSize argsize,
-		void *argp,
-		int *status,
-		SceKernelSMOption*option
-		)
+	int xrKernelStopModule(SceUID modid,
+						   SceSize argsize,
+						   void *argp, int *status, SceKernelSMOption * option)
 {
 	return sceKernelStopModule(modid, argsize, argp, status, option);
 }
 
-static inline
-int xrKernelUnloadModule(SceUID modid)   	
+static inline int xrKernelUnloadModule(SceUID modid)
 {
 	return sceKernelUnloadModule(modid);
 }
@@ -648,12 +644,13 @@ static inline
 	return sceAudioOutputPannedBlocking(channel, leftvol, rightvol, buf);
 }
 
-static inline int xrAsfSeekTime(SceAsfParser * asf, int unk, u32 *ms)
+static inline int xrAsfSeekTime(SceAsfParser * asf, int unk, u32 * ms)
 {
 	return sceAsfSeekTime(asf, unk, ms);
 }
 
-static inline int xrAsfParser_C6D98C54(SceAsfParser *asf, void *arg2, u64 *start, u64 *offset)
+static inline int xrAsfParser_C6D98C54(SceAsfParser * asf, void *arg2,
+									   u64 * start, u64 * offset)
 {
 	return sceAsfParser_C6D98C54(asf, arg2, start, offset);
 }
@@ -663,17 +660,21 @@ static inline int xrAsfCheckNeedMem(SceAsfParser * asf)
 	return sceAsfCheckNeedMem(asf);
 }
 
-static inline int xrAsfGetFrameData(SceAsfParser * asf, int unk, SceAsfFrame *frame)
+static inline int xrAsfGetFrameData(SceAsfParser * asf, int unk,
+									SceAsfFrame * frame)
 {
 	return sceAsfGetFrameData(asf, unk, frame);
 }
 
-static inline int xrAsfInitParser(SceAsfParser * asf, void* userdata, SceAsfParserReadCB read_cb, SceAsfParserSeekCB seek_cb)
+static inline int xrAsfInitParser(SceAsfParser * asf, void *userdata,
+								  SceAsfParserReadCB read_cb,
+								  SceAsfParserSeekCB seek_cb)
 {
 	return sceAsfInitParser(asf, userdata, read_cb, seek_cb);
 }
 
-static inline int xrAsfParser_685E0DA7(SceAsfParser * asf, void *ptr, int flag, void *arg4, u64 *start, u64 *offset)
+static inline int xrAsfParser_685E0DA7(SceAsfParser * asf, void *ptr, int flag,
+									   void *arg4, u64 * start, u64 * offset)
 {
 	return sceAsfParser_685E0DA7(asf, ptr, flag, arg4, start, offset);
 }

@@ -15,7 +15,7 @@ extern "C"
 		int fd;
 		bool use_buffer;
 	} reader_data;
-	
+
 /**
  * ÐÝÃßÇ°²¥·Å×´Ì¬
  */

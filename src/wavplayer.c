@@ -106,10 +106,10 @@ static int wav_seek_seconds(double seconds)
 	int ret;
 
 	if (data.use_buffer) {
-		ret = buffered_reader_seek(data.r, 
-				g_wav_data_offset +
-				(uint32_t) (seconds * g_info.sample_freq) *
-				g_wav_byte_per_frame);
+		ret = buffered_reader_seek(data.r,
+								   g_wav_data_offset +
+								   (uint32_t) (seconds * g_info.sample_freq) *
+								   g_wav_byte_per_frame);
 	} else {
 		ret =
 			xrIoLseek(data.fd,
@@ -202,9 +202,13 @@ static int wav_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 
 			if (data.use_buffer) {
-				ret = buffered_reader_read(data.r, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
+				ret =
+					buffered_reader_read(data.r, g_buff,
+										 WAVE_BUFFER_SIZE * sizeof(*g_buff));
 			} else {
-				ret = xrIoRead(data.fd, g_buff, WAVE_BUFFER_SIZE * sizeof(*g_buff));
+				ret =
+					xrIoRead(data.fd, g_buff,
+							 WAVE_BUFFER_SIZE * sizeof(*g_buff));
 			}
 
 			if (ret <= 0) {
@@ -419,7 +423,7 @@ static int wav_load(const char *spath, const char *lpath)
 	if (data.use_buffer) {
 		dword cur_pos;
 
-	   	cur_pos = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
+		cur_pos = xrIoLseek(data.fd, 0, PSP_SEEK_CUR);
 		xrIoClose(data.fd);
 		data.fd = -1;
 
@@ -627,16 +631,15 @@ static int wav_set_opt(const char *unused, const char *values)
 
 	for (i = 0; i < argc; ++i) {
 		if (!strncasecmp
-				(argv[i], "wav_buffered_io",
-				 sizeof("wav_buffered_io") - 1)) {
+			(argv[i], "wav_buffered_io", sizeof("wav_buffered_io") - 1)) {
 			if (opt_is_on(argv[i])) {
 				g_use_buffer = true;
 			} else {
 				g_use_buffer = false;
 			}
 		} else if (!strncasecmp
-				(argv[i], "wav_buffer_size",
-				 sizeof("wav_buffer_size") - 1)) {
+				   (argv[i], "wav_buffer_size",
+					sizeof("wav_buffer_size") - 1)) {
 			const char *p = argv[i];
 
 			if ((p = strrchr(p, '=')) != NULL) {

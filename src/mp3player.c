@@ -343,7 +343,8 @@ static int seek_valid_frame(void)
 			}
 
 			if (mp3_data.use_buffer)
-				bufsize = buffered_reader_read(mp3_data.r, read_start, read_size);
+				bufsize =
+					buffered_reader_read(mp3_data.r, read_start, read_size);
 			else
 				bufsize = xrIoRead(mp3_data.fd, read_start, read_size);
 
@@ -450,7 +451,7 @@ static int handle_seek(void)
 			if (g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, (u64*)&g_last_seek_tick) <= 0.5) {
+				if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 0.5) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -492,7 +493,7 @@ static int handle_seek(void)
 			if (!g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, (u64*)&g_last_seek_tick) <= 0.5) {
+				if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 0.5) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -772,12 +773,14 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			do {
 				if (mp3_data.use_buffer) {
 					if ((frame_size =
-						 search_valid_frame_me_buffered(&mp3_data, &brate)) < 0) {
+						 search_valid_frame_me_buffered(&mp3_data,
+														&brate)) < 0) {
 						__end();
 						return -1;
 					}
 				} else {
-					if ((frame_size = search_valid_frame_me(&mp3_data, &brate)) < 0) {
+					if ((frame_size =
+						 search_valid_frame_me(&mp3_data, &brate)) < 0) {
 						__end();
 						return -1;
 					}

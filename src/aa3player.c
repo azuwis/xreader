@@ -361,63 +361,68 @@ static int aa3_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-	while ( 1 ) {
-		if ( aa3_header_buffer[0] == 'e' && aa3_header_buffer[1] == 'a' && aa3_header_buffer[2] == '3' ) {
+	while (1) {
+		if (aa3_header_buffer[0] == 'e' && aa3_header_buffer[1] == 'a'
+			&& aa3_header_buffer[2] == '3') {
 			u8 id3v2_buffer[6];
 
-			if ( xrIoRead(data.fd, id3v2_buffer, 6) != 6 ) {
+			if (xrIoRead(data.fd, id3v2_buffer, 6) != 6) {
 				goto failed;
 			}
 
 			u32 id3v2_size, temp_value;
 
 			temp_value = id3v2_buffer[2];
-			temp_value = ( temp_value & 0x7F ) << 21;
+			temp_value = (temp_value & 0x7F) << 21;
 			id3v2_size = temp_value;
 			temp_value = id3v2_buffer[3];
-			temp_value = ( temp_value & 0x7F ) << 14;
+			temp_value = (temp_value & 0x7F) << 14;
 			id3v2_size = id3v2_size | temp_value;
 			temp_value = id3v2_buffer[4];
-			temp_value = ( temp_value & 0x7F ) << 7;
+			temp_value = (temp_value & 0x7F) << 7;
 			id3v2_size = id3v2_size | temp_value;
 			temp_value = id3v2_buffer[5];
-			temp_value = ( temp_value & 0x7F ) ;
+			temp_value = (temp_value & 0x7F);
 			id3v2_size = id3v2_size | temp_value;
 
 			xrIoLseek(data.fd, id3v2_size, PSP_SEEK_CUR);
 
-			if ( xrIoRead(data.fd, aa3_header_buffer, 4) != 4 ) {
+			if (xrIoRead(data.fd, aa3_header_buffer, 4) != 4) {
 				goto failed;
 			}
 
 			continue;
 		}
 
-		if ( aa3_header_buffer[0] != 0x45 || aa3_header_buffer[1] != 0x41 || aa3_header_buffer[2] != 0x33 || aa3_header_buffer[3] != 0x01 ) {
+		if (aa3_header_buffer[0] != 0x45 || aa3_header_buffer[1] != 0x41
+			|| aa3_header_buffer[2] != 0x33 || aa3_header_buffer[3] != 0x01) {
 			goto failed;
 		}
 
 		uint8_t ea3_header[0x5C];
-		if ( xrIoRead( data.fd, ea3_header, 0x5C ) != 0x5C ) {
+
+		if (xrIoRead(data.fd, ea3_header, 0x5C) != 0x5C) {
 			goto failed;
 		}
 
 		atrac3_plus_flag[0] = ea3_header[0x1E];
 		atrac3_plus_flag[1] = ea3_header[0x1F];
-	
-		aa3_type = (ea3_header[0x1C] == 0x00) ? 0x270 : ((ea3_header[0x1C] == 0x01) ? 0xFFFE : 0x0);
-	
-		if ( aa3_type != 0x270 && aa3_type != 0xFFFE ) {
+
+		aa3_type =
+			(ea3_header[0x1C] ==
+			 0x00) ? 0x270 : ((ea3_header[0x1C] == 0x01) ? 0xFFFE : 0x0);
+
+		if (aa3_type != 0x270 && aa3_type != 0xFFFE) {
 			goto failed;
 		}
-		
+
 		uint32_t ea3_info = ea3_header[0x1D];
 
 		ea3_info = (ea3_info << 8) | ea3_header[0x1E];
 		ea3_info = (ea3_info << 8) | ea3_header[0x1F];
-	
+
 		g_info.channels = 2;
-		
+
 		switch ((ea3_info >> 13) & 7) {
 			case 0:
 				g_info.sample_freq = 32000;
@@ -430,18 +435,17 @@ static int aa3_load(const char *spath, const char *lpath)
 				break;
 			default:
 				g_info.sample_freq = 0;
-		} 
-	
-//		init_data.sample_bits = 0x10;
-		if (aa3_type == 0x270 )
+		}
+
+//      init_data.sample_bits = 0x10;
+		if (aa3_type == 0x270)
 			aa3_sample_per_frame = 1024;
 		else
 			aa3_sample_per_frame = 2048;
-	
-		if (aa3_type == 0xFFFE ) {
+
+		if (aa3_type == 0xFFFE) {
 			aa3_data_align = 8ul * (1ul + (ea3_info & 0x03FF));
-		}
-		else {
+		} else {
 			aa3_data_align = 8ul * (ea3_info & 0x03FF);
 		}
 
