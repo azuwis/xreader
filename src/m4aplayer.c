@@ -294,7 +294,13 @@ static int m4a_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			memcpy(output, aac_mix_buffer, samplesdecoded * 4);
 			g_buff_frame_size = samplesdecoded;
 			g_buff_frame_start = 0;
-			incr = (double) samplesdecoded / g_info.sample_freq;
+			
+			if (g_force_up_sampling) {
+				incr = (double) samplesdecoded / (g_info.sample_freq / 2);
+			} else {
+				incr = (double) samplesdecoded / g_info.sample_freq;
+			}
+
 			g_play_time += incr;
 		}
 	}
