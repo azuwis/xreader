@@ -10,7 +10,6 @@
 #include "jpeg_speed_test.h"
 #include "hprm_test.h"
 #include "music_test.h"
-#include "prx_test.h"
 #include "commons.h"
 #include "common/utils.h"
 #include "text.h"

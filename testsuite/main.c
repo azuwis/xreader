@@ -13,7 +13,6 @@
 #include "image_queue.h"
 #include "music_test.h"
 #include "bookmark_test.h"
-#include "prx_test.h"
 #include "commons.h"
 #include "common/utils.h"
 

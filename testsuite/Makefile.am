@@ -36,7 +36,7 @@ xTest_elf_SOURCES = \
 image_queue.c image_queue.h \
 bookmark_test.c bookmark_test.h \
 rar_speed_test.c rar_speed_test.h hprm_test.h hprm_test.c \
-music_test.c jpeg_speed_test.c jpeg_speed_test.h prx_test.h prx_test.c testprx/testprx.S \
+music_test.c jpeg_speed_test.c jpeg_speed_test.h \
 main.c \
 $(xrdir)/array.c $(xrdir)/array.h $(xrdir)/bg.c $(xrdir)/bg.h $(xrdir)/bookmark.c $(xrdir)/bookmark.h \
 $(xrdir)/buffer.c $(xrdir)/buffer.h $(xrdir)/charsets.c $(xrdir)/charsets.h $(xrdir)/conf.c $(xrdir)/conf.h $(xrdir)/copy.c \
@@ -53,19 +53,83 @@ $(xrdir)/osk.h $(xrdir)/exception.c $(xrdir)/exception.h $(xrdir)/m33boot.c $(xr
 $(xrdir)/archive.c $(xrdir)/archive.h \
 $(xrdir)/depdb.c $(xrdir)/depdb.h $(xrdir)/unumd.c $(xrdir)/unumd.h $(xrdir)/ssv.c $(xrdir)/ssv.h $(xrdir)/crc16.c $(xrdir)/crc16.h \
 $(xrdir)/power.c $(xrdir)/power.h $(xrdir)/freq_lock.c $(xrdir)/freq_lock.h \
-$(xrdir)/xrPrx.S $(xrdir)/xr_RDLib.S
+$(xrdir)/xrPrx.S $(xrdir)/xr_RDLib.S $(xrdir)/sceAsfParser.S
 
 xTest_elf_SOURCES += \
 $(xrdir)/tta/filter.h $(xrdir)/tta/ttadec.h $(xrdir)/tta/ttadec.c $(xrdir)/tta/ttalib.h
 
 if MUSIC
 xTest_elf_SOURCES += \
-$(xrdir)/musicdrv.c $(xrdir)/musicdrv.h $(xrdir)/musicmgr.c $(xrdir)/musicmgr.h  $(xrdir)/apeplayer.cpp $(xrdir)/apeplayer.h \
-$(xrdir)/lyric.c $(xrdir)/lyric.h $(xrdir)/clock.c $(xrdir)/mp3info.c $(xrdir)/flacplayer.c $(xrdir)/flacplayer.h \
-$(xrdir)/mp3player.c $(xrdir)/mp3player.h $(xrdir)/mpcplayer.c $(xrdir)/mpcplayer.h $(xrdir)/wavplayer.c $(xrdir)/wavplayer.h $(xrdir)/ttaplayer.c $(xrdir)/ttaplayer.h \
-$(xrdir)/xmp3audiolib.c $(xrdir)/xmp3audiolib.h $(xrdir)/genericplayer.c $(xrdir)/genericplayer.h $(xrdir)/buffered_reader.c $(xrdir)/buffered_reader.h \
-$(xrdir)/mp3info_buffered.c $(xrdir)/musicinfo.c $(xrdir)/musicinfo.h \
-$(xrdir)/wmaplayer.c $(xrdir)/wmaplayer.h $(xrdir)/oggplayer.c $(xrdir)/oggplayer.h $(xrdir)/wvplayer.c $(xrdir)/wvplayer.h
+$(xrdir)/musicdrv.c $(xrdir)/musicdrv.h $(xrdir)/musicmgr.c $(xrdir)/musicmgr.h $(xrdir)/xmp3audiolib.c $(xrdir)/xmp3audiolib.h \
+genericplayer.c $(xrdir)/genericplayer.h $(xrdir)/buffered_reader.c $(xrdir)/buffered_reader.h $(xrdir)/mp3info.h $(xrdir)/mp3info.c $(xrdir)/mp3info_buffered.c $(xrdir)/lyric.c $(xrdir)/lyric.h $(xrdir)/clock.c \
+musicinfo.c $(xrdir)/musicinfo.h $(xrdir)/mediaengine.c $(xrdir)/medaiengine.h
+
+if MP3
+xTest_elf_SOURCES += \
+$(xrdir)/mp3player.c $(xrdir)/mp3player.h
+endif
+
+if MPC
+xTest_elf_SOURCES += \
+$(xrdir)/mpcplayer.c $(xrdir)/mpcplayer.h
+endif
+
+if OGG
+xTest_elf_SOURCES += \
+$(xrdir)/oggplayer.c $(xrdir)/oggplayer.h
+endif
+
+if WMA
+xTest_elf_SOURCES += \
+$(xrdir)/wmaplayer.c $(xrdir)/wmaplayer.h $(xrdir)/sceAsfParser.S $(top_builddir)/cooleyesBridge/cooleyesBridge.S
+endif
+
+if WAV
+xTest_elf_SOURCES += \
+$(xrdir)/wavplayer.c $(xrdir)/wavplayer.h
+endif
+
+if FLAC
+xTest_elf_SOURCES += \
+$(xrdir)/flacplayer.c $(xrdir)/flacplayer.h
+endif
+
+if TTA
+xTest_elf_SOURCES += \
+$(xrdir)/ttaplayer.c $(xrdir)/ttaplayer.h \
+$(xrdir)/tta/filter.h $(xrdir)/tta/ttadec.h $(xrdir)/tta/ttadec.c $(xrdir)/tta/ttalib.h
+endif
+
+if WAVPACK
+xTest_elf_SOURCES += \
+$(xrdir)/wvplayer.c $(xrdir)/wvplayer.h
+endif
+
+if APE
+xTest_elf_SOURCES += \
+$(xrdir)/apeplayer.cpp $(xrdir)/apeplayer.h
+endif
+
+if AT3 
+xTest_elf_SOURCES += \
+$(xrdir)/at3player.c $(xrdir)/at3player.h
+endif
+
+if AA3 
+xTest_elf_SOURCES += \
+$(xrdir)/aa3player.c $(xrdir)/aa3player.h
+endif
+
+if M4A
+xTest_elf_SOURCES += \
+$(xrdir)/m4aplayer.c $(xrdir)/m4aplayer.h
+endif
+
+if AAC
+xTest_elf_SOURCES += \
+$(xrdir)/aacplayer.c $(xrdir)/aacplayer.h
+endif
+
 endif
 
 if NLS
@@ -89,11 +153,36 @@ PSP_LARGE_MEMORY = 1
 
 libdir = $(top_srcdir)/lib
 if MUSIC
-LIBS += $(libdir)/libmpcdec.a $(libdir)/libFLAC.a -lmac \
-	$(libdir)/libvorbisidec.a -lm \
-	$(libdir)/pmpmodavc/libavformat.a \
-	$(libdir)/pmpmodavc/libavcodec.a $(libdir)/pmpmodavc/libavutil.a \
-	$(libdir)/libwavpack.a
+if MPC
+LIBS += $(libdir)/libmpcdec.a
+endif
+
+if MP3
+LIBS += $(libdir)/libmad.a
+endif
+
+if OGG
+LIBS += $(libdir)/libvorbisidec.a
+endif
+
+if WMA
+endif
+
+if APE
+LIBS += -lmac
+endif
+
+if FLAC
+LIBS += $(libdir)/libFLAC.a
+endif
+
+if WAVPACK
+LIBS += $(libdir)/libwavpack.a
+endif
+
+if M4A
+LIBS += $(libdir)/libmp4v2.a $(libdir)/libfaad2.a
+endif
 endif
 LIBS += \
 -L$(libdir) $(libdir)/unrar.a $(libdir)/unzip.a $(libdir)/libchm.a \
