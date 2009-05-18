@@ -21,6 +21,7 @@
 #include "image_queue.h"
 #include "pspscreen.h"
 #include "ctrl.h"
+#include "xrhal.h"
 
 extern p_win_menuitem filelist;
 
@@ -48,7 +49,6 @@ static volatile bool cacher_exited = false;
 static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
 static int cache_memory_usage = 0;
-static bool cacher_fierce = false;
 
 enum
 {
@@ -59,6 +59,8 @@ enum
 static SceUID cache_del_event = -1;
 
 #if 0
+/// Add lock to malloc
+
 #ifndef F_mlock
 #define F_mlock
 // by default newlib-PSP doesn't have a lock with malloc() / free()
@@ -85,17 +87,15 @@ void __malloc_unlock(struct _reent *ptr)
 #endif
 #endif
 
-static unsigned get_max_memory_usage(bool fierce)
+static unsigned get_avail_memory(void)
 {
 	int memory;
 	extern unsigned int get_free_mem(void);
 
-	if (fierce && cache_memory_usage)
-		return cache_memory_usage;
-
 	memory = get_free_mem();
 
 	if (memory >= 1024 * 1024L) {
+		// reverse for 1MB
 		memory -= 1024 * 1024L;
 	} else {
 		memory = 0;
@@ -108,22 +108,17 @@ static unsigned get_max_memory_usage(bool fierce)
 
 static inline int cache_lock(void)
 {
-#if 1
 	dbg_printf(d, "%s", __func__);
-	return sceKernelWaitSema(cache_lock_uid, 1, 0);
-#else
-	return 0;
-#endif
+	SceUInt tm_out;
+
+	tm_out = 5 * 10000000L;
+	return xrKernelWaitSema(cache_lock_uid, 1, &tm_out);
 }
 
 static inline int cache_unlock(void)
 {
-#if 1
 	dbg_printf(d, "%s", __func__);
-	return sceKernelSignalSema(cache_lock_uid, 1);
-#else
-	return 0;
-#endif
+	return xrKernelSignalSema(cache_lock_uid, 1);
 }
 
 void cache_on(bool on)
@@ -133,17 +128,16 @@ void cache_on(bool on)
 		cache_memory_usage = 0;
 		selidx_moved = true;
 		first_run = true;
-		sceKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
+		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
 	}
 
 	cache_switch = on;
 }
 
-void cache_set_fierce(bool fierce)
+// Ask cacher for next image
+void cache_next_image(void)
 {
-	dbg_printf(d, "CLIENT: setting cache fierce behavior to %s",
-			   fierce ? "on" : "off");
-	cacher_fierce = fierce;
+	selidx_moved = true;
 }
 
 static void cache_clear_without_lock()
@@ -165,22 +159,24 @@ static void cache_clear_without_lock()
 
 static void cache_clear(void)
 {
-	cache_lock();
-	cache_clear_without_lock();
-	cache_unlock();
+	if (cache_lock() == 0) {
+		cache_clear_without_lock();
+		cache_unlock();
+	}
 }
 
 void cache_set_forward(bool forward)
 {
-	cache_lock();
+	if (cache_lock() == 0) {
 
-	if (cache_forward != forward) {
-		cache_clear_without_lock();
-		first_run = true;
+		if (cache_forward != forward) {
+			cache_clear_without_lock();
+			first_run = true;
+		}
+
+		cache_forward = forward;
+		cache_unlock();
 	}
-
-	cache_forward = forward;
-	cache_unlock();
 }
 
 bool user_ask_for_exit = false;
@@ -242,19 +238,20 @@ static int cache_delete_without_lock(cache_image_t * p)
 
 int cache_delete_first(void)
 {
-	cache_lock();
+	if (cache_lock() == 0) {
 
-	if (caches_size != 0 && caches != NULL) {
-		int ret;
+		if (caches_size != 0 && caches != NULL) {
+			int ret;
 
-		ret = cache_delete_without_lock(&caches[0]);
-		sceKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
+			ret = cache_delete_without_lock(&caches[0]);
+			xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
+			cache_unlock();
+
+			return ret;
+		}
+
 		cache_unlock();
-
-		return ret;
 	}
-
-	cache_unlock();
 	return -1;
 }
 
@@ -264,14 +261,14 @@ int get_image(dword selidx)
 	u64 start, now;
 	int ret;
 
-	sceRtcGetCurrentTick(&start);
+	xrRtcGetCurrentTick(&start);
 
 //  if (!first_run) {
-//      sceKernelWaitEventFlag (cache_del_event, CACHE_EVENT_UNDELETED, PSP_EVENT_WAITAND, NULL, NULL);
+//      xrKernelWaitEventFlag (cache_del_event, CACHE_EVENT_UNDELETED, PSP_EVENT_WAITAND, NULL, NULL);
 //  }
 
 	while (caches_size == 0) {
-		sceKernelDelayThread(10000);
+		xrKernelDelayThread(10000);
 	}
 
 	img = &caches[0];
@@ -280,10 +277,10 @@ int get_image(dword selidx)
 
 	while (img->status == CACHE_INIT) {
 //      dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
-		sceKernelDelayThread(10000);
+		xrKernelDelayThread(10000);
 	}
 
-	sceRtcGetCurrentTick(&now);
+	xrRtcGetCurrentTick(&now);
 
 	if (img->status == CACHE_OK && img->result == 0) {
 		dbg_printf(d, "CLIENT: Image %u load OK in %.3f s, %ux%u",
@@ -299,13 +296,13 @@ int get_image(dword selidx)
 		ret = -1;
 	}
 
-	// Draw && Rotate the image
+	// Draw image
 	if (img->data) {
 		disp_flip();
 		disp_putimage(0, 0, img->width, img->height, 0, 0, img->data);
 		disp_flip();
 	}
-//  sceKernelDelayThread(1000000);
+//  xrKernelDelayThread(1000000);
 
 	return ret;
 }
@@ -350,8 +347,6 @@ int test_cache()
 	ctrl_init();
 	disp_init();
 	cache_set_forward(true);
-	// care about crashing...
-	cache_set_fierce(false);
 	// enable cache now
 	cache_on(true);
 
@@ -364,7 +359,7 @@ int test_cache()
 			cache_set_forward(is_forward);
 			user_ask_for_next_image = false;
 			update_selidx(&selidx, filecount, is_forward);
-			selidx_moved = true;
+			cache_next_image();
 		}
 
 		if (user_ask_for_prev_image) {
@@ -373,7 +368,7 @@ int test_cache()
 			cache_set_forward(is_forward);
 			user_ask_for_prev_image = false;
 			update_selidx(&selidx, filecount, is_forward);
-			selidx_moved = true;
+			cache_next_image();
 		}
 
 		if (is_needrf) {
@@ -422,7 +417,10 @@ int cache_add_by_path(const char *archname, const char *filename, int where,
 		return -1;
 	}
 
-	cache_lock();
+	if (cache_lock() < 0) {
+		return -1;
+	}
+
 	memset(&img, 0, sizeof(img));
 	img.archname = archname;
 	img.filename = filename;
@@ -457,7 +455,10 @@ int cache_add_by_path(const char *archname, const char *filename, int where,
 
 void dbg_dump_cache(void)
 {
-	cache_lock();
+	if (cache_lock() < 0) {
+		return;
+	}
+
 	cache_image_t *p = caches;
 	dword c;
 
@@ -468,7 +469,7 @@ void dbg_dump_cache(void)
 
 	dbg_printf(d, "CLIENT: Dumping cache[%u] %u/%ukb, %u finished", caches_size,
 			   (unsigned) memory_usage / 1024,
-			   (unsigned) get_max_memory_usage(cacher_fierce) / 1024,
+			   (unsigned) get_avail_memory() / 1024,
 			   (unsigned) c);
 
 	for (p = caches; p != caches + caches_size; ++p) {
@@ -487,7 +488,7 @@ int caching(void)
 	t_fs_filetype ft;
 	static bool dealarm = false;
 
-	if (memory_usage > get_max_memory_usage(cacher_fierce)) {
+	if (memory_usage > get_avail_memory()) {
 		if (!dealarm)
 			dbg_printf(d, "SERVER: %s: Memory usage %uKB, refuse to cache",
 					   __func__, (unsigned) memory_usage / 1024);
@@ -503,7 +504,9 @@ int caching(void)
 
 	dealarm = false;
 
-	cache_lock();
+	if (cache_lock() < 0) {
+		return -1;
+	}
 
 	for (p = caches; p != caches + caches_size; ++p) {
 		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
@@ -524,7 +527,7 @@ int caching(void)
 #if 1
 	if (tmp.status == CACHE_INIT && (tmp.result == 4 || tmp.result == 5)) {
 		if (memory_usage + (sizeof(pixel) * tmp.width * tmp.height) >
-			get_max_memory_usage(cacher_fierce)) {
+			get_avail_memory()) {
 //          dbg_printf(d, "SERVER: Cannot enter now because of out of memory ");
 
 			return -1;
@@ -571,7 +574,10 @@ int caching(void)
 	tmp.status = CACHE_FAILED;
 #endif
 
-	cache_lock();
+	if (cache_lock() < 0) {
+		return -1;
+	}
+
 	for (p = caches; p != caches + caches_size; ++p) {
 		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
 			break;
@@ -637,14 +643,16 @@ static int start_cache(void)
 	dword pos;
 	dword size;
 
-	cache_lock();
+	if (cache_lock() < 0) {
+		return -1;
+	}
 
 	if (first_run) {
 		first_run = false;
 	} else {
-		sceKernelWaitEventFlag(cache_del_event, CACHE_EVENT_DELETED,
+		xrKernelWaitEventFlag(cache_del_event, CACHE_EVENT_DELETED,
 							   PSP_EVENT_WAITAND, NULL, NULL);
-		sceKernelSetEventFlag(cache_del_event, CACHE_EVENT_UNDELETED);
+		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_UNDELETED);
 	}
 
 	pos = selidx;
@@ -685,7 +693,7 @@ static int thread_cacher(SceSize args, void *argp)
 			while (selidx_moved == false && !cacher_should_exit && cache_switch) {
 				// select a image cache and start caching
 				caching();
-				sceKernelDelayThread(1000000);
+				xrKernelDelayThread(1000000);
 			}
 
 			if (cacher_should_exit)
@@ -703,11 +711,11 @@ static int thread_cacher(SceSize args, void *argp)
 			cacher_cleared = true;
 		}
 
-		sceKernelDelayThread(100000);
+		xrKernelDelayThread(100000);
 	}
 
 	cacher_exited = true;
-	sceKernelExitDeleteThread(0);
+	xrKernelExitDeleteThread(0);
 
 	return 0;
 }
@@ -717,11 +725,11 @@ int cache_init(void)
 	int ret;
 
 	dbg_printf(d, "set max memory usage to %ukb",
-			   (unsigned) get_max_memory_usage(cacher_fierce) / 1024);
+			   (unsigned) get_avail_memory() / 1024);
 
-	cache_lock_uid = sceKernelCreateSema("Cache Mutex", 0, 1, 1, 0);
+	cache_lock_uid = xrKernelCreateSema("Cache Mutex", 0, 1, 1, 0);
 	thid =
-		sceKernelCreateThread("thread_cacher", thread_cacher, 90, 0x10000, 0,
+		xrKernelCreateThread("thread_cacher", thread_cacher, 90, 0x10000, 0,
 							  NULL);
 
 	if (thid < 0) {
@@ -738,9 +746,9 @@ int cache_init(void)
 	caches_cap = MAX_CACHE_IMAGE;
 	caches = calloc(caches_cap, sizeof(caches[0]));
 
-	cache_del_event = sceKernelCreateEventFlag("cache_del_event", 0, 0, 0);
+	cache_del_event = xrKernelCreateEventFlag("cache_del_event", 0, 0, 0);
 
-	if ((ret = sceKernelStartThread(thid, 0, NULL)) < 0) {
+	if ((ret = xrKernelStartThread(thid, 0, NULL)) < 0) {
 		dbg_printf(d, "start thread failed: 0x%08x", (unsigned) ret);
 
 		return -1;
@@ -754,26 +762,26 @@ void cache_free(void)
 	cache_on(false);
 
 	while (!cacher_cleared) {
-		sceKernelDelayThread(100000);
+		xrKernelDelayThread(100000);
 	}
 
 	if (thid >= 0) {
 		cacher_should_exit = true;
 
 		while (!cacher_exited) {
-			sceKernelDelayThread(100000);
+			xrKernelDelayThread(100000);
 		}
 
 		thid = -1;
 	}
 
 	if (cache_lock_uid >= 0) {
-		sceKernelDeleteSema(cache_lock_uid);
+		xrKernelDeleteSema(cache_lock_uid);
 		cache_lock_uid = -1;
 	}
 
 	if (cache_del_event >= 0) {
-		sceKernelDeleteEventFlag(cache_del_event);
+		xrKernelDeleteEventFlag(cache_del_event);
 		cache_del_event = -1;
 	}
 
