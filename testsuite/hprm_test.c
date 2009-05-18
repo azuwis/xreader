@@ -23,9 +23,9 @@ int hprm_test(void)
 
 	ctrl_init();
 
-	while ( 1 ) {
+	while (1) {
 		key = ctrl_hprm_raw();
-		dbg_printf(d, "ctrl_hprm_raw() returns %d", (int)key);
+		dbg_printf(d, "ctrl_hprm_raw() returns %d", (int) key);
 		sceKernelDelayThread(1000000);
 	}
 
@@ -45,21 +45,23 @@ int hprm_test(void)
 	sceRtcGetCurrentTick(&start);
 	sceRtcGetCurrentTick(&end);
 
-	while ( 1 ) {
+	while (1) {
 		key = ctrl_hprm_raw();
 		sceRtcGetCurrentTick(&end);
 		interval = pspDiffTime(&end, &start);
 
-		dbg_printf(d, "key = %d, oldkey = %d, interval %.3f", (int)key, (int) oldkey, interval);
+		dbg_printf(d, "key = %d, oldkey = %d, interval %.3f", (int) key,
+				   (int) oldkey, interval);
 
-		if (key == PSP_HPRM_FORWARD || key == PSP_HPRM_BACK || key == PSP_HPRM_PLAYPAUSE) {
+		if (key == PSP_HPRM_FORWARD || key == PSP_HPRM_BACK
+			|| key == PSP_HPRM_PLAYPAUSE) {
 			if (interval >= 5.0) {
 				if (key == PSP_HPRM_FORWARD) {
 					dbg_printf(d, "should fforward");
 				} else if (key == PSP_HPRM_BACK) {
 					dbg_printf(d, "should fbackward");
-				} 
-			} 
+				}
+			}
 
 			if (key != oldkey) {
 				sceRtcGetCurrentTick(&start);
@@ -72,7 +74,8 @@ int hprm_test(void)
 			}
 			sceKernelDelayThread(1000000);
 		} else {
-			if ((oldkey == PSP_HPRM_FORWARD || oldkey == PSP_HPRM_BACK || oldkey == PSP_HPRM_PLAYPAUSE)) {
+			if ((oldkey == PSP_HPRM_FORWARD || oldkey == PSP_HPRM_BACK
+				 || oldkey == PSP_HPRM_PLAYPAUSE)) {
 				if (interval <= 5.0) {
 					if (oldkey == PSP_HPRM_FORWARD)
 						dbg_printf(d, "should next");
@@ -90,4 +93,3 @@ int hprm_test(void)
 
 	return 0;
 }
-

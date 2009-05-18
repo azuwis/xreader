@@ -38,8 +38,8 @@ int jpeg_speed_test(void)
 
 	filecount = fs_rar_to_menu("ms0:/test.rar", &filelist, 0, 0, 0, 0);
 
-	for(i=0; i<filecount; ++i) {
-		const char* p;
+	for (i = 0; i < filecount; ++i) {
+		const char *p;
 		int ret;
 
 		p = utils_fileext(filelist[i].compname->ptr);
@@ -55,7 +55,10 @@ int jpeg_speed_test(void)
 		pixel bgcolor;
 
 		dbg_switch(d, 0);
-		ret = image_open_archive(filelist[i].compname->ptr, "ms0:/test.rar", fs_filetype_jpg, &w, &h, &img_dat, &bgcolor, scene_in_rar);
+		ret =
+			image_open_archive(filelist[i].compname->ptr, "ms0:/test.rar",
+							   fs_filetype_jpg, &w, &h, &img_dat, &bgcolor,
+							   scene_in_rar);
 		dbg_switch(d, 1);
 
 		if (ret != 0) {
@@ -70,7 +73,9 @@ int jpeg_speed_test(void)
 	}
 
 	sceRtcGetCurrentTick(&now);
-	dbg_printf(d, "Benchmark: %u files (%u pixels) extracted in %f seconds", (unsigned)filecount, (unsigned)pixels_size, pspDiffTime(&now, &start));
+	dbg_printf(d, "Benchmark: %u files (%u pixels) extracted in %f seconds",
+			   (unsigned) filecount, (unsigned) pixels_size, pspDiffTime(&now,
+																		 &start));
 
 	if (filelist != NULL) {
 		win_item_destroy(&filelist, &filecount);

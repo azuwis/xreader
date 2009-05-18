@@ -663,8 +663,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 		item[cur_count].selbcolor = selbcolor;
 		item[cur_count].data3 = header.UnpSize;
 		cur_count++;
-	}
-	while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
+	} while (RARProcessFile(hrar, RAR_SKIP, NULL, NULL) == 0);
 
 	RARCloseArchive(hrar);
 	freq_leave(fid);

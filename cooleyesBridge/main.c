@@ -2,10 +2,8 @@
 #include <pspkernel.h>
 #include <string.h>
 
-
 #define VERS 1
 #define REVS 0
-
 
 PSP_MODULE_INFO("cooleyesBridge", 0x1006, VERS, REVS);
 PSP_MAIN_THREAD_ATTR(0);
@@ -22,17 +20,20 @@ int sceMeBootStart380(int mebooterType);
 int sceMeBootStart395(int mebooterType);
 int sceMeBootStart500(int mebooterType);
 
-int cooleyesAudioSetFrequency(int devkitVersion, int frequency) {
-	u32 k1; 
-   	k1 = pspSdkSetK1(0);
-   	int ret; 
+int cooleyesAudioSetFrequency(int devkitVersion, int frequency)
+{
+	u32 k1;
+
+	k1 = pspSdkSetK1(0);
+	int ret;
+
 	if (devkitVersion < 0x03070000)
 		ret = sceAudioSetFrequency(frequency);
-	else if ( devkitVersion < 0x03080000 )
+	else if (devkitVersion < 0x03080000)
 		ret = sceAudioSetFrequency371(frequency);
-	else if ( devkitVersion < 0x03090500 )
+	else if (devkitVersion < 0x03090500)
 		ret = sceAudioSetFrequency380(frequency);
-	else if ( devkitVersion < 0x05000000 )
+	else if (devkitVersion < 0x05000000)
 		ret = sceAudioSetFrequency395(frequency);
 	else
 		ret = sceAudioSetFrequency500(frequency);
@@ -40,17 +41,20 @@ int cooleyesAudioSetFrequency(int devkitVersion, int frequency) {
 	return ret;
 }
 
-int cooleyesMeBootStart(int devkitVersion, int mebooterType) {
-	u32 k1; 
-   	k1 = pspSdkSetK1(0);
-   	int ret; 
-   	if (devkitVersion < 0x03070000)
+int cooleyesMeBootStart(int devkitVersion, int mebooterType)
+{
+	u32 k1;
+
+	k1 = pspSdkSetK1(0);
+	int ret;
+
+	if (devkitVersion < 0x03070000)
 		ret = sceMeBootStart(mebooterType);
-	else if ( devkitVersion < 0x03080000 )
+	else if (devkitVersion < 0x03080000)
 		ret = sceMeBootStart371(mebooterType);
-	else if ( devkitVersion < 0x03090500 )
+	else if (devkitVersion < 0x03090500)
 		ret = sceMeBootStart380(mebooterType);
-	else if ( devkitVersion < 0x05000000 )
+	else if (devkitVersion < 0x05000000)
 		ret = sceMeBootStart395(mebooterType);
 	else
 		ret = sceMeBootStart500(mebooterType);
@@ -58,10 +62,12 @@ int cooleyesMeBootStart(int devkitVersion, int mebooterType) {
 	return ret;
 }
 
-int module_start(SceSize args, void *argp){
+int module_start(SceSize args, void *argp)
+{
 	return 0;
 }
 
-int module_stop(){
+int module_stop()
+{
 	return 0;
 }

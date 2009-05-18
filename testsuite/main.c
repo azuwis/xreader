@@ -61,7 +61,7 @@ int main_thr(unsigned int args, void *argp)
 {
 	pspDebugScreenInit();
 
-	pspDebugScreenPrintf ("Welcome To xTest: xReader Testing Framework.\n");
+	pspDebugScreenPrintf("Welcome To xTest: xReader Testing Framework.\n");
 
 	conf_load(&config);
 	freq_init();
@@ -78,15 +78,15 @@ int main_thr(unsigned int args, void *argp)
 
 	freq_enter(222, 111);
 
-	while ( 1 ) {
+	while (1) {
 		image_queue_test();
-//		jpeg_speed_test();
-//		rar_speed_test();
-//		hprm_test();
-//		music_test();
+//      jpeg_speed_test();
+//      rar_speed_test();
+//      hprm_test();
+//      music_test();
 		sceKernelDelayThread(100000);
 	}
-	
+
 	return 0;
 }
 
@@ -105,4 +105,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-

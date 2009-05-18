@@ -27,7 +27,8 @@ extern p_win_menuitem filelist;
 #define MAX_CACHE_IMAGE 10
 #define MAX_MEMORY_USAGE ( 40 * 1024 * 1024L )
 
-enum {
+enum
+{
 	CACHE_INIT = 0,
 	CACHE_OK = 1,
 	CACHE_FAILED = 2
@@ -49,7 +50,8 @@ static dword cache_img_cnt = 0;
 static int cache_memory_usage = 0;
 static bool cacher_fierce = false;
 
-enum {
+enum
+{
 	CACHE_EVENT_DELETED = 1,
 	CACHE_EVENT_UNDELETED = 2
 };
@@ -90,7 +92,7 @@ static unsigned get_max_memory_usage(bool fierce)
 
 	if (fierce && cache_memory_usage)
 		return cache_memory_usage;
-	
+
 	memory = get_free_mem();
 
 	if (memory >= 1024 * 1024L) {
@@ -118,7 +120,7 @@ static inline int cache_unlock(void)
 {
 #if 1
 	dbg_printf(d, "%s", __func__);
-	return sceKernelSignalSema (cache_lock_uid, 1);
+	return sceKernelSignalSema(cache_lock_uid, 1);
 #else
 	return 0;
 #endif
@@ -139,7 +141,8 @@ void cache_on(bool on)
 
 void cache_set_fierce(bool fierce)
 {
-	dbg_printf(d, "CLIENT: setting cache fierce behavior to %s", fierce ? "on" : "off");
+	dbg_printf(d, "CLIENT: setting cache fierce behavior to %s",
+			   fierce ? "on" : "off");
 	cacher_fierce = fierce;
 }
 
@@ -147,7 +150,7 @@ static void cache_clear_without_lock()
 {
 	int i;
 
-	for(i=0; i<caches_size; ++i) {
+	for (i = 0; i < caches_size; ++i) {
 		if (caches[i].data != NULL) {
 			free(caches[i].data);
 		}
@@ -156,7 +159,7 @@ static void cache_clear_without_lock()
 			memory_usage -= caches[i].width * caches[i].height * sizeof(pixel);
 		}
 	}
-	
+
 	caches_size = 0;
 }
 
@@ -205,13 +208,13 @@ void parse_input()
 	if (key == PSP_CTRL_START)
 		dbg_dump_cache();
 
-//	ctrl_waitrelease();
+//  ctrl_waitrelease();
 }
 
 /**
  * 删除缓存, 并释放资源
  */
-static int cache_delete_without_lock(cache_image_t *p)
+static int cache_delete_without_lock(cache_image_t * p)
 {
 	size_t pos;
 
@@ -229,8 +232,9 @@ static int cache_delete_without_lock(cache_image_t *p)
 		memory_usage -= p->width * p->height * sizeof(pixel);
 	}
 
-	memmove(&caches[pos], &caches[pos+1], (caches_size - pos - 1) * sizeof(caches[0]));
-//	caches = safe_realloc(caches, sizeof(caches[0]) * (caches_size - 1));
+	memmove(&caches[pos], &caches[pos + 1],
+			(caches_size - pos - 1) * sizeof(caches[0]));
+//  caches = safe_realloc(caches, sizeof(caches[0]) * (caches_size - 1));
 	caches_size--;
 
 	return 0;
@@ -239,7 +243,7 @@ static int cache_delete_without_lock(cache_image_t *p)
 int cache_delete_first(void)
 {
 	cache_lock();
-	
+
 	if (caches_size != 0 && caches != NULL) {
 		int ret;
 
@@ -256,15 +260,15 @@ int cache_delete_first(void)
 
 int get_image(dword selidx)
 {
-	cache_image_t* img;
+	cache_image_t *img;
 	u64 start, now;
 	int ret;
 
 	sceRtcGetCurrentTick(&start);
 
-//	if (!first_run) {
-//		sceKernelWaitEventFlag (cache_del_event, CACHE_EVENT_UNDELETED, PSP_EVENT_WAITAND, NULL, NULL);
-// 	}
+//  if (!first_run) {
+//      sceKernelWaitEventFlag (cache_del_event, CACHE_EVENT_UNDELETED, PSP_EVENT_WAITAND, NULL, NULL);
+//  }
 
 	while (caches_size == 0) {
 		sceKernelDelayThread(10000);
@@ -275,33 +279,38 @@ int get_image(dword selidx)
 	DBG_ASSERT(d, "CLIENT: img->selidx == selidx", img->selidx == selidx);
 
 	while (img->status == CACHE_INIT) {
-//		dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
+//      dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
 		sceKernelDelayThread(10000);
 	}
 
 	sceRtcGetCurrentTick(&now);
 
 	if (img->status == CACHE_OK && img->result == 0) {
-		dbg_printf(d, "CLIENT: Image %u load OK in %.3f s, %ux%u", (unsigned) img->selidx, pspDiffTime(&now, &start), (unsigned)img->width, (unsigned)img->height);
+		dbg_printf(d, "CLIENT: Image %u load OK in %.3f s, %ux%u",
+				   (unsigned) img->selidx, pspDiffTime(&now, &start),
+				   (unsigned) img->width, (unsigned) img->height);
 		ret = 0;
 	} else {
-		dbg_printf(d, "CLIENT: Image %u load FAILED in %.3f s, %ux%u, status %u, result %u", (unsigned) img->selidx, pspDiffTime(&now, &start), (unsigned)img->width, (unsigned)img->height, img->status, img->result);
+		dbg_printf(d,
+				   "CLIENT: Image %u load FAILED in %.3f s, %ux%u, status %u, result %u",
+				   (unsigned) img->selidx, pspDiffTime(&now, &start),
+				   (unsigned) img->width, (unsigned) img->height, img->status,
+				   img->result);
 		ret = -1;
 	}
-		
+
 	// Draw && Rotate the image
 	if (img->data) {
 		disp_flip();
 		disp_putimage(0, 0, img->width, img->height, 0, 0, img->data);
 		disp_flip();
 	}
+//  sceKernelDelayThread(1000000);
 
-//	sceKernelDelayThread(1000000);
-	
 	return ret;
 }
 
-void update_selidx(volatile dword *selidx, dword count, bool is_forward)
+void update_selidx(volatile dword * selidx, dword count, bool is_forward)
 {
 	if (is_forward) {
 		do {
@@ -330,7 +339,8 @@ int test_cache()
 
 	selidx = 0;
 
-	while (!fs_is_image((t_fs_filetype) filelist[selidx].data) && selidx < filecount) {
+	while (!fs_is_image((t_fs_filetype) filelist[selidx].data)
+		   && selidx < filecount) {
 		selidx++;
 	}
 
@@ -368,7 +378,7 @@ int test_cache()
 
 		if (is_needrf) {
 			cache_delete_first();
-			
+
 			if (get_image(selidx) != 0) {
 				user_ask_for_exit = true;
 			}
@@ -393,11 +403,12 @@ int test_cache()
  * @param where 文件位置类型
  *
  */
-int cache_add_by_path(const char* archname, const char* filename, int where, dword selidx)
+int cache_add_by_path(const char *archname, const char *filename, int where,
+					  dword selidx)
 {
 	t_fs_filetype type;
 	cache_image_t img;
-	
+
 	type = fs_file_get_type(filename);
 
 	if (!fs_is_image(type)) {
@@ -405,7 +416,8 @@ int cache_add_by_path(const char* archname, const char* filename, int where, dwo
 	}
 
 	if (cache_get(archname, filename) != NULL) {
-		dbg_printf(d, "SERVER: %s: Image %s duplicate load, FIXME", __func__, filename);
+		dbg_printf(d, "SERVER: %s: Image %s duplicate load, FIXME", __func__,
+				   filename);
 
 		return -1;
 	}
@@ -432,7 +444,8 @@ int cache_add_by_path(const char* archname, const char* filename, int where, dwo
 		caches[caches_size] = img;
 		caches_size++;
 	} else {
-		dbg_printf(d, "SERVER: cannot add cache any more: size %u cap %u", caches_size, caches_cap);
+		dbg_printf(d, "SERVER: cannot add cache any more: size %u cap %u",
+				   caches_size, caches_cap);
 		cache_unlock();
 
 		return -1;
@@ -448,15 +461,20 @@ void dbg_dump_cache(void)
 	cache_image_t *p = caches;
 	dword c;
 
-	for(c = 0;p != caches + caches_size; ++p) {
+	for (c = 0; p != caches + caches_size; ++p) {
 		if (p->status == CACHE_OK || p->status == CACHE_FAILED)
 			c++;
 	}
 
-	dbg_printf(d, "CLIENT: Dumping cache[%u] %u/%ukb, %u finished", caches_size, (unsigned)memory_usage/1024, (unsigned)get_max_memory_usage(cacher_fierce)/1024, (unsigned)c);
+	dbg_printf(d, "CLIENT: Dumping cache[%u] %u/%ukb, %u finished", caches_size,
+			   (unsigned) memory_usage / 1024,
+			   (unsigned) get_max_memory_usage(cacher_fierce) / 1024,
+			   (unsigned) c);
 
-	for(p = caches;p != caches + caches_size; ++p) {
-		dbg_printf(d, "%d: %u st %u res %d mem %lukb", p - caches, (unsigned)p->selidx, p->status, p->result, p->width * p->height * sizeof(pixel) / 1024L);
+	for (p = caches; p != caches + caches_size; ++p) {
+		dbg_printf(d, "%d: %u st %u res %d mem %lukb", p - caches,
+				   (unsigned) p->selidx, p->status, p->result,
+				   p->width * p->height * sizeof(pixel) / 1024L);
 	}
 
 	cache_unlock();
@@ -467,11 +485,12 @@ int caching(void)
 	cache_image_t *p = NULL;
 	cache_image_t tmp;
 	t_fs_filetype ft;
-	static bool dealarm = false; 
+	static bool dealarm = false;
 
 	if (memory_usage > get_max_memory_usage(cacher_fierce)) {
 		if (!dealarm)
-			dbg_printf(d, "SERVER: %s: Memory usage %uKB, refuse to cache", __func__, (unsigned) memory_usage / 1024);
+			dbg_printf(d, "SERVER: %s: Memory usage %uKB, refuse to cache",
+					   __func__, (unsigned) memory_usage / 1024);
 
 		dealarm = true;
 
@@ -479,13 +498,14 @@ int caching(void)
 	}
 
 	if (dealarm)
-		dbg_printf(d, "SERVER: %s: Memory usage %uKB, OK to go now", __func__, (unsigned) memory_usage / 1024);
+		dbg_printf(d, "SERVER: %s: Memory usage %uKB, OK to go now", __func__,
+				   (unsigned) memory_usage / 1024);
 
 	dealarm = false;
 
 	cache_lock();
 
-	for(p=caches; p != caches + caches_size; ++p) {
+	for (p = caches; p != caches + caches_size; ++p) {
 		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
 			break;
 		}
@@ -500,12 +520,12 @@ int caching(void)
 	memcpy(&tmp, p, sizeof(tmp));
 	cache_unlock();
 
-
-   	ft = fs_file_get_type(tmp.filename);
+	ft = fs_file_get_type(tmp.filename);
 #if 1
 	if (tmp.status == CACHE_INIT && (tmp.result == 4 || tmp.result == 5)) {
-		if (memory_usage + (sizeof(pixel) * tmp.width * tmp.height) > get_max_memory_usage(cacher_fierce)) {
-//			dbg_printf(d, "SERVER: Cannot enter now because of out of memory ");
+		if (memory_usage + (sizeof(pixel) * tmp.width * tmp.height) >
+			get_max_memory_usage(cacher_fierce)) {
+//          dbg_printf(d, "SERVER: Cannot enter now because of out of memory ");
 
 			return -1;
 		}
@@ -513,26 +533,29 @@ int caching(void)
 
 	dbg_switch(d, 0);
 	int fid = freq_enter_hotzone();
-	tmp.result = image_open_archive(tmp.filename, tmp.archname, ft, &tmp.width, &tmp.height, &tmp.data, &tmp.bgc, tmp.where);
+
+	tmp.result =
+		image_open_archive(tmp.filename, tmp.archname, ft, &tmp.width,
+						   &tmp.height, &tmp.data, &tmp.bgc, tmp.where);
 	freq_leave(fid);
 	dbg_switch(d, 1);
 
 	if (tmp.result == 0) {
-//		dbg_printf(d, "SERVER: Image %u finished loading", (unsigned)tmp.selidx);
+//      dbg_printf(d, "SERVER: Image %u finished loading", (unsigned)tmp.selidx);
 		memory_usage += tmp.width * tmp.height * sizeof(pixel);
-//		dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) memory_usage / 1024);
+//      dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) memory_usage / 1024);
 		tmp.status = CACHE_OK;
 	} else if (tmp.result == 4 || tmp.result == 5) {
 		// out of memory
-		
+
 		// is memory completely out of memory?
 		if (memory_usage == 0) {
-//			dbg_printf(d, "SERVER: Image %u finished failed(%u), giving up", (unsigned)tmp.selidx, tmp.result);
+//          dbg_printf(d, "SERVER: Image %u finished failed(%u), giving up", (unsigned)tmp.selidx, tmp.result);
 			tmp.status = CACHE_FAILED;
 		} else {
 			// retry later
-//			dbg_printf(d, "SERVER: Image %u finished failed(%u), retring", (unsigned)tmp.selidx, tmp.result);
-//			dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) memory_usage / 1024);
+//          dbg_printf(d, "SERVER: Image %u finished failed(%u), retring", (unsigned)tmp.selidx, tmp.result);
+//          dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) memory_usage / 1024);
 		}
 
 		if (tmp.data != NULL) {
@@ -540,7 +563,7 @@ int caching(void)
 			tmp.data = NULL;
 		}
 	} else {
-//		dbg_printf(d, "SERVER: Image %u finished failed(%u)", (unsigned)tmp.selidx, tmp.result);
+//      dbg_printf(d, "SERVER: Image %u finished failed(%u)", (unsigned)tmp.selidx, tmp.result);
 		tmp.status = CACHE_FAILED;
 	}
 
@@ -549,7 +572,7 @@ int caching(void)
 #endif
 
 	cache_lock();
-	for(p=caches; p != caches + caches_size; ++p) {
+	for (p = caches; p != caches + caches_size; ++p) {
 		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
 			break;
 		}
@@ -600,7 +623,7 @@ static dword count_img(void)
 	if (cache_img_cnt != 0)
 		return cache_img_cnt;
 
-	for(i=0; i<filecount; ++i) {
+	for (i = 0; i < filecount; ++i) {
 		if (fs_is_image((t_fs_filetype) filelist[i].data))
 			cache_img_cnt++;
 	}
@@ -611,7 +634,7 @@ static dword count_img(void)
 static int start_cache(void)
 {
 	int re;
-	dword pos; 
+	dword pos;
 	dword size;
 
 	cache_lock();
@@ -619,31 +642,34 @@ static int start_cache(void)
 	if (first_run) {
 		first_run = false;
 	} else {
-		sceKernelWaitEventFlag (cache_del_event, CACHE_EVENT_DELETED, PSP_EVENT_WAITAND, NULL, NULL);
+		sceKernelWaitEventFlag(cache_del_event, CACHE_EVENT_DELETED,
+							   PSP_EVENT_WAITAND, NULL, NULL);
 		sceKernelSetEventFlag(cache_del_event, CACHE_EVENT_UNDELETED);
 	}
 
 	pos = selidx;
-   	size = caches_size;
+	size = caches_size;
 
 	while (size-- > 0) {
 		pos = cache_get_next_image(pos, cache_forward);
 	}
 
 	re = min(MAX_CACHE_IMAGE, count_img()) - caches_size;
-	dbg_printf(d, "SERVER: start pos %u selidx %u caches_size %u re %u", (unsigned) pos, (unsigned) selidx, (unsigned) caches_size, (unsigned) re);
+	dbg_printf(d, "SERVER: start pos %u selidx %u caches_size %u re %u",
+			   (unsigned) pos, (unsigned) selidx, (unsigned) caches_size,
+			   (unsigned) re);
 	cache_unlock();
 
 	if (re == 0) {
 		return 0;
 	}
-
 	// dbg_printf(d, "SERVER: Wait for new selidx: memory usage %uKB", (unsigned) memory_usage / 1024);
 	// dbg_printf(d, "SERVER: %d images to cache, selidx %u, caches_size %u", re, (unsigned)selidx, (unsigned)caches_size);
 
 	while (re-- > 0) {
-		dbg_printf(d, "SERVER: add cache image %u", (unsigned)pos);
-		cache_add_by_path(config.shortpath, filelist[pos].compname->ptr, where, pos);
+		dbg_printf(d, "SERVER: add cache image %u", (unsigned) pos);
+		cache_add_by_path(config.shortpath, filelist[pos].compname->ptr, where,
+						  pos);
 		pos = cache_get_next_image(pos, cache_forward);
 	}
 
@@ -652,7 +678,7 @@ static int start_cache(void)
 
 static int thread_cacher(SceSize args, void *argp)
 {
-	while ( !cacher_should_exit ) {
+	while (!cacher_should_exit) {
 		if (cache_switch) {
 			cacher_cleared = false;
 
@@ -690,13 +716,16 @@ int cache_init(void)
 {
 	int ret;
 
-	dbg_printf(d, "set max memory usage to %ukb", (unsigned)get_max_memory_usage(cacher_fierce) / 1024);
+	dbg_printf(d, "set max memory usage to %ukb",
+			   (unsigned) get_max_memory_usage(cacher_fierce) / 1024);
 
 	cache_lock_uid = sceKernelCreateSema("Cache Mutex", 0, 1, 1, 0);
-	thid = sceKernelCreateThread("thread_cacher", thread_cacher, 90, 0x10000, 0, NULL);
+	thid =
+		sceKernelCreateThread("thread_cacher", thread_cacher, 90, 0x10000, 0,
+							  NULL);
 
 	if (thid < 0) {
-		dbg_printf(d, "create thread failed: 0x%08x", (unsigned)thid);
+		dbg_printf(d, "create thread failed: 0x%08x", (unsigned) thid);
 
 		return -1;
 	}
@@ -712,7 +741,7 @@ int cache_init(void)
 	cache_del_event = sceKernelCreateEventFlag("cache_del_event", 0, 0, 0);
 
 	if ((ret = sceKernelStartThread(thid, 0, NULL)) < 0) {
-		dbg_printf(d, "start thread failed: 0x%08x", (unsigned)ret);
+		dbg_printf(d, "start thread failed: 0x%08x", (unsigned) ret);
 
 		return -1;
 	}
@@ -759,7 +788,7 @@ void cache_free(void)
 /**
  * 得到缓存信息
  */
-cache_image_t* cache_get(const char* archname, const char* filename)
+cache_image_t *cache_get(const char *archname, const char *filename)
 {
 	cache_image_t *p;
 
@@ -767,9 +796,10 @@ cache_image_t* cache_get(const char* archname, const char* filename)
 		return NULL;
 	}
 
-	for(p = caches; p != caches + caches_size; ++p) {
-		if (((archname == p->archname && archname == NULL) || !strcmp(p->archname, archname)) &&
-		   	!strcmp(p->filename, filename)) {
+	for (p = caches; p != caches + caches_size; ++p) {
+		if (((archname == p->archname && archname == NULL)
+			 || !strcmp(p->archname, archname))
+			&& !strcmp(p->filename, filename)) {
 			return p;
 		}
 	}

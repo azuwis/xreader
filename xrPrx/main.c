@@ -65,7 +65,7 @@ unsigned long FindProc(const char *szMod, const char *szLib, unsigned long nid)
 	void *entTab;
 	int entLen;
 
-	pMod = (SceModule*) sceKernelFindModuleByName(szMod);
+	pMod = (SceModule *) sceKernelFindModuleByName(szMod);
 
 	if (!pMod) {
 		Kprintf("Cannot find module %s\n", szMod);

@@ -948,8 +948,7 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 			default:
 				break;
 		}
-	}
-	while (RecordType != TERMINATE_RECORD_TYPE);
+	} while (RecordType != TERMINATE_RECORD_TYPE);
 
 	if (LineIn != NULL)
 		free(LineIn);

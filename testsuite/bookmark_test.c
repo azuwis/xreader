@@ -21,14 +21,14 @@
 
 int bookmark_test()
 {
-	const char* fn = "ms0:/电子书/全球通史.txt";
+	const char *fn = "ms0:/电子书/全球通史.txt";
 	p_bookmark pBookmark;
 	t_bookmark tmpbm;
 	int i, c;
 
 	bookmark_init("ms0:/bookmark.conf");
 
-	for(c=0; c<3; ++c) {
+	for (c = 0; c < 3; ++c) {
 		pBookmark = bookmark_open(fn);
 
 		if (pBookmark == NULL) {
@@ -36,7 +36,7 @@ int bookmark_test()
 			return -1;
 		}
 
-		for(i=0; i<10; ++i) {
+		for (i = 0; i < 10; ++i) {
 			pBookmark->row[i] = rand();
 		}
 
@@ -55,7 +55,8 @@ int bookmark_test()
 
 	if ((row = bookmark_autoload(fn)) != tmpbm.row[0]) {
 		dbg_switch(d, 1);
-		dbg_printf(d, "bookmark autosave / load MISMATCHED %08lx %08lx", row, tmpbm.row[0]);
+		dbg_printf(d, "bookmark autosave / load MISMATCHED %08lx %08lx", row,
+				   tmpbm.row[0]);
 	}
 #endif
 
@@ -67,9 +68,10 @@ int bookmark_test()
 		dbg_printf(d, "Cannot open bookmark %s again", fn);
 	}
 
-	for(i=0; i<10;++i) {
+	for (i = 0; i < 10; ++i) {
 		if (pBookmark->row[i] != tmpbm.row[i]) {
-			dbg_printf(d, "Item %02d: %08lx %08lx MISMATCHED", i, pBookmark->row[i], tmpbm.row[i]);
+			dbg_printf(d, "Item %02d: %08lx %08lx MISMATCHED", i,
+					   pBookmark->row[i], tmpbm.row[i]);
 		}
 	}
 
@@ -83,4 +85,3 @@ int bookmark_test()
 
 	return 0;
 }
-

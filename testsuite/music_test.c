@@ -43,36 +43,38 @@ int music_test(void)
 
 	oldtag[0] = '\0';
 
-	while ( 1 ) {
+	while (1) {
 		struct music_info info = { 0 };
 
 		info.type = MD_GET_TITLE | MD_GET_ARTIST | MD_GET_ALBUM;
-		
+
 		if (musicdrv_get_info(&info) == 0) {
 			char tag[512];
 
 			switch (info.encode) {
 				case conf_encode_utf8:
 					charsets_utf8_conv((const byte *) info.artist,
-							sizeof(info.artist), (byte *) info.artist,
-							sizeof(info.artist));
+									   sizeof(info.artist),
+									   (byte *) info.artist,
+									   sizeof(info.artist));
 					charsets_utf8_conv((const byte *) info.title,
-							sizeof(info.title), (byte *) info.title,
-							sizeof(info.title));
+									   sizeof(info.title), (byte *) info.title,
+									   sizeof(info.title));
 					charsets_utf8_conv((const byte *) info.album,
-							sizeof(info.album), (byte *) info.album,
-							sizeof(info.album));
+									   sizeof(info.album), (byte *) info.album,
+									   sizeof(info.album));
 					break;
 				case conf_encode_big5:
 					charsets_big5_conv((const byte *) info.artist,
-							sizeof(info.artist), (byte *) info.artist,
-							sizeof(info.artist));
+									   sizeof(info.artist),
+									   (byte *) info.artist,
+									   sizeof(info.artist));
 					charsets_big5_conv((const byte *) info.title,
-							sizeof(info.title), (byte *) info.title,
-							sizeof(info.title));
+									   sizeof(info.title), (byte *) info.title,
+									   sizeof(info.title));
 					charsets_big5_conv((const byte *) info.album,
-							sizeof(info.album), (byte *) info.album,
-							sizeof(info.album));
+									   sizeof(info.album), (byte *) info.album,
+									   sizeof(info.album));
 					break;
 				case conf_encode_sjis:
 					{
@@ -81,21 +83,21 @@ int music_test(void)
 
 						temp = NULL, size = strlen(info.artist);
 						charsets_sjis_conv((const byte *) info.artist,
-								(byte **) & temp, (dword *) & size);
+										   (byte **) & temp, (dword *) & size);
 						strncpy_s(info.artist, sizeof(info.artist),
-								(const char *) temp, size);
+								  (const char *) temp, size);
 						free(temp);
 						temp = NULL, size = strlen(info.title);
 						charsets_sjis_conv((const byte *) info.title,
-								(byte **) & temp, (dword *) & size);
+										   (byte **) & temp, (dword *) & size);
 						strncpy_s(info.title, sizeof(info.title),
-								(const char *) temp, size);
+								  (const char *) temp, size);
 						free(temp);
 						temp = NULL, size = strlen(info.album);
 						charsets_sjis_conv((const byte *) info.album,
-								(byte **) & temp, (dword *) & size);
+										   (byte **) & temp, (dword *) & size);
 						strncpy_s(info.album, sizeof(info.album),
-								(const char *) temp, size);
+								  (const char *) temp, size);
 						free(temp);
 					}
 					break;
@@ -106,8 +108,9 @@ int music_test(void)
 			}
 
 			if (info.artist[0] != '\0' && info.album[0] != '\0'
-					&& info.title[0] != '\0')
-				SPRINTF_S(tag, "%s - %s - %s", info.artist, info.album, info.title);
+				&& info.title[0] != '\0')
+				SPRINTF_S(tag, "%s - %s - %s", info.artist, info.album,
+						  info.title);
 			else if (info.album[0] != '\0' && info.title[0] != '\0')
 				SPRINTF_S(tag, "%s - %s", info.album, info.title);
 			else if (info.artist[0] != '\0' && info.title[0] != '\0')
@@ -135,7 +138,7 @@ int music_test(void)
 				strcpy(oldtag, tag);
 			}
 		}
-		
+
 		sceKernelDelayThread(1000000);
 	}
 

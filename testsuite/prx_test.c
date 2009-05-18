@@ -47,8 +47,8 @@ int prx_test(void)
 		mod = sceKernelStartModule(mod, 0, NULL, NULL, NULL);
 
 		if (mod < 0) {
-			dbg_printf(d, 
-					"%s: sceKernelStartModule failed %08x", __func__, mod);
+			dbg_printf(d,
+					   "%s: sceKernelStartModule failed %08x", __func__, mod);
 		} else {
 			do {
 				ret = test_get_version();
@@ -56,7 +56,7 @@ int prx_test(void)
 				test_modify_struct(&test);
 				dbg_printf(d, "test cnt is %d now.", test.cnt);
 				sceKernelDelayThread(1000000);
-			} while ( 1 );
+			} while (1);
 		}
 	} else {
 		if (mod == SCE_KERNEL_ERROR_EXCLUSIVE_LOAD) {
@@ -64,6 +64,6 @@ int prx_test(void)
 			dbg_printf(d, "%s: kuKernelLoadModule failed %08x", __func__, mod);
 		}
 	}
-	
+
 	return 0;
 }

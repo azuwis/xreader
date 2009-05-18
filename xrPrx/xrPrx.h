@@ -22,12 +22,13 @@
 #define XR_PRX
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include <psploadexec_kernel.h>
 
-void xrPlayerSetSpeed(int cpu, int bus);
+	void xrPlayerSetSpeed(int cpu, int bus);
 
 #ifdef __cplusplus
 }
