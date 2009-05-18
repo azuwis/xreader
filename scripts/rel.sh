@@ -9,6 +9,8 @@ DESTDIR=$HOME/svn_xreader/PSP/PSP/GAME/xReader
 DESTDIR2=$HOME/svn_xreader/PSP/seplugins
 LITE=n
 
+alias echo='echo -e'
+
 echo "xReader transfer script"
 echo "Author: $AUTHOR($EMAIL)"
 

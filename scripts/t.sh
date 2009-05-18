@@ -9,6 +9,8 @@ DESTDIR=/media/disk/PSP/game/xReader
 DESTDRIVE=/media/disk
 DEBUG=y
 
+alias echo='echo -e'
+
 echo "xReader transfer script"
 echo "Author: $AUTHOR($EMAIL)"
 
