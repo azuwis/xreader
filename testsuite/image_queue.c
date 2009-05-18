@@ -420,16 +420,6 @@ int cache_add_by_path(const char *archname, const char *filename, int where,
 	img.status = CACHE_INIT;
 	img.selidx = selidx;
 
-	// add to cache table
-#if 0
-	caches = safe_realloc(caches, sizeof(caches[0]) * (caches_size + 1));
-
-	if (caches == NULL) {
-		cache_unlock();
-		return -1;
-	}
-#endif
-
 	if (caches_size < caches_cap) {
 		caches[caches_size] = img;
 		caches_size++;
