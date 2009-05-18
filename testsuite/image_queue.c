@@ -50,6 +50,8 @@ static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
 static int cache_memory_usage = 0;
 
+static bool draw_image = false;
+
 enum
 {
 	CACHE_EVENT_DELETED = 1,
@@ -249,6 +251,11 @@ int cache_delete_first(void)
 	return -1;
 }
 
+int cache_get_size()
+{
+	return caches_size;
+}
+
 int get_image(dword selidx)
 {
 	cache_image_t *img;
@@ -257,11 +264,7 @@ int get_image(dword selidx)
 
 	xrRtcGetCurrentTick(&start);
 
-//  if (!first_run) {
-//      xrKernelWaitEventFlag (cache_del_event, CACHE_EVENT_UNDELETED, PSP_EVENT_WAITAND, NULL, NULL);
-//  }
-
-	while (caches_size == 0) {
+	while (cache_get_size() == 0) {
 		xrKernelDelayThread(10000);
 	}
 
@@ -291,10 +294,12 @@ int get_image(dword selidx)
 	}
 
 	// Draw image
-	if (img->data) {
-		disp_flip();
-		disp_putimage(0, 0, img->width, img->height, 0, 0, img->data);
-		disp_flip();
+	if (draw_image) {
+		if (img->data) {
+			disp_flip();
+			disp_putimage(0, 0, img->width, img->height, 0, 0, img->data);
+			disp_flip();
+		}
 	}
 //  xrKernelDelayThread(1000000);
 
@@ -384,6 +389,8 @@ int test_cache()
 	return 0;
 }
 
+static cache_image_t *cache_get(const char *archname, const char *filename);
+
 /**
  * 根据路径添加缓存
  * 
@@ -392,8 +399,8 @@ int test_cache()
  * @param where 文件位置类型
  *
  */
-int cache_add_by_path(const char *archname, const char *filename, int where,
-					  dword selidx)
+static int cache_add_by_path(const char *archname, const char *filename,
+							 int where, dword selidx)
 {
 	t_fs_filetype type;
 	cache_image_t img;
@@ -449,8 +456,7 @@ void dbg_dump_cache(void)
 
 	dbg_printf(d, "CLIENT: Dumping cache[%u] %u/%ukb, %u finished", caches_size,
 			   (unsigned) memory_usage / 1024,
-			   (unsigned) get_avail_memory() / 1024,
-			   (unsigned) c);
+			   (unsigned) get_avail_memory() / 1024, (unsigned) c);
 
 	for (p = caches; p != caches + caches_size; ++p) {
 		dbg_printf(d, "%d: %u st %u res %d mem %lukb", p - caches,
@@ -625,7 +631,7 @@ static int start_cache(void)
 		first_run = false;
 	} else {
 		xrKernelWaitEventFlag(cache_del_event, CACHE_EVENT_DELETED,
-							   PSP_EVENT_WAITAND, NULL, NULL);
+							  PSP_EVENT_WAITAND, NULL, NULL);
 		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_UNDELETED);
 	}
 
@@ -704,7 +710,7 @@ int cache_init(void)
 	cache_lock_uid = xrKernelCreateSema("Cache Mutex", 0, 1, 1, 0);
 	thid =
 		xrKernelCreateThread("thread_cacher", thread_cacher, 90, 0x10000, 0,
-							  NULL);
+							 NULL);
 
 	if (thid < 0) {
 		dbg_printf(d, "create thread failed: 0x%08x", (unsigned) thid);
@@ -770,7 +776,7 @@ void cache_free(void)
 /**
  * 得到缓存信息
  */
-cache_image_t *cache_get(const char *archname, const char *filename)
+static cache_image_t *cache_get(const char *archname, const char *filename)
 {
 	cache_image_t *p;
 

@@ -16,12 +16,13 @@ typedef struct _cache_image_t
 } cache_image_t;
 
 int cache_init(void);
-void cache_set_fierce(bool fierce);
 void cache_free(void);
 void dbg_dump_cache(void);
+int cache_get_size();
+void cache_set_forward(bool forward);
+void cache_next_image(void);
 
 int image_queue_test(void);
-cache_image_t *cache_get(const char *archname, const char *filename);
 void cache_on(bool on);
 
 #endif
