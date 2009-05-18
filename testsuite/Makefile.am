@@ -198,4 +198,5 @@ EXTRA_CLEAN = -r __SCE__xTest %__SCE__xTest xTest xTest% xTest.prx
 PSP_EBOOT_TITLE = xTest
 PSP_EBOOT_ICON = $(top_srcdir)/resource/ICON0.png
 
+PSPSDK=$(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak
