@@ -417,7 +417,12 @@ static int mpc_get_info(struct music_info *pinfo)
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] = 66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
-		pinfo->psp_freq[1] = 111;
+		pinfo->psp_freq[1] = 33;
+
+		// SV8 decoder playing SV7 file will cause decoder lag, need add some more cpu freq
+		if ((info.stream_version & 15) < 8) {
+			pinfo->psp_freq[0] += 33;
+		}
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		pinfo->ins_kbps = get_inst_bitrate(&g_inst_br) / 1000;
