@@ -109,10 +109,7 @@ static unsigned get_avail_memory(void)
 static inline int cache_lock(void)
 {
 	dbg_printf(d, "%s", __func__);
-	SceUInt tm_out;
-
-	tm_out = 5 * 10000000L;
-	return xrKernelWaitSema(cache_lock_uid, 1, &tm_out);
+	return xrKernelWaitSema(cache_lock_uid, 1, NULL);
 }
 
 static inline int cache_unlock(void)
@@ -159,24 +156,22 @@ static void cache_clear_without_lock()
 
 static void cache_clear(void)
 {
-	if (cache_lock() == 0) {
-		cache_clear_without_lock();
-		cache_unlock();
-	}
+	cache_lock();
+	cache_clear_without_lock();
+	cache_unlock();
 }
 
 void cache_set_forward(bool forward)
 {
-	if (cache_lock() == 0) {
+	cache_lock();
 
-		if (cache_forward != forward) {
-			cache_clear_without_lock();
-			first_run = true;
-		}
-
-		cache_forward = forward;
-		cache_unlock();
+	if (cache_forward != forward) {
+		cache_clear_without_lock();
+		first_run = true;
 	}
+
+	cache_forward = forward;
+	cache_unlock();
 }
 
 bool user_ask_for_exit = false;
@@ -238,20 +233,19 @@ static int cache_delete_without_lock(cache_image_t * p)
 
 int cache_delete_first(void)
 {
-	if (cache_lock() == 0) {
+	cache_lock();
 
-		if (caches_size != 0 && caches != NULL) {
-			int ret;
+	if (caches_size != 0 && caches != NULL) {
+		int ret;
 
-			ret = cache_delete_without_lock(&caches[0]);
-			xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
-			cache_unlock();
-
-			return ret;
-		}
-
+		ret = cache_delete_without_lock(&caches[0]);
+		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
 		cache_unlock();
+
+		return ret;
 	}
+
+	cache_unlock();
 	return -1;
 }
 
@@ -417,9 +411,7 @@ int cache_add_by_path(const char *archname, const char *filename, int where,
 		return -1;
 	}
 
-	if (cache_lock() < 0) {
-		return -1;
-	}
+	cache_lock();
 
 	memset(&img, 0, sizeof(img));
 	img.archname = archname;
@@ -455,9 +447,7 @@ int cache_add_by_path(const char *archname, const char *filename, int where,
 
 void dbg_dump_cache(void)
 {
-	if (cache_lock() < 0) {
-		return;
-	}
+	cache_lock();
 
 	cache_image_t *p = caches;
 	dword c;
@@ -504,9 +494,7 @@ int caching(void)
 
 	dealarm = false;
 
-	if (cache_lock() < 0) {
-		return -1;
-	}
+	cache_lock();
 
 	for (p = caches; p != caches + caches_size; ++p) {
 		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
@@ -574,9 +562,7 @@ int caching(void)
 	tmp.status = CACHE_FAILED;
 #endif
 
-	if (cache_lock() < 0) {
-		return -1;
-	}
+	cache_lock();
 
 	for (p = caches; p != caches + caches_size; ++p) {
 		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
@@ -643,9 +629,7 @@ static int start_cache(void)
 	dword pos;
 	dword size;
 
-	if (cache_lock() < 0) {
-		return -1;
-	}
+	cache_lock();
 
 	if (first_run) {
 		first_run = false;
@@ -814,16 +798,6 @@ cache_image_t *cache_get(const char *archname, const char *filename)
 
 	return NULL;
 }
-
-/*
-extern unsigned int get_free_mem(void);
-
-static inline bool test_free_memory(void)
-{
-	// Remember malloc/free is not thread-safe for now
-	return get_free_mem() >= MIN_FREE_MEMORY ? true : false;
-}
-*/
 
 int image_queue_test(void)
 {
