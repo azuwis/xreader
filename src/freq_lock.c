@@ -155,7 +155,9 @@ static int update_freq(void)
 	}
 
 	cpu = max(cpu, freq_list[config.freqs[0]][0]);
+	cpu = min(333, cpu);
 	bus = max(bus, freq_list[config.freqs[0]][1]);
+	bus = min(166, bus);
 
 //  dbg_printf(d, "%s: should set cpu/bus to %d/%d", __func__, cpu, bus);
 
