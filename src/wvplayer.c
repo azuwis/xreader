@@ -38,6 +38,8 @@
 
 #ifdef ENABLE_WAVPACK
 
+#define WVPACK_BUFFERED_READER_BUFFER_SIZE (256 * 1024)
+
 static int __end(void);
 
 #define MAX_BLOCK_SIZE (1024 * 8)
@@ -496,11 +498,11 @@ static WavpackContext *open_wvfile(const char *spath, int flags,
 		strcat(in2filename, "c");
 
 		// Lookup for corrent file
-		wvc = buffered_reader_open(in2filename, g_io_buffer_size, 1);
+		wvc = buffered_reader_open(in2filename, g_io_buffer_size, 0);
 		free(in2filename);
 	}
 
-	wv = buffered_reader_open(spath, g_io_buffer_size, 1);
+	wv = buffered_reader_open(spath, g_io_buffer_size, 0);
 
 	if (wv == NULL) {
 		goto failed;
@@ -784,11 +786,11 @@ static int wv_get_info(struct music_info *pinfo)
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		if (g_mode & MODE_WVC)
-			pinfo->psp_freq[0] = 266;
-		else
 			pinfo->psp_freq[0] = 222;
+		else
+			pinfo->psp_freq[0] = 166;
 
-		pinfo->psp_freq[1] = 111;
+		pinfo->psp_freq[1] = pinfo->psp_freq[0] / 2;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		if (g_decoder != NULL)
@@ -840,7 +842,7 @@ static int wv_set_opt(const char *unused, const char *values)
 	int argc, i;
 	char **argv;
 
-	g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+	g_io_buffer_size = WVPACK_BUFFERED_READER_BUFFER_SIZE;
 
 	dbg_printf(d, "%s: options are %s", __func__, values);
 
