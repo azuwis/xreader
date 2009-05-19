@@ -144,6 +144,97 @@ static int wv_seek_seconds(double seconds)
 	return 0;
 }
 
+static int handle_seek(void)
+{
+	u64 timer_end;
+
+	if (g_status == ST_FFORWARD) {
+		xrRtcGetCurrentTick(&timer_end);
+
+		generic_lock();
+		if (g_last_seek_is_forward) {
+			generic_unlock();
+
+			if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
+				generic_lock();
+
+				if (g_seek_count > 0) {
+					g_play_time += g_seek_seconds;
+					g_seek_count--;
+				}
+
+				generic_unlock();
+
+				if (g_play_time >= g_info.duration) {
+					return -1;
+				}
+
+				xrKernelDelayThread(100000);
+			} else {
+				generic_lock();
+
+				g_seek_count = 0;
+				generic_set_playback(true);
+
+				if (wv_seek_seconds(g_play_time) < 0) {
+					generic_unlock();
+					return -1;
+				}
+
+				g_status = ST_PLAYING;
+
+				generic_unlock();
+				xrKernelDelayThread(100000);
+			}
+		} else {
+			generic_unlock();
+		}
+	} else if (g_status == ST_FBACKWARD) {
+		xrRtcGetCurrentTick(&timer_end);
+
+		generic_lock();
+		if (!g_last_seek_is_forward) {
+			generic_unlock();
+
+			if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
+				generic_lock();
+
+				if (g_seek_count > 0) {
+					g_play_time -= g_seek_seconds;
+					g_seek_count--;
+				}
+
+				generic_unlock();
+
+				if (g_play_time < 0) {
+					g_play_time = 0;
+				}
+
+				xrKernelDelayThread(100000);
+			} else {
+				generic_lock();
+
+				g_seek_count = 0;
+				generic_set_playback(true);
+
+				if (wv_seek_seconds(g_play_time) < 0) {
+					generic_unlock();
+					return -1;
+				}
+
+				g_status = ST_PLAYING;
+
+				generic_unlock();
+				xrKernelDelayThread(100000);
+			}
+		} else {
+			generic_unlock();
+		}
+	}
+
+	return 0;
+}
+
 /**
  * WvPack音乐播放回调函数，
  * 负责将解码数据填充声音缓存区
@@ -164,19 +255,11 @@ static int wv_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFORWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_set_playback(true);
-			generic_unlock();
-			wv_seek_seconds(g_play_time + g_seek_seconds);
-		} else if (g_status == ST_FBACKWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_set_playback(true);
-			generic_unlock();
-			wv_seek_seconds(g_play_time - g_seek_seconds);
+		if (handle_seek() == -1) {
+			__end();
+			return -1;
 		}
+
 		xMP3ClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
@@ -330,7 +413,9 @@ static int set_pos_abs(void *id, uint32_t pos)
 {
 	buffered_reader_t *pbreader = (buffered_reader_t *) id;
 
-	return buffered_reader_seek(pbreader, pos);
+	buffered_reader_seek(pbreader, pos);
+
+	return 0;
 }
 
 static uint32_t get_length(void *id);
