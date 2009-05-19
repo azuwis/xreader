@@ -28,6 +28,7 @@ extern "C"
 #endif
 
 #define BUFFERED_READER_BUFFER_SIZE 65536	//131072//65536 //262144
+#define WVPACK_BUFFERED_READER_BUFFER_SIZE (256 * 1024)
 
 	typedef void *buffered_reader_t;
 

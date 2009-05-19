@@ -86,6 +86,8 @@ static FLAC__StreamDecoder *g_decoder = NULL;
 static FLAC__uint64 decode_position = 0;
 static FLAC__uint64 last_decode_position = 0;
 
+static buffered_reader_t *flacfile = NULL;
+
 /**
  * 复制数据到声音缓冲区
  *
@@ -151,6 +153,71 @@ static int flac_seek_seconds(double seconds)
 	last_decode_position = decode_position;
 
 	return 0;
+}
+
+static FLAC__StreamDecoderReadStatus flac_read_cb(const FLAC__StreamDecoder *
+												  decoder, FLAC__byte buffer[],
+												  size_t * bytes,
+												  void *client_data)
+{
+	buffered_reader_t *pb = (buffered_reader_t *) client_data;
+
+	if (*bytes > 0) {
+		*bytes = buffered_reader_read(pb, buffer, sizeof(FLAC__byte) *
+									  (*bytes));
+
+		if (*bytes == 0) {
+			return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
+		}
+	}
+
+	return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
+}
+
+static FLAC__StreamDecoderSeekStatus flac_seek_cb(const FLAC__StreamDecoder *
+												  decoder,
+												  FLAC__uint64
+												  absolute_byte_offset,
+												  void *client_data)
+{
+	buffered_reader_t *pb = (buffered_reader_t *) client_data;
+
+	buffered_reader_seek(pb, absolute_byte_offset);
+
+	return FLAC__STREAM_DECODER_SEEK_STATUS_OK;
+}
+
+static FLAC__StreamDecoderTellStatus flac_tell_cb(const FLAC__StreamDecoder *
+												  decoder,
+												  FLAC__uint64 *
+												  absolute_byte_offset,
+												  void *client_data)
+{
+	buffered_reader_t *pb = (buffered_reader_t *) client_data;
+
+	*absolute_byte_offset = buffered_reader_position(pb);
+
+	return FLAC__STREAM_DECODER_TELL_STATUS_OK;
+}
+
+static FLAC__StreamDecoderLengthStatus flac_length_cb(const FLAC__StreamDecoder
+													  * decoder,
+													  FLAC__uint64 *
+													  stream_length,
+													  void *client_data)
+{
+	buffered_reader_t *pb = (buffered_reader_t *) client_data;
+
+	*stream_length = (FLAC__uint64) buffered_reader_length(pb);
+	return FLAC__STREAM_DECODER_LENGTH_STATUS_OK;
+}
+
+static FLAC__bool flac_eof_cb(const FLAC__StreamDecoder * decoder,
+							  void *client_data)
+{
+	buffered_reader_t *pb = (buffered_reader_t *) client_data;
+
+	return buffered_reader_length(pb) == buffered_reader_position(pb);
 }
 
 static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
@@ -240,6 +307,104 @@ static void error_callback(const FLAC__StreamDecoder * decoder,
 }
 
 /**
+ * 处理快进快退
+ *
+ * @return
+ * - -1 should exit
+ * - 0 OK
+ */
+static int handle_seek(void)
+{
+	u64 timer_end;
+
+	if (g_status == ST_FFORWARD) {
+		xrRtcGetCurrentTick(&timer_end);
+
+		generic_lock();
+		if (g_last_seek_is_forward) {
+			generic_unlock();
+
+			if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
+				generic_lock();
+
+				if (g_seek_count > 0) {
+					g_play_time += g_seek_seconds;
+					g_seek_count--;
+				}
+
+				generic_unlock();
+
+				if (g_play_time >= g_info.duration) {
+					return -1;
+				}
+
+				xrKernelDelayThread(100000);
+			} else {
+				generic_lock();
+
+				g_seek_count = 0;
+				generic_set_playback(true);
+
+				if (flac_seek_seconds(g_play_time) < 0) {
+					generic_unlock();
+					return -1;
+				}
+
+				g_status = ST_PLAYING;
+
+				generic_unlock();
+				xrKernelDelayThread(100000);
+			}
+		} else {
+			generic_unlock();
+		}
+	} else if (g_status == ST_FBACKWARD) {
+		xrRtcGetCurrentTick(&timer_end);
+
+		generic_lock();
+		if (!g_last_seek_is_forward) {
+			generic_unlock();
+
+			if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
+				generic_lock();
+
+				if (g_seek_count > 0) {
+					g_play_time -= g_seek_seconds;
+					g_seek_count--;
+				}
+
+				generic_unlock();
+
+				if (g_play_time < 0) {
+					g_play_time = 0;
+				}
+
+				xrKernelDelayThread(100000);
+			} else {
+				generic_lock();
+
+				g_seek_count = 0;
+				generic_set_playback(true);
+
+				if (flac_seek_seconds(g_play_time) < 0) {
+					generic_unlock();
+					return -1;
+				}
+
+				g_status = ST_PLAYING;
+
+				generic_unlock();
+				xrKernelDelayThread(100000);
+			}
+		} else {
+			generic_unlock();
+		}
+	}
+
+	return 0;
+}
+
+/**
  * Flac音乐播放回调函数，
  * 负责将解码数据填充声音缓存区
  *
@@ -259,19 +424,11 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	UNUSED(pdata);
 
 	if (g_status != ST_PLAYING) {
-		if (g_status == ST_FFORWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_set_playback(true);
-			generic_unlock();
-			flac_seek_seconds(g_play_time + g_seek_seconds);
-		} else if (g_status == ST_FBACKWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_set_playback(true);
-			generic_unlock();
-			flac_seek_seconds(g_play_time - g_seek_seconds);
+		if (handle_seek() == -1) {
+			__end();
+			return -1;
 		}
+
 		xMP3ClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
@@ -455,10 +612,19 @@ static int flac_load(const char *spath, const char *lpath)
 	// for speed issue
 	(void) FLAC__stream_decoder_set_md5_checking(g_decoder, false);
 
+	flacfile = buffered_reader_open(spath, g_io_buffer_size, 0);
+
+	if (flacfile == NULL) {
+		__end();
+		return -1;
+	}
+
 	init_status =
-		FLAC__stream_decoder_init_file(g_decoder, spath, write_callback,
-									   metadata_callback, error_callback,
-									   /*client_data= */ NULL);
+		FLAC__stream_decoder_init_stream(g_decoder, flac_read_cb, flac_seek_cb,
+										 flac_tell_cb, flac_length_cb,
+										 flac_eof_cb, write_callback,
+										 metadata_callback, error_callback,
+										 flacfile);
 
 	if (init_status != FLAC__STREAM_DECODER_INIT_STATUS_OK) {
 		__end();
@@ -549,6 +715,11 @@ static int flac_end(void)
 	if (g_decoder) {
 		FLAC__stream_decoder_delete(g_decoder);
 		g_decoder = NULL;
+	}
+
+	if (flacfile != NULL) {
+		buffered_reader_close(flacfile);
+		flacfile = NULL;
 	}
 
 	free_bitrate(&g_inst_br);
@@ -655,9 +826,42 @@ static int flac_probe(const char *spath)
 	return 0;
 }
 
+static int flac_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "flac_buffer_size", sizeof("flac_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	return 0;
+}
+
 static struct music_ops flac_ops = {
 	.name = "flac",
-	.set_opt = NULL,
+	.set_opt = flac_set_opt,
 	.load = flac_load,
 	.play = NULL,
 	.pause = NULL,

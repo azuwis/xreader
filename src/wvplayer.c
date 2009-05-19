@@ -144,6 +144,13 @@ static int wv_seek_seconds(double seconds)
 	return 0;
 }
 
+/**
+ * 处理快进快退
+ *
+ * @return
+ * - -1 should exit
+ * - 0 OK
+ */
 static int handle_seek(void)
 {
 	u64 timer_end;
