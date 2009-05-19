@@ -109,7 +109,7 @@ static int __init(void)
 	memset(g_buff, 0, sizeof(g_buff));
 
 	data.fd = -1;
-	data.use_buffer = g_use_buffer;
+	data.use_buffer = true;
 
 	at3_type = 0;
 	at3_data_align = 0;

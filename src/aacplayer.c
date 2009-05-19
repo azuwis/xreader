@@ -374,7 +374,7 @@ static int aac_load(const char *spath, const char *lpath)
 
 	aac_config = NULL;
 
-	data.use_buffer = g_use_buffer;
+	data.use_buffer = true;
 
 	if (data.use_buffer) {
 		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
@@ -576,23 +576,13 @@ static int aac_set_opt(const char *unused, const char *values)
 	int argc, i;
 	char **argv;
 
-	g_use_buffer = false;
-
 	dbg_printf(d, "%s: options are %s", __func__, values);
 
 	build_args(values, &argc, &argv);
 
 	for (i = 0; i < argc; ++i) {
 		if (!strncasecmp
-			(argv[i], "aac_buffered_io", sizeof("aac_buffered_io") - 1)) {
-			if (opt_is_on(argv[i])) {
-				g_use_buffer = true;
-			} else {
-				g_use_buffer = false;
-			}
-		} else if (!strncasecmp
-				   (argv[i], "aac_buffer_size",
-					sizeof("aac_buffer_size") - 1)) {
+			(argv[i], "aac_buffer_size", sizeof("aac_buffer_size") - 1)) {
 			const char *p = argv[i];
 
 			if ((p = strrchr(p, '=')) != NULL) {

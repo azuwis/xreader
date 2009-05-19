@@ -96,11 +96,6 @@ int g_fid = -1;
 MusicInfo g_info = { 0 };
 
 /**
- * 使用缓冲IO
- */
-bool g_use_buffer = true;
-
-/**
  * 默认缓冲IO缓冲字节大小，最低不小于8192
  */
 int g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;

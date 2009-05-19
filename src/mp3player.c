@@ -379,7 +379,16 @@ static int seek_valid_frame(void)
 
 static int mp3_seek_seconds_offset(double npt)
 {
-	int new_pos = npt * mp3info.average_bitrate / 8;
+	int new_pos;
+
+	if (npt < 0) {
+		npt = 0;
+	} else if (npt > g_info.duration) {
+		__end();
+		return -1;
+	}
+
+	new_pos = npt * mp3info.average_bitrate / 8;
 
 	if (new_pos < 0) {
 		new_pos = 0;
@@ -440,111 +449,18 @@ static int mp3_seek_seconds(double npt)
  */
 static int handle_seek(void)
 {
-	u64 timer_end;
-
-	if (mp3_data.use_buffer) {
-
-		if (g_status == ST_FFORWARD) {
-			xrRtcGetCurrentTick(&timer_end);
-
-			generic_lock();
-			if (g_last_seek_is_forward) {
-				generic_unlock();
-
-				if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 0.5) {
-					generic_lock();
-
-					if (g_seek_count > 0) {
-						g_play_time += g_seek_seconds;
-						g_seek_count--;
-					}
-
-					generic_unlock();
-
-					if (g_play_time >= g_info.duration) {
-						return -1;
-					}
-
-					xrKernelDelayThread(100000);
-				} else {
-					generic_lock();
-
-					g_seek_count = 0;
-					generic_set_playback(true);
-
-					if (mp3_seek_seconds(g_play_time) < 0) {
-						generic_unlock();
-						return -1;
-					}
-
-					g_status = ST_PLAYING;
-
-					generic_unlock();
-
-					xrKernelDelayThread(100000);
-				}
-			} else {
-				generic_unlock();
-			}
-		} else if (g_status == ST_FBACKWARD) {
-			xrRtcGetCurrentTick(&timer_end);
-
-			generic_lock();
-			if (!g_last_seek_is_forward) {
-				generic_unlock();
-
-				if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 0.5) {
-					generic_lock();
-
-					if (g_seek_count > 0) {
-						g_play_time -= g_seek_seconds;
-						g_seek_count--;
-					}
-
-					generic_unlock();
-
-					if (g_play_time < 0) {
-						g_play_time = 0;
-					}
-
-					xrKernelDelayThread(100000);
-				} else {
-					generic_lock();
-
-					g_seek_count = 0;
-					generic_set_playback(true);
-
-					if (mp3_seek_seconds(g_play_time) < 0) {
-						generic_unlock();
-						return -1;
-					}
-
-					g_status = ST_PLAYING;
-
-					generic_unlock();
-
-					xrKernelDelayThread(100000);
-				}
-			} else {
-				generic_unlock();
-			}
-		}
-
-		return 0;
-	} else {
-		if (g_status == ST_FFORWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_unlock();
-			generic_set_playback(true);
-			mp3_seek_seconds(g_play_time + g_seek_seconds);
-		} else if (g_status == ST_FBACKWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_unlock();
-			generic_set_playback(true);
-			mp3_seek_seconds(g_play_time - g_seek_seconds);
-		}
+	if (g_status == ST_FFORWARD) {
+		generic_lock();
+		g_status = ST_PLAYING;
+		generic_unlock();
+		generic_set_playback(true);
+		mp3_seek_seconds(g_play_time + g_seek_seconds);
+	} else if (g_status == ST_FBACKWARD) {
+		generic_lock();
+		g_status = ST_PLAYING;
+		generic_unlock();
+		generic_set_playback(true);
+		mp3_seek_seconds(g_play_time - g_seek_seconds);
 	}
 
 	return 0;
@@ -926,7 +842,7 @@ static int mp3_load(const char *spath, const char *lpath)
 	dbg_printf(d, "%s: loading %s", __func__, spath);
 	g_status = ST_UNKNOWN;
 
-	mp3_data.use_buffer = g_use_buffer;
+	mp3_data.use_buffer = true;
 
 	mp3_data.fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
@@ -1048,6 +964,7 @@ static void init_default_option(void)
 {
 	use_me = false;
 	check_crc = false;
+	g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
 }
 
 static int mp3_set_opt(const char *unused, const char *values)
@@ -1082,14 +999,6 @@ static int mp3_set_opt(const char *unused, const char *values)
 				check_crc = true;
 			} else {
 				check_crc = false;
-			}
-		} else if (!strncasecmp
-				   (argv[i], "mp3_buffered_io",
-					sizeof("mp3_buffered_io") - 1)) {
-			if (opt_is_on(argv[i])) {
-				g_use_buffer = true;
-			} else {
-				g_use_buffer = false;
 			}
 		} else if (!strncasecmp
 				   (argv[i], "mp3_buffer_size",

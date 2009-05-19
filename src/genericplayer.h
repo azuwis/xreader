@@ -62,11 +62,6 @@ extern "C"
 	extern MusicInfo g_info;
 
 /**
- * 使用缓冲IO
- */
-	extern bool g_use_buffer;
-
-/**
  * 默认缓冲IO缓冲字节大小，最低不小于8192
  */
 	extern int g_io_buffer_size;

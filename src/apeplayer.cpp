@@ -156,7 +156,7 @@ static int handle_seek(void)
 			if (g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, (u64*)&g_last_seek_tick) <= 1.0) {
+				if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -197,7 +197,7 @@ static int handle_seek(void)
 			if (!g_last_seek_is_forward) {
 				generic_unlock();
 
-				if (pspDiffTime(&timer_end, (u64*)&g_last_seek_tick) <= 1.0) {
+				if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
 					generic_lock();
 
 					if (g_seek_count > 0) {
@@ -412,14 +412,14 @@ static int ape_load(const char *spath, const char *lpath)
 	dbg_printf(d,
 			   "[%d channel(s), %d Hz, %.2f kbps, %02d:%02d, encoder: %s, Ratio: %.3f]",
 			   g_info.channels, g_info.sample_freq, g_info.avg_bps / 1000,
-			   (int) (g_info.duration / 60), (int) g_info.duration % 60, g_encode_name,
-			   1.0 * g_info.filesize / (g_info.samples *
-										g_info.channels *
+			   (int) (g_info.duration / 60), (int) g_info.duration % 60,
+			   g_encode_name,
+			   1.0 * g_info.filesize / (g_info.samples * g_info.channels *
 										(g_ape_bits_per_sample / 8))
 		);
 
-	dbg_printf(d, "[%s - %s - %s, tag type: %d]", g_info.tag.artist, g_info.tag.album,
-			   g_info.tag.title, g_info.tag.type);
+	dbg_printf(d, "[%s - %s - %s, tag type: %d]", g_info.tag.artist,
+			   g_info.tag.album, g_info.tag.title, g_info.tag.type);
 
 	g_decoder = (CAPEDecompress *) CreateIAPEDecompress(path, &err);
 
@@ -567,7 +567,7 @@ static int ape_get_info(struct music_info *pinfo)
  *
  * @return 是APE文件返回1，否则返回0
  */
-static int ape_probe(const char* spath)
+static int ape_probe(const char *spath)
 {
 	const char *p;
 

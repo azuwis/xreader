@@ -55,7 +55,7 @@ static MPC_SAMPLE_FORMAT g_buff[MPC_DECODER_BUFFER_LENGTH];
 static unsigned g_buff_frame_size;
 
 /**
- * Musepack mpc_reader_exit_stdio()调用需要一个锁
+ * Musepack mpc_reader_exit_buffered_reader()调用需要一个锁
  */
 static bool reader_inited = false;
 
@@ -242,6 +242,74 @@ static int __init(void)
 	return 0;
 }
 
+/// mpc_reader callback implementations
+static mpc_int32_t
+read_buffered_reader(mpc_reader * p_reader, void *ptr, mpc_int32_t size)
+{
+	buffered_reader_t *p_breader = (buffered_reader_t *) p_reader->data;
+
+	return (mpc_int32_t) buffered_reader_read(p_breader, ptr, size);
+}
+
+static mpc_bool_t
+seek_buffered_reader(mpc_reader * p_reader, mpc_int32_t offset)
+{
+	buffered_reader_t *p_breader = (buffered_reader_t *) p_reader->data;
+
+	return buffered_reader_seek(p_breader, offset) == 0;
+}
+
+static mpc_int32_t tell_buffered_reader(mpc_reader * p_reader)
+{
+	buffered_reader_t *p_breader = (buffered_reader_t *) p_reader->data;
+
+	return buffered_reader_position(p_breader);
+}
+
+static mpc_int32_t get_size_buffered_reader(mpc_reader * p_reader)
+{
+	buffered_reader_t *p_breader = (buffered_reader_t *) p_reader->data;
+
+	return buffered_reader_length(p_breader);
+}
+
+static mpc_bool_t canseek_buffered_reader(mpc_reader * p_reader)
+{
+	return MPC_TRUE;
+}
+
+static mpc_status mpc_reader_init_buffered_reader(mpc_reader * p_reader,
+												  const char *spath)
+{
+	mpc_reader tmp_reader;
+	buffered_reader_t *reader;
+
+	reader = buffered_reader_open(spath, g_io_buffer_size, 1);
+
+	if (reader == NULL)
+		return MPC_STATUS_FILE;
+
+	memset(&tmp_reader, 0, sizeof(tmp_reader));
+
+	tmp_reader.data = reader;
+	tmp_reader.canseek = canseek_buffered_reader;
+	tmp_reader.get_size = get_size_buffered_reader;
+	tmp_reader.read = read_buffered_reader;
+	tmp_reader.seek = seek_buffered_reader;
+	tmp_reader.tell = tell_buffered_reader;
+
+	*p_reader = tmp_reader;
+	return MPC_STATUS_OK;
+}
+
+static void mpc_reader_exit_buffered_reader(mpc_reader * p_reader)
+{
+	buffered_reader_t *p_breader = (buffered_reader_t *) p_reader->data;
+
+	buffered_reader_close(p_breader);
+	p_reader->data = NULL;
+}
+
 /**
  * 装载Musepack音乐文件 
  *
@@ -254,7 +322,7 @@ static int mpc_load(const char *spath, const char *lpath)
 {
 	__init();
 
-	if (mpc_reader_init_stdio(&reader, spath) < 0) {
+	if (mpc_reader_init_buffered_reader(&reader, spath) < 0) {
 		__end();
 		return -1;
 	}
@@ -352,7 +420,7 @@ static int mpc_end(void)
 	}
 
 	if (reader_inited == true) {
-		mpc_reader_exit_stdio(&reader);
+		mpc_reader_exit_buffered_reader(&reader);
 		reader_inited = false;
 	}
 
@@ -421,7 +489,7 @@ static int mpc_get_info(struct music_info *pinfo)
 
 		// SV8 decoder playing SV7 file will cause decoder lag, need add some more cpu freq
 		if ((info.stream_version & 15) < 8) {
-			pinfo->psp_freq[0] += 33;
+//          pinfo->psp_freq[0] += 33;
 		}
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
@@ -472,9 +540,42 @@ static int mpc_probe(const char *spath)
 	return 0;
 }
 
+static int mpc_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "mpc_buffer_size", sizeof("mpc_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	return 0;
+}
+
 static struct music_ops mpc_ops = {
 	.name = "musepack",
-	.set_opt = NULL,
+	.set_opt = mpc_set_opt,
 	.load = mpc_load,
 	.play = NULL,
 	.pause = NULL,
