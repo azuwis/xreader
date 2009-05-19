@@ -87,6 +87,8 @@ static int32_t *wv_buffer = NULL;
  */
 static int g_mode = 0;
 
+static buffered_reader_t *wv = NULL, *wvc = NULL;
+
 /**
  * 复制数据到声音缓冲区
  *
@@ -310,6 +312,127 @@ static void wv_get_tag(void)
 	}
 }
 
+static int32_t read_bytes(void *id, void *data, int32_t bcount)
+{
+	buffered_reader_t *pbreader = (buffered_reader_t *) id;
+
+	return buffered_reader_read(pbreader, data, bcount);
+}
+
+static uint32_t get_pos(void *id)
+{
+	buffered_reader_t *pbreader = (buffered_reader_t *) id;
+
+	return buffered_reader_position(pbreader);
+}
+
+static int set_pos_abs(void *id, uint32_t pos)
+{
+	buffered_reader_t *pbreader = (buffered_reader_t *) id;
+
+	return buffered_reader_seek(pbreader, pos);
+}
+
+static uint32_t get_length(void *id);
+
+static int set_pos_rel(void *id, int32_t delta, int mode)
+{
+	uint32_t cur_pos;
+
+	switch (mode) {
+		case SEEK_SET:
+			set_pos_abs(id, delta);
+			break;
+		case SEEK_CUR:
+			cur_pos = get_pos(id);
+			set_pos_abs(id, delta + cur_pos);
+			break;
+		case SEEK_END:
+			cur_pos = get_length(id);
+			set_pos_abs(id, delta + cur_pos);
+			break;
+		default:
+			break;
+	}
+
+	return 0;
+}
+
+/// TODO: temp hack
+static int push_back_byte(void *id, int c)
+{
+	set_pos_rel(id, -1, SEEK_CUR);
+
+	return c;
+//    return ungetc (c, id);
+}
+
+static uint32_t get_length(void *id)
+{
+	buffered_reader_t *pbreader = (buffered_reader_t *) id;
+
+	return buffered_reader_length(pbreader);
+}
+
+static int can_seek(void *id)
+{
+	return 1;
+}
+
+static int32_t write_bytes(void *id, void *data, int32_t bcount)
+{
+	return -1;
+}
+
+static WavpackStreamReader breader = {
+	read_bytes, get_pos, set_pos_abs, set_pos_rel, push_back_byte, get_length,
+	can_seek,
+	write_bytes
+};
+
+static WavpackContext *open_wvfile(const char *spath, int flags,
+								   int norm_offset)
+{
+	if (spath == NULL) {
+		return NULL;
+	}
+
+	if (flags & OPEN_WVC) {
+		char *in2filename = malloc(strlen(spath) + 10);
+
+		strcpy(in2filename, spath);
+		strcat(in2filename, "c");
+
+		// Lookup for corrent file
+		wvc = buffered_reader_open(in2filename, g_io_buffer_size, 1);
+		free(in2filename);
+	}
+
+	wv = buffered_reader_open(spath, g_io_buffer_size, 1);
+
+	if (wv == NULL) {
+		goto failed;
+	}
+
+	char error[80];
+
+	return WavpackOpenFileInputEx(&breader, (void *) wv, (void *) wvc, error,
+								  flags, norm_offset);
+
+  failed:
+	if (wv != NULL) {
+		buffered_reader_close(wv);
+		wv = NULL;
+	}
+
+	if (wvc != NULL) {
+		buffered_reader_close(wvc);
+		wvc = NULL;
+	}
+
+	return NULL;
+}
+
 /**
  * 装载WvPack音乐文件 
  *
@@ -347,12 +470,9 @@ static int wv_load(const char *spath, const char *lpath)
 	g_info.filesize = xrIoLseek(fd, 0, PSP_SEEK_END);
 	xrIoClose(fd);
 
-	char error[80];
-
 	g_decoder =
-		WavpackOpenFileInput(spath, error,
-							 OPEN_WVC | OPEN_TAGS | OPEN_2CH_MAX |
-							 OPEN_NORMALIZE, 23);
+		open_wvfile(spath, OPEN_WVC | OPEN_TAGS | OPEN_2CH_MAX | OPEN_NORMALIZE,
+					23);
 
 	if (g_decoder == NULL) {
 		__end();
@@ -502,6 +622,16 @@ static int wv_end(void)
 		g_decoder = NULL;
 	}
 
+	if (wv != NULL) {
+		buffered_reader_close(wv);
+		wv = NULL;
+	}
+
+	if (wvc != NULL) {
+		buffered_reader_close(wvc);
+		wvc = NULL;
+	}
+
 	free_bitrate(&g_inst_br);
 	generic_end();
 
@@ -613,9 +743,42 @@ static int wv_probe(const char *spath)
 	return 0;
 }
 
+static int wv_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "wv_buffer_size", sizeof("wv_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	return 0;
+}
+
 static struct music_ops wv_ops = {
 	.name = "wv",
-	.set_opt = NULL,
+	.set_opt = wv_set_opt,
 	.load = wv_load,
 	.play = NULL,
 	.pause = NULL,
