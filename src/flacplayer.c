@@ -589,16 +589,16 @@ static int flac_load(const char *spath, const char *lpath)
 					(const char *) ptag->data.vorbis_comment.comments[i].entry;
 				const char *q;
 
-				if (!strncmp(p, "ALBUM=", sizeof("ALBUM=") - 1)) {
+				if (!strnicmp(p, "ALBUM=", sizeof("ALBUM=") - 1)) {
 					q = p + sizeof("ALBUM=") - 1;
 					STRCPY_S(g_info.tag.album, q);
-				} else if (!strncmp(p, "ARTIST=", sizeof("ARTIST=") - 1)) {
+				} else if (!strnicmp(p, "ARTIST=", sizeof("ARTIST=") - 1)) {
 					q = p + sizeof("ARTIST=") - 1;
 					STRCPY_S(g_info.tag.artist, q);
-				} else if (!strncmp(p, "PERFORMER=", sizeof("PERFORMER=") - 1)) {
+				} else if (!strnicmp(p, "PERFORMER=", sizeof("PERFORMER=") - 1)) {
 					q = p + sizeof("ARTIST=") - 1;
 					STRCPY_S(g_info.tag.artist, q);
-				} else if (!strncmp(p, "TITLE=", sizeof("TITLE=") - 1)) {
+				} else if (!strnicmp(p, "TITLE=", sizeof("TITLE=") - 1)) {
 					q = p + sizeof("TITLE=") - 1;
 					STRCPY_S(g_info.tag.title, q);
 				}
