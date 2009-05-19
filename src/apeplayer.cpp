@@ -234,20 +234,6 @@ static int handle_seek(void)
 		}
 
 		return 0;
-	} else {
-		if (g_status == ST_FFORWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_unlock();
-			generic_set_playback(true);
-			ape_seek_seconds(g_play_time + g_seek_seconds);
-		} else if (g_status == ST_FBACKWARD) {
-			generic_lock();
-			g_status = ST_PLAYING;
-			generic_unlock();
-			generic_set_playback(true);
-			ape_seek_seconds(g_play_time - g_seek_seconds);
-		}
 	}
 
 	return 0;
