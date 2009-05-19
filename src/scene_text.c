@@ -318,7 +318,7 @@ static void get_infobar_system_string(char *dest, int size)
 	xrRtcGetCurrentClockLocalTime(&tm);
 
 	power_get_battery(&percent, &unused, &unused, &unused);
-	if (tm.seconds % 2 == 0) {
+	if (tm.seconds % 2 == 0 || (config.infobar_use_ttf_mode && config.usettf)) {
 		if (percent == 100)
 			SPRINTF_S(t, "[%02u:%02u]", tm.hour, tm.minutes);
 		else
