@@ -296,6 +296,9 @@ int apetag_free(APETag * tag)
 
 char *apetag_get(APETag * tag, const char *key)
 {
+	int size;
+	char *t;
+
 	if (tag == NULL || key == NULL) {
 		return NULL;
 	}
@@ -306,7 +309,10 @@ char *apetag_get(APETag * tag, const char *key)
 		return NULL;
 	}
 
-	char *t = strndup(APE_ITEM_GET_VALUE(pItem), APE_ITEM_GET_VALUE_LEN(pItem));
+	size = APE_ITEM_GET_VALUE_LEN(pItem);
+	t = malloc(size + 1);
+	memcpy(t, APE_ITEM_GET_VALUE(pItem), size);
+	t[size] = '\0';
 
 	return t;
 }
