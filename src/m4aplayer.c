@@ -51,8 +51,7 @@
 #include "mediaengine.h"
 #include "mp4.h"
 #include "neaacdec.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

@@ -26,8 +26,7 @@
 
 #include "common/utils.h"
 #include "buffer.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

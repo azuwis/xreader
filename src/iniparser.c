@@ -37,8 +37,7 @@
 #include <ctype.h>
 #include "strsafe.h"
 #include "iniparser.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

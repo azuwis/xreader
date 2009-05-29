@@ -46,8 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

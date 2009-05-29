@@ -185,7 +185,7 @@ $(libdir)/libfreetype.a -lexif -lm -lpspkubridge -lpspsystemctrl_user \
 -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc -lpspusb \
 -lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpsputility 
 
-if DEBUG
+if DMALLOC
 LIBS += -ldmallocth
 endif
 

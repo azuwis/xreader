@@ -42,8 +42,7 @@
 #include "power.h"
 #include "freq_lock.h"
 #include "xrhal.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

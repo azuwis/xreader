@@ -26,8 +26,7 @@
 #include <pspkernel.h>
 #include "musicdrv.h"
 #include "genericplayer.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

@@ -25,8 +25,7 @@
 #include <malloc.h>
 #include <stdint.h>
 #include "xrhal.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

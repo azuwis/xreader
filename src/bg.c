@@ -30,8 +30,7 @@
 #include "pspscreen.h"
 #include "config.h"
 #include "scene.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

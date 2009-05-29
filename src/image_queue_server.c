@@ -21,8 +21,7 @@
 #include "ctrl.h"
 #include "xrhal.h"
 #include "kubridge.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

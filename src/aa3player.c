@@ -50,8 +50,7 @@
 #include "malloc.h"
 #include "musicinfo.h"
 #include "mediaengine.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

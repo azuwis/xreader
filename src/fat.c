@@ -29,8 +29,7 @@
 #include <stdio.h>
 #include "dbg.h"
 #include "xrhal.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

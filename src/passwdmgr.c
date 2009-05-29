@@ -29,8 +29,7 @@
 #include "scene.h"
 #include "strsafe.h"
 #include "dbg.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 

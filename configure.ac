@@ -20,6 +20,8 @@ AM_INIT_AUTOMAKE([xReader], [$xReader_version])
 
 AC_ARG_ENABLE(debug, [  --enable-debug   Enable debug option	default is disabled],
 [debug="$enableval"], debug=no)
+AC_ARG_ENABLE(dmalloc, [  --enable-dmalloc   Enable dmalloc option	default is disabled],
+[dmalloc="$enableval"], dmalloc=no)
 AC_ARG_ENABLE(optimize, [  --enable-optimize   Enable compiler optimize option	default is enabled],
 [optimize="$enableval"], optimize=yes)
 AC_ARG_ENABLE(homebrew_2xx, [  --enable-homebrew_2xx   Enable PSP firmware 2.0+ support	default is enabled],
@@ -87,6 +89,10 @@ if test $debug = "yes"; then
 	usb=no
 fi
 AM_CONDITIONAL([DEBUG], [test x$debug = "xyes"])
+if test $dmalloc = "yes"; then
+	AC_DEFINE([DMALLOC], 1, [Dmalloc option])
+fi
+AM_CONDITIONAL([DMALLOC], [test x$dmalloc = "xyes"])
 AM_CONDITIONAL([OPTIMIZE], [test x$optimize = "xyes"])
 if test $homebrew_2xx = "yes"; then
 	AC_DEFINE([HOMEBREW_2XX], 1, [Enable PSP firmware 2.0+ support])

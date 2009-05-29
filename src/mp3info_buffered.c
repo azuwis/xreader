@@ -33,8 +33,7 @@
 #include "charsets.h"
 #include "dbg.h"
 #include "config.h"
-#ifdef _DEBUG
-#define DMALLOC 1
+#ifdef DMALLOC
 #include "dmalloc.h"
 #endif
 
