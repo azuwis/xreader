@@ -165,9 +165,11 @@ int buffer_prepare_append(buffer * b, size_t size)
 
 		char *ptr = safe_realloc(b->ptr, b->size);
 
-		if (ptr == NULL)
-			return -1;
 		b->ptr = ptr;
+
+		if (ptr == NULL) {
+			return -1;
+		}
 	}
 	return 0;
 }
