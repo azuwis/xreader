@@ -912,12 +912,11 @@ static p_text text_open_binary(const char *filename, bool vert)
 				dword padding = (i + 1) * 16 - txt->size;
 
 				if (padding < 9)
-					memset(&txt->
-						   buf[bpr * i + bpr - padding * 2], 0x20, padding * 2);
+					memset(&txt->buf[bpr * i + bpr - padding * 2], 0x20,
+						   padding * 2);
 				else
-					memset(&txt->
-						   buf[bpr * i + bpr - 1 -
-							   padding * 2], 0x20, padding * 2 + 1);
+					memset(&txt->buf[bpr * i + bpr - 1 -
+									 padding * 2], 0x20, padding * 2 + 1);
 			}
 		} else {
 			sprintf(&txt->buf[bpr * i],
@@ -936,13 +935,12 @@ static p_text text_open_binary(const char *filename, bool vert)
 
 				memset(&txt->buf[bpr * i + bpr - padding], 0x20, padding);
 				if ((padding & 1) > 0)
-					memset(&txt->
-						   buf[bpr * i + 40 + 10 -
-							   padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
+					memset(&txt->buf[bpr * i + 40 + 10 -
+									 padding / 2 * 5 - 3], 0x20,
+						   padding / 2 * 5 + 3);
 				else
-					memset(&txt->
-						   buf[bpr * i + 40 + 10 -
-							   padding / 2 * 5], 0x20, padding / 2 * 5);
+					memset(&txt->buf[bpr * i + 40 + 10 -
+									 padding / 2 * 5], 0x20, padding / 2 * 5);
 			}
 		}
 		cbuf += 16;
@@ -1105,12 +1103,11 @@ static p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 				dword padding = (i + 1) * 16 - txt->size;
 
 				if (padding < 9)
-					memset(&txt->
-						   buf[bpr * i + bpr - padding * 2], 0x20, padding * 2);
+					memset(&txt->buf[bpr * i + bpr - padding * 2], 0x20,
+						   padding * 2);
 				else
-					memset(&txt->
-						   buf[bpr * i + bpr - 1 -
-							   padding * 2], 0x20, padding * 2 + 1);
+					memset(&txt->buf[bpr * i + bpr - 1 -
+									 padding * 2], 0x20, padding * 2 + 1);
 			}
 		} else {
 			sprintf(&txt->buf[bpr * i],
@@ -1129,13 +1126,12 @@ static p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 
 				memset(&txt->buf[bpr * i + bpr - padding], 0x20, padding);
 				if ((padding & 1) > 0)
-					memset(&txt->
-						   buf[bpr * i + 40 + 10 -
-							   padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
+					memset(&txt->buf[bpr * i + 40 + 10 -
+									 padding / 2 * 5 - 3], 0x20,
+						   padding / 2 * 5 + 3);
 				else
-					memset(&txt->
-						   buf[bpr * i + 40 + 10 -
-							   padding / 2 * 5], 0x20, padding / 2 * 5);
+					memset(&txt->buf[bpr * i + 40 + 10 -
+									 padding / 2 * 5], 0x20, padding / 2 * 5);
 			}
 		}
 		cbuf += 16;
@@ -1318,12 +1314,11 @@ static p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 				dword padding = (i + 1) * 16 - txt->size;
 
 				if (padding < 9)
-					memset(&txt->
-						   buf[bpr * i + bpr - padding * 2], 0x20, padding * 2);
+					memset(&txt->buf[bpr * i + bpr - padding * 2], 0x20,
+						   padding * 2);
 				else
-					memset(&txt->
-						   buf[bpr * i + bpr - 1 -
-							   padding * 2], 0x20, padding * 2 + 1);
+					memset(&txt->buf[bpr * i + bpr - 1 -
+									 padding * 2], 0x20, padding * 2 + 1);
 			}
 		} else {
 			sprintf(&txt->buf[bpr * i],
@@ -1342,13 +1337,12 @@ static p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 
 				memset(&txt->buf[bpr * i + bpr - padding], 0x20, padding);
 				if ((padding & 1) > 0)
-					memset(&txt->
-						   buf[bpr * i + 40 + 10 -
-							   padding / 2 * 5 - 3], 0x20, padding / 2 * 5 + 3);
+					memset(&txt->buf[bpr * i + 40 + 10 -
+									 padding / 2 * 5 - 3], 0x20,
+						   padding / 2 * 5 + 3);
 				else
-					memset(&txt->
-						   buf[bpr * i + 40 + 10 -
-							   padding / 2 * 5], 0x20, padding / 2 * 5);
+					memset(&txt->buf[bpr * i + 40 + 10 -
+									 padding / 2 * 5], 0x20, padding / 2 * 5);
 			}
 		}
 		cbuf += 16;

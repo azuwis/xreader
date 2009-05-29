@@ -366,8 +366,8 @@ static void get_infobar_string(dword selidx, char *dest, int size)
 		SPRINTF_S(t, "%s %s GI: %d %s %s",
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename(config.
-																  encode)),
+											  conf_get_encodename
+											  (config.encode)),
 				  filelist[selidx].name, calc_gi(), autopageinfo, u);
 		if (config.linenum_style) {
 			SPRINTF_S(cr, "%u/%u  %s", fs->crow + 1, fs->row_count, t);
@@ -385,9 +385,9 @@ static void get_infobar_string(dword selidx, char *dest, int size)
 		SPRINTF_S(t, "%s %s GI: %d %s %s",
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename(config.
-																  encode)),
-				  g_titlename, calc_gi(), autopageinfo, u);
+											  conf_get_encodename
+											  (config.encode)), g_titlename,
+				  calc_gi(), autopageinfo, u);
 		if (config.linenum_style) {
 			SPRINTF_S(cr, "%u/%u  %s", fs->crow + 1, fs->row_count, t);
 		} else {
@@ -404,8 +404,8 @@ static void get_infobar_string(dword selidx, char *dest, int size)
 		SPRINTF_S(t, "%s %s GI: %d %s %s",
 				  (fs->ucs == 2) ? "UTF-8" : (fs->ucs ==
 											  1 ? "UCS " :
-											  conf_get_encodename(config.
-																  encode)),
+											  conf_get_encodename
+											  (config.encode)),
 				  filelist[selidx].compname->ptr, calc_gi(), autopageinfo, u);
 		if (config.linenum_style) {
 			SPRINTF_S(cr, "%u/%u  %s", fs->crow + 1, fs->row_count, t);
@@ -1561,8 +1561,7 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 				disp_putnstring(70 + 7 * DISP_FONTSIZE / 2,
 								66 + (2 + DISP_FONTSIZE) * i,
 								COLOR_WHITE,
-								(const byte *) preview.
-								rows[0][i].start,
+								(const byte *) preview.rows[0][i].start,
 								preview.rows[0][i].count,
 								config.fontsize <= 10 ? 1 : 0,
 								0, DISP_FONTSIZE, 0);

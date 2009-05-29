@@ -84,7 +84,8 @@ extern unsigned int get_free_mem(void)
 	unsigned long all = 0;
 	unsigned long allocated = 0;
 
-	dmalloc_get_stats(NULL, NULL, NULL, &all, &allocated, NULL, NULL, NULL, NULL);
+	dmalloc_get_stats(NULL, NULL, NULL, &all, &allocated, NULL, NULL, NULL,
+					  NULL);
 
 	// return all - allocated;
 	return 25 * 1024 * 1024 - allocated;
@@ -420,8 +421,8 @@ static void scene_draw_mp3bar_music_staff(void)
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  msgbcolor);
 	info.type =
-		MD_GET_AVGKBPS | MD_GET_FREQ | MD_GET_CURTIME |
-		MD_GET_DURATION | MD_GET_DECODERNAME;
+		MD_GET_AVGKBPS | MD_GET_FREQ | MD_GET_CURTIME | MD_GET_DURATION |
+		MD_GET_DECODERNAME;
 	if (musicdrv_get_info(&info) == 0) {
 		bitrate = info.avg_kbps;
 		sample = info.freq;
@@ -631,7 +632,8 @@ static void scene_draw_mp3bar(bool * firstdup)
 #ifdef _DEBUG
 	if (config.use_image_queue) {
 		char temp[80];
-		SPRINTF_S(temp, " %u/%dKB", cache_get_loaded_size(), ccacher.memory_usage / 1024);
+		SPRINTF_S(temp, " %u/%dKB", cache_get_loaded_size(),
+				  ccacher.memory_usage / 1024);
 		STRCAT_S(infostr, temp);
 	}
 #endif

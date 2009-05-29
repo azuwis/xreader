@@ -113,14 +113,17 @@ __inline float sinc_n2(float x)
 {
 	return (2.0f + x) * (2.0f + x) * (1.0f + x);
 }
+
 __inline float sinc_n1(float x)
 {
 	return (1.0f - x - x * x) * (1.0f + x);
 }
+
 __inline float sinc_1(float x)
 {
 	return (1.0f + x - x * x) * (1.0f - x);
 }
+
 __inline float sinc_2(float x)
 {
 	return (2.0f - x) * (2.0f - x) * (1.0f - x);

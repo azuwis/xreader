@@ -251,7 +251,6 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		freq_leave(fid);
 		return 0;
 	}
-
 	//  if(stricmp(dir, "ms0:/") == 0)
 	{
 		itemcount = DIR_INC_SIZE;
@@ -300,14 +299,14 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 			item[cur_count].name[0] = '<';
 			if ((item[cur_count].width =
 				 strlen(info.d_name) + 2) > MAX_ITEM_NAME_LEN) {
-				mbcsncpy_s((unsigned char *) &item[cur_count].
-						   name[1], MAX_ITEM_NAME_LEN - 4,
+				mbcsncpy_s((unsigned char *) &item[cur_count].name[1],
+						   MAX_ITEM_NAME_LEN - 4,
 						   (const unsigned char *) info.d_name, -1);
 				STRCAT_S(item[cur_count].name, "...>");
 				item[cur_count].width = MAX_ITEM_NAME_LEN;
 			} else {
-				mbcsncpy_s((unsigned char *) &item[cur_count].
-						   name[1], MAX_ITEM_NAME_LEN - 1,
+				mbcsncpy_s((unsigned char *) &item[cur_count].name[1],
+						   MAX_ITEM_NAME_LEN - 1,
 						   (const unsigned char *) info.d_name, -1);
 				STRCAT_S(item[cur_count].name, ">");
 			}
@@ -691,7 +690,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 
 	RARCloseArchive(hrar);
 	freq_leave(fid);
-	
+
 	// Remove unused item
 	*mitem = win_realloc_items(*mitem, itemcount, cur_count);
 

@@ -385,8 +385,8 @@ static void fat_get_shortname(p_fat_entry entry, char *shortnamestr)
 	while (i < 8 && entry->norm.filename[i] != 0x20) {
 		*shortnamestr++ =
 			entry->norm.
-			filename[i] | ((chartable[(u8) entry->norm.filename[i]]) ?
-						   abit : 0);
+			filename[i] | ((chartable[(u8) entry->norm.filename[i]]) ? abit :
+						   0);
 		i++;
 	}
 	if (entry->norm.fileext[0] != 0x20) {

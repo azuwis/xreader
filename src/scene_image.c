@@ -383,10 +383,9 @@ static int exif_max_width(void)
 	int line_num = exif_array->used <= height ? exif_array->used : height;
 
 	for (i = 0; i < line_num; ++i) {
-		int len =
-			text_get_string_width_sys((const unsigned char *) exif_array->
-									  ptr[i]->ptr,
-									  strlen(exif_array->ptr[i]->ptr), 1);
+		int len = text_get_string_width_sys((const unsigned char *)
+											exif_array->ptr[i]->ptr,
+											strlen(exif_array->ptr[i]->ptr), 1);
 
 		max_h = max(max_h, len);
 	}
@@ -664,9 +663,8 @@ static bool image_paging_moveleft(void)
 static bool image_paging_movedown_smooth(void)
 {
 	if (curtop + imgh < height_rotated) {
-		curtop +=
-			config.image_scroll_chgn_speed ? (int) g_current_spd : (int) config.
-			imgpaging_spd;
+		curtop += config.image_scroll_chgn_speed ? (int) g_current_spd : (int)
+			config.imgpaging_spd;
 
 		if (curtop > height_rotated - imgh)
 			curtop = height_rotated - imgh;
@@ -682,9 +680,8 @@ static bool image_paging_movedown_smooth(void)
 static bool image_paging_moveup_smooth(void)
 {
 	if (curtop > 0) {
-		curtop -=
-			config.image_scroll_chgn_speed ? (int) g_current_spd : (int) config.
-			imgpaging_spd;
+		curtop -= config.image_scroll_chgn_speed ? (int) g_current_spd : (int)
+			config.imgpaging_spd;
 
 		if (curtop < 0)
 			curtop = 0;
@@ -700,9 +697,8 @@ static bool image_paging_moveup_smooth(void)
 static bool image_paging_moveright_smooth(void)
 {
 	if (curleft + PSP_SCREEN_WIDTH < width_rotated) {
-		curleft +=
-			config.image_scroll_chgn_speed ? (int) g_current_spd : (int) config.
-			imgpaging_spd;
+		curleft += config.image_scroll_chgn_speed ? (int) g_current_spd : (int)
+			config.imgpaging_spd;
 
 		if (curleft > width_rotated - PSP_SCREEN_WIDTH)
 			curleft = width_rotated - PSP_SCREEN_WIDTH;
@@ -718,9 +714,8 @@ static bool image_paging_moveright_smooth(void)
 static bool image_paging_moveleft_smooth(void)
 {
 	if (curleft > 0) {
-		curleft -=
-			config.image_scroll_chgn_speed ? (int) g_current_spd : (int) config.
-			imgpaging_spd;
+		curleft -= config.image_scroll_chgn_speed ? (int) g_current_spd : (int)
+			config.imgpaging_spd;
 
 		if (curleft < 0)
 			curleft = 0;

@@ -148,10 +148,8 @@ extern dword win_menu(dword x, dword y, dword max_width, dword max_height,
 											topindex) *
 								   (DISP_FONTSIZE + 1 +
 									linespace),
-								   item[i].
-								   selected ? item[i].
-								   selicolor : item[i].
-								   icolor, (const byte *) item[i].name);
+								   item[i].selected ? item[i].selicolor :
+								   item[i].icolor, (const byte *) item[i].name);
 			if (max_height < count) {
 				dword sbh =
 					2 + DISP_FONTSIZE + (max_height - 1) * (1 +
@@ -384,12 +382,11 @@ extern p_win_menuitem win_realloc_items(p_win_menuitem item, int orgsize,
 
 		return item;
 	}
-
 	// Cannot use safe_realloc here
 	p = realloc(item, sizeof(*item) * newsize);
 
 	if (p == NULL) {
-		for (i=0; i < orgsize; ++i) {
+		for (i = 0; i < orgsize; ++i) {
 			buffer_free(item[i].compname);
 			buffer_free(item[i].shortname);
 		}

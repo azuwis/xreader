@@ -745,16 +745,16 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				if (cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 					if (cttf->cleartype) {
 						error =
-							FT_Render_Glyph(cttf->face->
-											glyph, FT_RENDER_MODE_LCD);
+							FT_Render_Glyph(cttf->face->glyph,
+											FT_RENDER_MODE_LCD);
 					} else if (cttf->antiAlias) {
 						error =
-							FT_Render_Glyph(cttf->face->
-											glyph, FT_RENDER_MODE_NORMAL);
+							FT_Render_Glyph(cttf->face->glyph,
+											FT_RENDER_MODE_NORMAL);
 					} else
 						error =
-							FT_Render_Glyph(cttf->face->
-											glyph, FT_RENDER_MODE_MONO);
+							FT_Render_Glyph(cttf->face->glyph,
+											FT_RENDER_MODE_MONO);
 					if (error) {
 						return count;
 					}
@@ -820,16 +820,16 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				if (ettf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 					if (ettf->cleartype) {
 						error =
-							FT_Render_Glyph(ettf->face->
-											glyph, FT_RENDER_MODE_LCD);
+							FT_Render_Glyph(ettf->face->glyph,
+											FT_RENDER_MODE_LCD);
 					} else if (ettf->antiAlias) {
 						error =
-							FT_Render_Glyph(ettf->face->
-											glyph, FT_RENDER_MODE_NORMAL);
+							FT_Render_Glyph(ettf->face->glyph,
+											FT_RENDER_MODE_NORMAL);
 					} else
 						error =
-							FT_Render_Glyph(ettf->face->
-											glyph, FT_RENDER_MODE_MONO);
+							FT_Render_Glyph(ettf->face->glyph,
+											FT_RENDER_MODE_MONO);
 					if (error) {
 						return count;
 					}

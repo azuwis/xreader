@@ -381,9 +381,8 @@ extern bool disp_load_truetype_book_font(const char *ettffile,
 	if (ettf == NULL) {
 		if (!strcmp(ettffile, cttffile) || (ettf =
 											ttf_open(ettffile, size,
-													 config.
-													 ttf_load_to_memory)) ==
-			NULL) {
+													 config.ttf_load_to_memory))
+			== NULL) {
 			ettf = cttf;
 			g_ttf_share_two_font = true;
 		} else {

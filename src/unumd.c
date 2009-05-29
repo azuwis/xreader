@@ -919,12 +919,10 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 					if (bchapterless) {
 						if (i >= stChapterCount) {
 							stChapterCount += 16;
-							(*pchapter)->pchapters =
-								(struct t_chapter *) realloc((*pchapter)->
-															 pchapters,
-															 stChapterCount *
-															 sizeof(struct
-																	t_chapter));
+							(*pchapter)->pchapters = (struct t_chapter *)
+								realloc((*pchapter)->pchapters,
+										stChapterCount *
+										sizeof(struct t_chapter));
 							if (!(*pchapter)->pchapters)
 								break;
 							pchap = (*pchapter)->pchapters;
@@ -967,13 +965,10 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 						} else if (pHead->hdType == 0x81) {
 							if (bchapterless && i < stChapterCount) {
 								stChapterCount = i;
-								(*pchapter)->pchapters =
-									(struct t_chapter *) realloc((*pchapter)->
-																 pchapters,
-																 stChapterCount
-																 *
-																 sizeof(struct
-																		t_chapter));
+								(*pchapter)->pchapters = (struct t_chapter *)
+									realloc((*pchapter)->pchapters,
+											stChapterCount *
+											sizeof(struct t_chapter));
 								if (!(*pchapter)->pchapters)
 									break;
 								(*pchapter)->chapter_count = i;

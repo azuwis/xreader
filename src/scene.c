@@ -151,8 +151,8 @@ int default_predraw(const win_menu_predraw_data * pData, const char *str,
 				  *right - 1, *bottom - 1,
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  menubcolor);
-	disp_putstring(get_center_pos(*left, *right, str), *upper + 1,
-				   COLOR_WHITE, (const byte *) str);
+	disp_putstring(get_center_pos(*left, *right, str), *upper + 1, COLOR_WHITE,
+				   (const byte *) str);
 	disp_line(*left, *upper + 1 + DISP_FONTSIZE, *right,
 			  *upper + 1 + DISP_FONTSIZE, COLOR_WHITE);
 
@@ -828,8 +828,8 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
 				   COLOR_WHITE,
-				   (const byte *) (config.
-								   bicubic ? _("三次立方") : _("两次线性")));
+				   (const byte *) (config.bicubic ? _("三次立方") :
+								   _("两次线性")));
 	lines++;
 	SPRINTF_S(number, "%d %s", config.slideinterval, _("秒"));
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
@@ -881,8 +881,8 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
 				   COLOR_WHITE,
-				   config.
-				   img_enable_analog ? (const byte *) _("是") : (const byte *)
+				   config.img_enable_analog ? (const byte *) _("是") : (const
+																		byte *)
 				   _("否"));
 #else
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
@@ -1642,8 +1642,8 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
 				   COLOR_WHITE,
-				   (const byte *) (config.
-								   pagetonext ? _("下篇文章") : _("无动作")));
+				   (const byte *) (config.pagetonext ? _("下篇文章") :
+								   _("无动作")));
 	lines++;
 	if (config.autopagetype == 2) {
 		disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
@@ -1707,8 +1707,8 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
 				   COLOR_WHITE,
-				   config.
-				   enable_analog ? (const byte *) _("是") : (const byte *)
+				   config.enable_analog ? (const byte *) _("是") : (const byte
+																	*)
 				   _("否"));
 #else
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
@@ -1738,8 +1738,7 @@ void scene_boptions_predraw(p_win_menuitem item, dword index, dword topindex,
 								g_predraw.linespace) * (1 +
 														DISP_FONTSIZE),
 				   COLOR_WHITE,
-				   (const byte *) (config.
-								   infobar_use_ttf_mode ? _("TTF") :
+				   (const byte *) (config.infobar_use_ttf_mode ? _("TTF") :
 								   _("点阵")));
 	lines++;
 }
@@ -1939,8 +1938,8 @@ void scene_ctrlset_predraw(p_win_menuitem item, dword index, dword topindex,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
 				   COLOR_WHITE,
-				   (const byte *) (config.
-								   hprmctrl ? _("控制翻页") : _("控制音乐")));
+				   (const byte *) (config.hprmctrl ? _("控制翻页") :
+								   _("控制音乐")));
 	lines++;
 #else
 	disp_putstring(g_predraw.x + 2 + DISP_FONTSIZE,
@@ -2186,8 +2185,8 @@ void scene_fontsel_predraw(p_win_menuitem item, dword index, dword topindex,
 				   COLOR_WHITE, (const byte *) number);
 	lines++;
 	memset(number, ' ', 4);
-	utils_dword2string(config.usettf ? ttfsize : bookfonts[bookfontindex].
-					   size, number, 4);
+	utils_dword2string(config.usettf ? ttfsize : bookfonts[bookfontindex].size,
+					   number, 4);
 	disp_putstring(g_predraw.x + 2,
 				   upper + 2 + (lines + 1 + g_predraw.linespace) * (1 +
 																	DISP_FONTSIZE),
@@ -2925,15 +2924,15 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item,
 					 config.isreading)) {
 					dbg_printf(d, "location_set: %s %s %s %d",
 							   config.path, config.shortpath,
-							   filelist[(dword) item[1].data].
-							   compname->ptr, config.isreading);
+							   filelist[(dword) item[1].data].compname->ptr,
+							   config.isreading);
 					locaval[*index] = true;
 					char t[128];
 
 					STRCPY_S(t, config.path);
 					if (config.path[strlen(config.path) - 1] != '/'
-						&& filelist[(dword) item[1].data].compname->
-						ptr[0] != '/')
+						&& filelist[(dword) item[1].data].compname->ptr[0] !=
+						'/')
 						STRCAT_S(t, "/");
 					if (strcmp
 						(filelist[(dword) item[1].data].compname->ptr, "..")) {
@@ -2941,10 +2940,8 @@ t_win_menu_op scene_locsave_menucb(dword key, p_win_menuitem item,
 								 filelist[(dword) item[1].data].compname->ptr);
 					}
 					scene_locname_to_itemname(item[*index].name,
-											  NELEMS(item[*index].
-													 name), t,
-											  (config.
-											   filelistwidth /
+											  NELEMS(item[*index].name), t,
+											  (config.filelistwidth /
 											   config.fontsize * 4),
 											  config.isreading);
 					item[*index].width = strlen(item[*index].name);
@@ -3028,9 +3025,8 @@ dword scene_locsave(dword * selidx)
 				 g_predraw.upper, g_predraw.max_item_len,
 				 g_predraw.item_count, item, NELEMS(item), 0,
 				 g_predraw.linespace,
-				 config.usedyncolor ? get_bgcolor_by_time() : config.
-				 menubcolor, true, scene_locsave_predraw, NULL,
-				 scene_locsave_menucb);
+				 config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor,
+				 true, scene_locsave_predraw, NULL, scene_locsave_menucb);
 
 	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 	return 0;
@@ -3046,8 +3042,7 @@ static void scene_open_dir_or_archive(dword * idx)
 				fs_dir_to_menu(config.path, config.shortpath,
 							   &filelist, config.menutextcolor,
 							   config.selicolor,
-							   config.
-							   usedyncolor ? get_bgcolor_by_time() :
+							   config.usedyncolor ? get_bgcolor_by_time() :
 							   config.menubcolor, config.selbcolor,
 							   config.showhidden, config.showunknown);
 		else
@@ -3056,8 +3051,7 @@ static void scene_open_dir_or_archive(dword * idx)
 									config.shortpath, &filelist,
 									config.menutextcolor,
 									config.selicolor,
-									config.
-									usedyncolor ?
+									config.usedyncolor ?
 									get_bgcolor_by_time() :
 									config.menubcolor, config.selbcolor);
 	else
@@ -3068,8 +3062,7 @@ static void scene_open_dir_or_archive(dword * idx)
 					fs_zip_to_menu(config.shortpath, &filelist,
 								   config.menutextcolor,
 								   config.selicolor,
-								   config.
-								   usedyncolor ? get_bgcolor_by_time() :
+								   config.usedyncolor ? get_bgcolor_by_time() :
 								   config.menubcolor, config.selbcolor);
 				break;
 			case fs_filetype_chm:
@@ -3078,8 +3071,7 @@ static void scene_open_dir_or_archive(dword * idx)
 					fs_chm_to_menu(config.shortpath, &filelist,
 								   config.menutextcolor,
 								   config.selicolor,
-								   config.
-								   usedyncolor ? get_bgcolor_by_time() :
+								   config.usedyncolor ? get_bgcolor_by_time() :
 								   config.menubcolor, config.selbcolor);
 				break;
 			case fs_filetype_umd:
@@ -3088,8 +3080,7 @@ static void scene_open_dir_or_archive(dword * idx)
 					fs_umd_to_menu(config.shortpath, &filelist,
 								   config.menutextcolor,
 								   config.selicolor,
-								   config.
-								   usedyncolor ? get_bgcolor_by_time() :
+								   config.usedyncolor ? get_bgcolor_by_time() :
 								   config.menubcolor, config.selbcolor);
 				break;
 			case fs_filetype_rar:
@@ -3098,8 +3089,7 @@ static void scene_open_dir_or_archive(dword * idx)
 					fs_rar_to_menu(config.shortpath, &filelist,
 								   config.menutextcolor,
 								   config.selicolor,
-								   config.
-								   usedyncolor ? get_bgcolor_by_time() :
+								   config.usedyncolor ? get_bgcolor_by_time() :
 								   config.menubcolor, config.selbcolor);
 				break;
 			default:
@@ -3113,9 +3103,8 @@ static void scene_open_dir_or_archive(dword * idx)
 		filecount =
 			fs_dir_to_menu(config.path, config.shortpath, &filelist,
 						   config.menutextcolor, config.selicolor,
-						   config.
-						   usedyncolor ? get_bgcolor_by_time() : config.
-						   menubcolor, config.selbcolor,
+						   config.usedyncolor ? get_bgcolor_by_time() :
+						   config.menubcolor, config.selbcolor,
 						   config.showhidden, config.showunknown);
 	}
 	quicksort(filelist,
@@ -3219,9 +3208,8 @@ dword scene_locload(dword * selidx)
 				 g_predraw.upper, g_predraw.max_item_len,
 				 g_predraw.item_count, item, NELEMS(item), 0,
 				 g_predraw.linespace,
-				 config.usedyncolor ? get_bgcolor_by_time() : config.
-				 menubcolor, true, scene_locload_predraw, NULL,
-				 scene_locload_menucb);
+				 config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor,
+				 true, scene_locload_predraw, NULL, scene_locload_menucb);
 
 	*selidx = (dword) item[1].data;
 
@@ -3446,8 +3434,8 @@ dword scene_setting_mgr(dword * selidx)
 		win_menu(g_predraw.left, g_predraw.upper, g_predraw.max_item_len,
 				 g_predraw.item_count, item, NELEMS(item), 0,
 				 g_predraw.linespace,
-				 config.usedyncolor ? get_bgcolor_by_time() : config.
-				 menubcolor, true, scene_setting_mgr_predraw, NULL,
+				 config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor,
+				 true, scene_setting_mgr_predraw, NULL,
 				 scene_setting_mgr_menucb);
 
 	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
@@ -3562,8 +3550,8 @@ void scene_options_predraw(p_win_menuitem item, dword index, dword topindex,
 				  menubcolor);
 	disp_putstring(get_center_pos(left, right, _("设置选项")), upper + 1,
 				   COLOR_WHITE, (const byte *) _("设置选项"));
-	disp_line(left, upper + 1 + DISP_FONTSIZE, right,
-			  upper + 1 + DISP_FONTSIZE, COLOR_WHITE);
+	disp_line(left, upper + 1 + DISP_FONTSIZE, right, upper + 1 + DISP_FONTSIZE,
+			  COLOR_WHITE);
 }
 
 dword scene_options(dword * selidx)
@@ -3863,9 +3851,9 @@ static void scene_copy_files(int sidx)
 			dword result;
 
 			result = extract_archive_file(archname,
-										  copylist[sidx].compname->
-										  ptr, copydest, NULL,
-										  confirm_overwrite, NULL);
+										  copylist[sidx].compname->ptr,
+										  copydest, NULL, confirm_overwrite,
+										  NULL);
 			if (result == (dword) false) {
 				win_msg(_("文件解压失败!"), COLOR_WHITE,
 						COLOR_WHITE, config.msgbcolor);
@@ -4130,11 +4118,11 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 							while (idx < filecount && item[idx].selected)
 								idx++;
 							if (idx < filecount)
-								STRCPY_S(config.
-										 lastfile, item[idx].compname->ptr);
+								STRCPY_S(config.lastfile,
+										 item[idx].compname->ptr);
 							else if (sidx > 0)
-								STRCPY_S(config.
-										 lastfile, item[idx - 1].compname->ptr);
+								STRCPY_S(config.lastfile,
+										 item[idx - 1].compname->ptr);
 						}
 					}
 				*retop = win_menu_op_cancel;
@@ -4538,8 +4526,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 					buffer_append_string(b, exif_array->ptr[i]->ptr);
 
 					scene_readbook_raw(infotitle,
-									   (const unsigned char *) b->
-									   ptr, b->used, fs_filetype_txt);
+									   (const unsigned char *) b->ptr, b->used,
+									   fs_filetype_txt);
 					g_force_text_view_mode = false;
 					buffer_free(b);
 				} else
@@ -5027,8 +5015,7 @@ static void scene_enter_dir(dword * idx)
 			fs_list_device(config.path, config.shortpath,
 						   &filelist, config.menutextcolor,
 						   config.selicolor,
-						   config.
-						   usedyncolor ? get_bgcolor_by_time() :
+						   config.usedyncolor ? get_bgcolor_by_time() :
 						   config.menubcolor, config.selbcolor);
 	} else if (strnicmp(config.path, "ms0:/", 5) == 0) {
 		if (fat_inited == false) {
@@ -5039,8 +5026,7 @@ static void scene_enter_dir(dword * idx)
 			fs_dir_to_menu(config.path, config.shortpath,
 						   &filelist, config.menutextcolor,
 						   config.selicolor,
-						   config.
-						   usedyncolor ? get_bgcolor_by_time() :
+						   config.usedyncolor ? get_bgcolor_by_time() :
 						   config.menubcolor, config.selbcolor,
 						   config.showhidden, config.showunknown);
 	} else
@@ -5093,33 +5079,29 @@ static void scene_enter_archive(dword * idx, enum ArchiveType type)
 			filecount =
 				fs_zip_to_menu(config.shortpath, &filelist,
 							   config.menutextcolor, config.selicolor,
-							   config.
-							   usedyncolor ? get_bgcolor_by_time() : config.
-							   menubcolor, config.selbcolor);
+							   config.usedyncolor ? get_bgcolor_by_time() :
+							   config.menubcolor, config.selbcolor);
 			break;
 		case RAR:
 			filecount =
 				fs_rar_to_menu(config.shortpath, &filelist,
 							   config.menutextcolor, config.selicolor,
-							   config.
-							   usedyncolor ? get_bgcolor_by_time() : config.
-							   menubcolor, config.selbcolor);
+							   config.usedyncolor ? get_bgcolor_by_time() :
+							   config.menubcolor, config.selbcolor);
 			break;
 		case CHM:
 			filecount =
 				fs_chm_to_menu(config.shortpath, &filelist,
 							   config.menutextcolor, config.selicolor,
-							   config.
-							   usedyncolor ? get_bgcolor_by_time() : config.
-							   menubcolor, config.selbcolor);
+							   config.usedyncolor ? get_bgcolor_by_time() :
+							   config.menubcolor, config.selbcolor);
 			break;
 		case UMD:
 			filecount =
 				fs_umd_to_menu(config.shortpath, &filelist,
 							   config.menutextcolor, config.selicolor,
-							   config.
-							   usedyncolor ? get_bgcolor_by_time() : config.
-							   menubcolor, config.selbcolor);
+							   config.usedyncolor ? get_bgcolor_by_time() :
+							   config.menubcolor, config.selbcolor);
 			break;
 	}
 	if (UMD != type)
@@ -5138,7 +5120,7 @@ static void scene_open_image(dword * idx)
 
 	mark = dmalloc_mark();
 #endif
-	
+
 #ifdef ENABLE_USB
 	usb_deactivate();
 #endif
@@ -5159,7 +5141,7 @@ static void scene_open_image(dword * idx)
 #ifdef DMALLOC
 	dmalloc_log_changed(mark, 1, 0, 1);
 	dmalloc_log_stats();
-//	dmalloc_log_unfreed();
+//  dmalloc_log_unfreed();
 #endif
 }
 #endif
@@ -5261,8 +5243,7 @@ void scene_filelist(void)
 						fs_empty_dir(&filecount,
 									 config.menutextcolor,
 									 config.selicolor,
-									 config.
-									 usedyncolor ?
+									 config.usedyncolor ?
 									 get_bgcolor_by_time() :
 									 config.menubcolor, config.selbcolor);
 					idx = 0;
@@ -5272,8 +5253,7 @@ void scene_filelist(void)
 								 HRR * (DISP_FONTSIZE + 1),
 								 WRR * 4, HRR * 2, filelist,
 								 filecount, idx, 0,
-								 config.
-								 usedyncolor ?
+								 config.usedyncolor ?
 								 get_bgcolor_by_time() :
 								 config.menubcolor, false,
 								 scene_filelist_predraw,
@@ -5324,8 +5304,7 @@ void scene_filelist(void)
 						fs_umd_to_menu(config.shortpath, &filelist,
 									   config.menutextcolor,
 									   config.selicolor,
-									   config.
-									   usedyncolor ?
+									   config.usedyncolor ?
 									   get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
@@ -5334,8 +5313,7 @@ void scene_filelist(void)
 						fs_zip_to_menu(config.shortpath, &filelist,
 									   config.menutextcolor,
 									   config.selicolor,
-									   config.
-									   usedyncolor ?
+									   config.usedyncolor ?
 									   get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
@@ -5344,8 +5322,7 @@ void scene_filelist(void)
 						fs_chm_to_menu(config.shortpath, &filelist,
 									   config.menutextcolor,
 									   config.selicolor,
-									   config.
-									   usedyncolor ?
+									   config.usedyncolor ?
 									   get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
@@ -5354,8 +5331,7 @@ void scene_filelist(void)
 						fs_rar_to_menu(config.shortpath, &filelist,
 									   config.menutextcolor,
 									   config.selicolor,
-									   config.
-									   usedyncolor ?
+									   config.usedyncolor ?
 									   get_bgcolor_by_time() :
 									   config.menubcolor, config.selbcolor);
 					break;
@@ -5365,8 +5341,7 @@ void scene_filelist(void)
 									   config.shortpath, &filelist,
 									   config.menutextcolor,
 									   config.selicolor,
-									   config.
-									   usedyncolor ?
+									   config.usedyncolor ?
 									   get_bgcolor_by_time() :
 									   config.menubcolor,
 									   config.selbcolor,
@@ -5380,8 +5355,7 @@ void scene_filelist(void)
 								   config.shortpath, &filelist,
 								   config.menutextcolor,
 								   config.selicolor,
-								   config.
-								   usedyncolor ?
+								   config.usedyncolor ?
 								   get_bgcolor_by_time() :
 								   config.menubcolor,
 								   config.selbcolor,
@@ -5458,9 +5432,9 @@ void scene_filelist(void)
 		static int device_mark = -1;
 
 		if (device_mark != -1) {
-			dmalloc_log_changed((unsigned)device_mark, 1, 0, 1);
+			dmalloc_log_changed((unsigned) device_mark, 1, 0, 1);
 		} else {
-			device_mark = (int)dmalloc_mark();
+			device_mark = (int) dmalloc_mark();
 		}
 #endif
 	}
@@ -5519,7 +5493,8 @@ extern void scene_init(void)
 
 #ifdef DMALLOC
 //    dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-heap,check-funcs,check-blank,print-messages,inter=100");
-	dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-funcs,check-blank,print-messages");
+	dmalloc_debug_setup
+		("log-stats,log-non-free,check-fence,check-funcs,check-blank,print-messages");
 
 	unsigned mark;
 
@@ -5529,7 +5504,7 @@ extern void scene_init(void)
 
 	dmalloc_log_changed(mark, 1, 0, 1);
 	dmalloc_log_stats();
-//	dmalloc_log_unfreed();
+//  dmalloc_log_unfreed();
 
 	if (p == NULL) {
 		dbg_printf(d, "cannot malloc 4096 bytes yet");
@@ -5561,7 +5536,6 @@ extern void scene_init(void)
 		pspDebugScreenInit();
 		dbg_open_psp(d);
 	}
-
 #ifdef DMALLOC
 	extern unsigned int get_free_mem(void);
 	dbg_printf(d, "free memory %dKB", get_free_mem() / 1024);
@@ -5940,4 +5914,3 @@ int chmod(const char *path, unsigned mode)
 {
 	return 0;
 }
-
