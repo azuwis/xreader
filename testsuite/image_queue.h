@@ -36,7 +36,7 @@ typedef struct _cacher_context
 	SceUID cacher_locker, cacher_thread;
 } cacher_context;
 
-int cache_init(dword *c_selidx);
+int cache_init(unsigned max_cache_img, dword * c_selidx);
 void cache_free(void);
 void dbg_dump_cache(void);
 int cache_get_size();

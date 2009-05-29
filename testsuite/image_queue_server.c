@@ -28,9 +28,6 @@ extern p_win_menuitem filelist;
 extern dword filecount;
 volatile dword *cache_selidx = NULL;
 
-#define MAX_CACHE_IMAGE 10
-#define MAX_MEMORY_USAGE ( 40 * 1024 * 1024L )
-
 volatile cacher_context ccacher;
 
 static volatile bool cacher_should_exit = false;
@@ -62,8 +59,6 @@ static unsigned get_avail_memory(void)
 	} else {
 		memory = 0;
 	}
-
-	memory = min(MAX_MEMORY_USAGE, memory);
 
 	return memory;
 }
@@ -479,7 +474,7 @@ static int start_cache(dword selidx)
 		pos = cache_get_next_image(pos, ccacher.isforward);
 	}
 
-	re = min(MAX_CACHE_IMAGE, count_img()) - ccacher.caches_size;
+	re = min(ccacher.caches_cap, count_img()) - ccacher.caches_size;
 	dbg_printf(d, "SERVER: start pos %u selidx %u caches_size %u re %u",
 			   (unsigned) pos, (unsigned) selidx,
 			   (unsigned) ccacher.caches_size, (unsigned) re);
@@ -538,7 +533,7 @@ static int thread_cacher(SceSize args, void *argp)
 	return 0;
 }
 
-int cache_init(dword * c_selidx)
+int cache_init(unsigned max_cache_img, dword * c_selidx)
 {
 	int ret;
 
@@ -564,7 +559,7 @@ int cache_init(dword * c_selidx)
 	cacher_exited = false;
 
 	ccacher.caches_size = 0;
-	ccacher.caches_cap = MAX_CACHE_IMAGE;
+	ccacher.caches_cap = max_cache_img;
 	ccacher.caches = calloc(ccacher.caches_cap, sizeof(ccacher.caches[0]));
 
 	cache_del_event = xrKernelCreateEventFlag("cache_del_event", 0, 0, 0);

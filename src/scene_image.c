@@ -1670,7 +1670,7 @@ dword scene_readimage(dword selidx)
 
 	if (config.use_image_queue) {
 		fid = freq_enter_hotzone();
-		cache_init(&selidx);
+		cache_init(config.max_cache_img, &selidx);
 		cache_set_forward(true);
 		cache_on(true);
 	}
