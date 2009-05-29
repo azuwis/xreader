@@ -452,6 +452,7 @@ static int ogg_end(void)
 
 	if (decoder != NULL) {
 		ov_clear(decoder);
+		free(decoder);
 		decoder = NULL;
 	}
 
