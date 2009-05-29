@@ -59,8 +59,6 @@
 
 #ifdef ENABLE_IMAGE
 
-extern volatile cacher_context ccacher;
-
 dword width, height, width_rotated = 0;
 dword height_rotated = 0, thumb_width = 0, thumb_height = 0;
 dword paintleft = 0, painttop = 0;

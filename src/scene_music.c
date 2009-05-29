@@ -61,6 +61,7 @@
 #include "charsets.h"
 #include "dbg.h"
 #include "xrhal.h"
+#include "image_queue.h"
 
 extern win_menu_predraw_data g_predraw;
 
@@ -613,6 +614,13 @@ static void scene_draw_mp3bar(bool * firstdup)
 			  tm.year, tm.month, tm.day,
 			  get_week_str(pos), tm.hour, tm.minutes, tm.seconds, (int) cpu,
 			  (int) bus);
+
+	if (config.use_image_queue) {
+		char temp[80];
+		SPRINTF_S(temp, " %u/%dKB", cache_get_loaded_size(), ccacher.memory_usage / 1024);
+		STRCAT_S(infostr, temp);
+	}
+
 	disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE,
 				   (const byte *) infostr);
 	power_get_battery(&percent, &lifetime, &tempe, &volt);

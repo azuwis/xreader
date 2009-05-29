@@ -12,7 +12,7 @@ OBJEXT = o
 AM_CPPFLAGS = \
 -I$(srcdir) -I$(srcdir)/include -I$(srcdir)/include/freetype2 \
 -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_srcdir)/xrPrx -I$(top_srcdir)/xr_rdriver \
--I$(PSPSDK)/include -I$(top_srcdir)/testsuite/
+-I$(PSPSDK)/include
 
 if APE
 AM_CPPFLAGS += -I $(srcdir)/include/mac
@@ -46,7 +46,7 @@ simple_gettext.h osk.c \
 osk.h exception.c exception.h m33boot.c m33boot.h passwdmgr.c passwdmgr.h \
 archive.c archive.h xrPrx.S xr_RDLib.S \
 depdb.c depdb.h unumd.c unumd.h ssv.c ssv.h crc16.c crc16.h \
-main.c power.c power.h freq_lock.c freq_lock.h xrhal.h $(top_srcdir)/testsuite/image_queue.h $(top_srcdir)/testsuite/image_queue_server.c
+main.c power.c power.h freq_lock.c freq_lock.h xrhal.h image_queue.h image_queue_server.c
 
 xrPrx.o: $(top_builddir)/xrPrx/xrPrx.S
 	$(CC) -I$(PSPSDK)/include -c -o $@ $^
