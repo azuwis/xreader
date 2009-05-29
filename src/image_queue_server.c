@@ -94,7 +94,7 @@ void cache_on(bool on)
 		ccacher.on = on;
 	} else {
 		ccacher.on = on;
-		
+
 		while (!cacher_cleared) {
 			xrKernelDelayThread(100000);
 		}
@@ -123,6 +123,8 @@ static void cache_clear_without_lock()
 		}
 
 		if (ccacher.caches[i].data != NULL) {
+			dbg_printf(d, "%s: %d data 0x%08x", __func__, i,
+					   (unsigned) ccacher.caches[i].data);
 			free(ccacher.caches[i].data);
 			ccacher.caches[i].data = NULL;
 		}
@@ -176,6 +178,7 @@ static int cache_delete_without_lock(size_t pos)
 	}
 
 	if (p->data != NULL) {
+		dbg_printf(d, "%s: data 0x%08x", __func__, (unsigned) p->data);
 		free(p->data);
 		p->data = NULL;
 	}
@@ -292,12 +295,29 @@ void dbg_dump_cache(void)
 	cache_unlock();
 }
 
+static void copy_cache_image(cache_image_t * dst, const cache_image_t * src)
+{
+	memcpy(dst, src, sizeof(*src));
+}
+
+static void free_cache_image(cache_image_t * p)
+{
+	if (p == NULL)
+		return;
+
+	if (p->data != NULL) {
+		free(p->data);
+		p->data = NULL;
+	}
+}
+
 int start_cache_next_image(void)
 {
 	cache_image_t *p = NULL;
 	cache_image_t tmp;
 	t_fs_filetype ft;
 	dword used_memory, free_memory;
+	dword memory_used;
 
 	free_memory = get_avail_memory();
 
@@ -309,8 +329,10 @@ int start_cache_next_image(void)
 
 	if (ccacher.memory_usage >= used_memory) {
 		if (!alarm1) {
-			dbg_printf(d, "SERVER: %s: memory usage %uKB >= used memory %uKB, refuse to cache",
-					   __func__, (unsigned) ccacher.memory_usage / 1024, (unsigned)used_memory / 1024);
+			dbg_printf(d,
+					   "SERVER: %s: memory usage %uKB >= used memory %uKB, refuse to cache",
+					   __func__, (unsigned) ccacher.memory_usage / 1024,
+					   (unsigned) used_memory / 1024);
 		}
 
 		alarm1 = true;
@@ -318,8 +340,10 @@ int start_cache_next_image(void)
 		return -1;
 	} else {
 		if (alarm1) {
-			dbg_printf(d, "SERVER: %s: memory usage %uKB < used memory %uKB, continue",
-					__func__, (unsigned) ccacher.memory_usage / 1024, (unsigned)used_memory / 1024);
+			dbg_printf(d,
+					   "SERVER: %s: memory usage %uKB < used memory %uKB, continue",
+					   __func__, (unsigned) ccacher.memory_usage / 1024,
+					   (unsigned) used_memory / 1024);
 		}
 
 		alarm1 = false;
@@ -327,7 +351,6 @@ int start_cache_next_image(void)
 
 	cache_lock();
 
-	// Select first unloaded image
 	for (p = ccacher.caches; p != ccacher.caches + ccacher.caches_size; ++p) {
 		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
 			break;
@@ -340,7 +363,7 @@ int start_cache_next_image(void)
 		return 0;
 	}
 
-	memcpy(&tmp, p, sizeof(tmp));
+	copy_cache_image(&tmp, p);
 	cache_unlock();
 
 	// Predict memory usage
@@ -376,9 +399,9 @@ int start_cache_next_image(void)
 			} else {
 				if (alarm2) {
 					dbg_printf(d,
-							"SERVER: %s: memory predict usage %dKB < free_memory %dKB, continue",
-							__func__, (unsigned) predict_usage / 1024,
-							(unsigned) free_memory / 1024);
+							   "SERVER: %s: memory predict usage %dKB < free_memory %dKB, continue",
+							   __func__, (unsigned) predict_usage / 1024,
+							   (unsigned) free_memory / 1024);
 				}
 
 				alarm2 = false;
@@ -388,7 +411,6 @@ int start_cache_next_image(void)
 
   load:
 	ft = fs_file_get_type(tmp.filename);
-	dbg_switch(d, 0);
 	int fid = freq_enter_hotzone();
 
 	if (tmp.where == scene_in_dir) {
@@ -406,21 +428,35 @@ int start_cache_next_image(void)
 	}
 
 	freq_leave(fid);
-	dbg_switch(d, 1);
+
+	cache_lock();
+
+	for (p = ccacher.caches; p != ccacher.caches + ccacher.caches_size; ++p) {
+		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
+			break;
+		}
+	}
+
+	// if we ecounter FAILED cache, abort the caching, because user will quit when the image shows up
+	if (p == ccacher.caches + ccacher.caches_size || p->status == CACHE_FAILED) {
+		free_cache_image(&tmp);
+		cache_unlock();
+		return 0;
+	}
 
 	if (tmp.result == 0) {
-		dword memory_used;
-
+		// damn you psp-gcc! if you set breakpoint to here it will have incorrent result
 		memory_used = tmp.width * tmp.height * sizeof(pixel);
+
 //      dbg_printf(d, "SERVER: Image %u finished loading", (unsigned)tmp.selidx);
-		cache_lock();
-		ccacher.memory_usage += memory_used;
-		cache_unlock();
 //      dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) ccacher.memory_usage / 1024);
+		ccacher.memory_usage += memory_used;
+		cacher_cleared = false;
 		total_filesize += tmp.filesize;
 		total_datasize += memory_used;
 		tmp.status = CACHE_OK;
-	} else if ((tmp.result == 4 || tmp.result == 5) || (tmp.where == scene_in_rar && tmp.result == 6)) {
+	} else if ((tmp.result == 4 || tmp.result == 5)
+			   || (tmp.where == scene_in_rar && tmp.result == 6)) {
 		// out of memory
 		// if unrar throwed a bad_cast exception when run out of memory, result can be 6 also.
 
@@ -434,31 +470,17 @@ int start_cache_next_image(void)
 //          dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) ccacher.memory_usage / 1024);
 		}
 
-		if (tmp.data != NULL) {
-			free(tmp.data);
-			tmp.data = NULL;
-		}
+		free_cache_image(&tmp);
 	} else {
 //      dbg_printf(d, "SERVER: Image %u finished failed(%u)", (unsigned)tmp.selidx, tmp.result);
 		tmp.status = CACHE_FAILED;
+		free_cache_image(&tmp);
 	}
 
-	cache_lock();
+	copy_cache_image(p, &tmp);
+	tmp.data = NULL;
+	free_cache_image(&tmp);
 
-	for (p = ccacher.caches; p != ccacher.caches + ccacher.caches_size; ++p) {
-		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
-			break;
-		}
-	}
-
-	// if we ecounter FAILED cache, abort the caching, because user will quit when the image shows up
-	if (p == ccacher.caches + ccacher.caches_size || p->status == CACHE_FAILED) {
-		cache_unlock();
-		return 0;
-	}
-
-	memcpy(p, &tmp, sizeof(tmp));
-	cacher_cleared = false;
 	cache_unlock();
 
 	return 0;
@@ -594,7 +616,9 @@ int cache_setup(unsigned max_cache_img, dword * c_selidx)
 	cache_selidx = c_selidx;
 	ccacher.caches_cap = max_cache_img;
 
-	ccacher.caches = safe_realloc(ccacher.caches, ccacher.caches_cap * sizeof(ccacher.caches[0]));
+	ccacher.caches =
+		safe_realloc(ccacher.caches,
+					 ccacher.caches_cap * sizeof(ccacher.caches[0]));
 
 	cacher_cleared = true;
 
