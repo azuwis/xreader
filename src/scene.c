@@ -4518,8 +4518,6 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 						break;
 				}
 
-				free(imgdata);
-
 				*inop = false;
 				if (exif_array && exif_array->used) {
 					char infotitle[256];
@@ -5522,6 +5520,7 @@ extern void scene_init(void)
 #ifdef DMALLOC
 //    dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-heap,check-funcs,check-blank,print-messages,inter=100");
 	dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-funcs,check-blank,print-messages");
+
 	unsigned mark;
 
 	mark = dmalloc_mark();
@@ -5562,6 +5561,11 @@ extern void scene_init(void)
 		pspDebugScreenInit();
 		dbg_open_psp(d);
 	}
+
+#ifdef DMALLOC
+	extern unsigned int get_free_mem(void);
+	dbg_printf(d, "free memory %dKB", get_free_mem() / 1024);
+#endif
 
 	SPRINTF_S(infomsg, "%s %s (gcc version %d.%d.%d %s) now loading...",
 			  PACKAGE_NAME, VERSION, __GNUC__, __GNUC_MINOR__,
