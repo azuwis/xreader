@@ -39,6 +39,9 @@
 #include "buffered_reader.h"
 #include "genericplayer.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 /**
  * 上次按快进退键类型
