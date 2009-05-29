@@ -988,6 +988,7 @@ static p_text text_open_in_gz(const char *gzfile, const char *filename,
 
 	while ((len = gzread(unzf, tempbuf, BUFSIZ)) > 0) {
 		if (buffer_append_memory(b, tempbuf, len) < 0) {
+			buffer_free(b);
 			text_close(txt);
 			gzclose(unzf);
 			return NULL;
@@ -1467,6 +1468,8 @@ extern void text_close(p_text fstext)
 		for (i = 0; i < 1024; ++i)
 			if (fstext->rows[i] != NULL)
 				free(fstext->rows[i]);
+
+		free(fstext);
 	}
 }
 
