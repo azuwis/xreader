@@ -5032,16 +5032,6 @@ static void scene_enter_dir(dword * idx)
 						   config.
 						   usedyncolor ? get_bgcolor_by_time() :
 						   config.menubcolor, config.selbcolor);
-
-#ifdef DMALLOC
-		static int device_mark = -1;
-
-		if (device_mark != -1) {
-			dmalloc_log_changed((unsigned)device_mark, 1, 0, 1);
-		}
-
-		device_mark = (int)dmalloc_mark();
-#endif
 	} else if (strnicmp(config.path, "ms0:/", 5) == 0) {
 		if (fat_inited == false) {
 			fat_init();
@@ -5465,6 +5455,16 @@ void scene_filelist(void)
 		}
 		if (config.dis_scrsave)
 			xrPowerTick(0);
+
+#ifdef DMALLOC
+		static int device_mark = -1;
+
+		if (device_mark != -1) {
+			dmalloc_log_changed((unsigned)device_mark, 1, 0, 1);
+		} else {
+			device_mark = (int)dmalloc_mark();
+		}
+#endif
 	}
 	if (p_umdchapter) {
 		umd_chapter_free(p_umdchapter);
