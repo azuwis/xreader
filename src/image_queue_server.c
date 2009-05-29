@@ -437,7 +437,7 @@ int start_cache_next_image(void)
 		}
 	}
 
-	// if we ecounter FAILED cache, abort the caching, because user will quit when the image shows up
+	// recheck the first unloaded (and not failed) image, for we haven't locked cache for a while
 	if (p == ccacher.caches + ccacher.caches_size || p->status == CACHE_FAILED) {
 		free_cache_image(&tmp);
 		cache_unlock();
