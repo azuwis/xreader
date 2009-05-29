@@ -33,7 +33,7 @@ CCASFLAGS = $(CFLAGS) $(INCLUDES)
 noinst_PROGRAMS = xTest.elf
 
 xTest_elf_SOURCES = \
-image_queue.c image_queue.h \
+image_queue.c image_queue.h image_queue_server.c \
 bookmark_test.c bookmark_test.h \
 rar_speed_test.c rar_speed_test.h hprm_test.h hprm_test.c \
 music_test.c jpeg_speed_test.c jpeg_speed_test.h \
@@ -61,8 +61,8 @@ $(xrdir)/tta/filter.h $(xrdir)/tta/ttadec.h $(xrdir)/tta/ttadec.c $(xrdir)/tta/t
 if MUSIC
 xTest_elf_SOURCES += \
 $(xrdir)/musicdrv.c $(xrdir)/musicdrv.h $(xrdir)/musicmgr.c $(xrdir)/musicmgr.h $(xrdir)/xmp3audiolib.c $(xrdir)/xmp3audiolib.h \
-genericplayer.c $(xrdir)/genericplayer.h $(xrdir)/buffered_reader.c $(xrdir)/buffered_reader.h $(xrdir)/mp3info.h $(xrdir)/mp3info.c $(xrdir)/mp3info_buffered.c $(xrdir)/lyric.c $(xrdir)/lyric.h $(xrdir)/clock.c \
-musicinfo.c $(xrdir)/musicinfo.h $(xrdir)/mediaengine.c $(xrdir)/medaiengine.h
+$(xrdir)/genericplayer.c $(xrdir)/genericplayer.h $(xrdir)/buffered_reader.c $(xrdir)/buffered_reader.h $(xrdir)/mp3info.h $(xrdir)/mp3info.c $(xrdir)/mp3info_buffered.c $(xrdir)/lyric.c $(xrdir)/lyric.h $(xrdir)/clock.c \
+$(xrdir)/musicinfo.c $(xrdir)/musicinfo.h $(xrdir)/mediaengine.c $(xrdir)/medaiengine.h
 
 if MP3
 xTest_elf_SOURCES += \

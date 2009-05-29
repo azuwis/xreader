@@ -21,9 +21,10 @@ void dbg_dump_cache(void);
 int cache_get_size();
 void cache_set_forward(bool forward);
 void cache_next_image(void);
+void cache_on(bool on);
+int cache_wait_avail();
+int cache_delete_first(void);
 
 int image_queue_test(void);
-void cache_on(bool on);
-int cache_wait_empty();
 
 #endif
