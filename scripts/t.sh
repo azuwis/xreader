@@ -5,7 +5,7 @@ EMAIL=outmatch@gmail.com
 DIRS="msg fonts"
 BUILDDIR=./src
 SRCDIR=$HOME/xreader/src
-DESTDIR=/media/disk/PSP/game/xReader
+DESTDIR=/media/disk/PSP/GAME/xReader
 DESTDRIVE=/media/disk
 DEBUG=y
 
