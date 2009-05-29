@@ -36,6 +36,9 @@
 #include "kubridge.h"
 #include "passwdmgr.h"
 #include "buffered_reader.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 extern bool scene_load_font();
 extern bool scene_load_book_font();

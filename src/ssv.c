@@ -23,6 +23,9 @@
 #include <malloc.h>
 #include <ctype.h>
 #include "common/datatype.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 int clean_args(int argc, char **argv)
 {

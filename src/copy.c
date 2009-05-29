@@ -31,6 +31,9 @@
 #include "archive.h"
 #include "buffer.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 extern bool copy_file(const char *src, const char *dest, t_copy_cb cb,
 					  t_copy_overwritecb ocb, void *data)

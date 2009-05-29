@@ -48,6 +48,9 @@
 #include "malloc.h"
 #include "mediaengine.h"
 #include "neaacdec.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 #ifdef ENABLE_AAC
 

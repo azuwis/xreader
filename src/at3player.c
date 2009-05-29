@@ -49,6 +49,9 @@
 #include "buffered_reader.h"
 #include "malloc.h"
 #include "mediaengine.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 #ifdef ENABLE_AT3
 

@@ -29,6 +29,7 @@
 #include "conf.h"
 #include "common/utils.h"
 #include "array.h"
+#include "config.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif

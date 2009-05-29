@@ -38,6 +38,9 @@
 #include "text.h"
 #include "power.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 static volatile int secticks = 0;
 
@@ -368,6 +371,8 @@ extern void win_msg(const char *prompt, pixel fontcolor, pixel bordercolor,
 extern p_win_menuitem win_realloc_items(p_win_menuitem item, int orgsize,
 										int newsize)
 {
+	DBG_ASSERT(d, "win_realloc_items: orgsize <= newsize", orgsize <= newsize);
+
 	item = safe_realloc(item, sizeof(*item) * newsize);
 	if (item == NULL)
 		return NULL;

@@ -32,6 +32,9 @@
 #include "dbg.h"
 #include "scene.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 struct _bm_index
 {

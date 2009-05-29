@@ -23,6 +23,9 @@
 #include <pspsdk.h>
 #include "scene.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 int getCpuClock()
 {

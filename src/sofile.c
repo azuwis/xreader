@@ -24,6 +24,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "sofile.h"
+#include "config.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif

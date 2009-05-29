@@ -32,6 +32,9 @@
 #include "common/datatype.h"
 #include "conf.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 static void ClearScreen(pixel * saveimage)
 {

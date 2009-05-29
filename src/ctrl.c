@@ -32,6 +32,9 @@
 #endif
 #include "ctrl.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 #define CTRL_REPEAT_TIME 0x40000
 static unsigned int last_btn = 0;

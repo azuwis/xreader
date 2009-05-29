@@ -2,6 +2,9 @@
 #include <string.h>
 #include <stdint.h>
 #include "crc16.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 /*
  * This is the lookup table for computing the CRC-check word.

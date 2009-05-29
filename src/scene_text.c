@@ -60,6 +60,9 @@
 #include "osk.h"
 #include "freq_lock.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 #define MAX_TXT_KEY 14
 

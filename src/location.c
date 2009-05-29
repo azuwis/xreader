@@ -25,6 +25,9 @@
 #include "location.h"
 #include "common/utils.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 static char fn[PATH_MAX];
 static bool slot[10];

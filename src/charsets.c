@@ -24,6 +24,9 @@
 #include <string.h>
 #include "common/utils.h"
 #include "charsets.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 /* definitions */
 

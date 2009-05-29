@@ -24,6 +24,9 @@
 #include <string.h>
 #include "common/utils.h"
 #include "html.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 static char *html_skip_spaces(char *string, size_t size)
 {

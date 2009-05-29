@@ -39,6 +39,9 @@
 
 #include "xmp3audiolib.h"
 #include "xrhal.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 #define THREAD_STACK_SIZE (64 * 1024)
 

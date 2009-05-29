@@ -24,6 +24,9 @@
 #include <stdarg.h>
 #include "strsafe.h"
 #include "dbg.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 extern DBG *d;
 
