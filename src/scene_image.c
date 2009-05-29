@@ -55,8 +55,11 @@
 #include "freq_lock.h"
 #include "dbg.h"
 #include "xrhal.h"
+#include "image_queue.h"
 
 #ifdef ENABLE_IMAGE
+
+extern volatile cacher_context ccacher;
 
 dword width, height, width_rotated = 0;
 dword height_rotated = 0, thumb_width = 0, thumb_height = 0;
@@ -123,12 +126,15 @@ static inline void reset_image_show_ptr(void)
 
 static inline void reset_image_data_ptr(void)
 {
-	if (imgdata != NULL) {
-		if (imgshow == imgdata)
-			imgshow = NULL;
+	if (config.use_image_queue) {
+	} else {
+		if (imgdata != NULL) {
+			if (imgshow == imgdata)
+				imgshow = NULL;
 
-		free(imgdata);
-		imgdata = NULL;
+			free(imgdata);
+			imgdata = NULL;
+		}
 	}
 }
 
@@ -1257,6 +1263,11 @@ static void next_image(dword * selidx, bool * should_exit)
 {
 	dword orgidx = *selidx;
 
+	if (config.use_image_queue) {
+		cache_set_forward(true);
+		ctrl_waitrelease();
+	}
+
 	do {
 		if (*selidx < filecount - 1)
 			(*selidx)++;
@@ -1275,12 +1286,21 @@ static void next_image(dword * selidx, bool * should_exit)
 
 	in_move_z_mode = false;
 	z_mode_cnt = 0;
+
+	if (config.use_image_queue) {
+		cache_next_image();
+	}
 }
 
 static void prev_image(dword * selidx)
 {
 	dword orgidx = *selidx;
 
+	if (config.use_image_queue) {
+		cache_set_forward(false);
+		ctrl_waitrelease();
+	}
+				
 	do {
 		if (*selidx > 0)
 			(*selidx)--;
@@ -1293,6 +1313,10 @@ static void prev_image(dword * selidx)
 
 	in_move_z_mode = false;
 	z_mode_cnt = 0;
+
+	if (config.use_image_queue) {
+		cache_next_image();
+	}
 }
 
 static bool slideshow_move = false;
@@ -1536,10 +1560,90 @@ static int scene_slideshow_forward(dword * selidx)
 	return -1;
 }
 
+static int cache_wait_avail()
+{
+	dword key;
+	while (ccacher.caches_size == 0) {
+		key = ctrl_read();
+
+		if (key == PSP_CTRL_CROSS) {
+			return -1;
+		}
+
+		xrKernelDelayThread(10000);
+	}
+
+	return 0;
+}
+
+static int cache_wait_loaded()
+{
+	cache_image_t *img = &ccacher.caches[0];
+	dword key;
+
+	while (img->status == CACHE_INIT) {
+//      dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
+		key = ctrl_read();
+
+		if (key == PSP_CTRL_CROSS) {
+			return -1;
+		}
+
+		xrKernelDelayThread(10000);
+	}
+
+	return 0;
+}
+
+static int cache_get_image(dword selidx)
+{
+	cache_image_t *img;
+	u64 start, now;
+	int ret;
+
+	xrRtcGetCurrentTick(&start);
+
+	if (cache_wait_avail() != 0) {
+		return -1;
+	}
+
+	img = &ccacher.caches[0];
+
+	DBG_ASSERT(d, "CLIENT: img->selidx == selidx", img->selidx == selidx);
+
+	if (cache_wait_loaded() != 0) {
+		return -1;
+	}
+
+	xrRtcGetCurrentTick(&now);
+
+	if (img->status == CACHE_OK && img->result == 0) {
+		dbg_printf(d, "CLIENT: Image %u load OK in %.3f s, %ux%u",
+				   (unsigned) img->selidx, pspDiffTime(&now, &start),
+				   (unsigned) img->width, (unsigned) img->height);
+		ret = 0;
+	} else {
+		dbg_printf(d,
+				   "CLIENT: Image %u load FAILED in %.3f s, %ux%u, status %u, result %u",
+				   (unsigned) img->selidx, pspDiffTime(&now, &start),
+				   (unsigned) img->width, (unsigned) img->height, img->status,
+				   img->result);
+		ret = -1;
+	}
+
+//	disp_putimage(0, 0, img->width, img->height, 0, 0, img->data);
+	imgdata = img->data;
+	width = img->width;
+	height = img->height;
+
+	return ret;
+}
+
 dword scene_readimage(dword selidx)
 {
 	u64 timer_start, timer_end;
 	u64 slide_start, slide_end;
+	int fid;
 
 	width_rotated = 0, height_rotated = 0, thumb_width = 0, thumb_height =
 		0, paintleft = 0, painttop = 0;
@@ -1557,6 +1661,13 @@ dword scene_readimage(dword selidx)
 	else
 		imgh = PSP_SCREEN_HEIGHT;
 
+	if (config.use_image_queue) {
+		fid = freq_enter_hotzone();
+		cache_init(&selidx);
+		cache_set_forward(true);
+		cache_on(true);
+	}
+
 	xrRtcGetCurrentTick(&timer_start);
 
 	while (1) {
@@ -1564,22 +1675,31 @@ dword scene_readimage(dword selidx)
 		dword key = 0;
 
 		if (img_needrf) {
-			int fid;
+			if (config.use_image_queue) {
+				cache_delete_first();
 
-			fid = freq_enter_hotzone();
-			xrRtcGetCurrentTick(&dbglasttick);
-			dword ret = scene_reloadimage(selidx);
+				if (cache_get_image(selidx) != 0) {
+					break;
+				}
+				img_needrf = false;
+			} else {
+				int fid;
 
-			if (ret == -1) {
+				fid = freq_enter_hotzone();
+				xrRtcGetCurrentTick(&dbglasttick);
+				dword ret = scene_reloadimage(selidx);
+
+				if (ret == -1) {
+					freq_leave(fid);
+					break;
+				}
+
+				img_needrf = false;
+				xrRtcGetCurrentTick(&dbgnow);
+				dbg_printf(d, _("装载图像时间: %.2f秒"),
+						pspDiffTime(&dbgnow, &dbglasttick));
 				freq_leave(fid);
-				return selidx;
 			}
-
-			img_needrf = false;
-			xrRtcGetCurrentTick(&dbgnow);
-			dbg_printf(d, _("装载图像时间: %.2f秒"),
-					   pspDiffTime(&dbgnow, &dbglasttick));
-			freq_leave(fid);
 		}
 
 		if (img_needrc) {
@@ -1621,7 +1741,7 @@ dword scene_readimage(dword selidx)
 				next_image(&selidx, &should_exit);
 
 				if (should_exit) {
-					return selidx;
+					break;
 				}
 			} else if (key != 0
 					   && (key == config.imgkey[0] || key == config.imgkey2[0]
@@ -1666,10 +1786,18 @@ dword scene_readimage(dword selidx)
 			secticks = 0;
 		}
 
-		if (ret != -1)
-			return ret;
+		if (ret != -1) {
+			selidx = ret;
+			break;
+		}
 
 		scene_image_delay_action();
+	}
+
+	if (config.use_image_queue) {
+		cache_on(false);
+		cache_free();
+		freq_leave(fid);
 	}
 
 	imgreading = false;
@@ -1679,9 +1807,12 @@ dword scene_readimage(dword selidx)
 		imgshow = NULL;
 	}
 
-	if (imgdata != NULL) {
-		free(imgdata);
-		imgdata = NULL;
+	if (config.use_image_queue) {
+	} else {
+		if (imgdata != NULL) {
+			free(imgdata);
+			imgdata = NULL;
+		}
 	}
 
 	disp_duptocachealpha(50);

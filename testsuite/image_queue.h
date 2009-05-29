@@ -22,14 +22,26 @@ typedef struct _cache_image_t
 	dword selidx;
 } cache_image_t;
 
-int cache_init(void);
+typedef struct _cacher_context
+{
+	bool on;
+	bool first_run;
+	bool isforward;
+	dword memory_usage;
+	bool selidx_moved;
+
+	cache_image_t *caches;
+	size_t caches_cap, caches_size;
+	SceUID cacher_locker, cacher_thread;
+} cacher_context;
+
+int cache_init(dword *c_selidx);
 void cache_free(void);
 void dbg_dump_cache(void);
 int cache_get_size();
 void cache_set_forward(bool forward);
 void cache_next_image(void);
 void cache_on(bool on);
-int cache_wait_avail();
 int cache_delete_first(void);
 
 int image_queue_test(void);

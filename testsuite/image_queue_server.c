@@ -22,26 +22,14 @@
 #include "pspscreen.h"
 #include "ctrl.h"
 #include "xrhal.h"
+#include "kubridge.h"
 
 extern p_win_menuitem filelist;
 extern dword filecount;
-extern dword selidx;
+volatile dword *cache_selidx = NULL;
 
 #define MAX_CACHE_IMAGE 10
 #define MAX_MEMORY_USAGE ( 40 * 1024 * 1024L )
-
-typedef struct _cacher_context
-{
-	bool on;
-	bool first_run;
-	bool isforward;
-	dword memory_usage;
-	bool selidx_moved;
-
-	cache_image_t *caches;
-	size_t caches_cap, caches_size;
-	SceUID cacher_locker, cacher_thread;
-} cacher_context;
 
 volatile cacher_context ccacher;
 
@@ -49,8 +37,6 @@ static volatile bool cacher_should_exit = false;
 static volatile bool cacher_exited = false;
 static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
-
-static bool draw_image = false;
 
 enum
 {
@@ -280,7 +266,15 @@ int start_cache_next_image(void)
 	t_fs_filetype ft;
 	static bool alarmed = false;
 
-	if (ccacher.memory_usage > get_avail_memory()) {
+	dword used_memory;
+
+	if (kuKernelGetModel() == PSP_MODEL_SLIM_AND_LITE) {
+		used_memory = 45 * 1024 * 1024L - get_avail_memory();
+	} else {
+		used_memory = 12 * 1024 * 1024L - get_avail_memory();
+	}
+
+	if (ccacher.memory_usage > used_memory) {
 		if (!alarmed)
 			dbg_printf(d, "SERVER: %s: Memory usage %uKB, refuse to cache",
 					   __func__, (unsigned) ccacher.memory_usage / 1024);
@@ -427,7 +421,7 @@ static dword count_img(void)
 	return cache_img_cnt;
 }
 
-static int start_cache(void)
+static int start_cache(dword selidx)
 {
 	int re;
 	dword pos;
@@ -493,7 +487,7 @@ static int thread_cacher(SceSize args, void *argp)
 				continue;
 			}
 
-			start_cache();
+			start_cache(*cache_selidx);
 			ccacher.selidx_moved = false;
 		} else {
 			// clean up all remain cache now
@@ -510,7 +504,7 @@ static int thread_cacher(SceSize args, void *argp)
 	return 0;
 }
 
-int cache_init(void)
+int cache_init(dword *c_selidx)
 {
 	int ret;
 
@@ -528,6 +522,8 @@ int cache_init(void)
 
 		return -1;
 	}
+
+	cache_selidx = c_selidx;
 
 	cacher_cleared = true;
 	cacher_should_exit = false;

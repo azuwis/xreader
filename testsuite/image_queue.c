@@ -25,19 +25,6 @@
 
 extern p_win_menuitem filelist;
 
-typedef struct _cacher_context
-{
-	bool on;
-	bool first_run;
-	bool isforward;
-	dword memory_usage;
-	bool selidx_moved;
-
-	cache_image_t *caches;
-	size_t caches_cap, caches_size;
-	SceUID cacher_locker, cacher_thread;
-} cacher_context;
-
 extern dword filecount;
 
 extern volatile cacher_context ccacher;
@@ -223,7 +210,8 @@ int image_queue_test(void)
 	static int i = 0;
 
 	dbg_printf(d, "Start image queue test");
-	cache_init();
+	extern dword selidx;
+	cache_init(&selidx);
 
 	fid = freq_enter_hotzone();
 

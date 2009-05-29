@@ -291,6 +291,7 @@ static void conf_default(p_conf conf)
 			  BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE,
 			  WVPACK_BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE);
 	conf->magnetic_scrolling = true;
+	conf->use_image_queue = true;
 }
 
 static char *hexToString(char *str, int size, unsigned int hex)
@@ -1171,6 +1172,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		iniparser_getboolean(dict, "Image:magnetic_scrolling",
 							 conf->magnetic_scrolling);
 
+	conf->use_image_queue =
+		iniparser_getboolean(dict, "Image:use_image_queue",
+							 conf->use_image_queue);
+
 	dictionary_del(dict);
 
 	return true;
@@ -1472,6 +1477,10 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Image:magnetic_scrolling",
 						booleanToString(buf, sizeof(buf),
 										conf->magnetic_scrolling));
+
+	iniparser_setstring(dict, "Image:use_image_queue",
+						booleanToString(buf, sizeof(buf),
+										conf->use_image_queue));
 
 	iniparser_dump_ini(dict, fp);
 
