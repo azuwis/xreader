@@ -62,6 +62,9 @@
 #include "dbg.h"
 #include "xrhal.h"
 #include "image_queue.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 extern win_menu_predraw_data g_predraw;
 
@@ -77,6 +80,9 @@ static u64 start, end;
 // 作者:诗诺比
 extern unsigned int get_free_mem(void)
 {
+#if DMALLOC
+	return 16 * 1024 * 1024 - dmalloc_memory_allocated();
+#else
 	void *p[30];
 	unsigned int block_size = 0x04000000;	//最大内存:64MB,必需是2的N次方
 	unsigned int block_free = 0;
@@ -98,6 +104,7 @@ extern unsigned int get_free_mem(void)
 		free(p[i]);
 	}
 	return block_free;
+#endif
 }
 
 t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
