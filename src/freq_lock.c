@@ -142,9 +142,6 @@ static int update_freq(void)
 	int i, max, maxsum;
 	int cpu = 0, bus = 0;
 
-	if (freqs == NULL)
-		return -1;
-
 	for (i = 0, max = 0, maxsum = -1; i < freqs_cnt; ++i) {
 		if (maxsum < freqs[i].cpu + freqs[i].bus) {
 			maxsum = freqs[i].cpu + freqs[i].bus;
