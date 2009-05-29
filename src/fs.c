@@ -262,6 +262,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		item = *mitem;
 		STRCPY_S(item[0].name, "<..>");
 		buffer_copy_string(item[0].compname, "..");
+		buffer_copy_string(item[0].shortname, "..");
 		item[0].data = (void *) fs_filetype_dir;
 		item[0].width = 4;
 		item[0].selected = false;
@@ -392,6 +393,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 		item = *mitem;
 		STRCPY_S(item[0].name, "<..>");
 		buffer_copy_string(item[0].compname, "..");
+		buffer_copy_string(item[0].shortname, "..");
 		item[0].data = (void *) fs_filetype_dir;
 		item[0].width = 4;
 		item[0].selected = false;
@@ -499,6 +501,7 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
 	buffer_copy_string(item[0].compname, "..");
+	buffer_copy_string(item[0].shortname, "..");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;
@@ -595,6 +598,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
 	buffer_copy_string(item[0].compname, "..");
+	buffer_copy_string(item[0].shortname, "..");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;
@@ -685,6 +689,7 @@ p_win_menuitem fs_empty_dir(dword * filecount, dword icolor,
 	}
 	STRCPY_S(p->name, "<..>");
 	buffer_copy_string(p->compname, "..");
+	buffer_copy_string(p->shortname, "..");
 	p->data = (void *) fs_filetype_dir;
 	p->width = 4;
 	p->selected = false;
@@ -792,6 +797,7 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
 	buffer_copy_string(item[0].compname, "..");
+	buffer_copy_string(item[0].shortname, "..");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;
@@ -838,6 +844,7 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 
 	STRCPY_S(item[0].name, "<..>");
 	buffer_copy_string(item[0].compname, "..");
+	buffer_copy_string(item[0].shortname, "..");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 4;
 	item[0].selected = false;
