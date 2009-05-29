@@ -1848,11 +1848,7 @@ int image_open_archive(const char *filename, const char *archname,
 	*ppImageData = NULL;
 
 	if (where == scene_in_dir) {
-		char fullpath[PATH_MAX];
-
-		STRCPY_S(fullpath, archname);
-		STRCAT_S(fullpath, filename);
-		return image_open_normal(fullpath, ft, pWidth, pHeight,
+		return image_open_normal(filename, ft, pWidth, pHeight,
 								 ppImageData, pBgColor);
 	}
 

@@ -391,9 +391,20 @@ int start_cache_next_image(void)
 	dbg_switch(d, 0);
 	int fid = freq_enter_hotzone();
 
-	tmp.result =
-		image_open_archive(tmp.filename, tmp.archname, ft, &tmp.width,
-						   &tmp.height, &tmp.data, &tmp.bgc, tmp.where);
+	if (tmp.where == scene_in_dir) {
+		char fullpath[PATH_MAX];
+
+		STRCPY_S(fullpath, tmp.archname);
+		STRCAT_S(fullpath, tmp.filename);
+		tmp.result =
+			image_open_archive(fullpath, tmp.archname, ft, &tmp.width,
+							   &tmp.height, &tmp.data, &tmp.bgc, tmp.where);
+	} else {
+		tmp.result =
+			image_open_archive(tmp.filename, tmp.archname, ft, &tmp.width,
+							   &tmp.height, &tmp.data, &tmp.bgc, tmp.where);
+	}
+
 	freq_leave(fid);
 	dbg_switch(d, 1);
 
