@@ -27,6 +27,10 @@
 #include "strsafe.h"
 #include "dbg.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 extern dword utils_dword2string(dword dw, char *dest, dword width)
 {
@@ -160,6 +164,10 @@ void *safe_realloc(void *ptr, size_t size)
 {
 	void *p = realloc(ptr, size);
 
+	if (size == 0) {
+		return NULL;
+	}
+
 	if (p == NULL) {
 		if (ptr)
 			free(ptr);
@@ -168,3 +176,4 @@ void *safe_realloc(void *ptr, size_t size)
 
 	return p;
 }
+
