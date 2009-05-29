@@ -82,7 +82,7 @@ int cache_wait_avail()
 void cache_wait_loaded()
 {
 	cache_image_t *img = &ccacher.caches[0];
-	
+
 	while (img->status == CACHE_INIT) {
 //      dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
 		xrKernelDelayThread(10000);
