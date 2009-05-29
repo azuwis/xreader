@@ -33,7 +33,7 @@ CCASFLAGS = $(CFLAGS) $(INCLUDES)
 noinst_PROGRAMS = xTest.elf
 
 xTest_elf_SOURCES = \
-image_queue.c image_queue.h image_queue_server.c \
+dmalloc_test.c \
 bookmark_test.c bookmark_test.h \
 rar_speed_test.c rar_speed_test.h hprm_test.h hprm_test.c \
 music_test.c jpeg_speed_test.c jpeg_speed_test.h \
@@ -53,7 +53,7 @@ $(xrdir)/osk.h $(xrdir)/exception.c $(xrdir)/exception.h $(xrdir)/m33boot.c $(xr
 $(xrdir)/archive.c $(xrdir)/archive.h \
 $(xrdir)/depdb.c $(xrdir)/depdb.h $(xrdir)/unumd.c $(xrdir)/unumd.h $(xrdir)/ssv.c $(xrdir)/ssv.h $(xrdir)/crc16.c $(xrdir)/crc16.h \
 $(xrdir)/power.c $(xrdir)/power.h $(xrdir)/freq_lock.c $(xrdir)/freq_lock.h \
-$(xrdir)/xrPrx.S $(xrdir)/xr_RDLib.S $(xrdir)/sceAsfParser.S
+$(xrdir)/xrPrx.S $(xrdir)/xr_RDLib.S $(xrdir)/sceAsfParser.S $(xrdir)/image_queue.h $(xrdir)/image_queue_server.c
 
 xTest_elf_SOURCES += \
 $(xrdir)/tta/filter.h $(xrdir)/tta/ttadec.h $(xrdir)/tta/ttadec.c $(xrdir)/tta/ttalib.h
@@ -191,6 +191,8 @@ $(libdir)/libtga.a $(libdir)/libmad.a $(libdir)/libz.a \
 $(libdir)/libfreetype.a -lexif -lm -lpspkubridge -lpspsystemctrl_user \
 -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc -lpspusb \
 -lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpspmpeg -lpsputility 
+
+LIBS += -ldmallocth
 
 TARGET = xTest
 EXTRA_TARGETS = EBOOT.PBP

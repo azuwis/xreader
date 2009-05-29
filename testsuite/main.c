@@ -64,6 +64,7 @@ int main_thr(unsigned int args, void *argp)
 
 	conf_load(&config);
 	freq_init();
+	fat_init();
 
 	d = dbg_init();
 	dbg_open_file(d, "ms0:/xTest.log");
@@ -75,10 +76,11 @@ int main_thr(unsigned int args, void *argp)
 
 	utils_del_file("ms0:/xTest.log");
 
-	freq_enter(222, 111);
-
 	while (1) {
-		image_queue_test();
+		extern int dmalloc_test_fs(void);
+
+		dmalloc_test_fs();
+//		image_queue_test();
 //      jpeg_speed_test();
 //      rar_speed_test();
 //      hprm_test();
