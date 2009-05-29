@@ -29,6 +29,7 @@
 #include "musicdrv.h"
 #include "strsafe.h"
 #include "common/utils.h"
+#include "buffered_reader.h"
 #include "tta/ttalib.h"
 #include "ssv.h"
 #include "simple_gettext.h"
@@ -263,7 +264,7 @@ static int tta_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	if (open_tta_file(spath, &ttainfo, 0) < 0) {
+	if (open_tta_file(spath, &ttainfo, 0, g_io_buffer_size) < 0) {
 		dbg_printf(d, "TTA Decoder Error - %s", get_error_str(ttainfo.STATE));
 		close_tta_file(&ttainfo);
 		return -1;
@@ -472,9 +473,42 @@ static int tta_probe(const char *spath)
 	return 0;
 }
 
+static int tta_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	g_io_buffer_size = WVPACK_BUFFERED_READER_BUFFER_SIZE;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "tta_buffer_size", sizeof("tta_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	return 0;
+}
+
 static struct music_ops tta_ops = {
 	.name = "tta",
-	.set_opt = NULL,
+	.set_opt = tta_set_opt,
 	.load = tta_load,
 	.play = NULL,
 	.pause = NULL,

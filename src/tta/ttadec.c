@@ -39,7 +39,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <pspkernel.h>
 
+#include "buffered_reader.h"
 #include "ttalib.h"
 #include "ttadec.h"
 #include "filter.h"
@@ -93,8 +95,8 @@ static unsigned int crc32(unsigned char *buffer, unsigned int len)
 #define GET_BINARY(value, bits) \
 	while (bit_count < bits) { \
 		if (bitpos == iso_buffers_end) { \
-			if (!fread(isobuffers, 1, \
-			    ISO_BUFFERS_SIZE, ttainfo->HANDLE)) { \
+			if (!buffered_reader_read(ttainfo->HANDLE, \
+				isobuffers, ISO_BUFFERS_SIZE)) { \
 			    ttainfo->STATE = READ_ERROR; \
 			    return -1; } \
 			bitpos = isobuffers; } \
@@ -111,8 +113,8 @@ static unsigned int crc32(unsigned char *buffer, unsigned int len)
 	value = 0; \
 	while (!(bit_cache ^ bit_mask[bit_count])) { \
 		if (bitpos == iso_buffers_end) { \
-			if (!fread(isobuffers, 1, \
-			    ISO_BUFFERS_SIZE, ttainfo->HANDLE)) { \
+			if (!buffered_reader_read(ttainfo->HANDLE, \
+				isobuffers, ISO_BUFFERS_SIZE)) { \
 			    ttainfo->STATE = READ_ERROR; \
 			    return -1; } \
 			bitpos = isobuffers; } \
@@ -143,8 +145,8 @@ static int done_buffer_read()
 
 	if (rbytes < sizeof(int)) {
 		memcpy(isobuffers, bitpos, 4);
-		if (!fread(isobuffers + rbytes, 1,
-				   ISO_BUFFERS_SIZE - rbytes, ttainfo->HANDLE))
+		if (!buffered_reader_read
+			(ttainfo->HANDLE, isobuffers + rbytes, ISO_BUFFERS_SIZE - rbytes))
 			return -1;
 		bitpos = isobuffers;
 	}
@@ -185,19 +187,19 @@ const char *get_error_str(int error)
 }
 
 int open_tta_file(const char *filename, tta_info * info,
-				  unsigned int data_offset)
+				  unsigned int data_offset, unsigned int buffer_size)
 {
 	unsigned int checksum;
 	unsigned int datasize;
 	unsigned int origsize;
-	FILE *infile;
+	buffered_reader_t *infile;
 	tta_hdr ttahdr;
 
 	// clear the memory
 	memset(info, 0, sizeof(tta_info));
 
 	// open file
-	infile = fopen(filename, "rb");
+	infile = buffered_reader_open(filename, buffer_size, 0);
 	if (!infile) {
 		info->STATE = OPEN_ERROR;
 		return -1;
@@ -205,28 +207,26 @@ int open_tta_file(const char *filename, tta_info * info,
 	info->HANDLE = infile;
 
 	// get file size
-	fseek(infile, 0, SEEK_END);
-	info->FILESIZE = ftell(infile);
-	fseek(infile, 0, SEEK_SET);
+	info->FILESIZE = buffered_reader_length(infile);
 
 	// read id3 tags
 	if (!data_offset) {
 		if ((data_offset = read_id3_tags(info)) < 0) {
-			fclose(infile);
+			buffered_reader_close(infile);
 			return -1;
 		}
 	} else
-		fseek(infile, data_offset, SEEK_SET);
+		buffered_reader_seek(infile, data_offset);
 
 	// read TTA header
-	if (fread(&ttahdr, 1, sizeof(ttahdr), infile) == 0) {
-		fclose(infile);
+	if (buffered_reader_read(infile, &ttahdr, sizeof(ttahdr)) == 0) {
+		buffered_reader_close(infile);
 		info->STATE = READ_ERROR;
 		return -1;
 	}
 	// check for TTA3 signature
 	if (ENDSWAP_INT32(ttahdr.TTAid) != TTA1_SIGN) {
-		fclose(infile);
+		buffered_reader_close(infile);
 		info->STATE = FORMAT_ERROR;
 		return -1;
 	}
@@ -234,7 +234,7 @@ int open_tta_file(const char *filename, tta_info * info,
 	ttahdr.CRC32 = ENDSWAP_INT32(ttahdr.CRC32);
 	checksum = crc32((unsigned char *) &ttahdr, sizeof(tta_hdr) - sizeof(int));
 	if (checksum != ttahdr.CRC32) {
-		fclose(infile);
+		buffered_reader_close(infile);
 		info->STATE = FILE_ERROR;
 		return -1;
 	}
@@ -257,7 +257,7 @@ int open_tta_file(const char *filename, tta_info * info,
 										   ttahdr.SampleRate != 64000 &&
 										   ttahdr.SampleRate != 88200 &&
 										   ttahdr.SampleRate != 96000)) {
-		fclose(infile);
+		buffered_reader_close(infile);
 		info->STATE = FORMAT_ERROR;
 		return -1;
 	}
@@ -326,7 +326,7 @@ int set_position(unsigned int pos)
 	}
 
 	seek_pos = ttainfo->DATAPOS + seek_table[data_pos = pos];
-	if (fseek(ttainfo->HANDLE, seek_pos, SEEK_SET) < 0) {
+	if (buffered_reader_seek(ttainfo->HANDLE, seek_pos) < 0) {
 		ttainfo->STATE = READ_ERROR;
 		return -1;
 	}
@@ -362,7 +362,7 @@ int player_init(tta_info * info)
 		return -1;
 	}
 	// read seek table
-	if (!fread(seek_table, st_size, 1, ttainfo->HANDLE)) {
+	if (!buffered_reader_read(ttainfo->HANDLE, seek_table, st_size)) {
 		ttainfo->STATE = READ_ERROR;
 		return -1;
 	}
@@ -386,7 +386,7 @@ int player_init(tta_info * info)
 void close_tta_file(tta_info * info)
 {
 	if (info->HANDLE) {
-		fclose(info->HANDLE);
+		buffered_reader_close(info->HANDLE);
 		info->HANDLE = NULL;
 	}
 }
@@ -588,11 +588,11 @@ static int skip_id3_tag(tta_info * info)
 
 	////////////////////////////////////////
 	// skip ID3v2 tag
-	if (!fread(&id3v2, 1, sizeof(id3v2_tag), info->HANDLE))
+	if (!buffered_reader_read(info->HANDLE, &id3v2, sizeof(id3v2_tag)))
 		goto read_error;
 
 	if (memcmp(id3v2.id, "ID3", 3)) {
-		if (fseek(info->HANDLE, 0, SEEK_SET) < 0)
+		if (buffered_reader_seek(info->HANDLE, 0) < 0)
 			goto read_error;
 		return 0;
 	}
@@ -602,7 +602,7 @@ static int skip_id3_tag(tta_info * info)
 	id3v2_size = unpack_sint28(id3v2.size);
 
 	id3v2_size += (id3v2.flags & ID3_FOOTERPRESENT_FLAG) ? 20 : 10;
-	fseek(info->HANDLE, id3v2_size, SEEK_SET);
+	buffered_reader_seek(info->HANDLE, id3v2_size);
 	info->ID3.size = id3v2_size;
 
 	return id3v2_size;
@@ -629,10 +629,12 @@ static int read_id3_tags(tta_info * info)
 
 	////////////////////////////////////////
 	// ID3v1 support
-	if (fseek(info->HANDLE, -(int) sizeof(id3v1_tag), SEEK_END) < 0)
+	if (buffered_reader_seek
+		(info->HANDLE,
+		 buffered_reader_length(info->HANDLE) - (int) sizeof(id3v1_tag)) < 0)
 		goto read_error;
 
-	if (!fread(&id3v1, sizeof(id3v1_tag), 1, info->HANDLE))
+	if (!buffered_reader_read(info->HANDLE, &id3v1, sizeof(id3v1_tag)))
 		goto read_error;
 
 	if (!memcmp(id3v1.id, "TAG", 3)) {
@@ -650,16 +652,16 @@ static int read_id3_tags(tta_info * info)
 		info->ID3.id3has |= 1;
 	}
 
-	if (fseek(info->HANDLE, 0, SEEK_SET) < 0)
+	if (buffered_reader_seek(info->HANDLE, 0) < 0)
 		goto read_error;
 
 	////////////////////////////////////////
 	// ID3v2 minimal support
-	if (!fread(&id3v2, 1, sizeof(id3v2_tag), info->HANDLE))
+	if (!buffered_reader_read(info->HANDLE, &id3v2, sizeof(id3v2_tag)))
 		goto read_error;
 
 	if (memcmp(id3v2.id, "ID3", 3)) {
-		if (fseek(info->HANDLE, 0, SEEK_SET) < 0)
+		if (buffered_reader_seek(info->HANDLE, 0) < 0)
 			goto read_error;
 		return 0;
 	}
@@ -677,7 +679,7 @@ static int read_id3_tags(tta_info * info)
 		(id3v2.flags & ID3_EXPERIMENTALTAG_FLAG) || (id3v2.version < 3))
 		goto read_done;
 
-	if (!fread(buffer, 1, id3v2_size, info->HANDLE)) {
+	if (!buffered_reader_read(info->HANDLE, buffer, id3v2_size)) {
 		free(buffer);
 		goto read_error;
 	}
@@ -767,7 +769,7 @@ static int read_id3_tags(tta_info * info)
 		free(buffer);
 
 	id3v2_size += (id3v2.flags & ID3_FOOTERPRESENT_FLAG) ? 20 : 10;
-	fseek(info->HANDLE, id3v2_size, SEEK_SET);
+	buffered_reader_seek(info->HANDLE, id3v2_size);
 	info->ID3.size = id3v2_size;
 
 	return id3v2_size;

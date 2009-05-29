@@ -81,7 +81,7 @@ typedef struct
 
 typedef struct
 {
-	FILE *HANDLE;				// file handle
+	buffered_reader_t *HANDLE;	// file handle
 	unsigned int FILESIZE;		// compressed size
 	unsigned short NCH;			// number of channels
 	unsigned short BPS;			// bits per sample
@@ -103,7 +103,9 @@ typedef struct
 int open_tta_file(				// FUNCTION: opens TTA file
 					 const char *filename,	// file to open
 					 tta_info * info,	// file info structure
-					 unsigned int offset);	// ID3v2 header size
+					 unsigned int offset,	// ID3v2 header size
+					 unsigned int buffer_size	// buffered_reader buffer size
+	);
 
 /*
  * RETURN VALUE
