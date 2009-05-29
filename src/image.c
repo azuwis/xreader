@@ -1128,6 +1128,9 @@ static int image_readjpg2(FILE * infile, dword * pwidth, dword * pheight,
 		jpeg_destroy_decompress(&cinfo);
 		return 5;
 	}
+
+	dbg_printf(d, "%s: data 0x%08x", __func__, (unsigned) *image_data);
+
 	xrRtcGetCurrentTick(&dbglasttick);
 	pixel *imgdata = *image_data;
 
