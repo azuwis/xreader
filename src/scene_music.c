@@ -80,7 +80,7 @@ static u64 start, end;
 // ×÷Õß:Ê«Åµ±È
 extern unsigned int get_free_mem(void)
 {
-#if DMALLOC
+#ifdef DMALLOC
 	unsigned long free = 0;
 
 	dmalloc_get_stats(NULL, NULL, NULL, NULL, &free, NULL, NULL, NULL, NULL);
