@@ -455,6 +455,9 @@ int start_cache_next_image(void)
 		total_filesize += tmp.filesize;
 		total_datasize += memory_used;
 		tmp.status = CACHE_OK;
+		copy_cache_image(p, &tmp);
+		tmp.data = NULL;
+		free_cache_image(&tmp);
 	} else if ((tmp.result == 4 || tmp.result == 5)
 			   || (tmp.where == scene_in_rar && tmp.result == 6)) {
 		// out of memory
@@ -476,10 +479,6 @@ int start_cache_next_image(void)
 		tmp.status = CACHE_FAILED;
 		free_cache_image(&tmp);
 	}
-
-	copy_cache_image(p, &tmp);
-	tmp.data = NULL;
-	free_cache_image(&tmp);
 
 	cache_unlock();
 
