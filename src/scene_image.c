@@ -56,6 +56,10 @@
 #include "dbg.h"
 #include "xrhal.h"
 #include "image_queue.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #ifdef ENABLE_IMAGE
 

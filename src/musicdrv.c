@@ -26,6 +26,10 @@
 #include <pspkernel.h>
 #include "musicdrv.h"
 #include "genericplayer.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static struct music_ops *music_drivers = NULL;
 static struct music_ops *cur_musicdrv = NULL;

@@ -26,6 +26,10 @@
 
 #include "common/utils.h"
 #include "buffer.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static const char hex_chars[] = "0123456789abcdef";
 

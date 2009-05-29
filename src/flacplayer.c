@@ -37,6 +37,10 @@
 #include "musicinfo.h"
 #include "xrhal.h"
 #include "simple_gettext.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #ifdef ENABLE_FLAC
 
@@ -884,11 +888,6 @@ int flac_init(void)
 }
 
 // Dummy function for libFLAC
-
-int chmod(const char *path, int mode)
-{
-	return 0;
-}
 
 int chown(const char *path, int owner, int group)
 {

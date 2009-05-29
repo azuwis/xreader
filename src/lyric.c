@@ -31,6 +31,10 @@
 #include "charsets.h"
 #include "lyric.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 __inline bool lyric_add(p_lyric l, dword sec, dword fra, const char *line,
 						dword size)

@@ -42,6 +42,10 @@
 #include "power.h"
 #include "freq_lock.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static SceUID ttf_sema = -1;
 

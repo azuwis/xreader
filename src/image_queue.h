@@ -10,8 +10,8 @@ enum
 
 typedef struct _cache_image_t
 {
-	const char *archname;
-	const char *filename;
+	char *archname;
+	char *filename;
 	int where;
 	int status;
 	pixel *data;

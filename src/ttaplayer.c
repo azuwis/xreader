@@ -38,6 +38,10 @@
 #include "musicinfo.h"
 #include "genericplayer.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #ifdef ENABLE_TTA
 

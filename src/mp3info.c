@@ -34,6 +34,10 @@
 #include "dbg.h"
 #include "config.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #if defined(ENABLE_MP3)|| defined(ENABLE_TTA)
 

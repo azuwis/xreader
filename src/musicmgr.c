@@ -59,6 +59,10 @@
 #include "power.h"
 #include "image_queue.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 struct music_list
 {
@@ -870,6 +874,8 @@ int music_free(void)
 	int ret;
 	unsigned to = 500000;
 
+	cache_on(false);
+
 	music_lock();
 
 	ret = -1;
@@ -895,8 +901,6 @@ int music_free(void)
 
 	if (ret < 0)
 		return ret;
-
-	cache_free();
 
 	return 0;
 }

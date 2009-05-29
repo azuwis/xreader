@@ -11,6 +11,10 @@
 #include "buffer.h"
 #include "dbg.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #define ID3v1_TAG_SIZE 128
 #define ID3v2_HEADER_SIZE 10

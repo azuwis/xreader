@@ -30,6 +30,10 @@
 #include "pspscreen.h"
 #include "config.h"
 #include "scene.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static pixel *bg_start =
 	(pixel *) (0x44000000 +

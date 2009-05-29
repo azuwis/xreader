@@ -29,6 +29,10 @@
 #include "dmalloc.h"
 #endif
 #include "simple_gettext.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static PTextDomainEntry g_domain_head = NULL;
 static PTextDomainEntry g_domain_tail = NULL;

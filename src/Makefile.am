@@ -26,6 +26,7 @@ AM_CFLAGS += \
 else
 AM_CFLAGS = -O0 -G0 -g -Wall
 endif
+
 AM_CXXFLAGS = $(AM_CFLAGS) -fno-exceptions -fno-rtti
 CCASFLAGS = $(CFLAGS) $(INCLUDES)
 
@@ -183,6 +184,10 @@ $(libdir)/libtga.a $(libdir)/libz.a \
 $(libdir)/libfreetype.a -lexif -lm -lpspkubridge -lpspsystemctrl_user \
 -lpspaudio -lpspaudiolib -lpspgu -lpspgum -lpsphprm -lpsppower -lpsprtc -lpspusb \
 -lpspusbstor -lstdc++ -lpspaudio -lpspaudiocodec -lpspaudio -lpsputility 
+
+if DEBUG
+LIBS += -ldmallocth
+endif
 
 TARGET = xReader
 EXTRA_TARGETS = EBOOT.PBP

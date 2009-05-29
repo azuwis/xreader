@@ -29,6 +29,10 @@
 #include "scene.h"
 #include "strsafe.h"
 #include "dbg.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static buffer **list = NULL;
 static int list_count = 0;

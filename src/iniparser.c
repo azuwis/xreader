@@ -37,6 +37,10 @@
 #include <ctype.h>
 #include "strsafe.h"
 #include "iniparser.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 /*---------------------------- Defines -------------------------------------*/
 #define ASCIILINESZ         (1024)

@@ -26,6 +26,10 @@
 #include "dbg.h"
 #include "charsets.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 enum umd_cmd
 {

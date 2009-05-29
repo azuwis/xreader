@@ -56,7 +56,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "hash.h"
-#ifdef DMALLOC
+#ifdef _DEBUG
+#define DMALLOC 1
 #include "dmalloc.h"
 #endif
 

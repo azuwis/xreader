@@ -46,6 +46,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 /** Maximum value size for integers and doubles. */
 #define MAXVALSZ	1024

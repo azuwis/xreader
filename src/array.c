@@ -29,6 +29,10 @@
 #include "conf.h"
 #include "common/utils.h"
 #include "array.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #define NDEBUG
 

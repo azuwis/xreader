@@ -36,6 +36,10 @@
 #include "musicinfo.h"
 #include "xrhal.h"
 #include "simple_gettext.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #ifdef ENABLE_WAVPACK
 

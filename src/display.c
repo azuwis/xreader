@@ -36,6 +36,10 @@
 #include "archive.h"
 #include "dbg.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static bool auto_inc_wordspace_on_small_font = false;
 static pixel *vram_disp = NULL;

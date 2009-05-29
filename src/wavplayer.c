@@ -34,6 +34,10 @@
 #include "genericplayer.h"
 #include "musicinfo.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #ifdef ENABLE_WAV
 

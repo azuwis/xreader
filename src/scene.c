@@ -72,6 +72,10 @@
 #include "clock.h"
 #include "musicdrv.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 char appdir[PATH_MAX], copydir[PATH_MAX], cutdir[PATH_MAX];
 bool copy_archmode = false;
@@ -5132,6 +5136,12 @@ static void scene_enter_archive(dword * idx, enum ArchiveType type)
 #ifdef ENABLE_IMAGE
 static void scene_open_image(dword * idx)
 {
+#ifdef DMALLOC
+	unsigned mark;
+
+	mark = dmalloc_mark();
+#endif
+	
 #ifdef ENABLE_USB
 	usb_deactivate();
 #endif
@@ -5147,6 +5157,10 @@ static void scene_open_image(dword * idx)
 		usb_activate();
 	else
 		usb_deactivate();
+#endif
+
+#ifdef DMALLOC
+	dmalloc_log_changed(mark, 1, 0, 1);
 #endif
 }
 #endif
@@ -5493,6 +5507,23 @@ extern void scene_init(void)
 {
 	char logfile[PATH_MAX];
 	char infomsg[256];
+
+#ifdef DMALLOC
+    dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-funcs,check-blank,print-messages");
+	unsigned mark;
+
+	mark = dmalloc_mark();
+#endif
+
+	void *p = malloc(4096);
+
+#ifdef DMALLOC
+	dmalloc_log_changed(mark, 1, 0, 1);
+#endif
+
+	if (p == NULL) {
+		dbg_printf(d, "cannot malloc 4096 bytes yet");
+	}
 
 	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
@@ -5888,3 +5919,9 @@ dword get_bgcolor_by_time(void)
 
 	return origColor;
 }
+
+int chmod(const char *path, unsigned mode)
+{
+	return 0;
+}
+

@@ -47,6 +47,10 @@
 #include "common/utils.h"
 #include "xrhal.h"
 #include "mediaengine.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 #ifdef ENABLE_MP3
 

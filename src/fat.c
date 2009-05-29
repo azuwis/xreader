@@ -29,6 +29,10 @@
 #include <stdio.h>
 #include "dbg.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static int fatfd = -1;
 static t_fat_dbr dbr;

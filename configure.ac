@@ -86,6 +86,7 @@ if test $debug = "yes"; then
 	AC_DEFINE([_DEBUG], 1, [Debug option])
 	usb=no
 fi
+AM_CONDITIONAL([DEBUG], [test x$debug = "xyes"])
 AM_CONDITIONAL([OPTIMIZE], [test x$optimize = "xyes"])
 if test $homebrew_2xx = "yes"; then
 	AC_DEFINE([HOMEBREW_2XX], 1, [Enable PSP firmware 2.0+ support])

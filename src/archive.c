@@ -36,6 +36,10 @@
 #include "bg.h"
 #include "osk.h"
 #include "archive.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 static void extract_zip_file_into_buffer_with_password(buffer * buf,
 													   const char *archname,

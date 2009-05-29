@@ -43,6 +43,10 @@
 #include "unumd.h"
 #include "depdb.h"
 #include "xrhal.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 extern int use_ttf;
 

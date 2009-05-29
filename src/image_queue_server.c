@@ -21,6 +21,10 @@
 #include "ctrl.h"
 #include "xrhal.h"
 #include "kubridge.h"
+#ifdef _DEBUG
+#define DMALLOC 1
+#include "dmalloc.h"
+#endif
 
 extern p_win_menuitem filelist;
 extern dword filecount;
@@ -86,9 +90,15 @@ void cache_on(bool on)
 
 		alarm1 = false;
 		alarm2 = false;
-	}
 
-	ccacher.on = on;
+		ccacher.on = on;
+	} else {
+		ccacher.on = on;
+		
+		while (!cacher_cleared) {
+			xrKernelDelayThread(100000);
+		}
+	}
 }
 
 // Ask cacher for next image
@@ -102,6 +112,16 @@ static void cache_clear_without_lock()
 	int i;
 
 	for (i = 0; i < ccacher.caches_size; ++i) {
+		if (ccacher.caches[i].archname != NULL) {
+			free(ccacher.caches[i].archname);
+			ccacher.caches[i].archname = NULL;
+		}
+
+		if (ccacher.caches[i].filename != NULL) {
+			free(ccacher.caches[i].filename);
+			ccacher.caches[i].filename = NULL;
+		}
+
 		if (ccacher.caches[i].data != NULL) {
 			free(ccacher.caches[i].data);
 			ccacher.caches[i].data = NULL;
@@ -121,6 +141,7 @@ static void cache_clear(void)
 {
 	cache_lock();
 	cache_clear_without_lock();
+	cacher_cleared = true;
 	cache_unlock();
 }
 
@@ -144,6 +165,16 @@ static int cache_delete_without_lock(size_t pos)
 {
 	cache_image_t *p = &ccacher.caches[pos];
 
+	if (p->archname != NULL) {
+		free(p->archname);
+		p->archname = NULL;
+	}
+
+	if (p->filename != NULL) {
+		free(p->filename);
+		p->filename = NULL;
+	}
+
 	if (p->data != NULL) {
 		free(p->data);
 		p->data = NULL;
@@ -155,7 +186,6 @@ static int cache_delete_without_lock(size_t pos)
 
 	memmove(&ccacher.caches[pos], &ccacher.caches[pos + 1],
 			(ccacher.caches_size - pos - 1) * sizeof(ccacher.caches[0]));
-//  ccacher.caches = safe_realloc(ccacher.caches, sizeof(ccacher.caches[0]) * (ccacher.caches_size - 1));
 	ccacher.caches_size--;
 
 	return 0;
@@ -182,18 +212,21 @@ int cache_delete_first(void)
 static cache_image_t *cache_get(const char *archname, const char *filename);
 
 /**
- * 根据路径添加缓存
- * 
- * @param archname 可能的档案名
- * @param filename 文件名
+ * @param selidx filelist中的文件位置
  * @param where 文件位置类型
  *
  */
-static int cache_add_by_path(const char *archname, const char *filename,
-							 int where, dword selidx, dword filesize)
+static int cache_add_by_selidx(dword selidx, int where)
 {
 	t_fs_filetype type;
 	cache_image_t img;
+	const char *archname;
+	const char *filename;
+	dword filesize;
+
+	archname = config.shortpath;
+	filename = filelist[selidx].compname->ptr;
+	filesize = filelist[selidx].data3;
 
 	type = fs_file_get_type(filename);
 
@@ -211,8 +244,8 @@ static int cache_add_by_path(const char *archname, const char *filename,
 	cache_lock();
 
 	memset(&img, 0, sizeof(img));
-	img.archname = archname;
-	img.filename = filename;
+	img.archname = strdup(archname);
+	img.filename = strdup(filename);
 	img.where = where;
 	img.status = CACHE_INIT;
 	img.selidx = selidx;
@@ -221,6 +254,7 @@ static int cache_add_by_path(const char *archname, const char *filename,
 	if (ccacher.caches_size < ccacher.caches_cap) {
 		ccacher.caches[ccacher.caches_size] = img;
 		ccacher.caches_size++;
+		cacher_cleared = false;
 	} else {
 		dbg_printf(d, "SERVER: cannot add cache any more: size %u cap %u",
 				   ccacher.caches_size, ccacher.caches_cap);
@@ -413,6 +447,7 @@ int start_cache_next_image(void)
 	}
 
 	memcpy(p, &tmp, sizeof(tmp));
+	cacher_cleared = false;
 	cache_unlock();
 
 	return 0;
@@ -498,8 +533,7 @@ static int start_cache(dword selidx)
 
 	while (re-- > 0) {
 		dbg_printf(d, "SERVER: add cache image %u", (unsigned) pos);
-		cache_add_by_path(config.shortpath, filelist[pos].compname->ptr, where,
-						  pos, filelist[pos].data3);
+		cache_add_by_selidx(pos, where);
 		pos = cache_get_next_image(pos, ccacher.isforward);
 	}
 
@@ -509,12 +543,11 @@ static int start_cache(dword selidx)
 int cache_routine(void)
 {
 	if (ccacher.on) {
-		cacher_cleared = false;
-
-		while (ccacher.selidx_moved == false && ccacher.on) {
+		if (!ccacher.selidx_moved && ccacher.on) {
 			// cache next image
 			start_cache_next_image();
-			xrKernelDelayThread(1000000);
+
+			return 0;
 		}
 
 		if (!ccacher.on) {
@@ -526,7 +559,6 @@ int cache_routine(void)
 	} else {
 		// clean up all remain cache now
 		cache_clear();
-		cacher_cleared = true;
 	}
 
 	xrKernelDelayThread(100000);
@@ -559,10 +591,6 @@ int cache_setup(unsigned max_cache_img, dword * c_selidx)
 void cache_free(void)
 {
 	cache_on(false);
-
-	while (!cacher_cleared) {
-		xrKernelDelayThread(100000);
-	}
 
 	if (ccacher.cacher_locker >= 0) {
 		xrKernelDeleteSema(ccacher.cacher_locker);
