@@ -20,6 +20,7 @@ typedef struct _cache_image_t
 	dword height;
 	int result;
 	dword selidx;
+	dword filesize;
 } cache_image_t;
 
 typedef struct _cacher_context

@@ -38,6 +38,9 @@ static volatile bool cacher_exited = false;
 static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
 
+static dword total_filesize;
+static dword total_datasize;
+
 enum
 {
 	CACHE_EVENT_DELETED = 1,
@@ -84,6 +87,9 @@ void cache_on(bool on)
 		cache_next_image();
 		ccacher.first_run = true;
 		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
+
+		total_filesize = 0;
+		total_datasize = 0;
 	}
 
 	ccacher.on = on;
@@ -192,7 +198,7 @@ static cache_image_t *cache_get(const char *archname, const char *filename);
  *
  */
 static int cache_add_by_path(const char *archname, const char *filename,
-							 int where, dword selidx)
+							 int where, dword selidx, dword filesize)
 {
 	t_fs_filetype type;
 	cache_image_t img;
@@ -218,6 +224,7 @@ static int cache_add_by_path(const char *archname, const char *filename,
 	img.where = where;
 	img.status = CACHE_INIT;
 	img.selidx = selidx;
+	img.filesize = filesize;
 
 	if (ccacher.caches_size < ccacher.caches_cap) {
 		ccacher.caches[ccacher.caches_size] = img;
@@ -265,13 +272,14 @@ int start_cache_next_image(void)
 	cache_image_t tmp;
 	t_fs_filetype ft;
 	static bool alarmed = false;
+	dword used_memory, free_memory;
 
-	dword used_memory;
+	free_memory = get_avail_memory();
 
 	if (kuKernelGetModel() == PSP_MODEL_SLIM_AND_LITE) {
-		used_memory = 45 * 1024 * 1024L - get_avail_memory();
+		used_memory = 45 * 1024 * 1024L - free_memory;
 	} else {
-		used_memory = 12 * 1024 * 1024L - get_avail_memory();
+		used_memory = 13 * 1024 * 1024L - free_memory;
 	}
 
 	if (ccacher.memory_usage > used_memory) {
@@ -308,17 +316,42 @@ int start_cache_next_image(void)
 	memcpy(&tmp, p, sizeof(tmp));
 	cache_unlock();
 
-	ft = fs_file_get_type(tmp.filename);
-#if 1
-	if (tmp.status == CACHE_INIT && (tmp.result == 4 || tmp.result == 5)) {
-		if (ccacher.memory_usage + (sizeof(pixel) * tmp.width * tmp.height) >
-			get_avail_memory()) {
-//          dbg_printf(d, "SERVER: Cannot enter now because of out of memory ");
+	// Predict memory usage
+	{
+		double ratio;
 
-			return -1;
+		if (total_datasize != 0) {
+			ratio = (double) total_filesize / total_datasize;
+		} else {
+			ratio = 0;
+		}
+
+		dbg_printf(d, "Total compress ratio: %.2f", ratio);
+
+		if (ratio != 0) {
+			dword predict_usage;
+
+			predict_usage = (dword) (tmp.filesize / ratio);
+
+			if (predict_usage >= free_memory) {
+				// if it is the first image in the queue, then give a chance
+				if (ccacher.memory_usage == 0) {
+					goto load;
+				}
+
+				if (!alarmed)
+					dbg_printf(d,
+							   "SERVER: %s: memory predict usage %dkb overload(%dkb free), refuse to cache",
+							   __func__, (unsigned) predict_usage / 1024,
+							   (unsigned) free_memory / 1024);
+
+				alarmed = true;
+			}
 		}
 	}
 
+  load:
+	ft = fs_file_get_type(tmp.filename);
 	dbg_switch(d, 0);
 	int fid = freq_enter_hotzone();
 
@@ -329,9 +362,14 @@ int start_cache_next_image(void)
 	dbg_switch(d, 1);
 
 	if (tmp.result == 0) {
+		dword memory_used;
+
+		memory_used = tmp.width * tmp.height * sizeof(pixel);
 //      dbg_printf(d, "SERVER: Image %u finished loading", (unsigned)tmp.selidx);
-		ccacher.memory_usage += tmp.width * tmp.height * sizeof(pixel);
+		ccacher.memory_usage += memory_used;
 //      dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) ccacher.memory_usage / 1024);
+		total_filesize += tmp.filesize;
+		total_datasize += memory_used;
 		tmp.status = CACHE_OK;
 	} else if (tmp.result == 4 || tmp.result == 5) {
 		// out of memory
@@ -354,10 +392,6 @@ int start_cache_next_image(void)
 //      dbg_printf(d, "SERVER: Image %u finished failed(%u)", (unsigned)tmp.selidx, tmp.result);
 		tmp.status = CACHE_FAILED;
 	}
-
-#else
-	tmp.status = CACHE_FAILED;
-#endif
 
 	cache_lock();
 
@@ -460,7 +494,7 @@ static int start_cache(dword selidx)
 	while (re-- > 0) {
 		dbg_printf(d, "SERVER: add cache image %u", (unsigned) pos);
 		cache_add_by_path(config.shortpath, filelist[pos].compname->ptr, where,
-						  pos);
+						  pos, filelist[pos].data3);
 		pos = cache_get_next_image(pos, ccacher.isforward);
 	}
 
@@ -504,7 +538,7 @@ static int thread_cacher(SceSize args, void *argp)
 	return 0;
 }
 
-int cache_init(dword *c_selidx)
+int cache_init(dword * c_selidx)
 {
 	int ret;
 
