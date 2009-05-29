@@ -371,13 +371,35 @@ extern void win_msg(const char *prompt, pixel fontcolor, pixel bordercolor,
 extern p_win_menuitem win_realloc_items(p_win_menuitem item, int orgsize,
 										int newsize)
 {
-	DBG_ASSERT(d, "win_realloc_items: orgsize <= newsize", orgsize <= newsize);
-
-	item = safe_realloc(item, sizeof(*item) * newsize);
-	if (item == NULL)
-		return NULL;
-
 	int i;
+	p_win_menuitem p;
+
+	if (orgsize > newsize) {
+		for (i = newsize; i < orgsize; ++i) {
+			buffer_free(item[i].compname);
+			buffer_free(item[i].shortname);
+		}
+
+		item = safe_realloc(item, sizeof(*item) * newsize);
+
+		return item;
+	}
+
+	// Cannot use safe_realloc here
+	p = realloc(item, sizeof(*item) * newsize);
+
+	if (p == NULL) {
+		for (i=0; i < orgsize; ++i) {
+			buffer_free(item[i].compname);
+			buffer_free(item[i].shortname);
+		}
+
+		free(item);
+
+		return p;
+	}
+
+	item = p;
 
 	for (i = orgsize; i < newsize; ++i) {
 		item[i].compname = buffer_init();
@@ -395,9 +417,11 @@ extern void win_item_destroy(p_win_menuitem * item, dword * size)
 
 	int i;
 
+	p_win_menuitem p = *item;
+
 	for (i = 0; i < *size; ++i) {
-		buffer_free((*item)[i].compname);
-		buffer_free((*item)[i].shortname);
+		buffer_free(p[i].compname);
+		buffer_free(p[i].shortname);
 	}
 
 	free(*item);

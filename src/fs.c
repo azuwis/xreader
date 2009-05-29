@@ -236,6 +236,7 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 {
 	extern dword filecount;
 	int fid;
+	dword itemcount;
 
 	win_item_destroy(mitem, &filecount);
 
@@ -250,9 +251,11 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 		freq_leave(fid);
 		return 0;
 	}
+
 	//  if(stricmp(dir, "ms0:/") == 0)
 	{
-		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
+		itemcount = DIR_INC_SIZE;
+		*mitem = win_realloc_items(NULL, 0, itemcount);
 		if (*mitem == NULL) {
 			xrIoDclose(fd);
 			freq_leave(fid);
@@ -281,16 +284,15 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 			if (strcmp(info.d_name, "..") == 0)
 				continue;
 			if (cur_count % DIR_INC_SIZE == 0) {
-				if (cur_count == 0)
-					*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
-				else
-					*mitem =
-						win_realloc_items(*mitem, cur_count,
-										  cur_count + DIR_INC_SIZE);
+				itemcount = cur_count + DIR_INC_SIZE;
+
+				*mitem = win_realloc_items(*mitem, cur_count, itemcount);
+
 				if (*mitem == NULL) {
 					freq_leave(fid);
 					return 0;
 				}
+
 				item = *mitem;
 			}
 			item[cur_count].data = (void *) fs_filetype_dir;
@@ -313,18 +315,15 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 			t_fs_filetype ft = fs_file_get_type(info.d_name);
 
 			if (cur_count % DIR_INC_SIZE == 0) {
-				if (cur_count == 0)
-					*mitem =
-						win_realloc_items(NULL, cur_count,
-										  cur_count + DIR_INC_SIZE);
-				else
-					*mitem =
-						win_realloc_items(*mitem, cur_count,
-										  cur_count + DIR_INC_SIZE);
+				itemcount = cur_count + DIR_INC_SIZE;
+
+				*mitem = win_realloc_items(*mitem, cur_count, itemcount);
+
 				if (*mitem == NULL) {
 					freq_leave(fid);
 					return 0;
 				}
+
 				item = *mitem;
 			}
 			item[cur_count].data = (void *) ft;
@@ -358,6 +357,9 @@ extern dword fs_flashdir_to_menu(const char *dir, const char *sdir,
 	xrIoDclose(fd);
 	freq_leave(fid);
 
+	// Remove unused item
+	*mitem = win_realloc_items(*mitem, itemcount, cur_count);
+
 	return cur_count;
 }
 
@@ -374,21 +376,25 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 	p_win_menuitem item = NULL;
 	p_fat_info info;
 
+	dword itemcount;
 	dword count = fat_readdir(dir, sdir, &info);
+	dword i, cur_count = 0;
 
 	if (count == INVALID) {
 		freq_leave(fid);
 		return 0;
 	}
-	dword i, cur_count = 0;
 
 	if (stricmp(dir, "ms0:/") == 0) {
-		*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
+		itemcount = DIR_INC_SIZE;
+		*mitem = win_realloc_items(NULL, 0, itemcount);
+
 		if (*mitem == NULL) {
 			free(info);
 			freq_leave(fid);
 			return 0;
 		}
+
 		cur_count = 1;
 		item = *mitem;
 		STRCPY_S(item[0].name, "<..>");
@@ -402,23 +408,21 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 		item[0].selrcolor = selrcolor;
 		item[0].selbcolor = selbcolor;
 	}
+
 	for (i = 0; i < count; i++) {
 		if (!showhidden && (info[i].attr & FAT_FILEATTR_HIDDEN) > 0)
 			continue;
 		if (cur_count % DIR_INC_SIZE == 0) {
-			if (cur_count == 0)
-				*mitem =
-					win_realloc_items(NULL, cur_count,
-									  cur_count + DIR_INC_SIZE);
-			else
-				*mitem =
-					win_realloc_items(*mitem, cur_count,
-									  cur_count + DIR_INC_SIZE);
+			itemcount = cur_count + DIR_INC_SIZE;
+
+			*mitem = win_realloc_items(*mitem, cur_count, itemcount);
+
 			if (*mitem == NULL) {
 				free(info);
 				freq_leave(fid);
 				return 0;
 			}
+
 			item = *mitem;
 		}
 		if (info[i].attr & FAT_FILEATTR_DIRECTORY) {
@@ -471,6 +475,10 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 	}
 	free(info);
 	freq_leave(fid);
+
+	// Remove unused item
+	*mitem = win_realloc_items(*mitem, itemcount, cur_count);
+
 	return cur_count;
 }
 
@@ -479,6 +487,8 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 							dword selbcolor)
 {
 	extern dword filecount;
+	dword itemcount;
+	dword cur_count = 1;
 
 	win_item_destroy(mitem, &filecount);
 
@@ -490,14 +500,16 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 		freq_leave(fid);
 		return 0;
 	}
-	dword cur_count = 1;
 
-	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
+	itemcount = DIR_INC_SIZE;
+	*mitem = win_realloc_items(NULL, 0, itemcount);
+
 	if (*mitem == NULL) {
 		unzClose(unzf);
 		freq_leave(fid);
 		return 0;
 	}
+
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
 	buffer_copy_string(item[0].compname, "..");
@@ -509,11 +521,14 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 	item[0].selicolor = selicolor;
 	item[0].selrcolor = selrcolor;
 	item[0].selbcolor = selbcolor;
+
 	if (unzGoToFirstFile(unzf) != UNZ_OK) {
 		unzClose(unzf);
 		freq_leave(fid);
-		return 1;
+		*mitem = win_realloc_items(*mitem, itemcount, cur_count);
+		return cur_count;
 	}
+
 	do {
 		char fname[PATH_MAX];
 		unz_file_info file_info;
@@ -529,19 +544,16 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 			|| ft == fs_filetype_rar)
 			continue;
 		if (cur_count % DIR_INC_SIZE == 0) {
-			if (cur_count == 0)
-				*mitem =
-					win_realloc_items(NULL, cur_count,
-									  cur_count + DIR_INC_SIZE);
-			else
-				*mitem =
-					win_realloc_items(*mitem, cur_count,
-									  cur_count + DIR_INC_SIZE);
+			itemcount = cur_count + DIR_INC_SIZE;
+
+			*mitem = win_realloc_items(*mitem, cur_count, itemcount);
+
 			if (*mitem == NULL) {
 				unzClose(unzf);
 				freq_leave(fid);
 				return 0;
 			}
+
 			item = *mitem;
 		}
 		item[cur_count].data = (void *) ft;
@@ -561,6 +573,9 @@ extern dword fs_zip_to_menu(const char *zipfile, p_win_menuitem * mitem,
 	} while (unzGoToNextFile(unzf) == UNZ_OK);
 	unzClose(unzf);
 	freq_leave(fid);
+
+	*mitem = win_realloc_items(*mitem, itemcount, cur_count);
+
 	return cur_count;
 }
 
@@ -569,6 +584,7 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 							dword selbcolor)
 {
 	extern dword filecount;
+	dword itemcount;
 
 	win_item_destroy(mitem, &filecount);
 
@@ -587,14 +603,17 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 		freq_leave(fid);
 		return 0;
 	}
+
 	dword cur_count = 1;
 
-	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
+	itemcount = DIR_INC_SIZE;
+	*mitem = win_realloc_items(NULL, 0, itemcount);
 	if (*mitem == NULL) {
 		RARCloseArchive(hrar);
 		freq_leave(fid);
 		return 0;
 	}
+
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
 	buffer_copy_string(item[0].compname, "..");
@@ -628,19 +647,16 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 			|| ft == fs_filetype_rar)
 			continue;
 		if (cur_count % DIR_INC_SIZE == 0) {
-			if (cur_count == 0)
-				*mitem =
-					win_realloc_items(NULL, cur_count,
-									  cur_count + DIR_INC_SIZE);
-			else
-				*mitem =
-					win_realloc_items(*mitem, cur_count,
-									  cur_count + DIR_INC_SIZE);
+			itemcount = cur_count + DIR_INC_SIZE;
+
+			*mitem = win_realloc_items(*mitem, cur_count, itemcount);
+
 			if (*mitem == NULL) {
 				RARCloseArchive(hrar);
 				freq_leave(fid);
 				return 0;
 			}
+
 			item = *mitem;
 		}
 		item[cur_count].data = (void *) ft;
@@ -675,6 +691,10 @@ extern dword fs_rar_to_menu(const char *rarfile, p_win_menuitem * mitem,
 
 	RARCloseArchive(hrar);
 	freq_leave(fid);
+	
+	// Remove unused item
+	*mitem = win_realloc_items(*mitem, itemcount, cur_count);
+
 	return cur_count;
 }
 
@@ -684,9 +704,11 @@ p_win_menuitem fs_empty_dir(dword * filecount, dword icolor,
 	p_win_menuitem p;
 
 	p = win_realloc_items(NULL, 0, 1);
+
 	if (p == NULL) {
 		return NULL;
 	}
+
 	STRCPY_S(p->name, "<..>");
 	buffer_copy_string(p->compname, "..");
 	buffer_copy_string(p->shortname, "..");
@@ -712,6 +734,8 @@ typedef struct
 	dword selbcolor;
 } t_fs_chm_enum, *p_fs_chm_enum;
 
+static dword *chm_itemcount = NULL;
+
 static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 {
 	p_win_menuitem *mitem = ((p_fs_chm_enum) context)->mitem;
@@ -731,16 +755,14 @@ static int chmEnum(struct chmFile *h, struct chmUnitInfo *ui, void *context)
 	dword cur_count = ((p_fs_chm_enum) context)->cur_count;
 
 	if (cur_count % DIR_INC_SIZE == 0) {
-		if (cur_count == 0)
-			*mitem =
-				win_realloc_items(NULL, cur_count, cur_count + DIR_INC_SIZE);
-		else
-			*mitem =
-				win_realloc_items(*mitem, cur_count, cur_count + DIR_INC_SIZE);
+		*chm_itemcount = cur_count + DIR_INC_SIZE;
+		*mitem = win_realloc_items(*mitem, cur_count, *chm_itemcount);
+
 		if (*mitem == NULL) {
 			((p_fs_chm_enum) context)->cur_count = 0;
 			return CHM_ENUMERATOR_FAILURE;
 		}
+
 		item = *mitem;
 	}
 
@@ -777,6 +799,7 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 							dword selbcolor)
 {
 	extern dword filecount;
+	dword itemcount;
 
 	win_item_destroy(mitem, &filecount);
 
@@ -788,12 +811,16 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 		freq_leave(fid);
 		return 0;
 	}
-	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
+
+	itemcount = DIR_INC_SIZE;
+	*mitem = win_realloc_items(NULL, 0, itemcount);
+
 	if (*mitem == NULL) {
 		chm_close(chm);
 		freq_leave(fid);
 		return 0;
 	}
+
 	item = *mitem;
 	STRCPY_S(item[0].name, "<..>");
 	buffer_copy_string(item[0].compname, "..");
@@ -814,11 +841,16 @@ extern dword fs_chm_to_menu(const char *chmfile, p_win_menuitem * mitem,
 	cenum.selicolor = selicolor;
 	cenum.selrcolor = selrcolor;
 	cenum.selbcolor = selbcolor;
+
+	chm_itemcount = &itemcount;
 	chm_enumerate(chm, CHM_ENUMERATE_NORMAL | CHM_ENUMERATE_FILES, chmEnum,
 				  (void *) &cenum);
 
 	chm_close(chm);
 	freq_leave(fid);
+
+	*mitem = win_realloc_items(*mitem, itemcount, cenum.cur_count);
+
 	return cenum.cur_count;
 }
 
@@ -828,19 +860,24 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 {
 	buffer *pbuf = NULL;
 	extern dword filecount;
+	p_win_menuitem item = NULL;
+	dword cur_count = 1;
+	dword itemcount;
+	int fid;
 
 	win_item_destroy(mitem, &filecount);
 
-	int fid = freq_enter_hotzone();
-	p_win_menuitem item = NULL;
+	fid = freq_enter_hotzone();
 
-	*mitem = win_realloc_items(NULL, 0, DIR_INC_SIZE);
+	itemcount = DIR_INC_SIZE;
+	*mitem = win_realloc_items(NULL, 0, itemcount);
+
 	if (*mitem == NULL) {
 		freq_leave(fid);
 		return 0;
 	}
+
 	item = *mitem;
-	dword cur_count = 1;
 
 	STRCPY_S(item[0].name, "<..>");
 	buffer_copy_string(item[0].compname, "..");
@@ -869,9 +906,12 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 
 		if (cur_count > 1) {
 			if (cur_count > DIR_INC_SIZE) {
-				*mitem = win_realloc_items(*mitem, DIR_INC_SIZE, cur_count);
+				itemcount = cur_count;
+				*mitem = win_realloc_items(*mitem, DIR_INC_SIZE, itemcount);
+
 				if (*mitem == NULL)
 					break;
+
 				item = *mitem;
 			}
 
@@ -926,11 +966,16 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 #endif
 		}
 	} while (false);
+
 	if (pbuf)
 		buffer_free(pbuf);
+
 	freq_leave(fid);
 #define MAX_CHAP_LEN 500
-	return (cur_count > 1 && cur_count < MAX_CHAP_LEN) ? cur_count : 1;
+	cur_count = (cur_count > 1 && cur_count < MAX_CHAP_LEN) ? cur_count : 1;
+	*mitem = win_realloc_items(*mitem, itemcount, cur_count);
+
+	return cur_count;
 }
 
 extern t_fs_filetype fs_file_get_type(const char *filename)
