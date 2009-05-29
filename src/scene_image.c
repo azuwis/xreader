@@ -1683,6 +1683,7 @@ dword scene_readimage(dword selidx)
 
 		if (img_needrf) {
 			if (config.use_image_queue) {
+				reset_image_show_ptr();
 				cache_delete_first();
 
 				if (cache_get_image(selidx) != 0) {
@@ -1801,6 +1802,8 @@ dword scene_readimage(dword selidx)
 		scene_image_delay_action();
 	}
 
+	reset_image_show_ptr();
+
 	if (config.use_image_queue) {
 		cache_on(false);
 		cache_free();
@@ -1808,11 +1811,6 @@ dword scene_readimage(dword selidx)
 	}
 
 	imgreading = false;
-
-	if (imgshow != NULL && imgshow != imgdata) {
-		free(imgshow);
-		imgshow = NULL;
-	}
 
 	if (config.use_image_queue) {
 	} else {
