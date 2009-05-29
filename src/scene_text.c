@@ -847,6 +847,12 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 				   filelist[selidx].shortname->ptr,
 				   filelist[selidx].compname->ptr, where);
 		freq_leave(fid);
+
+		if (g_bm != NULL) {
+			bookmark_close(g_bm);
+			g_bm = NULL;
+		}
+
 		return 1;
 	}
 
