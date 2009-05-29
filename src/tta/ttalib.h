@@ -63,7 +63,7 @@
 #define ISO_BUFFER_LENGTH       (4608)
 #define ISO_NBUFFERS            (1)
 #define ISO_BUFFERS_SIZE        (ISO_BUFFER_LENGTH*ISO_NBUFFERS)
-#define PCM_BUFFER_LENGTH       (4608)
+#define PCM_BUFFER_LENGTH       (1024)
 
 typedef struct
 {
