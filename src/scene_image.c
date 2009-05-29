@@ -1291,6 +1291,7 @@ static void next_image(dword * selidx, bool * should_exit)
 
 	if (config.use_image_queue) {
 		cache_next_image();
+		cache_delete_first();
 	}
 }
 
@@ -1318,6 +1319,7 @@ static void prev_image(dword * selidx)
 
 	if (config.use_image_queue) {
 		cache_next_image();
+		cache_delete_first();
 	}
 }
 
@@ -1685,13 +1687,15 @@ dword scene_readimage(dword selidx)
 				int ret;
 
 				reset_image_show_ptr();
-				cache_delete_first();
-
 				ret = cache_get_image(selidx);
 
 				if (ret != 0) {
 					report_image_error(ret);
 					break;
+				}
+
+				if (config.imgbrightness != 100) {
+					recalc_brightness();
 				}
 
 				img_needrf = false;
