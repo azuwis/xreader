@@ -247,8 +247,8 @@ static int cache_add_by_selidx(dword selidx, int where)
 	cache_lock();
 
 	memset(&img, 0, sizeof(img));
-	img.archname = strdup(archname);
-	img.filename = strdup(filename);
+	img.archname = archname;
+	img.filename = filename;
 	img.where = where;
 	img.status = CACHE_INIT;
 	img.selidx = selidx;
