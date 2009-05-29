@@ -291,7 +291,6 @@ int start_cache_next_image(void)
 		dbg_printf(d, "SERVER: %s: Memory usage %uKB, OK to go now", __func__,
 				   (unsigned) ccacher.memory_usage / 1024);
 
-	alarmed = false;
 
 	cache_lock();
 
@@ -348,6 +347,7 @@ int start_cache_next_image(void)
 	}
 
   load:
+	alarmed = false;
 	ft = fs_file_get_type(tmp.filename);
 	dbg_switch(d, 0);
 	int fid = freq_enter_hotzone();
