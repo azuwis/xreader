@@ -424,7 +424,11 @@ static int tta_get_info(struct music_info *pinfo)
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
+#ifdef _DEBUG
+		pinfo->psp_freq[0] = 222;
+#else
 		pinfo->psp_freq[0] = 111;
+#endif
 		pinfo->psp_freq[1] = pinfo->psp_freq[0] / 2;
 	}
 	if (pinfo->type & MD_GET_FREQ) {
