@@ -38,8 +38,6 @@
 
 #ifdef ENABLE_WAVPACK
 
-#define WVPACK_BUFFERED_READER_BUFFER_SIZE (256 * 1024)
-
 static int __end(void);
 
 #define MAX_BLOCK_SIZE (1024 * 8)
