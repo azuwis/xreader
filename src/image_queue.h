@@ -33,10 +33,11 @@ typedef struct _cacher_context
 
 	cache_image_t *caches;
 	size_t caches_cap, caches_size;
-	SceUID cacher_locker, cacher_thread;
+	SceUID cacher_locker;
 } cacher_context;
 
-int cache_init(unsigned max_cache_img, dword * c_selidx);
+int cache_init(void);
+int cache_setup(unsigned max_cache_img, dword * c_selidx);
 void cache_free(void);
 void dbg_dump_cache(void);
 int cache_get_size();
@@ -45,6 +46,7 @@ void cache_next_image(void);
 void cache_on(bool on);
 int cache_delete_first(void);
 int cache_get_loaded_size();
+int cache_routine(void);
 
 int image_queue_test(void);
 

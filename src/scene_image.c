@@ -1666,7 +1666,7 @@ dword scene_readimage(dword selidx)
 		imgh = PSP_SCREEN_HEIGHT;
 
 	if (config.use_image_queue) {
-		cache_init(config.max_cache_img, &selidx);
+		cache_setup(config.max_cache_img, &selidx);
 		cache_set_forward(true);
 		cache_on(true);
 	}
@@ -1808,7 +1808,6 @@ dword scene_readimage(dword selidx)
 
 	if (config.use_image_queue) {
 		cache_on(false);
-		cache_free();
 	}
 
 	imgreading = false;

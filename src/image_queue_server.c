@@ -28,13 +28,13 @@ volatile dword *cache_selidx = NULL;
 
 volatile cacher_context ccacher;
 
-static volatile bool cacher_should_exit = false;
-static volatile bool cacher_exited = false;
 static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
 
 static dword total_filesize;
 static dword total_datasize;
+
+static bool alarm1 = false, alarm2 = false;
 
 enum
 {
@@ -83,6 +83,9 @@ void cache_on(bool on)
 
 		total_filesize = 0;
 		total_datasize = 0;
+
+		alarm1 = false;
+		alarm2 = false;
 	}
 
 	ccacher.on = on;
@@ -101,6 +104,7 @@ static void cache_clear_without_lock()
 	for (i = 0; i < ccacher.caches_size; ++i) {
 		if (ccacher.caches[i].data != NULL) {
 			free(ccacher.caches[i].data);
+			ccacher.caches[i].data = NULL;
 		}
 
 		if (ccacher.caches[i].status == CACHE_OK) {
@@ -136,19 +140,14 @@ void cache_set_forward(bool forward)
 /**
  * 删除缓存, 并释放资源
  */
-static int cache_delete_without_lock(cache_image_t * p)
+static int cache_delete_without_lock(size_t pos)
 {
-	size_t pos;
-
-	if (p == NULL)
-		return -1;
+	cache_image_t *p = &ccacher.caches[pos];
 
 	if (p->data != NULL) {
 		free(p->data);
 		p->data = NULL;
 	}
-
-	pos = p - ccacher.caches;
 
 	if (p->status == CACHE_OK) {
 		ccacher.memory_usage -= p->width * p->height * sizeof(pixel);
@@ -169,7 +168,7 @@ int cache_delete_first(void)
 	if (ccacher.caches_size != 0 && ccacher.caches != NULL) {
 		int ret;
 
-		ret = cache_delete_without_lock(&ccacher.caches[0]);
+		ret = cache_delete_without_lock(0);
 		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
 		cache_unlock();
 
@@ -264,7 +263,6 @@ int start_cache_next_image(void)
 	cache_image_t *p = NULL;
 	cache_image_t tmp;
 	t_fs_filetype ft;
-	static bool alarmed = false;
 	dword used_memory, free_memory;
 
 	free_memory = get_avail_memory();
@@ -275,20 +273,23 @@ int start_cache_next_image(void)
 		used_memory = 13 * 1024 * 1024L - free_memory;
 	}
 
-	if (ccacher.memory_usage > used_memory) {
-		if (!alarmed)
-			dbg_printf(d, "SERVER: %s: Memory usage %uKB, refuse to cache",
-					   __func__, (unsigned) ccacher.memory_usage / 1024);
+	if (ccacher.memory_usage >= used_memory) {
+		if (!alarm1) {
+			dbg_printf(d, "SERVER: %s: memory usage %uKB >= used memory %uKB, refuse to cache",
+					   __func__, (unsigned) ccacher.memory_usage / 1024, (unsigned)used_memory / 1024);
+		}
 
-		alarmed = true;
+		alarm1 = true;
 
 		return -1;
+	} else {
+		if (alarm1) {
+			dbg_printf(d, "SERVER: %s: memory usage %uKB < used memory %uKB, continue",
+					__func__, (unsigned) ccacher.memory_usage / 1024, (unsigned)used_memory / 1024);
+		}
+
+		alarm1 = false;
 	}
-
-	if (alarmed)
-		dbg_printf(d, "SERVER: %s: Memory usage %uKB, OK to go now", __func__,
-				   (unsigned) ccacher.memory_usage / 1024);
-
 
 	cache_lock();
 
@@ -318,8 +319,6 @@ int start_cache_next_image(void)
 			ratio = 0;
 		}
 
-		dbg_printf(d, "Total compress ratio: %.2f", ratio);
-
 		if (ratio != 0) {
 			dword predict_usage;
 
@@ -331,21 +330,29 @@ int start_cache_next_image(void)
 					goto load;
 				}
 
-				if (!alarmed)
+				if (!alarm2)
 					dbg_printf(d,
-							   "SERVER: %s: memory predict usage %dkb overload(%dkb free), refuse to cache",
+							   "SERVER: %s: memory predict usage %dKB >= free_memory %dKB, refuse to cache",
 							   __func__, (unsigned) predict_usage / 1024,
 							   (unsigned) free_memory / 1024);
 
-				alarmed = true;
+				alarm2 = true;
 
 				return -1;
+			} else {
+				if (alarm2) {
+					dbg_printf(d,
+							"SERVER: %s: memory predict usage %dKB < free_memory %dKB, continue",
+							__func__, (unsigned) predict_usage / 1024,
+							(unsigned) free_memory / 1024);
+				}
+
+				alarm2 = false;
 			}
 		}
 	}
 
   load:
-	alarmed = false;
 	ft = fs_file_get_type(tmp.filename);
 	dbg_switch(d, 0);
 	int fid = freq_enter_hotzone();
@@ -361,13 +368,16 @@ int start_cache_next_image(void)
 
 		memory_used = tmp.width * tmp.height * sizeof(pixel);
 //      dbg_printf(d, "SERVER: Image %u finished loading", (unsigned)tmp.selidx);
+		cache_lock();
 		ccacher.memory_usage += memory_used;
+		cache_unlock();
 //      dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) ccacher.memory_usage / 1024);
 		total_filesize += tmp.filesize;
 		total_datasize += memory_used;
 		tmp.status = CACHE_OK;
-	} else if (tmp.result == 4 || tmp.result == 5) {
+	} else if ((tmp.result == 4 || tmp.result == 5) || (tmp.where == scene_in_rar && tmp.result == 6)) {
 		// out of memory
+		// if unrar throwed a bad_cast exception when run out of memory, result can be 6 also.
 
 		// is memory completely out of memory?
 		if (ccacher.memory_usage == 0) {
@@ -496,79 +506,52 @@ static int start_cache(dword selidx)
 	return re;
 }
 
-static int thread_cacher(SceSize args, void *argp)
+int cache_routine(void)
 {
-	while (!cacher_should_exit) {
-		if (ccacher.on) {
-			cacher_cleared = false;
+	if (ccacher.on) {
+		cacher_cleared = false;
 
-			while (ccacher.selidx_moved == false && !cacher_should_exit
-				   && ccacher.on) {
-				// cache next image
-				start_cache_next_image();
-				xrKernelDelayThread(1000000);
-			}
-
-			if (cacher_should_exit)
-				break;
-
-			if (!ccacher.on) {
-				continue;
-			}
-
-			start_cache(*cache_selidx);
-			ccacher.selidx_moved = false;
-		} else {
-			// clean up all remain cache now
-			cache_clear();
-			cacher_cleared = true;
+		while (ccacher.selidx_moved == false && ccacher.on) {
+			// cache next image
+			start_cache_next_image();
+			xrKernelDelayThread(1000000);
 		}
 
-		xrKernelDelayThread(100000);
+		if (!ccacher.on) {
+			return 0;
+		}
+
+		start_cache(*cache_selidx);
+		ccacher.selidx_moved = false;
+	} else {
+		// clean up all remain cache now
+		cache_clear();
+		cacher_cleared = true;
 	}
 
-	cacher_exited = true;
-	xrKernelExitDeleteThread(0);
+	xrKernelDelayThread(100000);
 
 	return 0;
 }
 
-int cache_init(unsigned max_cache_img, dword * c_selidx)
+int cache_init(void)
 {
-	int ret;
-
-	dbg_printf(d, "set max memory usage to %ukb",
-			   (unsigned) get_avail_memory() / 1024);
-
 	ccacher.cacher_locker = xrKernelCreateSema("Cache Mutex", 0, 1, 1, 0);
-	ccacher.cacher_thread =
-		xrKernelCreateThread("thread_cacher", thread_cacher, 90, 0x10000, 0,
-							 NULL);
-
-	if (ccacher.cacher_thread < 0) {
-		dbg_printf(d, "create thread failed: 0x%08x",
-				   (unsigned) ccacher.cacher_thread);
-
-		return -1;
-	}
-
-	cache_selidx = c_selidx;
 
 	cacher_cleared = true;
-	cacher_should_exit = false;
-	cacher_exited = false;
 
 	ccacher.caches_size = 0;
-	ccacher.caches_cap = max_cache_img;
 	ccacher.caches = calloc(ccacher.caches_cap, sizeof(ccacher.caches[0]));
 
 	cache_del_event = xrKernelCreateEventFlag("cache_del_event", 0, 0, 0);
 
-	if ((ret = xrKernelStartThread(ccacher.cacher_thread, 0, NULL)) < 0) {
-		dbg_printf(d, "start thread failed: 0x%08x", (unsigned) ret);
+	return 0;
+}
 
-		return -1;
-	}
+int cache_setup(unsigned max_cache_img, dword * c_selidx)
+{
+	cache_selidx = c_selidx;
+	ccacher.caches_cap = max_cache_img;
 
 	return 0;
 }
@@ -579,16 +562,6 @@ void cache_free(void)
 
 	while (!cacher_cleared) {
 		xrKernelDelayThread(100000);
-	}
-
-	if (ccacher.cacher_thread >= 0) {
-		cacher_should_exit = true;
-
-		while (!cacher_exited) {
-			xrKernelDelayThread(100000);
-		}
-
-		ccacher.cacher_thread = -1;
 	}
 
 	if (ccacher.cacher_locker >= 0) {

@@ -57,6 +57,7 @@
 #include "buffer.h"
 #include "musicinfo.h"
 #include "power.h"
+#include "image_queue.h"
 #include "xrhal.h"
 
 struct music_list
@@ -769,6 +770,15 @@ static int music_thread(SceSize arg, void *argp)
 				xrRtcGetCurrentTick(&start);
 			}
 		}
+
+		{
+			int thid = sceKernelGetThreadId();
+			int oldpri = sceKernelGetThreadCurrentPriority();
+
+			sceKernelChangeThreadPriority(thid, 90);
+			cache_routine();
+			sceKernelChangeThreadPriority(thid, oldpri);
+		}
 	}
 
 	g_thread_actived = 0;
@@ -781,6 +791,8 @@ int music_init(void)
 {
 	pspTime tm;
 
+	cache_init();
+	
 	xrRtcGetCurrentClockLocalTime(&tm);
 	srand(tm.microseconds);
 	music_sema = xrKernelCreateSema("Music Sema", 0, 1, 1, NULL);
@@ -883,6 +895,8 @@ int music_free(void)
 
 	if (ret < 0)
 		return ret;
+
+	cache_free();
 
 	return 0;
 }
