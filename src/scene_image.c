@@ -1650,7 +1650,6 @@ dword scene_readimage(dword selidx)
 {
 	u64 timer_start, timer_end;
 	u64 slide_start, slide_end;
-	int fid = -1;
 
 	width_rotated = 0, height_rotated = 0, thumb_width = 0, thumb_height =
 		0, paintleft = 0, painttop = 0;
@@ -1669,7 +1668,6 @@ dword scene_readimage(dword selidx)
 		imgh = PSP_SCREEN_HEIGHT;
 
 	if (config.use_image_queue) {
-		fid = freq_enter_hotzone();
 		cache_init(config.max_cache_img, &selidx);
 		cache_set_forward(true);
 		cache_on(true);
@@ -1813,7 +1811,6 @@ dword scene_readimage(dword selidx)
 	if (config.use_image_queue) {
 		cache_on(false);
 		cache_free();
-		freq_leave(fid);
 	}
 
 	imgreading = false;
