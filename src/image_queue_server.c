@@ -447,6 +447,8 @@ int start_cache_next_image(void)
 		if (ccacher.memory_usage == 0) {
 //          dbg_printf(d, "SERVER: Image %u finished failed(%u), giving up", (unsigned)tmp.selidx, tmp.result);
 			tmp.status = CACHE_FAILED;
+			copy_cache_image(p, &tmp);
+			p->data = NULL;
 		} else {
 			// retry later
 //          dbg_printf(d, "SERVER: Image %u finished failed(%u), retring", (unsigned)tmp.selidx, tmp.result);
@@ -457,6 +459,8 @@ int start_cache_next_image(void)
 	} else {
 //      dbg_printf(d, "SERVER: Image %u finished failed(%u)", (unsigned)tmp.selidx, tmp.result);
 		tmp.status = CACHE_FAILED;
+		copy_cache_image(p, &tmp);
+		p->data = NULL;
 		free_cache_image(&tmp);
 	}
 
