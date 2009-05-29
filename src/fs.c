@@ -196,6 +196,7 @@ extern dword fs_list_device(const char *dir, const char *sdir,
 	item = *mitem;
 	STRCPY_S(item[0].name, "<MemoryStick>");
 	buffer_copy_string(item[0].compname, "ms0:");
+	buffer_copy_string(item[0].shortname, "ms0:");
 	item[0].data = (void *) fs_filetype_dir;
 	item[0].width = 13;
 	item[0].selected = false;
