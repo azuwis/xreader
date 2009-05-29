@@ -22,21 +22,27 @@
 
 #include "config.h"
 
-#ifdef ENABLE_NLS
-typedef struct _TextDomainEntry TextDomainEntry;
-typedef struct _TextDomainEntry *PTextDomainEntry;
-
-struct _TextDomainEntry
+#ifdef __cplusplus
+extern "C"
 {
-	char *domainname;
-	char *dirname;
-	PTextDomainEntry next;
-};
+#endif
 
-const char *simple_gettext(const char *msgid);
-char *simple_bindtextdomain(const char *domainname, const char *dirname);
-char *simple_textdomain(const char *domainname);
-void simple_gettext_destroy(void);
+#ifdef ENABLE_NLS
+
+	typedef struct _TextDomainEntry TextDomainEntry;
+	typedef struct _TextDomainEntry *PTextDomainEntry;
+
+	struct _TextDomainEntry
+	{
+		char *domainname;
+		char *dirname;
+		PTextDomainEntry next;
+	};
+
+	const char *simple_gettext(const char *msgid);
+	char *simple_bindtextdomain(const char *domainname, const char *dirname);
+	char *simple_textdomain(const char *domainname);
+	void simple_gettext_destroy(void);
 
 #define _(STRING) simple_gettext(STRING)
 #else
@@ -47,4 +53,8 @@ void simple_gettext_destroy(void);
 #define simple_textdomain(domainname) (domainname)
 #define simple_gettext_destroy()
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

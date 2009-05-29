@@ -39,6 +39,7 @@
 #include "ssv.h"
 #include "config.h"
 #include "xrhal.h"
+#include "simple_gettext.h"
 
 #ifdef ENABLE_APE
 
@@ -534,7 +535,8 @@ static int ape_get_info(struct music_info *pinfo)
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
 		if (show_encoder_msg && g_status != ST_UNKNOWN) {
-			SPRINTF_S(pinfo->encode_msg, "%s Ratio: %.3f", g_encode_name,
+			SPRINTF_S(pinfo->encode_msg, "%s %s: %.3f", g_encode_name,
+					  _("Ñ¹ËõÂÊ"),
 					  1.0 * g_info.filesize / (g_info.samples *
 											   g_info.channels *
 											   (g_ape_bits_per_sample / 8)));
