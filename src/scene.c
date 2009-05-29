@@ -5171,6 +5171,7 @@ static void scene_open_image(dword * idx)
 #ifdef DMALLOC
 	dmalloc_log_changed(mark, 1, 0, 1);
 	dmalloc_log_stats();
+//	dmalloc_log_unfreed();
 #endif
 }
 #endif
@@ -5519,7 +5520,8 @@ extern void scene_init(void)
 	char infomsg[256];
 
 #ifdef DMALLOC
-    dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-heap,check-funcs,check-blank,print-messages,inter=100");
+//    dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-heap,check-funcs,check-blank,print-messages,inter=100");
+	dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-funcs,check-blank,print-messages");
 	unsigned mark;
 
 	mark = dmalloc_mark();
@@ -5528,6 +5530,7 @@ extern void scene_init(void)
 
 	dmalloc_log_changed(mark, 1, 0, 1);
 	dmalloc_log_stats();
+//	dmalloc_log_unfreed();
 
 	if (p == NULL) {
 		dbg_printf(d, "cannot malloc 4096 bytes yet");
