@@ -24,5 +24,6 @@ void cache_next_image(void);
 
 int image_queue_test(void);
 void cache_on(bool on);
+int cache_wait_empty();
 
 #endif
