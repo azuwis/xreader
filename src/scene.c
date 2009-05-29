@@ -5160,6 +5160,7 @@ static void scene_open_image(dword * idx)
 
 #ifdef DMALLOC
 	dmalloc_log_changed(mark, 1, 0, 1);
+	dmalloc_log_stats();
 #endif
 }
 #endif
@@ -5516,6 +5517,7 @@ extern void scene_init(void)
 	void *p = malloc(4096);
 
 	dmalloc_log_changed(mark, 1, 0, 1);
+	dmalloc_log_stats();
 
 	if (p == NULL) {
 		dbg_printf(d, "cannot malloc 4096 bytes yet");
