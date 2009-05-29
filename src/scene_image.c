@@ -1631,7 +1631,7 @@ static int cache_get_image(dword selidx)
 				   (unsigned) img->selidx, pspDiffTime(&now, &start),
 				   (unsigned) img->width, (unsigned) img->height, img->status,
 				   img->result);
-		ret = -1;
+		ret = img->result;
 	}
 
 	if (ret == 0) {
@@ -1683,12 +1683,18 @@ dword scene_readimage(dword selidx)
 
 		if (img_needrf) {
 			if (config.use_image_queue) {
+				int ret;
+
 				reset_image_show_ptr();
 				cache_delete_first();
 
-				if (cache_get_image(selidx) != 0) {
+				ret = cache_get_image(selidx);
+
+				if (ret != 0) {
+					report_image_error(ret);
 					break;
 				}
+
 				img_needrf = false;
 			} else {
 				int fid;
