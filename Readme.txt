@@ -22,7 +22,6 @@ xReaderÖ§³Ö²¥·ÅMP3£¨Ó²/Èí½âÂë£©¡¢Musepack(MPC)¡¢TTA¡¢FLAC¡¢APE¡¢WAV¸ñÊ½¼°Æä±êÇ©µ
 
 Î´À´Õ¹Íû£º
 ½«Ö§³ÖGraphics Engine»æÍ¼
-½«Ö§³Ö¶àÏß³Ì×Ô¶¯Ô¤¶Á¹¦ÄÜ£¬ÏµÍ³¿ÕÏÐ×Ô¶¯»º´æÍ¼Ïñ»òÎÄ×Ö¡£
 ½«Ö§³ÖLRC¸è´Ê×Ô¶¯ËÑË÷ÏÂÔØ
 ½«ÖØ¹¹´úÂëÒÔ±ã´úÂë¸´ÓÃ
 
@@ -210,3 +209,11 @@ wv_buffer_size=262144
 musicdrv_opts=show_encoder_msg=on mp3_brute_mode=on mp3_use_me=on
 
 ½«ÏÔÊ¾±àÂëÆ÷ÐÅÏ¢£¬²¢Ê¹ÓÃ±©Á¦·¨Ó²¼þ½âÂëMP3
+
+image:max_cache_img
+Í¼ÏñÔ¤¶Á×´Ì¬ÏÂ×î¶à»º³åµÄÍ¼Ïñ¸öÊý£¬Ä¬ÈÏÎª10£¬Èç¹ûÎª0½«¹Ø±ÕÔ¤¶Á¹¦ÄÜ
+
+image:use_image_queue
+ÊÇ·ñ¿ªÆôÍ¼ÏñÔ¤¶Á¹¦ÄÜ£¬Ä¬ÈÏÎªÊÇ
+
+
