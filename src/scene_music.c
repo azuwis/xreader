@@ -628,11 +628,13 @@ static void scene_draw_mp3bar(bool * firstdup)
 			  get_week_str(pos), tm.hour, tm.minutes, tm.seconds, (int) cpu,
 			  (int) bus);
 
+#ifdef _DEBUG
 	if (config.use_image_queue) {
 		char temp[80];
 		SPRINTF_S(temp, " %u/%dKB", cache_get_loaded_size(), ccacher.memory_usage / 1024);
 		STRCAT_S(infostr, temp);
 	}
+#endif
 
 	disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE,
 				   (const byte *) infostr);
