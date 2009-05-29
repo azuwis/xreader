@@ -341,6 +341,8 @@ int start_cache_next_image(void)
 							   (unsigned) free_memory / 1024);
 
 				alarmed = true;
+
+				return -1;
 			}
 		}
 	}
