@@ -73,7 +73,11 @@ void buffer_free(buffer * b)
 	if (!b)
 		return;
 
-	free(b->ptr);
+	if (b->ptr != NULL) {
+		free(b->ptr);
+		b->ptr = NULL;
+	}
+
 	free(b);
 }
 
