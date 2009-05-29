@@ -1,6 +1,13 @@
 #ifndef IMAGE_QUEUE_H
 #define IMAGE_QUEUE_H
 
+enum
+{
+	CACHE_INIT = 0,
+	CACHE_OK = 1,
+	CACHE_FAILED = 2
+};
+
 typedef struct _cache_image_t
 {
 	const char *archname;

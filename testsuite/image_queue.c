@@ -25,16 +25,6 @@
 
 extern p_win_menuitem filelist;
 
-#define MAX_CACHE_IMAGE 10
-#define MAX_MEMORY_USAGE ( 40 * 1024 * 1024L )
-
-enum
-{
-	CACHE_INIT = 0,
-	CACHE_OK = 1,
-	CACHE_FAILED = 2
-};
-
 typedef struct _cacher_context
 {
 	bool on;
@@ -80,6 +70,25 @@ void parse_input()
 //  ctrl_waitrelease();
 }
 
+int cache_wait_avail()
+{
+	while (ccacher.caches_size == 0) {
+		xrKernelDelayThread(10000);
+	}
+
+	return 0;
+}
+
+void cache_wait_loaded()
+{
+	cache_image_t *img = &ccacher.caches[0];
+	
+	while (img->status == CACHE_INIT) {
+//      dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
+		xrKernelDelayThread(10000);
+	}
+}
+
 int get_image(dword selidx)
 {
 	cache_image_t *img;
@@ -94,10 +103,7 @@ int get_image(dword selidx)
 
 	DBG_ASSERT(d, "CLIENT: img->selidx == selidx", img->selidx == selidx);
 
-	while (img->status == CACHE_INIT) {
-//      dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
-		xrKernelDelayThread(10000);
-	}
+	cache_wait_loaded();
 
 	xrRtcGetCurrentTick(&now);
 

@@ -30,13 +30,6 @@ extern dword selidx;
 #define MAX_CACHE_IMAGE 10
 #define MAX_MEMORY_USAGE ( 40 * 1024 * 1024L )
 
-enum
-{
-	CACHE_INIT = 0,
-	CACHE_OK = 1,
-	CACHE_FAILED = 2
-};
-
 typedef struct _cacher_context
 {
 	bool on;
@@ -227,15 +220,6 @@ int cache_delete_first(void)
 
 	cache_unlock();
 	return -1;
-}
-
-int cache_wait_avail()
-{
-	while (ccacher.caches_size == 0) {
-		xrKernelDelayThread(10000);
-	}
-
-	return 0;
 }
 
 static cache_image_t *cache_get(const char *archname, const char *filename);
