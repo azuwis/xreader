@@ -21,6 +21,7 @@
 #include "ctrl.h"
 #include "xrhal.h"
 #include "kubridge.h"
+#include "common/utils.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -568,13 +569,11 @@ int cache_routine(void)
 int cache_init(void)
 {
 	ccacher.cacher_locker = xrKernelCreateSema("Cache Mutex", 0, 1, 1, 0);
-
-	cacher_cleared = true;
-
 	ccacher.caches_size = 0;
-	ccacher.caches = calloc(ccacher.caches_cap, sizeof(ccacher.caches[0]));
+	ccacher.caches_cap = 0;
 
 	cache_del_event = xrKernelCreateEventFlag("cache_del_event", 0, 0, 0);
+	ccacher.caches = NULL;
 
 	return 0;
 }
@@ -583,6 +582,10 @@ int cache_setup(unsigned max_cache_img, dword * c_selidx)
 {
 	cache_selidx = c_selidx;
 	ccacher.caches_cap = max_cache_img;
+
+	ccacher.caches = safe_realloc(ccacher.caches, ccacher.caches_cap * sizeof(ccacher.caches[0]));
+
+	cacher_cleared = true;
 
 	return 0;
 }
