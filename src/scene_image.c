@@ -1301,7 +1301,7 @@ static void prev_image(dword * selidx)
 		cache_set_forward(false);
 		ctrl_waitrelease();
 	}
-				
+
 	do {
 		if (*selidx > 0)
 			(*selidx)--;
@@ -1325,6 +1325,36 @@ static bool slideshow_move = false;
 static int image_handle_input(dword * selidx, dword key)
 {
 	slideshow_move = false;
+
+#ifdef ENABLE_ANALOG
+	if (config.img_enable_analog) {
+		int x, y, orgtop = curtop, orgleft = curleft;
+
+		if (ctrl_analog(&x, &y)) {
+			slideshow_move = true;
+			x = x / 31 * (int) config.imgmvspd / 2;
+			y = y / 31 * (int) config.imgmvspd / 2;
+			curtop += y;
+
+			if (curtop + imgh > height_rotated)
+				curtop = (int) height_rotated - imgh;
+
+			if (curtop < 0)
+				curtop = 0;
+
+			curleft += x;
+
+			if (curleft + PSP_SCREEN_WIDTH > width_rotated)
+				curleft = (int) width_rotated - PSP_SCREEN_WIDTH;
+
+			if (curleft < 0)
+				curleft = 0;
+
+			thumb = (config.thumb == conf_thumb_scroll);
+			img_needrp = (thumb || orgtop != curtop || orgleft != curleft);
+		}
+	}
+#endif
 
 	if (key == 0)
 		goto next;
@@ -1384,36 +1414,7 @@ static int image_handle_input(dword * selidx, dword key)
 			goto next;
 
 		prev_image(selidx);
-	}
-#ifdef ENABLE_ANALOG
-	else if (key == CTRL_ANALOG && config.img_enable_analog) {
-		int x, y, orgtop = curtop, orgleft = curleft;
-
-		slideshow_move = true;
-		ctrl_analog(&x, &y);
-		x = x / 31 * (int) config.imgmvspd / 2;
-		y = y / 31 * (int) config.imgmvspd / 2;
-		curtop += y;
-
-		if (curtop + imgh > height_rotated)
-			curtop = (int) height_rotated - imgh;
-
-		if (curtop < 0)
-			curtop = 0;
-
-		curleft += x;
-
-		if (curleft + PSP_SCREEN_WIDTH > width_rotated)
-			curleft = (int) width_rotated - PSP_SCREEN_WIDTH;
-
-		if (curleft < 0)
-			curleft = 0;
-
-		thumb = (config.thumb == conf_thumb_scroll);
-		img_needrp = (thumb || orgtop != curtop || orgleft != curleft);
-	}
-#endif
-	else if (key == config.imgkey[2] || key == config.imgkey2[2]) {
+	} else if (key == config.imgkey[2] || key == config.imgkey2[2]) {
 		ctrl_waitrelease();
 
 		if (config.fit == conf_fit_custom)
@@ -1564,6 +1565,7 @@ static int scene_slideshow_forward(dword * selidx)
 static int cache_wait_avail()
 {
 	dword key;
+
 	while (ccacher.caches_size == 0) {
 		key = ctrl_read();
 
@@ -1631,8 +1633,6 @@ static int cache_get_image(dword selidx)
 				   img->result);
 		ret = -1;
 	}
-
-//	disp_putimage(0, 0, img->width, img->height, 0, 0, img->data);
 
 	if (ret == 0) {
 		imgdata = img->data;
@@ -1704,7 +1704,7 @@ dword scene_readimage(dword selidx)
 				img_needrf = false;
 				xrRtcGetCurrentTick(&dbgnow);
 				dbg_printf(d, _("◊∞‘ÿÕºœÒ ±º‰: %.2f√Î"),
-						pspDiffTime(&dbgnow, &dbglasttick));
+						   pspDiffTime(&dbgnow, &dbglasttick));
 				freq_leave(fid);
 			}
 		}

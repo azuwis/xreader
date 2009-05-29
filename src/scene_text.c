@@ -1603,10 +1603,21 @@ bool scene_bookmark(PBookViewData pView)
 
 int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 {
+	pView->text_needrp = pView->text_needrb = pView->text_needrf = false;
+
+#ifdef ENABLE_ANALOG
+	if (config.enable_analog) {
+		int x, y;
+
+		if (ctrl_analog(&x, &y)) {
+			move_line_analog(&cur_book_view, x, y);
+		}
+	}
+#endif
+
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 	if (key == 0 && config.infobar == conf_infobar_lyric) {
 		pView->text_needrp = true;
-		pView->text_needrb = pView->text_needrf = false;
 	} else
 #endif
 	if (key == (PSP_CTRL_SELECT | PSP_CTRL_START)) {
@@ -1660,16 +1671,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		}
 		scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
 		pView->text_needrp = true;
-	}
-#ifdef ENABLE_ANALOG
-	else if (key == CTRL_ANALOG && config.enable_analog) {
-		int x, y;
-
-		ctrl_analog(&x, &y);
-		move_line_analog(&cur_book_view, x, y);
-	}
-#endif
-	else if (key == ku) {
+	} else if (key == ku) {
 		move_line_up(&cur_book_view, 1);
 	} else if (key == kd) {
 		move_line_down(&cur_book_view, 1);
@@ -1796,8 +1798,7 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		cur_book_view.text_needrp = true;
 
 		freq_leave(fid);
-	} else
-		pView->text_needrp = pView->text_needrb = pView->text_needrf = false;
+	}
 	// reset ticks
 	ticks = 0;
   next:
@@ -2001,6 +2002,10 @@ dword scene_readbook(dword selidx)
 
 	scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
 	while (1) {
+		dword key;
+		int ret;
+		int x, y;
+
 		if (cur_book_view.text_needrf) {
 			if (scene_book_reload(&cur_book_view, selidx)) {
 				free_infobar_image();
@@ -2011,8 +2016,6 @@ dword scene_readbook(dword selidx)
 		if (cur_book_view.text_needrp) {
 			redraw_book(selidx);
 		}
-
-		dword key;
 
 		while ((key = ctrl_read()) == 0) {
 			xrKernelDelayThread(20000);
@@ -2059,8 +2062,15 @@ dword scene_readbook(dword selidx)
 			}
 
 			scene_text_delay_action();
+
+			ctrl_analog(&x, &y);
+
+			if (x < -63 || x > 63 || y < -63 || y > 63) {
+				// avoid empty key
+				key = CTRL_ANALOG;
+				break;
+			}
 		}
-		int ret;
 
 		ret = book_handle_input(&cur_book_view, &selidx, key);
 

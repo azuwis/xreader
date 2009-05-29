@@ -38,7 +38,7 @@ extern void ctrl_init(void);
 extern void ctrl_destroy(void);
 
 #ifdef ENABLE_ANALOG
-extern void ctrl_analog(int *x, int *y);
+extern bool ctrl_analog(int *x, int *y);
 #endif
 extern dword ctrl_read_cont(void);
 extern dword ctrl_read(void);

@@ -66,13 +66,19 @@ extern void ctrl_destroy(void)
 }
 
 #ifdef ENABLE_ANALOG
-extern void ctrl_analog(int *x, int *y)
+extern bool ctrl_analog(int *x, int *y)
 {
 	SceCtrlData ctl;
 
 	xrCtrlReadBufferPositive(&ctl, 1);
 	*x = ((int) ctl.Lx) - 128;
 	*y = ((int) ctl.Ly) - 128;
+
+	if (*x < -63 || *x > 63 || *y < -63 || *y > 63) {
+		return true;
+	}
+
+	return false;
 }
 #endif
 
@@ -114,12 +120,9 @@ extern dword ctrl_read_cont(void)
 	}
 #endif
 
-#ifdef ENABLE_ANALOG
-	if (ctl.Lx < 65 || ctl.Lx > 191 || ctl.Ly < 65 || ctl.Ly > 191)
-		return CTRL_ANALOG | ctl.Buttons;
-#endif
 	last_btn = ctl.Buttons;
 	last_tick = ctl.TimeStamp;
+
 	return last_btn;
 }
 
@@ -158,15 +161,12 @@ extern dword ctrl_read(void)
 
 	xrCtrlReadBufferPositive(&ctl, 1);
 
-#ifdef ENABLE_ANALOG
-	if (ctl.Lx < 65 || ctl.Lx > 191 || ctl.Ly < 65 || ctl.Ly > 191)
-		return CTRL_ANALOG;
-#endif
 	if (ctl.Buttons == last_btn) {
 		if (ctl.TimeStamp - last_tick < CTRL_REPEAT_TIME)
 			return 0;
 		return last_btn;
 	}
+
 	last_btn = ctl.Buttons;
 	last_tick = ctl.TimeStamp;
 	return last_btn;
