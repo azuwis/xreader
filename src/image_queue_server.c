@@ -112,16 +112,6 @@ static void cache_clear_without_lock()
 	int i;
 
 	for (i = 0; i < ccacher.caches_size; ++i) {
-		if (ccacher.caches[i].archname != NULL) {
-			free(ccacher.caches[i].archname);
-			ccacher.caches[i].archname = NULL;
-		}
-
-		if (ccacher.caches[i].filename != NULL) {
-			free(ccacher.caches[i].filename);
-			ccacher.caches[i].filename = NULL;
-		}
-
 		if (ccacher.caches[i].data != NULL) {
 			dbg_printf(d, "%s: %d data 0x%08x", __func__, i,
 					   (unsigned) ccacher.caches[i].data);
@@ -166,16 +156,6 @@ void cache_set_forward(bool forward)
 static int cache_delete_without_lock(size_t pos)
 {
 	cache_image_t *p = &ccacher.caches[pos];
-
-	if (p->archname != NULL) {
-		free(p->archname);
-		p->archname = NULL;
-	}
-
-	if (p->filename != NULL) {
-		free(p->filename);
-		p->filename = NULL;
-	}
 
 	if (p->data != NULL) {
 		dbg_printf(d, "%s: data 0x%08x", __func__, (unsigned) p->data);
