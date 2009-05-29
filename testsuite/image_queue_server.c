@@ -60,35 +60,6 @@ enum
 
 static SceUID cache_del_event = -1;
 
-#if 0
-/// Add lock to malloc
-
-#ifndef F_mlock
-#define F_mlock
-// by default newlib-PSP doesn't have a lock with malloc() / free()
-static unsigned int lock_count = 0;
-static unsigned int intr_flags = 0;
-
-void __malloc_lock(struct _reent *ptr)
-{
-	unsigned int flags = pspSdkDisableInterrupts();
-
-	if (lock_count == 0) {
-		intr_flags = flags;
-	}
-
-	lock_count++;
-}
-
-void __malloc_unlock(struct _reent *ptr)
-{
-	if (--lock_count == 0) {
-		pspSdkEnableInterrupts(intr_flags);
-	}
-}
-#endif
-#endif
-
 static unsigned get_avail_memory(void)
 {
 	int memory;
