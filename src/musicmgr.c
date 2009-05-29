@@ -775,12 +775,12 @@ static int music_thread(SceSize arg, void *argp)
 		}
 
 		{
-			int thid = sceKernelGetThreadId();
-			int oldpri = sceKernelGetThreadCurrentPriority();
+			int thid = xrKernelGetThreadId();
+			int oldpri = xrKernelGetThreadCurrentPriority();
 
-			sceKernelChangeThreadPriority(thid, 90);
+			xrKernelChangeThreadPriority(thid, 90);
 			cache_routine();
-			sceKernelChangeThreadPriority(thid, oldpri);
+			xrKernelChangeThreadPriority(thid, oldpri);
 		}
 	}
 
@@ -795,7 +795,7 @@ int music_init(void)
 	pspTime tm;
 
 	cache_init();
-	
+
 	xrRtcGetCurrentClockLocalTime(&tm);
 	srand(tm.microseconds);
 	music_sema = xrKernelCreateSema("Music Sema", 0, 1, 1, NULL);

@@ -324,17 +324,20 @@ static inline int xrKernelSetEventFlag(SceUID evid, u32 bits)
 	return sceKernelSetEventFlag(evid, bits);
 }
 
-static inline int xrKernelWaitEventFlag(SceUID evid, u32 bits, u32 wait, u32* outBits, SceUInt *timeout)
+static inline int xrKernelWaitEventFlag(SceUID evid, u32 bits, u32 wait,
+										u32 * outBits, SceUInt * timeout)
 {
 	return sceKernelWaitEventFlag(evid, bits, wait, outBits, timeout);
 }
 
-static inline SceUID xrKernelCreateEventFlag (const char *name, int attr, int bits, SceKernelEventFlagOptParam *opt)
+static inline SceUID xrKernelCreateEventFlag(const char *name, int attr,
+											 int bits,
+											 SceKernelEventFlagOptParam * opt)
 {
 	return sceKernelCreateEventFlag(name, attr, bits, opt);
 }
 
-static inline int xrKernelDeleteEventFlag (int evid)
+static inline int xrKernelDeleteEventFlag(int evid)
 {
 	return sceKernelDeleteEventFlag(evid);
 }
@@ -697,6 +700,21 @@ static inline int xrAsfParser_685E0DA7(SceAsfParser * asf, void *ptr, int flag,
 									   void *arg4, u64 * start, u64 * offset)
 {
 	return sceAsfParser_685E0DA7(asf, ptr, flag, arg4, start, offset);
+}
+
+static inline int xrKernelGetThreadId(void)
+{
+	return sceKernelGetThreadId();
+}
+
+static inline int xrKernelGetThreadCurrentPriority(void)
+{
+	return sceKernelGetThreadCurrentPriority();
+}
+
+static inline int xrKernelChangeThreadPriority(SceUID thid, int priority)
+{
+	return sceKernelChangeThreadPriority(thid, priority);
 }
 
 #endif
