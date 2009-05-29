@@ -120,8 +120,9 @@ static inline void reset_image_show_ptr(void)
 {
 	if (imgshow != imgdata && imgshow != NULL) {
 		free(imgshow);
-		imgshow = NULL;
 	}
+
+	imgshow = NULL;
 }
 
 static inline void reset_image_data_ptr(void)
@@ -1632,7 +1633,13 @@ static int cache_get_image(dword selidx)
 	}
 
 //	disp_putimage(0, 0, img->width, img->height, 0, 0, img->data);
-	imgdata = img->data;
+
+	if (ret == 0) {
+		imgdata = img->data;
+	} else {
+		imgdata = NULL;
+	}
+
 	width = img->width;
 	height = img->height;
 
@@ -1643,7 +1650,7 @@ dword scene_readimage(dword selidx)
 {
 	u64 timer_start, timer_end;
 	u64 slide_start, slide_end;
-	int fid;
+	int fid = -1;
 
 	width_rotated = 0, height_rotated = 0, thumb_width = 0, thumb_height =
 		0, paintleft = 0, painttop = 0;
