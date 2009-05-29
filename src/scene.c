@@ -5509,7 +5509,7 @@ extern void scene_init(void)
 	char infomsg[256];
 
 #ifdef DMALLOC
-    dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-funcs,check-blank,print-messages");
+    dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-heap,check-funcs,check-blank,print-messages,inter=100");
 	unsigned mark;
 
 	mark = dmalloc_mark();
