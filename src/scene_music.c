@@ -81,11 +81,13 @@ static u64 start, end;
 extern unsigned int get_free_mem(void)
 {
 #ifdef DMALLOC
-	unsigned long free = 0;
+	unsigned long all = 0;
+	unsigned long allocated = 0;
 
-	dmalloc_get_stats(NULL, NULL, NULL, NULL, &free, NULL, NULL, NULL, NULL);
+	dmalloc_get_stats(NULL, NULL, NULL, &all, &allocated, NULL, NULL, NULL, NULL);
 
-	return free;
+	// return all - allocated;
+	return 25 * 1024 * 1024 - allocated;
 #else
 	void *p[30];
 	unsigned int block_size = 0x04000000;	//最大内存:64MB,必需是2的N次方
