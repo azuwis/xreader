@@ -5512,17 +5512,15 @@ extern void scene_init(void)
 	unsigned mark;
 
 	mark = dmalloc_mark();
-#endif
 
 	void *p = malloc(4096);
 
-#ifdef DMALLOC
 	dmalloc_log_changed(mark, 1, 0, 1);
-#endif
 
 	if (p == NULL) {
 		dbg_printf(d, "cannot malloc 4096 bytes yet");
 	}
+#endif
 
 	getcwd(appdir, PATH_MAX);
 	STRCAT_S(appdir, "/");
