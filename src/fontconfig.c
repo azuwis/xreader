@@ -346,8 +346,6 @@ static int get_var_as_int(font_config *cfg, const token *t, int **interge)
 
 	if (!stricmp(p, "pixelsize")) {
 		*interge = &cfg->pixelsize;
-	} else if (!stricmp(p, "spacing")) {
-		*interge = &cfg->spacing;
 	} else if (!stricmp(p, "hintstyle")) {
 		*interge = &cfg->hintstyle;
 	} else {
@@ -375,10 +373,8 @@ static int get_var_as_bool(font_config *cfg, const token *t, bool **boolean)
 		*boolean = &cfg->hinting;
 	} else if (!stricmp(p, "autohint")) {
 		*boolean = &cfg->autohint;
-	} else if (!stricmp(p, "rh_prefer_bitmaps")) {
-		*boolean = &cfg->rh_prefer_bitmaps;
-	} else if (!stricmp(p, "embeddedbitmap")) {
-		*boolean = &cfg->embeddedbitmap;
+	} else if (!stricmp(p, "cleartype")) {
+		*boolean = &cfg->cleartype;
 	} else if (!stricmp(p, "embolden")) {
 		*boolean = &cfg->embolden;
 	} else {
@@ -920,14 +916,10 @@ int report_font_config(font_config* p)
 	dbg_printf(d, "%-20s: %s", "name", p->fontname);
 	dbg_printf(d, "%-20s: %d", "pixelsize", p->pixelsize);
 	dbg_printf(d, "%-20s: %s", "globaladvance", get_bool_str(p->globaladvance));
-	dbg_printf(d, "%-20s: %d", "spacing", p->spacing);
 	dbg_printf(d, "%-20s: %s", "antialias", get_bool_str(p->antialias));
 	dbg_printf(d, "%-20s: %s", "hinting", get_bool_str(p->hinting));
 	dbg_printf(d, "%-20s: %d", "hintstyle", p->hintstyle);
 	dbg_printf(d, "%-20s: %s", "autohint", get_bool_str(p->autohint));
-	dbg_printf(d, "%-20s: %s", "rh_prefer_bitmaps", get_bool_str(p->rh_prefer_bitmaps));
-	dbg_printf(d, "%-20s: %s", "embeddedbitmap", get_bool_str(p->embeddedbitmap));
-	dbg_printf(d, "%-20s: %d", "rgba", p->rgba);
 	dbg_printf(d, "%-20s: %s", "cleartype", get_bool_str(p->cleartype));
 	dbg_printf(d, "%-20s: %s", "embolden", get_bool_str(p->embolden));
 

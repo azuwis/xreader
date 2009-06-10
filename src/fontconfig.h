@@ -6,14 +6,10 @@
 typedef struct _font_config {
 	const char* fontname;
 	bool globaladvance;
-	int spacing;
 	bool antialias;
 	bool hinting;
 	int hintstyle;
 	bool autohint;
-	bool rh_prefer_bitmaps;
-	int rgba;
-	bool embeddedbitmap;
 	int pixelsize;
 	bool embolden;
 	bool cleartype;
