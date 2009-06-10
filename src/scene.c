@@ -5350,16 +5350,29 @@ void scene_filelist(void)
 									   config.menubcolor, config.selbcolor);
 					break;
 				default:
-					filecount =
-						fs_dir_to_menu(config.path,
-									   config.shortpath, &filelist,
-									   config.menutextcolor,
-									   config.selicolor,
-									   config.usedyncolor ?
-									   get_bgcolor_by_time() :
-									   config.menubcolor,
-									   config.selbcolor,
-									   config.showhidden, config.showunknown);
+					if (config.path[0] == '\0') {
+						fat_inited = false;
+						fat_free();
+						filecount =
+							fs_list_device(config.path, config.shortpath,
+										   &filelist, config.menutextcolor,
+										   config.selicolor,
+										   config.
+										   usedyncolor ? get_bgcolor_by_time() :
+										   config.menubcolor, config.selbcolor);
+					} else {
+						filecount =
+							fs_dir_to_menu(config.path,
+										   config.shortpath, &filelist,
+										   config.menutextcolor,
+										   config.selicolor,
+										   config.usedyncolor ?
+										   get_bgcolor_by_time() :
+										   config.menubcolor,
+										   config.selbcolor,
+										   config.showhidden,
+										   config.showunknown);
+					}
 			}
 			if (filelist == 0) {
 				STRCPY_S(config.path, "ms0:/");
