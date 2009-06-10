@@ -35,10 +35,12 @@ volatile cacher_context ccacher;
 static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
 
+#if 0
 static dword total_filesize;
 static dword total_datasize;
 
 static bool alarm1 = false, alarm2 = false;
+#endif
 
 enum
 {
@@ -85,11 +87,13 @@ void cache_on(bool on)
 		ccacher.first_run = true;
 		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
 
+#if 0
 		total_filesize = 0;
 		total_datasize = 0;
 
 		alarm1 = false;
 		alarm2 = false;
+#endif
 
 		ccacher.on = on;
 	} else {
@@ -296,8 +300,10 @@ int start_cache_next_image(void)
 	cache_image_t *p = NULL;
 	cache_image_t tmp;
 	t_fs_filetype ft;
-	dword used_memory, free_memory;
 	dword memory_used;
+
+#if 0
+	dword used_memory, free_memory;
 
 	free_memory = get_avail_memory();
 
@@ -328,23 +334,6 @@ int start_cache_next_image(void)
 
 		alarm1 = false;
 	}
-
-	cache_lock();
-
-	for (p = ccacher.caches; p != ccacher.caches + ccacher.caches_size; ++p) {
-		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
-			break;
-		}
-	}
-
-	// if we ecounter FAILED cache, abort the caching, because user will quit when the image shows up
-	if (p == ccacher.caches + ccacher.caches_size || p->status == CACHE_FAILED) {
-		cache_unlock();
-		return 0;
-	}
-
-	copy_cache_image(&tmp, p);
-	cache_unlock();
 
 	// Predict memory usage
 	{
@@ -388,8 +377,25 @@ int start_cache_next_image(void)
 			}
 		}
 	}
+#endif
 
-  load:
+	cache_lock();
+
+	for (p = ccacher.caches; p != ccacher.caches + ccacher.caches_size; ++p) {
+		if (p->status == CACHE_INIT || p->status == CACHE_FAILED) {
+			break;
+		}
+	}
+
+	// if we ecounter FAILED cache, abort the caching, because user will quit when the image shows up
+	if (p == ccacher.caches + ccacher.caches_size || p->status == CACHE_FAILED) {
+		cache_unlock();
+		return 0;
+	}
+
+	copy_cache_image(&tmp, p);
+	cache_unlock();
+
 	ft = fs_file_get_type(tmp.filename);
 	int fid = freq_enter_hotzone();
 
@@ -443,8 +449,10 @@ int start_cache_next_image(void)
 //      dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) ccacher.memory_usage / 1024);
 		ccacher.memory_usage += memory_used;
 		cacher_cleared = false;
+#if 0
 		total_filesize += tmp.filesize;
 		total_datasize += memory_used;
+#endif
 		tmp.status = CACHE_OK;
 		copy_cache_image(p, &tmp);
 		tmp.data = NULL;
