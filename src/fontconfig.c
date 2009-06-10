@@ -936,6 +936,7 @@ int report_font_config(font_config* p)
 	dbg_printf(d, "%-20s: %s", "autohint", get_bool_str(p->autohint));
 	dbg_printf(d, "%-20s: %s", "cleartype", get_bool_str(p->cleartype));
 	dbg_printf(d, "%-20s: %s", "embolden", get_bool_str(p->embolden));
+	dbg_printf(d, "%-20s: %d", "lcdfilter", p->lcdfilter);
 
 	return 0;
 }
