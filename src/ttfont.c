@@ -204,6 +204,8 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 		return NULL;
 	}
 
+	dbg_printf(d, "%s: font name is %s", __func__, FT_Get_Postscript_Name(ttf->face));
+
 	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
 		memset(&ttf->sbitHashRoot[i], 0, sizeof(SBit_HashItem));
 	}
