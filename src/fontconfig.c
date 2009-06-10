@@ -706,7 +706,7 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 
 					size_t j;
 
-					level++;
+					level = 1;
 
 					for(j=start; j<tsize; ++j) {
 						if (t[j].type == TOKEN_IF) {
