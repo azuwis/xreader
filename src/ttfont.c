@@ -651,6 +651,7 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
 		// disable hinting when loading chinese characters
+		// TODO: add font config per font to get better performace
 		if (is_hanzi)
 			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
 		else
