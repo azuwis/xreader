@@ -397,6 +397,9 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 	if (h[0] != 0xff)
 		return -1;
 
+	if ((h[1] & 0xe0) != 0xe0)
+		return -1;
+
 	switch ((h[1] >> 3) & 0x03) {
 		case 0:
 			mp3_version = 2;	// MPEG 2.5
@@ -413,6 +416,7 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 	}
 
 	mp3_level = 3 - ((h[1] >> 1) & 0x03);
+
 	if (mp3_level == 3)
 		mp3_level--;
 
