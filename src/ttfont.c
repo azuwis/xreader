@@ -352,8 +352,7 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 	int pitch = abs(bitmap->pitch);
 
 	if (pitch * bitmap->rows > 0) {
-		item->bitmap.buffer =
-			(unsigned char *) memalign(64, pitch * bitmap->rows);
+		item->bitmap.buffer = malloc(pitch * bitmap->rows);
 		if (item->bitmap.buffer) {
 			memcpy(item->bitmap.buffer, bitmap->buffer, pitch * bitmap->rows);
 		}
