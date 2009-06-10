@@ -141,7 +141,7 @@ static p_ttf ttf_open_file_to_memory(const char *filename, int size,
 	xrIoRead(fd, buf, fileSize);
 	xrIoClose(fd);
 
-	ttf = ttf_open_buffer(buf, fileSize, size, ttfname);
+	ttf = ttf_open_buffer(buf, fileSize, size, ttfname, false);
 
 	if (ttf == NULL) {
 		free(buf);
@@ -150,7 +150,7 @@ static p_ttf ttf_open_file_to_memory(const char *filename, int size,
 	return ttf;
 }
 
-static fontconfig_mgr * fc_mgr = NULL;
+static fontconfig_mgr *fc_mgr = NULL;
 
 static void update_fontconfig(p_ttf ttf, int pixelSize)
 {
@@ -176,7 +176,8 @@ static void update_fontconfig(p_ttf ttf, int pixelSize)
 	ttf_unlock();
 }
 
-extern p_ttf ttf_open(const char *filename, int size, bool load2mem, bool cjkmode)
+extern p_ttf ttf_open(const char *filename, int size, bool load2mem,
+					  bool cjkmode)
 {
 	p_ttf ttf;
 
@@ -198,7 +199,7 @@ extern p_ttf ttf_open(const char *filename, int size, bool load2mem, bool cjkmod
 }
 
 extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
-							 const char *ttfName)
+							 const char *ttfName, bool cjkmode)
 {
 	int i;
 	p_ttf ttf;
@@ -241,6 +242,9 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 	ttf->cachePop = 0;
 
 	ttf_set_pixel_size(ttf, pixelSize);
+
+	ttf->cjkmode = cjkmode;
+	report_font_config(&ttf->config);
 
 	return ttf;
 }
@@ -662,7 +666,8 @@ static FT_Error ttf_load_glyph(p_ttf ttf, FT_UInt glyphIndex, bool is_vertical)
 		 * missing the glyph
 		 */
 		if (flag & FT_LOAD_NO_BITMAP) {
-			error = FT_Load_Glyph(ttf->face, glyphIndex, flag & ~FT_LOAD_NO_BITMAP);
+			error =
+				FT_Load_Glyph(ttf->face, glyphIndex, flag & ~FT_LOAD_NO_BITMAP);
 		}
 	}
 
@@ -815,7 +820,9 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				}
 
 				if (cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-					error = FT_Render_Glyph(cttf->face->glyph, get_render_mode(cttf, false));
+					error =
+						FT_Render_Glyph(cttf->face->glyph,
+										get_render_mode(cttf, false));
 
 					if (error) {
 						return count;
@@ -881,8 +888,10 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				}
 
 				if (ettf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-					error = FT_Render_Glyph(ettf->face->glyph, get_render_mode(ettf, false));
-					
+					error =
+						FT_Render_Glyph(ettf->face->glyph,
+										get_render_mode(ettf, false));
+
 					if (error) {
 						return count;
 					}
@@ -961,8 +970,9 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 		return x;
 
 	if (cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-		error = FT_Render_Glyph(cttf->face->glyph, get_render_mode(cttf, false));
-		
+		error =
+			FT_Render_Glyph(cttf->face->glyph, get_render_mode(cttf, false));
+
 		if (error) {
 			return x;
 		}
@@ -1176,7 +1186,8 @@ extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 		}
 
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-			error = FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, false));
+			error =
+				FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, false));
 
 			if (error) {
 				return;

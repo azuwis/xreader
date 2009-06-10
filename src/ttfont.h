@@ -89,7 +89,8 @@ typedef struct _ttf
  * @return 描述TTF的指针
  * - NULL 失败
  */
-extern p_ttf ttf_open(const char *filename, int size, bool load2mem, bool cjkmode);
+extern p_ttf ttf_open(const char *filename, int size, bool load2mem,
+					  bool cjkmode);
 
 /**
  * 从指定数据中打开TTF字体
@@ -103,7 +104,7 @@ extern p_ttf ttf_open(const char *filename, int size, bool load2mem, bool cjkmod
  * - NULL 失败
  */
 extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
-							 const char *ttfName);
+							 const char *ttfName, bool cjkmode);
 
 /**
  * 释放TTF字体
