@@ -533,9 +533,16 @@ static int start_cache(dword selidx)
 	if (ccacher.first_run) {
 		ccacher.first_run = false;
 	} else {
+		SceUInt timeout = 10000;
+
 		// wait until user notify cache delete
-		xrKernelWaitEventFlag(cache_del_event, CACHE_EVENT_DELETED,
-							  PSP_EVENT_WAITAND, NULL, NULL);
+		re = xrKernelWaitEventFlag(cache_del_event, CACHE_EVENT_DELETED,
+							  PSP_EVENT_WAITAND, NULL, &timeout);
+
+		if (re == SCE_KERNEL_ERROR_WAIT_TIMEOUT) {
+			return 0;
+		}
+
 		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_UNDELETED);
 	}
 
