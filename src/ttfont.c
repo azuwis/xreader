@@ -150,14 +150,25 @@ static p_ttf ttf_open_file_to_memory(const char *filename, int size,
 	return ttf;
 }
 
+static fontconfig_mgr * fc_mgr = NULL;
+
 static void update_fontconfig(p_ttf ttf, int pixelSize)
 {
-	new_font_config(ttf->fontName, &ttf->config);
-	ttf->config.pixelsize = pixelSize;
+	ttf_lock();
 
-	if (get_font_config(&ttf->config) == 0) {
-//		report_font_config(&ttf->config);
+	font_config *p = NULL;
+
+	if (fc_mgr == NULL) {
+		fc_mgr = fontconfigmgr_init();
 	}
+
+	p = fontconfigmgr_lookup(fc_mgr, ttf->fontName, pixelSize);
+
+	if (p != NULL) {
+		memcpy(&ttf->config, p, sizeof(*p));
+	}
+
+	ttf_unlock();
 }
 
 extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
@@ -251,6 +262,15 @@ extern void ttf_close(p_ttf ttf)
 
 	FT_Done_Face(ttf->face);
 	FT_Done_FreeType(ttf->library);
+
+	ttf_lock();
+
+	if (fc_mgr != NULL) {
+		fontconfigmgr_free(fc_mgr);
+		fc_mgr = NULL;
+	}
+
+	ttf_unlock();
 
 	free(ttf);
 }

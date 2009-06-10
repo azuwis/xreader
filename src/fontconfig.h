@@ -55,8 +55,19 @@ typedef struct _token {
 	size_t value_size;
 } token;
 
+typedef struct _fontconfig_mgr {
+	font_config *cache;
+	size_t cnt;
+	size_t caps;
+} fontconfig_mgr;
+
 int new_font_config(const char* fontname, font_config *p);
 int get_font_config(font_config *p);
 int report_font_config(font_config* p);
+
+fontconfig_mgr *fontconfigmgr_init(void);
+font_config *fontconfigmgr_add_cache(fontconfig_mgr *font_mgr, font_config *p_cfg);
+font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_name, int pixelsize);
+void fontconfigmgr_free(fontconfig_mgr *font_mgr);
 
 #endif

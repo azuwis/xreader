@@ -871,6 +871,76 @@ int destroy_token(token **t, size_t *tsize)
 	return 0;
 }
 
+fontconfig_mgr *fontconfigmgr_init(void)
+{
+	fontconfig_mgr *font_mgr;
+
+	font_mgr = malloc(sizeof(*font_mgr));
+
+	if (font_mgr == NULL) {
+		return NULL;
+	}
+
+	memset(font_mgr, 0, sizeof(*font_mgr));
+
+	return font_mgr;
+}
+
+font_config *fontconfigmgr_add_cache(fontconfig_mgr *font_mgr, font_config *p_cfg)
+{
+	font_config *p = NULL;
+
+	if (font_mgr->cnt + 1 > font_mgr->caps) {
+		font_mgr->caps += font_mgr->cnt + 16;
+		font_mgr->cache = safe_realloc(font_mgr->cache, sizeof(font_mgr->cache[0]) * font_mgr->caps);
+	}
+
+	if (font_mgr->cache == NULL) {
+		return NULL;
+	}
+
+	p = &font_mgr->cache[font_mgr->cnt++];
+	memcpy(p, p_cfg, sizeof(font_mgr->cache[0]));
+
+	return p;
+}
+
+font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_name, int pixelsize)
+{
+	size_t i;
+
+	for(i=0; i<font_mgr->cnt; ++i) {
+		if (!strcmp(font_mgr->cache[i].fontname, font_name)) {
+			if (font_mgr->cache[i].pixelsize == pixelsize) {
+				return &font_mgr->cache[i];
+			}
+		}
+	}
+
+	font_config my_font_config, *p = NULL;
+
+	new_font_config(font_name, &my_font_config);
+	my_font_config.pixelsize = pixelsize;
+
+	if (get_font_config(&my_font_config) == 0) {
+		p = fontconfigmgr_add_cache(font_mgr, &my_font_config);
+	} else {
+		return NULL;
+	}
+
+	return p;
+}
+
+void fontconfigmgr_free(fontconfig_mgr *font_mgr)
+{
+	if (font_mgr->cache != NULL) {
+		free(font_mgr->cache);
+		font_mgr->cache = NULL;
+	}
+
+	free(font_mgr);
+}
+
 int get_font_config(font_config *p)
 {
 	FILE *fp;
