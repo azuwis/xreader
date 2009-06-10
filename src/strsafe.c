@@ -45,9 +45,9 @@ strncpy_s(char *strDest,
 		dbg_printf(d, "%s: strDest may be a pointer: %s", __func__, strSource);
 	}
 #endif
-	strncpy(strDest, strSource, numberOfElements < count ?
-			numberOfElements : count);
-	strDest[numberOfElements - 1] = '\0';
+	size_t copied = numberOfElements - 1 < count ?  numberOfElements - 1 : count;
+	strncpy(strDest, strSource, copied);
+	strDest[copied] = '\0';
 	return strnlen(strDest, numberOfElements);
 }
 
