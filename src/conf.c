@@ -1187,6 +1187,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		conf->use_image_queue = false;
 	}
 
+	if (conf->max_cache_img == 0) {
+		conf->use_image_queue = false;
+	}
+
 	dictionary_del(dict);
 
 	return true;
