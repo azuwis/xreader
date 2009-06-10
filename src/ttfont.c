@@ -166,6 +166,9 @@ static void update_fontconfig(p_ttf ttf, int pixelSize)
 
 	if (p != NULL) {
 		memcpy(&ttf->config, p, sizeof(*p));
+	} else {
+		// apply default config
+		new_font_config("unknown font", &ttf->config);
 	}
 
 	ttf_unlock();
