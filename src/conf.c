@@ -259,12 +259,6 @@ static void conf_default(p_conf conf)
 	STRCAT_S(conf->ettfpath, "fonts/asc.ttf");
 
 	conf->infobar_use_ttf_mode = true;
-	conf->cfont_antialias = false;
-	conf->cfont_cleartype = true;
-	conf->cfont_embolden = false;
-	conf->efont_antialias = false;
-	conf->efont_cleartype = true;
-	conf->efont_embolden = false;
 	conf->img_no_repeat = false;
 	conf->hide_flash = true;
 	conf->tabstop = 4;
@@ -1093,24 +1087,6 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->infobar_use_ttf_mode =
 		iniparser_getboolean(dict, "Text:infobar_use_ttf_mode",
 							 conf->infobar_use_ttf_mode);
-	conf->cfont_antialias =
-		iniparser_getboolean(dict, "Text:cfont_antialias",
-							 conf->cfont_antialias);
-	conf->cfont_cleartype =
-		iniparser_getboolean(dict, "Text:cfont_cleartype",
-							 conf->cfont_cleartype);
-	conf->cfont_embolden =
-		iniparser_getboolean(dict, "Text:cfont_embolden", conf->cfont_embolden);
-
-	conf->efont_antialias =
-		iniparser_getboolean(dict, "Text:efont_antialias",
-							 conf->efont_antialias);
-	conf->efont_cleartype =
-		iniparser_getboolean(dict, "Text:efont_cleartype",
-							 conf->efont_cleartype);
-	conf->efont_embolden =
-		iniparser_getboolean(dict, "Text:efont_embolden", conf->efont_embolden);
-
 	conf->img_no_repeat =
 		iniparser_getboolean(dict, "Image:no_repeat", conf->img_no_repeat);
 
@@ -1412,26 +1388,6 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Text:infobar_fontsize",
 						dwordToString(buf, sizeof(buf),
 									  conf->infobar_fontsize));
-	iniparser_setstring(dict, "Text:cfont_antialias",
-						booleanToString(buf, sizeof(buf),
-										conf->cfont_antialias));
-	iniparser_setstring(dict, "Text:cfont_cleartype",
-						booleanToString(buf, sizeof(buf),
-										conf->cfont_cleartype));
-	iniparser_setstring(dict, "Text:cfont_embolden",
-						booleanToString(buf, sizeof(buf),
-										conf->cfont_embolden));
-
-	iniparser_setstring(dict, "Text:efont_antialias",
-						booleanToString(buf, sizeof(buf),
-										conf->efont_antialias));
-	iniparser_setstring(dict, "Text:efont_cleartype",
-						booleanToString(buf, sizeof(buf),
-										conf->efont_cleartype));
-	iniparser_setstring(dict, "Text:efont_embolden",
-						booleanToString(buf, sizeof(buf),
-										conf->efont_embolden));
-
 	iniparser_setstring(dict, "Image:no_repeat",
 						booleanToString(buf, sizeof(buf), conf->img_no_repeat));
 

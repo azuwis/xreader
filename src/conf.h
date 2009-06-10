@@ -204,12 +204,6 @@ typedef struct
 	bool load_exif;
 	int launchtype;
 	bool infobar_use_ttf_mode;
-	bool cfont_antialias;
-	bool cfont_cleartype;
-	bool cfont_embolden;
-	bool efont_antialias;
-	bool efont_cleartype;
-	bool efont_embolden;
 	bool img_no_repeat;
 	bool hide_flash;
 	dword tabstop;
