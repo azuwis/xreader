@@ -596,10 +596,39 @@ static FT_Int32 get_fontconfig_flag(p_ttf ttf)
 		flag |= FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
 	}
 
+	/* It is not happy with CJK fonts...
+	if (ttf->config.antialias) {
+		flag |= FT_LOAD_NO_BITMAP;
+	}
+	*/
+
 	return flag;
 }
 
 #define DISP_RSPAN 0
+
+static FT_Error ttf_load_glyph(p_ttf ttf, FT_UInt glyphIndex)
+{
+	FT_Int32 flag;
+	FT_Error error;
+
+	flag = get_fontconfig_flag(ttf);
+	error = FT_Load_Glyph(ttf->face, glyphIndex, flag);
+
+	if (error) {
+		/*
+		 * If anti-aliasing or transforming glyphs and
+		 * no outline version exists, fallback to the
+		 * bitmap and let things look bad instead of
+		 * missing the glyph
+		 */
+		if (flag & FT_LOAD_NO_BITMAP) {
+			error = FT_Load_Glyph(ttf->face, glyphIndex, flag & ~FT_LOAD_NO_BITMAP);
+		}
+	}
+
+	return error;
+}
 
 /**
  * 从*str中取出一个字（汉字/英文字母）进行绘制，水平版本
@@ -655,11 +684,11 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		// TODO: add font config per font to get better performace
-		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag(ttf));
+		error = ttf_load_glyph(ttf, glyphIndex);
 
-		if (error)
+		if (error) {
 			return;
+		}
 
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 			error =
@@ -740,11 +769,12 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				cprevious = cache->glyph_index;
 			} else {
 				glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
-				error = FT_Load_Glyph(cttf->face, glyphIndex, get_fontconfig_flag(cttf));
-				
+				error = ttf_load_glyph(cttf, glyphIndex);
+
 				if (error) {
 					return count;
 				}
+
 				if (cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 					error = FT_Render_Glyph(cttf->face->glyph, get_render_mode(cttf, false));
 
@@ -805,7 +835,7 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				eprevious = cache->glyph_index;
 			} else {
 				glyphIndex = FT_Get_Char_Index(ettf->face, ucs);
-				error = FT_Load_Glyph(ettf->face, glyphIndex, get_fontconfig_flag(ettf));
+				error = ttf_load_glyph(ettf, glyphIndex);
 
 				if (error) {
 					return count;
@@ -898,8 +928,8 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 	word ucs = charsets_gbk_to_ucs(str);
 
 	glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
-	error = FT_Load_Glyph(cttf->face, glyphIndex, get_fontconfig_flag(cttf));
-	
+	error = ttf_load_glyph(cttf, glyphIndex);
+
 	if (error)
 		return x;
 
@@ -1112,10 +1142,12 @@ extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 		width = 0;
 		useKerning = FT_HAS_KERNING(ttf->face);
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		error = ttf_load_glyph(ttf, glyphIndex);
+
 		if (error) {
 			return;
 		}
+
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 			error = FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, false));
 
@@ -1360,10 +1392,12 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag(ttf));
+		error = ttf_load_glyph(ttf, glyphIndex);
 
-		if (error)
+		if (error) {
 			return;
+		}
+
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 			error =
 				FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, false));
