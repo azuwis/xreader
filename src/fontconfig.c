@@ -17,7 +17,7 @@
 
 static char g_font_config_path[PATH_MAX];
 
-int new_font_config(const char* fontname, font_config *p, bool cjkmode)
+int new_font_config(const char *fontname, font_config * p, bool cjkmode)
 {
 	if (fontname == NULL)
 		return -1;
@@ -59,7 +59,8 @@ static int skip_token(const char *buf, size_t size, const char **p)
 	return *p - buf;
 }
 
-static int get_token(const char* linebuf, size_t size, const char *p, char *buf, size_t bufsize)
+static int get_token(const char *linebuf, size_t size, const char *p, char *buf,
+					 size_t bufsize)
 {
 	size_t pos;
 	const char *q = p;
@@ -87,7 +88,7 @@ static int get_next_quote(const char *linebuf, size_t size, const char *p)
 	return (int) (p - linebuf);
 }
 
-static int add_token(token **th, size_t *tsize, token *t)
+static int add_token(token ** th, size_t * tsize, token * t)
 {
 	if (*th == NULL) {
 		*th = malloc(sizeof(**th));
@@ -106,7 +107,7 @@ static int add_token(token **th, size_t *tsize, token *t)
 	return 0;
 }
 
-static int add_token_quote(token **th, size_t *tsize, const char* tokenstring)
+static int add_token_quote(token ** th, size_t * tsize, const char *tokenstring)
 {
 	token t;
 
@@ -127,7 +128,7 @@ static bool is_str_digit(const char *str)
 
 	len = strlen(str);
 
-	for(i=0; i<len; ++i) {
+	for (i = 0; i < len; ++i) {
 		if (has_dot) {
 			if (str[i] == '.') {
 				return false;
@@ -147,12 +148,13 @@ static bool is_str_digit(const char *str)
 	return true;
 }
 
-static int add_token_keyword(token **th, size_t *tsize, const char* tokenstring)
+static int add_token_keyword(token ** th, size_t * tsize,
+							 const char *tokenstring)
 {
 	token t;
 
 	memset(&t, 0, sizeof(t));
-	
+
 	if (!stricmp(tokenstring, "if")) {
 		t.type = TOKEN_IF;
 	} else if (!stricmp(tokenstring, "then")) {
@@ -169,10 +171,10 @@ static int add_token_keyword(token **th, size_t *tsize, const char* tokenstring)
 		t.type = TOKEN_OR;
 	} else if (!stricmp(tokenstring, "(")) {
 		t.type = TOKEN_BRACKET;
-		t.value = (void*) TOKEN_BRACKET_LEFT;
+		t.value = (void *) TOKEN_BRACKET_LEFT;
 	} else if (!stricmp(tokenstring, ")")) {
 		t.type = TOKEN_BRACKET;
-		t.value = (void*) TOKEN_BRACKET_RIGHT;
+		t.value = (void *) TOKEN_BRACKET_RIGHT;
 	} else if (!stricmp(tokenstring, "=")) {
 		t.type = TOKEN_EQUAL;
 	} else if (!stricmp(tokenstring, "!")) {
@@ -189,13 +191,13 @@ static int add_token_keyword(token **th, size_t *tsize, const char* tokenstring)
 		t.type = TOKEN_NOTGT;
 	} else if (!stricmp(tokenstring, "true")) {
 		t.type = TOKEN_BOOL;
-		t.value = (void*)1;
+		t.value = (void *) 1;
 	} else if (!stricmp(tokenstring, "false")) {
 		t.type = TOKEN_BOOL;
-		t.value = (void*)0;
+		t.value = (void *) 0;
 	} else if (is_str_digit(tokenstring)) {
 		t.type = TOKEN_NUM;
-		t.value = (void*)strtol(tokenstring, NULL, 10);
+		t.value = (void *) strtol(tokenstring, NULL, 10);
 	} else {
 		t.type = TOKEN_VAR;
 		t.value = strdup(tokenstring);
@@ -205,7 +207,7 @@ static int add_token_keyword(token **th, size_t *tsize, const char* tokenstring)
 	return add_token(th, tsize, &t);
 }
 
-int scan_tokens(char *buf, token **t, size_t *tsize)
+int scan_tokens(char *buf, token ** t, size_t * tsize)
 {
 	bool inquote = false;
 	bool intoken = false;
@@ -213,7 +215,7 @@ int scan_tokens(char *buf, token **t, size_t *tsize)
 	size_t len = strlen(buf);
 	size_t i;
 
-	for(i=0; i<len; ++i) {
+	for (i = 0; i < len; ++i) {
 		if (buf[i] == '\"') {
 			inquote = !inquote;
 			continue;
@@ -230,7 +232,7 @@ int scan_tokens(char *buf, token **t, size_t *tsize)
 			int next_quote;
 
 			next_quote = get_next_quote(buf, len, p);
-			
+
 			if (next_quote < 0) {
 				dbg_printf(d, "%s: Missing end quote", __func__);
 
@@ -238,7 +240,7 @@ int scan_tokens(char *buf, token **t, size_t *tsize)
 			}
 
 			strncpy_s(tokenname, sizeof(tokenname), &buf[i], next_quote - i);
-//			dbg_printf(d, "token is %s", tokenname);
+//          dbg_printf(d, "token is %s", tokenname);
 			i = next_quote - 1;
 			add_token_quote(t, tsize, tokenname);
 		} else {
@@ -249,7 +251,7 @@ int scan_tokens(char *buf, token **t, size_t *tsize)
 
 					get_token(buf, len, p, tokenname, sizeof(tokenname));
 
-//					dbg_printf(d, "token is %s", tokenname);
+//                  dbg_printf(d, "token is %s", tokenname);
 					add_token_keyword(t, tsize, tokenname);
 				}
 
@@ -271,13 +273,13 @@ int scan_tokens(char *buf, token **t, size_t *tsize)
 	return 0;
 }
 
-void report_tokens(token *t, size_t size)
+void report_tokens(token * t, size_t size)
 {
 	size_t i;
 
 	dbg_printf(d, "Dump all tokens input:");
 
-	for(i=0; i<size; ++i) {
+	for (i = 0; i < size; ++i) {
 		switch (t[i].type) {
 			case TOKEN_IF:
 				dbg_printf(d, "IF");
@@ -298,7 +300,9 @@ void report_tokens(token *t, size_t size)
 				dbg_printf(d, "or");
 				break;
 			case TOKEN_BRACKET:
-				dbg_printf(d, "%s", ((int)t[i].value) == TOKEN_BRACKET_LEFT ? "(" : ")");
+				dbg_printf(d, "%s",
+						   ((int) t[i].value) ==
+						   TOKEN_BRACKET_LEFT ? "(" : ")");
 				break;
 			case TOKEN_NOTEQUAL:
 				dbg_printf(d, "!=");
@@ -322,22 +326,22 @@ void report_tokens(token *t, size_t size)
 				dbg_printf(d, "<=");
 				break;
 			case TOKEN_BOOL:
-				dbg_printf(d, "%s", (int)(t[i].value) ? "true" : "false");
+				dbg_printf(d, "%s", (int) (t[i].value) ? "true" : "false");
 				break;
 			case TOKEN_STRING:
-				dbg_printf(d, "\"%s\"", (const char*)t[i].value);
+				dbg_printf(d, "\"%s\"", (const char *) t[i].value);
 				break;
 			case TOKEN_VAR:
-				dbg_printf(d, "$%s", (const char*)t[i].value);
+				dbg_printf(d, "$%s", (const char *) t[i].value);
 				break;
 			case TOKEN_NUM:
-				dbg_printf(d, "%d", (int)t[i].value);
+				dbg_printf(d, "%d", (int) t[i].value);
 				break;
 		}
 	}
 }
 
-static int get_var_as_int(font_config *cfg, const token *t, int **interge)
+static int get_var_as_int(font_config * cfg, const token * t, int **interge)
 {
 	const char *p;
 
@@ -345,7 +349,7 @@ static int get_var_as_int(font_config *cfg, const token *t, int **interge)
 		return -1;
 	}
 
-	p = (const char*) t->value;
+	p = (const char *) t->value;
 
 	if (!stricmp(p, "pixelsize")) {
 		*interge = &cfg->pixelsize;
@@ -360,7 +364,7 @@ static int get_var_as_int(font_config *cfg, const token *t, int **interge)
 	return 0;
 }
 
-static int get_var_as_bool(font_config *cfg, const token *t, bool **boolean)
+static int get_var_as_bool(font_config * cfg, const token * t, bool ** boolean)
 {
 	const char *p;
 
@@ -368,7 +372,7 @@ static int get_var_as_bool(font_config *cfg, const token *t, bool **boolean)
 		return -1;
 	}
 
-	p = (const char*) t->value;
+	p = (const char *) t->value;
 
 	if (!stricmp(p, "globaladvance")) {
 		*boolean = &cfg->globaladvance;
@@ -391,7 +395,8 @@ static int get_var_as_bool(font_config *cfg, const token *t, bool **boolean)
 	return 0;
 }
 
-static int get_var_as_string(font_config *cfg, const token *t, const char **string)
+static int get_var_as_string(font_config * cfg, const token * t,
+							 const char **string)
 {
 	const char *p;
 
@@ -399,7 +404,7 @@ static int get_var_as_string(font_config *cfg, const token *t, const char **stri
 		return -1;
 	}
 
-	p = (const char*) t->value;
+	p = (const char *) t->value;
 
 	if (!stricmp(p, "fontname")) {
 		*string = cfg->fontname;
@@ -410,7 +415,7 @@ static int get_var_as_string(font_config *cfg, const token *t, const char **stri
 	return 0;
 }
 
-static int token_compare(font_config *cfg, token *t, size_t tsize, size_t i)
+static int token_compare(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	int ret = TOKEN_COMPARE_FALSE;
 
@@ -426,14 +431,20 @@ static int token_compare(font_config *cfg, token *t, size_t tsize, size_t i)
 #if 0
 		case TOKEN_NUM:
 			if (t[right].type == TOKEN_NUM) {
-				ret = ((int)t[left].value == (int)t[right].value) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
+				ret =
+					((int) t[left].value ==
+					 (int) t[right].
+					 value) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
 			} else if (t[right].type == TOKEN_VAR) {
 				int *rightvalue;
 
 				ret = get_var_as_int(cfg, &t[right], &rightvalue);
 
 				if (ret == 0) {
-					ret = ((int)t[left].value == *rightvalue) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
+					ret =
+						((int) t[left].value ==
+						 *rightvalue) ? TOKEN_COMPARE_TRUE :
+						TOKEN_COMPARE_FALSE;
 				}
 			}
 			break;
@@ -441,58 +452,72 @@ static int token_compare(font_config *cfg, token *t, size_t tsize, size_t i)
 			break;
 		case TOKEN_BOOL:
 			if (t[right].type == TOKEN_BOOL) {
-				ret = ((bool)(int)t[left].value == (bool)(int)t[right].value) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
+				ret =
+					((bool) (int) t[left].value ==
+					 (bool) (int) t[right].
+					 value) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
 			} else if (t[right].type == TOKEN_VAR) {
 				bool *rightvalue;
 
 				ret = get_var_as_bool(cfg, &t[right], &rightvalue);
 
 				if (ret == 0) {
-					ret = ((bool)(int)t[left].value == *rightvalue) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
+					ret =
+						((bool) (int) t[left].value ==
+						 *rightvalue) ? TOKEN_COMPARE_TRUE :
+						TOKEN_COMPARE_FALSE;
 				}
 			}
 			break;
 #endif
 		case TOKEN_VAR:
 			{
-				switch(t[right].type) {
+				switch (t[right].type) {
 					case TOKEN_NUM:
-					{
-						int *leftvalue;
+						{
+							int *leftvalue;
 
-						ret = get_var_as_int(cfg, &t[left], &leftvalue);
+							ret = get_var_as_int(cfg, &t[left], &leftvalue);
 
-						if (ret == 0) {
-							ret = ((int)t[right].value == *leftvalue) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
-						}
-					}
-					break;
-					case TOKEN_BOOL:
-					{
-						bool *leftvalue;
-
-						ret = get_var_as_bool(cfg, &t[left], &leftvalue);
-
-						if (ret == 0) {
-							ret = ((bool)(int)t[right].value == *leftvalue) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
-						}
-					}
-					break;
-					case TOKEN_STRING:
-					{
-						const char* leftvalue;
-
-						ret = get_var_as_string(cfg, &t[left], &leftvalue);
-
-						if (ret == 0) {
-							if (!strcmp((const char*)t[right].value, leftvalue)) {
-								ret = TOKEN_COMPARE_TRUE;
-							} else {
-								ret = TOKEN_COMPARE_FALSE;
+							if (ret == 0) {
+								ret =
+									((int) t[right].value ==
+									 *leftvalue) ? TOKEN_COMPARE_TRUE :
+									TOKEN_COMPARE_FALSE;
 							}
 						}
-					}
-					break;
+						break;
+					case TOKEN_BOOL:
+						{
+							bool *leftvalue;
+
+							ret = get_var_as_bool(cfg, &t[left], &leftvalue);
+
+							if (ret == 0) {
+								ret =
+									((bool) (int) t[right].value ==
+									 *leftvalue) ? TOKEN_COMPARE_TRUE :
+									TOKEN_COMPARE_FALSE;
+							}
+						}
+						break;
+					case TOKEN_STRING:
+						{
+							const char *leftvalue;
+
+							ret = get_var_as_string(cfg, &t[left], &leftvalue);
+
+							if (ret == 0) {
+								if (!strcmp
+									((const char *) t[right].value,
+									 leftvalue)) {
+									ret = TOKEN_COMPARE_TRUE;
+								} else {
+									ret = TOKEN_COMPARE_FALSE;
+								}
+							}
+						}
+						break;
 				}
 			}
 			break;
@@ -501,12 +526,13 @@ static int token_compare(font_config *cfg, token *t, size_t tsize, size_t i)
 	return ret;
 }
 
-static int token_notcompare(font_config *cfg, token *t, size_t tsize, size_t i)
+static int token_notcompare(font_config * cfg, token * t, size_t tsize,
+							size_t i)
 {
 	return !token_compare(cfg, t, tsize, i);
 }
 
-static int token_gt(font_config *cfg, token *t, size_t tsize, size_t i)
+static int token_gt(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	int ret = TOKEN_COMPARE_FALSE;
 
@@ -521,18 +547,22 @@ static int token_gt(font_config *cfg, token *t, size_t tsize, size_t i)
 	switch (t[left].type) {
 		case TOKEN_VAR:
 			{
-				switch(t[right].type) {
+				switch (t[right].type) {
 					case TOKEN_NUM:
-					{
-						int *leftvalue;
+						{
+							int *leftvalue;
 
-						ret = get_var_as_int(cfg, &t[left], &leftvalue);
+							ret = get_var_as_int(cfg, &t[left], &leftvalue);
 
-						if (ret == 0) {
-							ret = (*leftvalue > (int)t[right].value) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
+							if (ret == 0) {
+								ret =
+									(*leftvalue >
+									 (int) t[right].
+									 value) ? TOKEN_COMPARE_TRUE :
+									TOKEN_COMPARE_FALSE;
+							}
 						}
-					}
-					break;
+						break;
 				}
 			}
 			break;
@@ -541,12 +571,12 @@ static int token_gt(font_config *cfg, token *t, size_t tsize, size_t i)
 	return ret;
 }
 
-static int token_ngt(font_config *cfg, token *t, size_t tsize, size_t i)
+static int token_ngt(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	return !token_gt(cfg, t, tsize, i);
 }
 
-static int token_lt(font_config *cfg, token *t, size_t tsize, size_t i)
+static int token_lt(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	int ret = TOKEN_COMPARE_FALSE;
 
@@ -554,25 +584,29 @@ static int token_lt(font_config *cfg, token *t, size_t tsize, size_t i)
 		dbg_printf(d, "%s: Missing operand", __func__);
 		return -1;
 	}
-	
+
 	size_t left = i - 1;
 	size_t right = i + 1;
 
 	switch (t[left].type) {
 		case TOKEN_VAR:
 			{
-				switch(t[right].type) {
+				switch (t[right].type) {
 					case TOKEN_NUM:
-					{
-						int *leftvalue;
+						{
+							int *leftvalue;
 
-						ret = get_var_as_int(cfg, &t[left], &leftvalue);
+							ret = get_var_as_int(cfg, &t[left], &leftvalue);
 
-						if (ret == 0) {
-							ret = (*leftvalue < (int)t[right].value) ? TOKEN_COMPARE_TRUE : TOKEN_COMPARE_FALSE;
+							if (ret == 0) {
+								ret =
+									(*leftvalue <
+									 (int) t[right].
+									 value) ? TOKEN_COMPARE_TRUE :
+									TOKEN_COMPARE_FALSE;
+							}
 						}
-					}
-					break;
+						break;
 				}
 			}
 			break;
@@ -581,12 +615,12 @@ static int token_lt(font_config *cfg, token *t, size_t tsize, size_t i)
 	return ret;
 }
 
-static int token_nlt(font_config *cfg, token *t, size_t tsize, size_t i)
+static int token_nlt(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	return !token_lt(cfg, t, tsize, i);
 }
 
-static int token_equal(font_config *cfg, token *t, size_t tsize, size_t i)
+static int token_equal(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	size_t left, right;
 
@@ -597,14 +631,13 @@ static int token_equal(font_config *cfg, token *t, size_t tsize, size_t i)
 
 	left = i - 1;
 	right = i + 1;
-	
+
 	if (t[left].type != TOKEN_VAR) {
 		dbg_printf(d, "Error left value");
 		return -1;
 	}
 
-	switch (t[right].type)
-	{
+	switch (t[right].type) {
 		case TOKEN_BOOL:
 			{
 				bool *boolean = NULL;
@@ -612,7 +645,7 @@ static int token_equal(font_config *cfg, token *t, size_t tsize, size_t i)
 				int ret = get_var_as_bool(cfg, &t[left], &boolean);
 
 				if (ret == 0) {
-					*boolean = (bool)(int)t[right].value;
+					*boolean = (bool) (int) t[right].value;
 				} else {
 					return -1;
 				}
@@ -625,7 +658,7 @@ static int token_equal(font_config *cfg, token *t, size_t tsize, size_t i)
 				int ret = get_var_as_int(cfg, &t[left], &interge);
 
 				if (ret == 0) {
-					*interge = (int)t[right].value;
+					*interge = (int) t[right].value;
 				} else {
 					return -1;
 				}
@@ -640,25 +673,31 @@ static int token_equal(font_config *cfg, token *t, size_t tsize, size_t i)
 				if (ret < 0) {
 					return -1;
 				}
-				
-				if (!stricmp((const char*)t[left].value, "hintstyle")) {
-					if (!stricmp((const char*)t[right].value, "hintnone")) {
+
+				if (!stricmp((const char *) t[left].value, "hintstyle")) {
+					if (!stricmp((const char *) t[right].value, "hintnone")) {
 						*interge = 0;
-					} else if (!stricmp((const char*)t[right].value, "hintslight")) {
+					} else if (!stricmp
+							   ((const char *) t[right].value, "hintslight")) {
 						*interge = 1;
-					} else if (!stricmp((const char*)t[right].value, "hintmedium")) {
+					} else if (!stricmp
+							   ((const char *) t[right].value, "hintmedium")) {
 						*interge = 2;
-					} else if (!stricmp((const char*)t[right].value, "hintfull")) {
+					} else if (!stricmp
+							   ((const char *) t[right].value, "hintfull")) {
 						*interge = 3;
 					}
-				} else if (!stricmp((const char*)t[left].value, "lcdfilter")) {
-					if (!stricmp((const char*)t[right].value, "lcdnone")) {
+				} else if (!stricmp((const char *) t[left].value, "lcdfilter")) {
+					if (!stricmp((const char *) t[right].value, "lcdnone")) {
 						*interge = 0;
-					} else if (!stricmp((const char*)t[right].value, "lcddefault")) {
+					} else if (!stricmp
+							   ((const char *) t[right].value, "lcddefault")) {
 						*interge = 1;
-					} else if (!stricmp((const char*)t[right].value, "lcdlight")) {
+					} else if (!stricmp
+							   ((const char *) t[right].value, "lcdlight")) {
 						*interge = 2;
-					} else if (!stricmp((const char*)t[right].value, "lcdlegacy")) {
+					} else if (!stricmp
+							   ((const char *) t[right].value, "lcdlegacy")) {
 						*interge = 3;
 					}
 				} else {
@@ -674,7 +713,7 @@ static int token_equal(font_config *cfg, token *t, size_t tsize, size_t i)
 	return 0;
 }
 
-int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
+int parse_tokens(font_config * cfg, token * t, size_t tsize, bool boolean_mode)
 {
 	size_t i;
 	size_t start = 0, end = 0;
@@ -683,7 +722,7 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 
 	if (boolean_mode) {
 		// search for AND or OR
-		for(i=0; i<tsize; ++i) {
+		for (i = 0; i < tsize; ++i) {
 			if (t[i].type == TOKEN_AND || t[i].type == TOKEN_OR) {
 				break;
 			}
@@ -697,19 +736,19 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 			int left, right;
 
 			left = parse_tokens(cfg, &t[0], i, true);
-			right = parse_tokens(cfg, &t[i+1], tsize - i - 1, true);
+			right = parse_tokens(cfg, &t[i + 1], tsize - i - 1, true);
 
 			return left && right;
 		} else if (t[i].type == TOKEN_OR) {
 			int left, right;
-			
+
 			left = parse_tokens(cfg, &t[0], i, true);
-			right = parse_tokens(cfg, &t[i+1], tsize - i - 1, true);
+			right = parse_tokens(cfg, &t[i + 1], tsize - i - 1, true);
 
 			return left || right;
 		}
 	} else {
-		for(i=0; i<tsize; ++i) {
+		for (i = 0; i < tsize; ++i) {
 			switch (t[i].type) {
 				case TOKEN_IF:
 					start = i + 1;
@@ -718,13 +757,16 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 					{
 						size_t j;
 
-						for(j=start; j<tsize; ++j) {
-							if (t[j].type == TOKEN_THEN || t[j].type == TOKEN_THEN || t[j].type == TOKEN_END) {
+						for (j = start; j < tsize; ++j) {
+							if (t[j].type == TOKEN_THEN
+								|| t[j].type == TOKEN_THEN
+								|| t[j].type == TOKEN_END) {
 								break;
 							}
 						}
 
-						if (j == tsize || t[j].type == TOKEN_IF || t[j].type == TOKEN_END) {
+						if (j == tsize || t[j].type == TOKEN_IF
+							|| t[j].type == TOKEN_END) {
 							dbg_printf(d, "Missing then");
 							return -1;
 						}
@@ -751,7 +793,7 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 
 					level = 1;
 
-					for(j=start; j<tsize; ++j) {
+					for (j = start; j < tsize; ++j) {
 						if (t[j].type == TOKEN_IF) {
 							level++;
 						} else if (t[j].type == TOKEN_END) {
@@ -772,7 +814,7 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 					level = 1;
 
 					// search for ELSE
-					for(j=start; j<end; ++j) {
+					for (j = start; j < end; ++j) {
 						if (t[j].type == TOKEN_IF) {
 							level++;
 						} else if (t[j].type == TOKEN_END) {
@@ -789,16 +831,22 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 
 					if (ret == TOKEN_COMPARE_TRUE) {
 						if (elsepos >= 0) {
-							ret = parse_tokens(cfg, &t[start], elsepos - start, false);
+							ret =
+								parse_tokens(cfg, &t[start], elsepos - start,
+											 false);
 						} else {
-							ret = parse_tokens(cfg, &t[start], end - start + 1, false);
+							ret =
+								parse_tokens(cfg, &t[start], end - start + 1,
+											 false);
 						}
 
 						i = end + 1;
 					} else {
 						if (elsepos >= 0) {
-							ret = parse_tokens(cfg, &t[elsepos+1], end - elsepos, false);
-						} 
+							ret =
+								parse_tokens(cfg, &t[elsepos + 1],
+											 end - elsepos, false);
+						}
 
 						i = end + 1;
 					}
@@ -834,13 +882,13 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 					break;
 				case TOKEN_NUM:
 				case TOKEN_BOOL:
-					ret = (int)t[i].value;
+					ret = (int) t[i].value;
 					break;
 				case TOKEN_VAR:
 				case TOKEN_NOT:
 				case TOKEN_STRING:
 				case TOKEN_BRACKET:
-					//				report_tokens(&t[i], 1);
+					//              report_tokens(&t[i], 1);
 					break;
 				default:
 					dbg_printf(d, "Unexcepted token");
@@ -854,11 +902,11 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 	return ret;
 }
 
-int destroy_token(token **t, size_t *tsize)
+int destroy_token(token ** t, size_t * tsize)
 {
 	size_t i;
 
-	for(i=0; i< *tsize; ++i) {
+	for (i = 0; i < *tsize; ++i) {
 		if ((*t)[i].type == TOKEN_VAR || (*t)[i].type == TOKEN_STRING) {
 			if ((*t)[i].value != NULL) {
 				free((*t)[i].value);
@@ -889,13 +937,16 @@ fontconfig_mgr *fontconfigmgr_init(void)
 	return font_mgr;
 }
 
-font_config *fontconfigmgr_add_cache(fontconfig_mgr *font_mgr, font_config *p_cfg)
+font_config *fontconfigmgr_add_cache(fontconfig_mgr * font_mgr,
+									 font_config * p_cfg)
 {
 	font_config *p = NULL;
 
 	if (font_mgr->cnt + 1 > font_mgr->caps) {
 		font_mgr->caps += font_mgr->cnt + 16;
-		font_mgr->cache = safe_realloc(font_mgr->cache, sizeof(font_mgr->cache[0]) * font_mgr->caps);
+		font_mgr->cache =
+			safe_realloc(font_mgr->cache,
+						 sizeof(font_mgr->cache[0]) * font_mgr->caps);
 	}
 
 	if (font_mgr->cache == NULL) {
@@ -908,13 +959,16 @@ font_config *fontconfigmgr_add_cache(fontconfig_mgr *font_mgr, font_config *p_cf
 	return p;
 }
 
-font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_name, int pixelsize, bool cjkmode)
+font_config *fontconfigmgr_lookup(fontconfig_mgr * font_mgr,
+								  const char *font_name, int pixelsize,
+								  bool cjkmode)
 {
 	size_t i;
 
-	for(i=0; i<font_mgr->cnt; ++i) {
+	for (i = 0; i < font_mgr->cnt; ++i) {
 		if (!strcmp(font_mgr->cache[i].fontname, font_name)) {
-			if (font_mgr->cache[i].pixelsize == pixelsize && font_mgr->cache[i].cjkmode == cjkmode) {
+			if (font_mgr->cache[i].pixelsize == pixelsize
+				&& font_mgr->cache[i].cjkmode == cjkmode) {
 				return &font_mgr->cache[i];
 			}
 		}
@@ -934,7 +988,7 @@ font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_nam
 	return p;
 }
 
-void fontconfigmgr_free(fontconfig_mgr *font_mgr)
+void fontconfigmgr_free(fontconfig_mgr * font_mgr)
 {
 	if (font_mgr->cache != NULL) {
 		free(font_mgr->cache);
@@ -944,7 +998,7 @@ void fontconfigmgr_free(fontconfig_mgr *font_mgr)
 	free(font_mgr);
 }
 
-int get_font_config(font_config *p)
+int get_font_config(font_config * p)
 {
 	FILE *fp;
 	char linebuf[4096];
@@ -977,14 +1031,14 @@ int get_font_config(font_config *p)
 		if (linebuf[0] == '#')
 			continue;
 
-//		dbg_printf(d, "linebuf is %s", linebuf);
+//      dbg_printf(d, "linebuf is %s", linebuf);
 
 		scan_tokens(linebuf, &t, &tsize);
 	}
 
 	fclose(fp);
 
-//	report_tokens(t, tsize);
+//  report_tokens(t, tsize);
 
 	parse_tokens(p, t, tsize, false);
 
@@ -993,12 +1047,12 @@ int get_font_config(font_config *p)
 	return 0;
 }
 
-static const char* get_bool_str(bool b)
+static const char *get_bool_str(bool b)
 {
 	return b ? "true" : "false";
 }
 
-int report_font_config(font_config* p)
+int report_font_config(font_config * p)
 {
 	dbg_printf(d, "%-20s: %s", "name", p->fontname);
 	dbg_printf(d, "%-20s: %d", "pixelsize", p->pixelsize);
@@ -1017,7 +1071,7 @@ int report_font_config(font_config* p)
 
 #ifdef TEST
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	d = dbg_init();
 	dbg_open_stream(d, stderr);
@@ -1044,4 +1098,3 @@ int main(int argc, char* argv[])
 	return 0;
 }
 #endif
-

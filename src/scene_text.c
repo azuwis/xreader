@@ -504,34 +504,41 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 
 				dump_ttf(&myttf1, &myttf2);
 				disp_putnstring_reversal_truetype(&myttf1, &myttf2, s,
-										PSP_SCREEN_HEIGHT -
-										scene_get_infobar_height() - 1,
-										config.forecolor, (const byte *) cr,
-										960 / config.infobar_fontsize,
-										wordspace, 0, config.infobar_fontsize,
-										0);
+												  PSP_SCREEN_HEIGHT -
+												  scene_get_infobar_height() -
+												  1, config.forecolor,
+												  (const byte *) cr,
+												  960 / config.infobar_fontsize,
+												  wordspace, 0,
+												  config.infobar_fontsize, 0);
 				clean_ttfs_cache(&myttf1, &myttf2);
 			}
 			break;
 		case conf_vertread_lvert:
 			{
 				dump_ttf(&myttf1, &myttf2);
-				disp_putnstring_lvert_truetype(&myttf1, &myttf2, PSP_SCREEN_WIDTH -
-									 scene_get_infobar_height() - 1,
-									 (PSP_SCREEN_HEIGHT - 1), config.forecolor,
-									 (const byte *) cr,
-									 544 / config.infobar_fontsize, wordspace, 0,
-									 config.infobar_fontsize, 0);
+				disp_putnstring_lvert_truetype(&myttf1, &myttf2,
+											   PSP_SCREEN_WIDTH -
+											   scene_get_infobar_height() - 1,
+											   (PSP_SCREEN_HEIGHT - 1),
+											   config.forecolor,
+											   (const byte *) cr,
+											   544 / config.infobar_fontsize,
+											   wordspace, 0,
+											   config.infobar_fontsize, 0);
 				clean_ttfs_cache(&myttf1, &myttf2);
 			}
 			break;
 		case conf_vertread_rvert:
 			{
 				dump_ttf(&myttf1, &myttf2);
-				disp_putnstring_rvert_truetype(&myttf1, &myttf2, scene_get_infobar_height(), 0,
-											  config.forecolor, (const byte *) cr,
-											  544 / config.infobar_fontsize, wordspace, 0,
-											  config.infobar_fontsize, 0);
+				disp_putnstring_rvert_truetype(&myttf1, &myttf2,
+											   scene_get_infobar_height(), 0,
+											   config.forecolor,
+											   (const byte *) cr,
+											   544 / config.infobar_fontsize,
+											   wordspace, 0,
+											   config.infobar_fontsize, 0);
 				clean_ttfs_cache(&myttf1, &myttf2);
 			}
 			break;
@@ -541,11 +548,13 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 
 				dump_ttf(&myttf1, &myttf2);
 				disp_putnstring_horz_truetype(&myttf1, &myttf2, s,
-									PSP_SCREEN_HEIGHT -
-									scene_get_infobar_height() - 1,
-									config.forecolor, (const byte *) cr,
-									960 / config.infobar_fontsize, wordspace, 0,
-									config.infobar_fontsize, 0);
+											  PSP_SCREEN_HEIGHT -
+											  scene_get_infobar_height() - 1,
+											  config.forecolor,
+											  (const byte *) cr,
+											  960 / config.infobar_fontsize,
+											  wordspace, 0,
+											  config.infobar_fontsize, 0);
 				clean_ttfs_cache(&myttf1, &myttf2);
 			}
 			break;
