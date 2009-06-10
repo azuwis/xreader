@@ -45,8 +45,11 @@
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
+#include "fontconfig.h"
 
 static SceUID ttf_sema = -1;
+
+static font_config my_font_config;
 
 /**
  * 打开TTF字体文件
@@ -166,6 +169,16 @@ extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
 	return ttf;
 }
 
+static void update_fontconfig(FT_Face face, int pixelSize)
+{
+	new_font_config(FT_Get_Postscript_Name(face), &my_font_config);
+	my_font_config.pixelsize = pixelSize;
+
+	if (get_font_config(&my_font_config) == 0) {
+//		report_font_config(&my_font_config);
+	}
+}
+
 extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 							 const char *ttfName)
 {
@@ -209,10 +222,13 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
 		memset(&ttf->sbitHashRoot[i], 0, sizeof(SBit_HashItem));
 	}
+
 	ttf->cacheSize = 0;
 	ttf->cachePop = 0;
 
 	ttf_set_pixel_size(ttf, pixelSize);
+
+	update_fontconfig(ttf->face, pixelSize);
 
 	return ttf;
 }
@@ -257,6 +273,8 @@ extern bool ttf_set_pixel_size(p_ttf ttf, int size)
 	}
 
 	ttf->pixelSize = size;
+	update_fontconfig(ttf->face, size);
+
 	return true;
 }
 
@@ -596,6 +614,25 @@ static void drawBitmap_horz(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 					 bitmap->rows, bitmap->pitch, x, y, width, height, color);
 }
 
+static FT_Int32 get_fontconfig_flag(void)
+{
+	FT_Int32 flag = FT_LOAD_DEFAULT;
+
+	if (!my_font_config.hinting) {
+		flag |= FT_LOAD_NO_HINTING;
+	}
+
+	if (my_font_config.autohint) {
+		flag |= FT_LOAD_FORCE_AUTOHINT;
+	}
+
+	if (!my_font_config.globaladvance) {
+		flag |= FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
+	}
+
+	return flag;
+}
+
 #define DISP_RSPAN 0
 
 /**
@@ -652,14 +689,15 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		// disable hinting when loading chinese characters
 		// TODO: add font config per font to get better performace
-		if (is_hanzi)
-			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
-		else
-			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag());
+
+		if (my_font_config.antialias)
+			ttf_set_anti_alias(ttf, true);
+
 		if (error)
 			return;
+
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 			error =
 				FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, false));
@@ -739,9 +777,8 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				cprevious = cache->glyph_index;
 			} else {
 				glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
-				// disable hinting when loading chinese characters
-				error =
-					FT_Load_Glyph(cttf->face, glyphIndex, FT_LOAD_NO_HINTING);
+				error = FT_Load_Glyph(cttf->face, glyphIndex, get_fontconfig_flag());
+				
 				if (error) {
 					return count;
 				}
@@ -815,11 +852,12 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				eprevious = cache->glyph_index;
 			} else {
 				glyphIndex = FT_Get_Char_Index(ettf->face, ucs);
-				// disable hinting when loading chinese characters
-				error = FT_Load_Glyph(ettf->face, glyphIndex, FT_LOAD_DEFAULT);
+				error = FT_Load_Glyph(ettf->face, glyphIndex, get_fontconfig_flag());
+
 				if (error) {
 					return count;
 				}
+
 				if (ettf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 					if (ettf->cleartype) {
 						error =
@@ -905,10 +943,11 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 	word ucs = charsets_gbk_to_ucs(str);
 
 	glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
-	// disable hinting when loading chinese characters
-	error = FT_Load_Glyph(cttf->face, glyphIndex, FT_LOAD_NO_HINTING);
+	error = FT_Load_Glyph(cttf->face, glyphIndex, get_fontconfig_flag());
+	
 	if (error)
 		return x;
+
 	if (cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
 		if (cttf->cleartype) {
 			error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_LCD);
@@ -1379,11 +1418,8 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		// disable hinting when loading chinese characters
-		if (is_hanzi)
-			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
-		else
-			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag());
+
 		if (error)
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
@@ -1698,11 +1734,8 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		// disable hinting when loading chinese characters
-		if (is_hanzi)
-			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
-		else
-			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag());
+
 		if (error)
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
@@ -2017,11 +2050,8 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		// disable hinting when loading chinese characters
-		if (is_hanzi)
-			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_NO_HINTING);
-		else
-			error = FT_Load_Glyph(ttf->face, glyphIndex, FT_LOAD_DEFAULT);
+		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag());
+
 		if (error)
 			return;
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {

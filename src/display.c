@@ -343,12 +343,12 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 #ifdef ENABLE_TTF
 static bool load_ttf_config(void)
 {
-	ttf_set_anti_alias(cttf, config.cfont_antialias);
-	ttf_set_anti_alias(ettf, config.efont_antialias);
-	ttf_set_cleartype(cttf, config.cfont_cleartype);
-	ttf_set_cleartype(ettf, config.efont_cleartype);
-	ttf_set_embolden(cttf, config.cfont_embolden);
-	ttf_set_embolden(ettf, config.efont_embolden);
+//	ttf_set_anti_alias(cttf, config.cfont_antialias);
+//	ttf_set_anti_alias(ettf, config.efont_antialias);
+//	ttf_set_cleartype(cttf, config.cfont_cleartype);
+//	ttf_set_cleartype(ettf, config.efont_cleartype);
+//	ttf_set_embolden(cttf, config.cfont_embolden);
+//	ttf_set_embolden(ettf, config.efont_embolden);
 
 	return true;
 }
