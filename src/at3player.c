@@ -514,6 +514,12 @@ static int at3_load(const char *spath, const char *lpath)
 		xrIoClose(data.fd);
 		data.fd = -1;
 		data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
+
+		if (data.r == NULL) {
+			__end();
+			return -1;
+		}
+
 		buffered_reader_seek(data.r, cur);
 	}
 

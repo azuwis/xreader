@@ -900,6 +900,12 @@ static int mp3_load(const char *spath, const char *lpath)
 		xrIoClose(mp3_data.fd);
 		mp3_data.fd = -1;
 		mp3_data.r = buffered_reader_open(spath, g_io_buffer_size, 1);
+
+		if (mp3_data.r == NULL) {
+			__end();
+			return -1;
+		}
+
 		buffered_reader_seek(mp3_data.r, cur);
 	}
 
