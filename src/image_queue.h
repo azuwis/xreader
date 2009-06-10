@@ -47,6 +47,7 @@ void cache_on(bool on);
 int cache_delete_first(void);
 int cache_get_loaded_size();
 int cache_routine(void);
+void cache_reload_all(void);
 
 int image_queue_test(void);
 

@@ -72,6 +72,7 @@
 #include "clock.h"
 #include "musicdrv.h"
 #include "xrhal.h"
+#include "image_queue.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -921,6 +922,7 @@ void scene_ioptions_predraw(p_win_menuitem item, dword index, dword topindex,
 dword scene_ioptions(dword * selidx)
 {
 	win_menu_predraw_data prev;
+	dword orgimgbrightness = config.imgbrightness;
 
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
 
@@ -969,6 +971,10 @@ dword scene_ioptions(dword * selidx)
 					 config.usedyncolor ? get_bgcolor_by_time() : config.
 					 menubcolor, true, scene_ioptions_predraw, NULL,
 					 scene_ioptions_menucb)) != INVALID);
+
+	if (orgimgbrightness != config.imgbrightness) {
+		cache_reload_all();
+	}
 
 	memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
 

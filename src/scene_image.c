@@ -1689,10 +1689,6 @@ dword scene_readimage(dword selidx)
 					break;
 				}
 
-				if (config.imgbrightness != 100) {
-					recalc_brightness();
-				}
-
 				img_needrf = false;
 			} else {
 				int fid;

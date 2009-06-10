@@ -407,6 +407,17 @@ int start_cache_next_image(void)
 							   &tmp.height, &tmp.data, &tmp.bgc, tmp.where);
 	}
 
+	if (tmp.result == 0 && tmp.data != NULL && config.imgbrightness != 100) {
+		pixel *t = tmp.data;
+		short b = 100 - config.imgbrightness;
+		dword i;
+
+		for (i = 0; i < tmp.height * tmp.width; i++) {
+			*t = disp_grayscale(*t, 0, 0, 0, b);
+			t++;
+		}
+	}
+
 	freq_leave(fid);
 
 	cache_lock();
@@ -664,3 +675,25 @@ int cache_get_loaded_size()
 
 	return c;
 }
+
+void cache_reload_all(void)
+{
+	cache_image_t *p;
+	int i;
+
+	cache_lock();
+
+	for (i = 0; i < ccacher.caches_size; ++i) {
+		p = &ccacher.caches[i];
+
+		if (p->status == CACHE_OK) {
+			free_cache_image(p);
+			ccacher.memory_usage -= p->width * p->height * sizeof(pixel);
+			p->status = CACHE_INIT;
+		}
+	}
+
+	xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
+	cache_unlock();
+}
+
