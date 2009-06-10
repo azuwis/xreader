@@ -950,7 +950,7 @@ int get_font_config(font_config *p)
 
 	if (g_font_config_path[0] == '\0') {
 		STRCPY_S(g_font_config_path, scene_appdir());
-		STRCAT_S(g_font_config_path, "font.conf");
+		STRCAT_S(g_font_config_path, "fonts.conf");
 	}
 
 	fp = fopen(g_font_config_path, "rb");
@@ -1021,7 +1021,7 @@ int main(int argc, char* argv[])
 
 	font_config my_font_config;
 
-	STRCPY_S(g_font_config_path, "./font.conf");
+	STRCPY_S(g_font_config_path, "./fonts.conf");
 
 	new_font_config("#WenQuanYi Zen Hei#", &my_font_config);
 
