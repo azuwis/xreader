@@ -348,6 +348,8 @@ static int get_var_as_int(font_config *cfg, const token *t, int **interge)
 		*interge = &cfg->pixelsize;
 	} else if (!stricmp(p, "spacing")) {
 		*interge = &cfg->spacing;
+	} else if (!stricmp(p, "hintstyle")) {
+		*interge = &cfg->hintstyle;
 	} else {
 		return -1;
 	}
@@ -627,7 +629,31 @@ static int token_equal(font_config *cfg, token *t, size_t tsize, size_t i)
 			}
 			break;
 		case TOKEN_STRING:
-			dbg_printf(d, "Unsupported now");
+			{
+				int *interge = NULL;
+
+				int ret = get_var_as_int(cfg, &t[left], &interge);
+
+				if (ret < 0) {
+					return -1;
+				}
+				
+				if (!stricmp((const char*)t[left].value, "hintstyle")) {
+					if (!stricmp((const char*)t[right].value, "hintnone")) {
+						*interge = 0;
+					} else if (!stricmp((const char*)t[right].value, "hintslight")) {
+						*interge = 1;
+					} else if (!stricmp((const char*)t[right].value, "hintmedium")) {
+						*interge = 2;
+					} else if (!stricmp((const char*)t[right].value, "hintfull")) {
+						*interge = 3;
+					}
+				} else {
+					dbg_printf(d, "Unsupported now");
+					return -1;
+				}
+			}
+
 			return 0;
 			break;
 	}

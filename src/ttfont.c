@@ -602,6 +602,24 @@ static FT_Int32 get_fontconfig_flag(p_ttf ttf)
 	}
 	*/
 
+	if (ttf->config.antialias) {
+		switch (ttf->config.hintstyle) {
+			case 0:
+				flag |= FT_LOAD_NO_HINTING;
+				break;
+			case 1:
+			case 2:
+				flag |= FT_LOAD_TARGET_LIGHT;
+				break;
+			case 3:
+				break;
+		}
+
+		flag |= FT_LOAD_TARGET_LCD;
+	} else {
+		flag |= FT_LOAD_TARGET_MONO;
+	}
+
 	return flag;
 }
 
