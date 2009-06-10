@@ -13,6 +13,7 @@ typedef struct _font_config {
 	int pixelsize;
 	bool embolden;
 	bool cleartype;
+	int lcdfilter;
 } font_config;
 
 enum {

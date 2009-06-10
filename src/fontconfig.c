@@ -26,6 +26,8 @@ int new_font_config(const char* fontname, font_config *p)
 	p->fontname = fontname;
 	p->antialias = true;
 	p->hinting = true;
+	p->cleartype = true;
+	p->lcdfilter = 1;
 
 	return 0;
 }
@@ -348,6 +350,8 @@ static int get_var_as_int(font_config *cfg, const token *t, int **interge)
 		*interge = &cfg->pixelsize;
 	} else if (!stricmp(p, "hintstyle")) {
 		*interge = &cfg->hintstyle;
+	} else if (!stricmp(p, "lcdfilter")) {
+		*interge = &cfg->lcdfilter;
 	} else {
 		return -1;
 	}
@@ -642,6 +646,16 @@ static int token_equal(font_config *cfg, token *t, size_t tsize, size_t i)
 					} else if (!stricmp((const char*)t[right].value, "hintmedium")) {
 						*interge = 2;
 					} else if (!stricmp((const char*)t[right].value, "hintfull")) {
+						*interge = 3;
+					}
+				} else if (!stricmp((const char*)t[left].value, "lcdfilter")) {
+					if (!stricmp((const char*)t[right].value, "lcdnone")) {
+						*interge = 0;
+					} else if (!stricmp((const char*)t[right].value, "lcddefault")) {
+						*interge = 1;
+					} else if (!stricmp((const char*)t[right].value, "lcdlight")) {
+						*interge = 2;
+					} else if (!stricmp((const char*)t[right].value, "lcdlegacy")) {
 						*interge = 3;
 					}
 				} else {
