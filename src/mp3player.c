@@ -75,7 +75,7 @@ static struct mad_synth synth;
 /**
  * MP3“Ù¿÷≤•∑≈ª∫≥Â
  */
-static uint16_t g_buff[BUFF_SIZE / 2];
+static uint16_t *g_buff = NULL;
 
 /**
  * MP3“Ù¿÷Ω‚¬Îª∫≥Â
@@ -749,7 +749,6 @@ static int __init(void)
 	generic_unlock();
 
 	memset(&g_inst_br, 0, sizeof(g_inst_br));
-	memset(g_buff, 0, sizeof(g_buff));
 	memset(g_input_buff, 0, sizeof(g_input_buff));
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
@@ -950,7 +949,14 @@ static int mp3_load(const char *spath, const char *lpath)
 		__end();
 		return -1;
 	}
-	// ME can't handle mono channel now
+
+	g_buff = xMP3Alloc(0, BUFF_SIZE);
+
+	if (g_buff == NULL) {
+		__end();
+		return -1;
+	}
+
 	if (use_me)
 		xMP3AudioSetChannelCallback(0, memp3_audiocallback, NULL);
 	else
@@ -1133,6 +1139,11 @@ static int mp3_end(void)
 			xrIoClose(mp3_data.fd);
 			mp3_data.fd = -1;
 		}
+	}
+
+	if (g_buff != NULL) {
+		xMP3Free(g_buff);
+		g_buff = NULL;
 	}
 
 	generic_end();

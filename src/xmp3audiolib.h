@@ -78,6 +78,8 @@ extern "C"
 	int xMP3AudioSetFrequency(unsigned short freq);
 
 	void xMP3ClearSndBuf(void *buf, int frames);
+	void *xMP3Alloc(size_t align, size_t bytes);
+	void xMP3Free(void *p);
 
 #ifdef __cplusplus
 }

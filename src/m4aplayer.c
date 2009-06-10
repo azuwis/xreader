@@ -62,7 +62,7 @@
 /**
  * MP3音乐播放缓冲
  */
-static uint16_t g_buff[BUFF_SIZE / 2];
+static uint16_t *g_buff = NULL;
 
 /**
  * MP3音乐播放缓冲大小，以帧数计
@@ -111,7 +111,6 @@ static int __init(void)
 	g_seek_seconds = 0;
 	g_play_time = 0.;
 	memset(&g_info, 0, sizeof(g_info));
-	memset(g_buff, 0, sizeof(g_buff));
 
 	aac_data_align = 0;
 	aac_data_start = 0;
@@ -531,6 +530,12 @@ static int m4a_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
+	g_buff = xMP3Alloc(0, BUFF_SIZE);
+
+	if (g_buff == NULL) {
+		goto failed;
+	}
+
 	xMP3AudioSetChannelCallback(0, m4a_audiocallback, NULL);
 
 	return 0;
@@ -559,6 +564,11 @@ static int m4a_end(void)
 	if (aac_getEDRAM) {
 		xrAudiocodecReleaseEDRAM(aac_codec_buffer);
 		aac_getEDRAM = false;
+	}
+
+	if (g_buff != NULL) {
+		xMP3Free(g_buff);
+		g_buff = NULL;
 	}
 
 	return 0;

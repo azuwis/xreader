@@ -36,6 +36,7 @@
 #include <string.h>
 #include <pspthreadman.h>
 #include <pspaudio.h>
+#include <malloc.h>
 
 #include "xmp3audiolib.h"
 #include "xrhal.h"
@@ -292,4 +293,19 @@ void xMP3AudioEnd()
 void xMP3ClearSndBuf(void *buf, int frames)
 {
 	memset(buf, 0, frames * 2 * 2);
+}
+
+void *xMP3Alloc(size_t align, size_t bytes)
+{
+	void *p = memalign(align, bytes);
+
+	if (p)
+		memset(p, 0, bytes);
+
+	return p;
+}
+
+void xMP3Free(void *p)
+{
+	free(p);
 }

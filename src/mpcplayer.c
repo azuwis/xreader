@@ -50,7 +50,7 @@ static mpc_streaminfo info;
 /**
  * Musepack音乐播放缓冲
  */
-static MPC_SAMPLE_FORMAT g_buff[MPC_DECODER_BUFFER_LENGTH];
+static MPC_SAMPLE_FORMAT *g_buff = NULL;
 
 /**
  * Musepack音乐播放缓冲大小，以帧数计
@@ -232,7 +232,6 @@ static int __init(void)
 	g_status = ST_UNKNOWN;
 	generic_unlock();
 
-	memset(g_buff, 0, sizeof(g_buff));
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
 	reader_inited = false;
@@ -374,6 +373,13 @@ static int mpc_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
+	g_buff = xMP3Alloc(0, sizeof(*g_buff) * MPC_DECODER_BUFFER_LENGTH);
+
+	if (g_buff == NULL) {
+		__end();
+		return -1;
+	}
+
 	xMP3AudioSetChannelCallback(0, mpc_audiocallback, NULL);
 
 	generic_lock();
@@ -429,6 +435,11 @@ static int mpc_end(void)
 
 	free_bitrate(&g_inst_br);
 	generic_end();
+
+	if (g_buff != NULL) {
+		xMP3Free(g_buff);
+		g_buff = NULL;
+	}
 
 	return 0;
 }
