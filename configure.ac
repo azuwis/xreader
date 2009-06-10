@@ -235,11 +235,10 @@ fi
 
 #AC_CONFIG_SUBDIRS([src/GenIndex])
 AC_CONFIG_FILES([Makefile
-				 cooleyesBridge/Makefile
+                 cooleyesBridge/Makefile
                  src/Makefile
                  xrPrx/Makefile
                  xr_rdriver/Makefile
                  testsuite/Makefile
-                 testsuite/testprx/Makefile
                  ])
 AC_OUTPUT
