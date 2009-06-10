@@ -378,10 +378,50 @@ static int calc_crc(int fd, size_t nbytes, uint16_t * crc_value)
 	return 0;
 }
 
-static inline int parse_frame(uint8_t * h, int *lv, int *br,
-							  struct MP3Info *info, mp3_reader_data * data,
-							  offset_t start)
+static bool check_next_frame_header(mp3_reader_data * data, uint8_t * buf,
+									uint32_t bufpos, uint32_t bufsize,
+									uint32_t this_frame, uint32_t next_frame)
 {
+	uint32_t orig;
+	bool result = false;
+	uint8_t tmp[2];
+
+	if (bufpos + next_frame - this_frame + 1 < bufsize) {
+		uint8_t *ptr;
+
+		ptr = &buf[bufpos + next_frame - this_frame];
+
+		if (ptr[0] == 0xff && (ptr[1] & 0xe0) == 0xe0) {
+			result = true;
+		} else {
+			result = false;
+		}
+	} else {
+		orig = xrIoLseek(data->fd, 0, PSP_SEEK_CUR);
+		xrIoLseek(data->fd, next_frame, PSP_SEEK_SET);
+
+		if (xrIoRead(data->fd, tmp, sizeof(tmp)) != sizeof(tmp)) {
+			// EOF? Ignore this error
+			result = true;
+		} else {
+			if (tmp[0] == 0xff && (tmp[1] & 0xe0) == 0xe0) {
+				result = true;
+			} else {
+				result = false;
+			}
+		}
+
+		xrIoLseek(data->fd, orig, PSP_SEEK_SET);
+	}
+
+	return result;
+}
+
+static inline int parse_frame(uint8_t * buf, size_t bufpos, size_t bufsize,
+							  int *lv, int *br, struct MP3Info *info,
+							  mp3_reader_data * data, offset_t start)
+{
+	uint8_t *h = buf + bufpos;
 	uint8_t mp3_version, mp3_level;
 	uint8_t layer;
 	uint8_t crc;
@@ -393,6 +433,8 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 	int freq;
 	uint16_t mp3_samples_per_frames[9] =
 		{ 384, 1152, 1152, 384, 1152, 576, 384, 1152, 576 };
+	uint16_t spf;
+	bool have_crc = false;
 
 	if (h[0] != 0xff)
 		return -1;
@@ -420,7 +462,7 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 	if (mp3_level == 3)
 		mp3_level--;
 
-	info->spf = mp3_samples_per_frames[mp3_version * 3 + mp3_level];
+	spf = mp3_samples_per_frames[mp3_version * 3 + mp3_level];
 
 	layer = 4 - ((h[1] >> 1) & 3);
 
@@ -502,7 +544,7 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 		}
 
 		xrIoLseek(data->fd, offset, PSP_SEEK_SET);
-		info->have_crc = true;
+		have_crc = true;
 	}
 
 	if (*lv == 0)
@@ -510,17 +552,31 @@ static inline int parse_frame(uint8_t * h, int *lv, int *br,
 
 	*br = bitrate;
 
-	info->sample_freq = freq;
-
-	if (channel_mode == 3)
-		info->channels = 1;
-	else
-		info->channels = 2;
-
 	if (mp3_level == 0)
-		framelenbyte = ((info->spf / 8 * 1000) * bitrate / freq + pad) << 2;
+		framelenbyte = ((spf / 8 * 1000) * bitrate / freq + pad) << 2;
 	else
-		framelenbyte = (info->spf / 8 * 1000) * bitrate / freq + pad;
+		framelenbyte = (spf / 8 * 1000) * bitrate / freq + pad;
+
+	if (!check_next_frame_header
+		(data, buf, bufpos, bufsize, start, start + framelenbyte)) {
+		return -1;
+	}
+
+	if (info->sample_freq == 0)
+		info->sample_freq = freq;
+
+	if (info->channels == 0) {
+		if (channel_mode == 3)
+			info->channels = 1;
+		else
+			info->channels = 2;
+	}
+
+	if (info->spf == 0) {
+		info->spf = spf;
+	}
+
+	info->have_crc = have_crc;
 
 	return framelenbyte;
 }
@@ -578,7 +634,7 @@ int search_valid_frame_me(mp3_reader_data * data, int *brate)
 	while ((end = xrIoRead(data->fd, &buf[4], sizeof(buf) - 4)) > 0) {
 		while (start < end) {
 			size =
-				parse_frame(buf + start, &level, brate, info, data,
+				parse_frame(buf, start, end, &level, brate, info, data,
 							dcount * (sizeof(buf) - 4) + off + start);
 
 			if (size > 0) {
@@ -604,50 +660,12 @@ int search_valid_frame_me(mp3_reader_data * data, int *brate)
 	return size;
 }
 
-static bool check_next_frame_header(mp3_reader_data * data, uint8_t *buf, uint32_t bufpos, uint32_t bufsize, uint32_t this_frame, uint32_t next_frame)
-{
-	uint32_t orig;
-	bool result = false;
-	uint8_t tmp[2];
-
-	if (bufpos + next_frame - this_frame + 1 < bufsize) {
-		uint8_t *ptr;
-
-		ptr = &buf[bufpos + next_frame - this_frame];
-
-		if (ptr[0] == 0xff && (ptr[1] & 0xe0) == 0xe0) {
-			result = true;
-		} else {
-			result = false;
-		}
-	} else {
-		orig = xrIoLseek(data->fd, 0, PSP_SEEK_CUR);
-		xrIoLseek(data->fd, next_frame, PSP_SEEK_SET);
-
-		if (xrIoRead(data->fd, tmp, sizeof(tmp)) != sizeof(tmp)) {
-			// EOF? Ignore this error
-			result = true;
-		} else {
-			if (tmp[0] == 0xff && (tmp[1] & 0xe0) == 0xe0) {
-				result = true;
-			} else {
-				result = false;
-			}
-		}
-
-		xrIoLseek(data->fd, orig, PSP_SEEK_SET);
-	}
-
-	return result;
-}
-
 int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 {
 	uint32_t off;
 	int size, br = 0, dcount = 0;
 	int end;
 	int level;
-	struct MP3Info tmp_info;
 
 	if (data->fd < 0)
 		return -1;
@@ -677,43 +695,30 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	level = info->sample_freq = info->channels = info->frames = 0;
 	info->frameoff = NULL;
 
-	memset(&tmp_info, 0, sizeof(tmp_info));
-	tmp_info.check_crc = info->check_crc;
-
 	while ((end = xrIoRead(data->fd, &buf[4], 65536)) > 0) {
 		while (off < end) {
 			int brate = 0;
 
 			if ((size =
-				 parse_frame(&buf[off], &level, &brate, &tmp_info, data,
+				 parse_frame(buf, off, end, &level, &brate, info, data,
 							 dcount * 65536 + off)) > 0) {
-				if (check_next_frame_header(data, buf, off, end, dcount * 65536 + off, dcount * 65536 + off + size)) {
-					info->is_mpeg1or2 = tmp_info.is_mpeg1or2;
-					info->check_crc = tmp_info.check_crc;
-					info->have_crc = tmp_info.have_crc;
-					info->spf = tmp_info.spf;
-					info->sample_freq = tmp_info.sample_freq;
-					info->channels = tmp_info.channels;
-					br += brate;
-					if (first_frame == (uint32_t) - 1)
-						first_frame = dcount * 65536 + off;
+				br += brate;
+				if (first_frame == (uint32_t) - 1)
+					first_frame = dcount * 65536 + off;
 
-					if (info->frames >= 0) {
-						if (info->frames == 0)
-							info->frameoff = malloc(sizeof(dword) * 1024);
-						else
-							info->frameoff =
-								safe_realloc(info->frameoff,
-										sizeof(dword) * (info->frames + 1024));
-						if (info->frameoff == NULL)
-							info->frames = -1;
-						else
-							info->frameoff[info->frames++] = dcount * 65536 + off;
-					}
-					off += size;
-				} else {
-					off++;
+				if (info->frames >= 0) {
+					if (info->frames == 0)
+						info->frameoff = malloc(sizeof(dword) * 1024);
+					else
+						info->frameoff =
+							safe_realloc(info->frameoff,
+										 sizeof(dword) * (info->frames + 1024));
+					if (info->frameoff == NULL)
+						info->frames = -1;
+					else
+						info->frameoff[info->frames++] = dcount * 65536 + off;
 				}
+				off += size;
 			} else
 				off++;
 		}
