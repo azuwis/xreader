@@ -340,20 +340,6 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 	return true;
 }
 
-#ifdef ENABLE_TTF
-static bool load_ttf_config(void)
-{
-//	ttf_set_anti_alias(cttf, config.cfont_antialias);
-//	ttf_set_anti_alias(ettf, config.efont_antialias);
-//	ttf_set_cleartype(cttf, config.cfont_cleartype);
-//	ttf_set_cleartype(ettf, config.efont_cleartype);
-//	ttf_set_embolden(cttf, config.cfont_embolden);
-//	ttf_set_embolden(ettf, config.efont_embolden);
-
-	return true;
-}
-#endif
-
 extern bool disp_load_truetype_book_font(const char *ettffile,
 										 const char *cttffile, int size)
 {
@@ -391,8 +377,6 @@ extern bool disp_load_truetype_book_font(const char *ettffile,
 	} else {
 		ttf_set_pixel_size(ettf, size);
 	}
-
-	load_ttf_config();
 
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
 	use_ttf = 1;
@@ -505,8 +489,6 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 	}
 	if (cttf == NULL)
 		return false;
-
-	load_ttf_config();
 
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
 	use_ttf = 1;
@@ -2007,8 +1989,6 @@ extern void disp_ttf_reload(void)
 		ettf = cttf;
 		g_ttf_share_two_font = true;
 	}
-
-	load_ttf_config();
 
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
 }

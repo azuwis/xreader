@@ -49,8 +49,6 @@
 
 static SceUID ttf_sema = -1;
 
-static font_config my_font_config;
-
 /**
  * 打开TTF字体文件
  *
@@ -78,12 +76,6 @@ static p_ttf ttf_open_file(const char *ttfpath, int pixelSize,
 
 	memset(ttf, 0, sizeof(t_ttf));
 
-	if (strrchr(ttfName, '/') == NULL)
-		ttf->fontName = strdup(ttfName);
-	else {
-		ttf->fontName = strdup(strrchr(ttfName, '/') + 1);
-	}
-
 	if (FT_Init_FreeType(&ttf->library) != 0) {
 		free(ttf);
 		return NULL;
@@ -96,6 +88,10 @@ static p_ttf ttf_open_file(const char *ttfpath, int pixelSize,
 		free(ttf);
 		return NULL;
 	}
+
+	ttf->fontName = FT_Get_Postscript_Name(ttf->face);
+
+	dbg_printf(d, "%s: font name is %s", __func__, ttf->fontName);
 
 	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
 		memset(&ttf->sbitHashRoot[i], 0, sizeof(SBit_HashItem));
@@ -154,6 +150,16 @@ static p_ttf ttf_open_file_to_memory(const char *filename, int size,
 	return ttf;
 }
 
+static void update_fontconfig(p_ttf ttf, int pixelSize)
+{
+	new_font_config(ttf->fontName, &ttf->config);
+	ttf->config.pixelsize = pixelSize;
+
+	if (get_font_config(&ttf->config) == 0) {
+//		report_font_config(&ttf->config);
+	}
+}
+
 extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
 {
 	p_ttf ttf;
@@ -166,17 +172,12 @@ extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
 	else
 		ttf = ttf_open_file(filename, size, filename);
 
-	return ttf;
-}
-
-static void update_fontconfig(FT_Face face, int pixelSize)
-{
-	new_font_config(FT_Get_Postscript_Name(face), &my_font_config);
-	my_font_config.pixelsize = pixelSize;
-
-	if (get_font_config(&my_font_config) == 0) {
-//		report_font_config(&my_font_config);
+	if (ttf != NULL) {
+		update_fontconfig(ttf, size);
+		report_font_config(&ttf->config);
 	}
+
+	return ttf;
 }
 
 extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
@@ -198,12 +199,6 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 	ttf->fileBuffer = ttfBuf;
 	ttf->fileSize = ttfLength;
 
-	if (strrchr(ttfName, '/') == NULL)
-		ttf->fontName = strdup(ttfName);
-	else {
-		ttf->fontName = strdup(strrchr(ttfName, '/') + 1);
-	}
-
 	if (FT_Init_FreeType(&ttf->library) != 0) {
 		free(ttf);
 		return NULL;
@@ -217,7 +212,9 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 		return NULL;
 	}
 
-	dbg_printf(d, "%s: font name is %s", __func__, FT_Get_Postscript_Name(ttf->face));
+	ttf->fontName = FT_Get_Postscript_Name(ttf->face);
+
+	dbg_printf(d, "%s: font name is %s", __func__, ttf->fontName);
 
 	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
 		memset(&ttf->sbitHashRoot[i], 0, sizeof(SBit_HashItem));
@@ -227,8 +224,6 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 	ttf->cachePop = 0;
 
 	ttf_set_pixel_size(ttf, pixelSize);
-
-	update_fontconfig(ttf->face, pixelSize);
 
 	return ttf;
 }
@@ -240,10 +235,7 @@ extern void ttf_close(p_ttf ttf)
 	if (ttf == NULL)
 		return;
 
-	if (ttf->fontName != NULL) {
-		free(ttf->fontName);
-		ttf->fontName = NULL;
-	}
+	ttf->fontName = NULL;
 
 	if (ttf->fileBuffer != NULL) {
 		free(ttf->fileBuffer);
@@ -273,35 +265,9 @@ extern bool ttf_set_pixel_size(p_ttf ttf, int size)
 	}
 
 	ttf->pixelSize = size;
-	update_fontconfig(ttf->face, size);
+	update_fontconfig(ttf, size);
 
 	return true;
-}
-
-extern void ttf_set_anti_alias(p_ttf ttf, bool aa)
-{
-	if (ttf == NULL)
-		return;
-
-	ttf->antiAlias = aa;
-}
-
-extern void ttf_set_cleartype(p_ttf ttf, bool cleartype)
-{
-	if (ttf == NULL)
-		return;
-
-	if (cleartype)
-		FT_Library_SetLcdFilter(ttf->library, FT_LCD_FILTER_DEFAULT);
-	ttf->cleartype = cleartype;
-}
-
-extern void ttf_set_embolden(p_ttf ttf, bool embolden)
-{
-	if (ttf == NULL)
-		return;
-
-	ttf->embolden = embolden;
 }
 
 /**
@@ -340,9 +306,9 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 	item->ucs_code = ucsCode;
 	item->glyph_index = glyphIndex;
 	item->size = ttf->pixelSize;
-	item->anti_alias = ttf->antiAlias;
-	item->cleartype = ttf->cleartype;
-	item->embolden = ttf->embolden;
+	item->anti_alias = ttf->config.antialias;
+	item->cleartype = ttf->config.cleartype;
+	item->embolden = ttf->config.embolden;
 	item->xadvance = xadvance;
 	item->yadvance = yadvance;
 	item->bitmap.width = bitmap->width;
@@ -381,9 +347,9 @@ static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode,
 	for (i = 0; i < ttf->cacheSize; i++) {
 		if ((ttf->sbitHashRoot[i].ucs_code == ucsCode) &&
 			(ttf->sbitHashRoot[i].size == ttf->pixelSize) &&
-			(ttf->sbitHashRoot[i].anti_alias == ttf->antiAlias) &&
-			(ttf->sbitHashRoot[i].cleartype == ttf->cleartype) &&
-			(ttf->sbitHashRoot[i].embolden == ttf->embolden) &&
+			(ttf->sbitHashRoot[i].anti_alias == ttf->config.antialias) &&
+			(ttf->sbitHashRoot[i].cleartype == ttf->config.cleartype) &&
+			(ttf->sbitHashRoot[i].embolden == ttf->config.embolden) &&
 			(ttf->sbitHashRoot[i].bitmap.format == format)
 			)
 			return (&ttf->sbitHashRoot[i]);
@@ -401,11 +367,11 @@ static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode,
  */
 static FT_Render_Mode get_render_mode(p_ttf ttf, bool isVertical)
 {
-	if (ttf->cleartype && isVertical)
+	if (ttf->config.cleartype && isVertical)
 		return FT_RENDER_MODE_LCD_V;
-	if (ttf->cleartype && !isVertical)
+	if (ttf->config.cleartype && !isVertical)
 		return FT_RENDER_MODE_LCD;
-	if (ttf->antiAlias)
+	if (ttf->config.antialias)
 		return FT_RENDER_MODE_NORMAL;
 
 	return FT_RENDER_MODE_MONO;
@@ -614,19 +580,19 @@ static void drawBitmap_horz(FT_Bitmap * bitmap, FT_Int x, FT_Int y,
 					 bitmap->rows, bitmap->pitch, x, y, width, height, color);
 }
 
-static FT_Int32 get_fontconfig_flag(void)
+static FT_Int32 get_fontconfig_flag(p_ttf ttf)
 {
 	FT_Int32 flag = FT_LOAD_DEFAULT;
 
-	if (!my_font_config.hinting) {
+	if (!ttf->config.hinting) {
 		flag |= FT_LOAD_NO_HINTING;
 	}
 
-	if (my_font_config.autohint) {
+	if (ttf->config.autohint) {
 		flag |= FT_LOAD_FORCE_AUTOHINT;
 	}
 
-	if (!my_font_config.globaladvance) {
+	if (!ttf->config.globaladvance) {
 		flag |= FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
 	}
 
@@ -690,10 +656,7 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
 		// TODO: add font config per font to get better performace
-		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag());
-
-		if (my_font_config.antialias)
-			ttf_set_anti_alias(ttf, true);
+		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag(ttf));
 
 		if (error)
 			return;
@@ -707,7 +670,7 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 		}
 		slot = ttf->face->glyph;
 
-		if (ttf->embolden)
+		if (ttf->config.embolden)
 			FT_GlyphSlot_Embolden(slot);
 
 		if (useKerning && *previous && glyphIndex) {
@@ -777,31 +740,21 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				cprevious = cache->glyph_index;
 			} else {
 				glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
-				error = FT_Load_Glyph(cttf->face, glyphIndex, get_fontconfig_flag());
+				error = FT_Load_Glyph(cttf->face, glyphIndex, get_fontconfig_flag(cttf));
 				
 				if (error) {
 					return count;
 				}
 				if (cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-					if (cttf->cleartype) {
-						error =
-							FT_Render_Glyph(cttf->face->glyph,
-											FT_RENDER_MODE_LCD);
-					} else if (cttf->antiAlias) {
-						error =
-							FT_Render_Glyph(cttf->face->glyph,
-											FT_RENDER_MODE_NORMAL);
-					} else
-						error =
-							FT_Render_Glyph(cttf->face->glyph,
-											FT_RENDER_MODE_MONO);
+					error = FT_Render_Glyph(cttf->face->glyph, get_render_mode(cttf, false));
+
 					if (error) {
 						return count;
 					}
 				}
 				slot = cttf->face->glyph;
 
-				if (cttf->embolden)
+				if (cttf->config.embolden)
 					FT_GlyphSlot_Embolden(slot);
 
 				if (useKerning && cprevious && glyphIndex) {
@@ -852,18 +805,20 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				eprevious = cache->glyph_index;
 			} else {
 				glyphIndex = FT_Get_Char_Index(ettf->face, ucs);
-				error = FT_Load_Glyph(ettf->face, glyphIndex, get_fontconfig_flag());
+				error = FT_Load_Glyph(ettf->face, glyphIndex, get_fontconfig_flag(ettf));
 
 				if (error) {
 					return count;
 				}
 
 				if (ettf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-					if (ettf->cleartype) {
+					error = FT_Render_Glyph(ettf->face->glyph, get_render_mode(ettf, false));
+					
+					if (ettf->config.cleartype) {
 						error =
 							FT_Render_Glyph(ettf->face->glyph,
 											FT_RENDER_MODE_LCD);
-					} else if (ettf->antiAlias) {
+					} else if (ettf->config.antialias) {
 						error =
 							FT_Render_Glyph(ettf->face->glyph,
 											FT_RENDER_MODE_NORMAL);
@@ -877,7 +832,7 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 				}
 				slot = ettf->face->glyph;
 
-				if (ettf->embolden)
+				if (ettf->config.embolden)
 					FT_GlyphSlot_Embolden(slot);
 
 				if (useKerning && eprevious && glyphIndex) {
@@ -943,25 +898,21 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 	word ucs = charsets_gbk_to_ucs(str);
 
 	glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
-	error = FT_Load_Glyph(cttf->face, glyphIndex, get_fontconfig_flag());
+	error = FT_Load_Glyph(cttf->face, glyphIndex, get_fontconfig_flag(cttf));
 	
 	if (error)
 		return x;
 
 	if (cttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-		if (cttf->cleartype) {
-			error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_LCD);
-		} else if (cttf->antiAlias) {
-			error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_NORMAL);
-		} else
-			error = FT_Render_Glyph(cttf->face->glyph, FT_RENDER_MODE_MONO);
+		error = FT_Render_Glyph(cttf->face->glyph, get_render_mode(cttf, false));
+		
 		if (error) {
 			return x;
 		}
 	}
 	slot = cttf->face->glyph;
 
-	if (cttf->embolden)
+	if (cttf->config.embolden)
 		FT_GlyphSlot_Embolden(slot);
 
 	x += slot->advance.x >> 6;
@@ -1130,10 +1081,6 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 		} else {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_BOOK_FONTSIZE;
-#endif
 			}
 			int j;
 
@@ -1170,20 +1117,15 @@ extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 			return;
 		}
 		if (ttf->face->glyph->format != FT_GLYPH_FORMAT_BITMAP) {
-			if (ttf->cleartype) {
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_LCD);
-			} else if (ttf->antiAlias) {
-				error =
-					FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_NORMAL);
-			} else
-				error = FT_Render_Glyph(ttf->face->glyph, FT_RENDER_MODE_MONO);
+			error = FT_Render_Glyph(ttf->face->glyph, get_render_mode(ttf, false));
+
 			if (error) {
 				return;
 			}
 		}
 		slot = ttf->face->glyph;
 
-		if (ttf->embolden)
+		if (ttf->config.embolden)
 			FT_GlyphSlot_Embolden(slot);
 
 		if (useKerning && eprevious && glyphIndex) {
@@ -1418,7 +1360,7 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag());
+		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag(ttf));
 
 		if (error)
 			return;
@@ -1431,7 +1373,7 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 		}
 		slot = ttf->face->glyph;
 
-		if (ttf->embolden)
+		if (ttf->config.embolden)
 			FT_GlyphSlot_Embolden(slot);
 
 		if (useKerning && *previous && glyphIndex) {
@@ -1509,10 +1451,6 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 		} else {
 			if (x < 0) {
 				break;
-#if 0
-				x = 0;
-				y += DISP_BOOK_FONTSIZE;
-#endif
 			}
 			int j;
 
@@ -1734,7 +1672,7 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag());
+		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag(ttf));
 
 		if (error)
 			return;
@@ -1747,7 +1685,7 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 		}
 		slot = ttf->face->glyph;
 
-		if (ttf->embolden)
+		if (ttf->config.embolden)
 			FT_GlyphSlot_Embolden(slot);
 
 		if (useKerning && *previous && glyphIndex) {
@@ -2050,7 +1988,7 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 		*previous = cache->glyph_index;
 	} else {
 		glyphIndex = FT_Get_Char_Index(ttf->face, ucs);
-		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag());
+		error = FT_Load_Glyph(ttf->face, glyphIndex, get_fontconfig_flag(ttf));
 
 		if (error)
 			return;
@@ -2063,7 +2001,7 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 		}
 		slot = ttf->face->glyph;
 
-		if (ttf->embolden)
+		if (ttf->config.embolden)
 			FT_GlyphSlot_Embolden(slot);
 
 		if (useKerning && *previous && glyphIndex) {

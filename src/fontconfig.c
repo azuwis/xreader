@@ -13,6 +13,7 @@
 #endif
 #include "common/utils.h"
 #include "fontconfig.h"
+#include "scene.h"
 
 static char g_font_config_path[PATH_MAX];
 
@@ -888,6 +889,8 @@ int report_font_config(font_config* p)
 	dbg_printf(d, "%-20s: %s", "rh_prefer_bitmaps", get_bool_str(p->rh_prefer_bitmaps));
 	dbg_printf(d, "%-20s: %s", "embeddedbitmap", get_bool_str(p->embeddedbitmap));
 	dbg_printf(d, "%-20s: %d", "rgba", p->rgba);
+	dbg_printf(d, "%-20s: %s", "cleartype", get_bool_str(p->cleartype));
+	dbg_printf(d, "%-20s: %s", "embolden", get_bool_str(p->embolden));
 
 	return 0;
 }

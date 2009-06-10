@@ -26,6 +26,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "./common/datatype.h"
+#include "fontconfig.h"
 
 /** Truetype×ÖÐÎ»º³å´óÐ¡ */
 #define SBIT_HASH_SIZE (1024)
@@ -63,10 +64,7 @@ typedef struct _ttf
 	FT_Library library;
 	FT_Face face;
 
-	char *fontName;
-	bool antiAlias;
-	bool cleartype;
-	bool embolden;
+	const char *fontName;
 	int pixelSize;
 
 	SBit_HashItem sbitHashRoot[SBIT_HASH_SIZE];
@@ -76,6 +74,8 @@ typedef struct _ttf
 	char fnpath[PATH_MAX];
 	int fileSize;
 	byte *fileBuffer;
+
+	font_config config;
 } t_ttf, *p_ttf;
 
 /**
