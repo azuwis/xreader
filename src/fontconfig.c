@@ -655,13 +655,17 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 		}
 
 		if (t[i].type == TOKEN_AND) {
-			int left = parse_tokens(cfg, t, i, true);
-			int right = parse_tokens(cfg, &t[i+1], tsize - i - 1, true);
+			int left, right;
+
+			left = parse_tokens(cfg, &t[0], i, true);
+			right = parse_tokens(cfg, &t[i+1], tsize - i - 1, true);
 
 			return left && right;
 		} else if (t[i].type == TOKEN_OR) {
-			int left = parse_tokens(cfg, t, i - 1, true);
-			int right = parse_tokens(cfg, &t[i+1], tsize - i - 1, true);
+			int left, right;
+			
+			left = parse_tokens(cfg, &t[0], i, true);
+			right = parse_tokens(cfg, &t[i+1], tsize - i - 1, true);
 
 			return left || right;
 		}
@@ -763,31 +767,40 @@ int parse_tokens(font_config *cfg, token *t, size_t tsize, bool boolean_mode)
 					break;
 				case TOKEN_COMP:
 					ret = token_compare(cfg, t, tsize, i);
+					i++;
 					break;
 				case TOKEN_LT:
 					ret = token_lt(cfg, t, tsize, i);
+					i++;
 					break;
 				case TOKEN_GT:
 					ret = token_gt(cfg, t, tsize, i);
+					i++;
 					break;
 				case TOKEN_NOTLT:
 					ret = token_nlt(cfg, t, tsize, i);
+					i++;
 					break;
 				case TOKEN_NOTGT:
 					ret = token_ngt(cfg, t, tsize, i);
+					i++;
 					break;
 				case TOKEN_NOTEQUAL:
 					ret = token_notcompare(cfg, t, tsize, i);
+					i++;
 					break;
 				case TOKEN_EQUAL:
 					ret = token_equal(cfg, t, tsize, i);
+					i++;
+					break;
+				case TOKEN_NUM:
+				case TOKEN_BOOL:
+					ret = (int)t[i].value;
 					break;
 				case TOKEN_VAR:
 				case TOKEN_NOT:
-				case TOKEN_NUM:
 				case TOKEN_STRING:
 				case TOKEN_BRACKET:
-				case TOKEN_BOOL:
 					//				report_tokens(&t[i], 1);
 					break;
 				default:
