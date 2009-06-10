@@ -14,6 +14,7 @@ typedef struct _font_config {
 	bool embolden;
 	bool cleartype;
 	int lcdfilter;
+	bool cjkmode;
 } font_config;
 
 enum {
@@ -61,13 +62,13 @@ typedef struct _fontconfig_mgr {
 	size_t caps;
 } fontconfig_mgr;
 
-int new_font_config(const char* fontname, font_config *p);
+int new_font_config(const char* fontname, font_config *p, bool cjkmode);
 int get_font_config(font_config *p);
 int report_font_config(font_config* p);
 
 fontconfig_mgr *fontconfigmgr_init(void);
 font_config *fontconfigmgr_add_cache(fontconfig_mgr *font_mgr, font_config *p_cfg);
-font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_name, int pixelsize);
+font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_name, int pixelsize, bool cjkmode);
 void fontconfigmgr_free(fontconfig_mgr *font_mgr);
 
 #endif

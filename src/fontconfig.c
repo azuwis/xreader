@@ -17,7 +17,7 @@
 
 static char g_font_config_path[PATH_MAX];
 
-int new_font_config(const char* fontname, font_config *p)
+int new_font_config(const char* fontname, font_config *p, bool cjkmode)
 {
 	if (fontname == NULL)
 		return -1;
@@ -25,9 +25,10 @@ int new_font_config(const char* fontname, font_config *p)
 	memset(p, 0, sizeof(*p));
 	p->fontname = fontname;
 	p->antialias = true;
-	p->hinting = true;
 	p->cleartype = true;
 	p->lcdfilter = 1;
+	p->cjkmode = cjkmode;
+	p->hinting = !p->cjkmode;
 
 	return 0;
 }
@@ -381,6 +382,8 @@ static int get_var_as_bool(font_config *cfg, const token *t, bool **boolean)
 		*boolean = &cfg->cleartype;
 	} else if (!stricmp(p, "embolden")) {
 		*boolean = &cfg->embolden;
+	} else if (!stricmp(p, "cjkmode")) {
+		*boolean = &cfg->cjkmode;
 	} else {
 		return -1;
 	}
@@ -905,13 +908,13 @@ font_config *fontconfigmgr_add_cache(fontconfig_mgr *font_mgr, font_config *p_cf
 	return p;
 }
 
-font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_name, int pixelsize)
+font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_name, int pixelsize, bool cjkmode)
 {
 	size_t i;
 
 	for(i=0; i<font_mgr->cnt; ++i) {
 		if (!strcmp(font_mgr->cache[i].fontname, font_name)) {
-			if (font_mgr->cache[i].pixelsize == pixelsize) {
+			if (font_mgr->cache[i].pixelsize == pixelsize && font_mgr->cache[i].cjkmode == cjkmode) {
 				return &font_mgr->cache[i];
 			}
 		}
@@ -919,7 +922,7 @@ font_config *fontconfigmgr_lookup(fontconfig_mgr *font_mgr, const char *font_nam
 
 	font_config my_font_config, *p = NULL;
 
-	new_font_config(font_name, &my_font_config);
+	new_font_config(font_name, &my_font_config, cjkmode);
 	my_font_config.pixelsize = pixelsize;
 
 	if (get_font_config(&my_font_config) == 0) {
@@ -1007,6 +1010,7 @@ int report_font_config(font_config* p)
 	dbg_printf(d, "%-20s: %s", "cleartype", get_bool_str(p->cleartype));
 	dbg_printf(d, "%-20s: %s", "embolden", get_bool_str(p->embolden));
 	dbg_printf(d, "%-20s: %d", "lcdfilter", p->lcdfilter);
+	dbg_printf(d, "%-20s: %s", "cjkmode", get_bool_str(p->cjkmode));
 
 	return 0;
 }

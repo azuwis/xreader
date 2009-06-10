@@ -401,10 +401,11 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 				load_archieve_truetype_book_font(config.cttfarch,
 												 config.cttfpath,
 												 config.bookfontsize);
+			cttf->cjkmode = true;
 		} else {
 			cttf =
 				ttf_open(config.cttfpath, config.bookfontsize,
-						 config.ttf_load_to_memory);
+						 config.ttf_load_to_memory, true);
 		}
 		STRCPY_S(prev_cttfarch, config.cttfarch);
 		STRCPY_S(prev_cttfpath, config.cttfpath);
@@ -428,10 +429,11 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 				load_archieve_truetype_book_font(config.ettfarch,
 												 config.ettfpath,
 												 config.bookfontsize);
+			ettf->cjkmode = false;
 		} else {
 			ettf =
 				ttf_open(config.ettfpath, config.bookfontsize,
-						 config.ttf_load_to_memory);
+						 config.ttf_load_to_memory, false);
 		}
 		STRCPY_S(prev_ettfarch, config.ettfarch);
 		STRCPY_S(prev_ettfpath, config.ettfpath);
@@ -1916,10 +1918,11 @@ extern bool disp_ttf_reload(void)
 			load_archieve_truetype_book_font(config.cttfarch,
 											 config.cttfpath,
 											 config.bookfontsize);
+		cttf->cjkmode = true;
 	} else {
 		cttf =
 			ttf_open(config.cttfpath, config.bookfontsize,
-					 config.ttf_load_to_memory);
+					 config.ttf_load_to_memory, true);
 	}
 
 	if (cttf == NULL) {
@@ -1935,10 +1938,11 @@ extern bool disp_ttf_reload(void)
 			load_archieve_truetype_book_font(config.ettfarch,
 											 config.ettfpath,
 											 config.bookfontsize);
+		ettf->cjkmode = false;
 	} else {
 		ettf =
 			ttf_open(config.ettfpath, config.bookfontsize,
-					 config.ttf_load_to_memory);
+					 config.ttf_load_to_memory, false);
 	}
 	if (ettf == NULL) {
 		ettf = cttf;

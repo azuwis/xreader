@@ -154,6 +154,8 @@ static fontconfig_mgr * fc_mgr = NULL;
 
 static void update_fontconfig(p_ttf ttf, int pixelSize)
 {
+	bool cjkmode = false;
+
 	ttf_lock();
 
 	font_config *p = NULL;
@@ -162,19 +164,19 @@ static void update_fontconfig(p_ttf ttf, int pixelSize)
 		fc_mgr = fontconfigmgr_init();
 	}
 
-	p = fontconfigmgr_lookup(fc_mgr, ttf->fontName, pixelSize);
+	p = fontconfigmgr_lookup(fc_mgr, ttf->fontName, pixelSize, ttf->cjkmode);
 
 	if (p != NULL) {
 		memcpy(&ttf->config, p, sizeof(*p));
 	} else {
 		// apply default config
-		new_font_config("unknown font", &ttf->config);
+		new_font_config("unknown font", &ttf->config, cjkmode);
 	}
 
 	ttf_unlock();
 }
 
-extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
+extern p_ttf ttf_open(const char *filename, int size, bool load2mem, bool cjkmode)
 {
 	p_ttf ttf;
 
@@ -187,6 +189,7 @@ extern p_ttf ttf_open(const char *filename, int size, bool load2mem)
 		ttf = ttf_open_file(filename, size, filename);
 
 	if (ttf != NULL) {
+		ttf->cjkmode = cjkmode;
 		update_fontconfig(ttf, size);
 		report_font_config(&ttf->config);
 	}

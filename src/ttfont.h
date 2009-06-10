@@ -74,6 +74,7 @@ typedef struct _ttf
 	char fnpath[PATH_MAX];
 	int fileSize;
 	byte *fileBuffer;
+	bool cjkmode;
 
 	font_config config;
 } t_ttf, *p_ttf;
@@ -88,7 +89,7 @@ typedef struct _ttf
  * @return 描述TTF的指针
  * - NULL 失败
  */
-extern p_ttf ttf_open(const char *filename, int size, bool load2mem);
+extern p_ttf ttf_open(const char *filename, int size, bool load2mem, bool cjkmode);
 
 /**
  * 从指定数据中打开TTF字体
