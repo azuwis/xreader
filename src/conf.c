@@ -40,9 +40,6 @@
 #include "dmalloc.h"
 #endif
 
-extern bool scene_load_font();
-extern bool scene_load_book_font();
-
 static char conf_filename[PATH_MAX];
 
 extern void conf_set_file(const char *filename)

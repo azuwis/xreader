@@ -244,12 +244,6 @@ bool scene_load_book_font(void)
 												config.cttfpath,
 												config.bookfontsize);
 		freq_leave(fid);
-		if (!loaded) {
-			char infomsg[80];
-
-			SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
-			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
-		}
 	}
 #endif
 	if (!loaded) {
@@ -267,10 +261,6 @@ bool scene_load_book_font(void)
 					  config.bookfontsize);
 			if (!disp_load_book_font(efontfile, cfontfile)) {
 				freq_leave(fid);
-#ifdef ENABLE_LITE
-				config.bookfontsize = 12;
-				return scene_load_book_font();
-#endif
 				return false;
 			}
 		}
@@ -2303,9 +2293,20 @@ dword scene_fontsel(dword * selidx)
 	if (orgfontindex != fontindex || orgusettf != config.usettf
 		|| (!config.usettf && orgbookfontindex != bookfontindex)
 		|| (config.usettf && orgttfsize != ttfsize)) {
+		bool orgusettf2 = config.usettf;
+
 		if (orgfontindex != fontindex)
 			scene_load_font();
+
 		scene_load_book_font();
+
+		if (orgusettf2 != config.usettf) {
+			char infomsg[80];
+
+			SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
+			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
+		}
+
 		scene_bookmark_autosave();
 		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 		cur_book_view.rrow = INVALID;
@@ -2833,8 +2834,6 @@ dword scene_moptions(dword * selidx)
 	dword index;
 	bool orgshowhidden = config.showhidden;
 	bool orgshowunknown = config.showunknown;
-	int orgfontindex = fontindex;
-	int orgbookfontindex = bookfontindex;
 	t_conf_arrange orgarrange = config.arrange;
 	char orglanguage[20];
 
@@ -2868,16 +2867,7 @@ dword scene_moptions(dword * selidx)
 			usb_deactivate();
 	}
 #endif
-	if (orgfontindex != fontindex || orgbookfontindex != bookfontindex) {
-		scene_load_font();
-		scene_load_book_font();
-		scene_bookmark_autosave();
-		recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
-		cur_book_view.rrow = INVALID;
 
-		memcpy(&g_predraw, &prev, sizeof(win_menu_predraw_data));
-		return 2;
-	}
 	if (orgshowhidden != config.showhidden
 		|| orgshowunknown != config.showunknown
 		|| orgarrange != config.arrange) {
@@ -5225,8 +5215,16 @@ static void scene_open_font(dword * idx)
 	}
 	dbg_printf(d, "ettf: %s %s cttf: %s %s", config.ettfarch,
 			   config.ettfpath, config.cttfarch, config.cttfpath);
-	if (config.usettf) {
-		scene_load_book_font();
+
+	config.usettf = true;
+
+	scene_load_book_font();
+
+	if (!config.usettf) {
+		char infomsg[80];
+
+		SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
+		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 	}
 }
 #endif

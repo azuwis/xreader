@@ -131,18 +131,6 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 									   const char *cfont);
 
 /**
- * 装载TTF字体作为文本字体
- *
- * @param ettffile
- * @param cttffile
- * @param size
- *
- * @return
- */
-extern bool disp_load_truetype_book_font(const char *ettffile,
-										 const char *cttffile, int size);
-
-/**
  * 从ZIP档案中读取文件作为文本TTF字体
  *
  * @note 如果同上次装载的文件相同就不重复装载，只改变字体大小
@@ -272,7 +260,7 @@ extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color);
 extern bool check_range(int x, int y);
 extern void disp_fix_osk(void *buffer);
 pixel *disp_swizzle_image(pixel * buf, int width, int height);
-extern void disp_ttf_reload(void);
+extern bool disp_ttf_reload(void);
 
 #ifdef ENABLE_TTF
 extern void disp_ttf_close(void);

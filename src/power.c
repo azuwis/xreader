@@ -111,7 +111,6 @@ extern const char *power_get_battery_charging(void)
 	return status_str;
 }
 
-extern int use_ttf;
 extern p_ttf cttf, ettf;
 
 static volatile bool has_run_suspend = false;
@@ -124,7 +123,7 @@ extern void power_down(void)
 		return;
 
 #ifdef ENABLE_TTF
-	if (use_ttf && !config.ttf_load_to_memory) {
+	if (config.usettf && !config.ttf_load_to_memory) {
 		ttf_lock();
 		disp_ttf_close();
 	}
@@ -147,8 +146,10 @@ extern void power_up(void)
 	music_resume();
 #endif
 #ifdef ENABLE_TTF
-	if (use_ttf && !config.ttf_load_to_memory) {
-		disp_ttf_reload();
+	if (config.usettf && !config.ttf_load_to_memory) {
+		if (!disp_ttf_reload()) {
+			config.usettf = false;
+		}
 		ttf_unlock();
 	}
 #endif

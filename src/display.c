@@ -47,7 +47,6 @@ static bool vram_page = 0;
 static byte *cfont_buffer = NULL, *book_cfont_buffer = NULL, *efont_buffer =
 	NULL, *book_efont_buffer = NULL;
 int DISP_FONTSIZE = 16, DISP_BOOK_FONTSIZE = 16, HRR = 6, WRR = 15;
-int use_ttf = 0;
 static int DISP_EFONTSIZE, DISP_CFONTSIZE, DISP_CROWSIZE, DISP_EROWSIZE,
 	fbits_last = 0, febits_last =
 	0, DISP_BOOK_EFONTSIZE, DISP_BOOK_CFONTSIZE, DISP_BOOK_EROWSIZE,
@@ -143,7 +142,7 @@ extern void disp_putpixel(int x, int y, pixel color)
 
 extern void disp_set_fontsize(int fontsize)
 {
-	if (!use_ttf)
+	if (!config.usettf)
 		memset(disp_ewidth, 0, 0x80);
 	DISP_FONTSIZE = fontsize;
 	if (fontsize <= 16) {
@@ -195,12 +194,12 @@ extern void disp_set_book_fontsize(int fontsize)
 	DISP_BOOK_EFONTSIZE = DISP_BOOK_FONTSIZE * DISP_BOOK_EROWSIZE;
 
 	// if set font size to very small one, set config.wordspace to 1
-	if (use_ttf == false && fontsize <= 10 && config.wordspace == 0) {
+	if (config.usettf == false && fontsize <= 10 && config.wordspace == 0) {
 		config.wordspace = 1;
 		auto_inc_wordspace_on_small_font = true;
 	}
 	// if previous have auto increased wordspace on small font, restore config.wordspace to 0
-	if (use_ttf == false && fontsize >= 12
+	if (config.usettf == false && fontsize >= 12
 		&& auto_inc_wordspace_on_small_font && config.wordspace == 1) {
 		config.wordspace = 0;
 		auto_inc_wordspace_on_small_font = false;
@@ -266,7 +265,7 @@ extern void disp_ttf_close(void)
 
 extern void disp_assign_book_font(void)
 {
-	use_ttf = 0;
+	config.usettf = false;
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
 		free(book_efont_buffer);
 		book_efont_buffer = NULL;
@@ -340,52 +339,6 @@ extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 	return true;
 }
 
-extern bool disp_load_truetype_book_font(const char *ettffile,
-										 const char *cttffile, int size)
-{
-#ifdef ENABLE_TTF
-	use_ttf = 0;
-	memset(disp_ewidth, size / 2, 0x80);
-	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
-		free(book_efont_buffer);
-		book_efont_buffer = NULL;
-	}
-	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
-		free(book_cfont_buffer);
-		book_cfont_buffer = NULL;
-	}
-	if (cttf == NULL) {
-		if ((cttf =
-			 ttf_open(cttffile, size, config.ttf_load_to_memory)) == NULL) {
-			return false;
-		}
-		if (g_ttf_share_two_font)
-			ettf = cttf;
-	} else {
-		ttf_set_pixel_size(cttf, size);
-	}
-	if (ettf == NULL) {
-		if (!strcmp(ettffile, cttffile) || (ettf =
-											ttf_open(ettffile, size,
-													 config.ttf_load_to_memory))
-			== NULL) {
-			ettf = cttf;
-			g_ttf_share_two_font = true;
-		} else {
-			g_ttf_share_two_font = false;
-		}
-	} else {
-		ttf_set_pixel_size(ettf, size);
-	}
-
-	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
-	use_ttf = 1;
-	return true;
-#else
-	return false;
-#endif
-}
-
 #ifdef ENABLE_TTF
 static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 											  const char *zippath, int size)
@@ -411,7 +364,7 @@ static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 		ttf_set_pixel_size(ttf, size);
 	}
 
-	use_ttf = 1;
+	config.usettf = true;
 	return ttf;
 }
 #endif
@@ -425,7 +378,7 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 	static char prev_ettfpath[PATH_MAX] = "", prev_ettfarch[PATH_MAX] = "";
 	static char prev_cttfpath[PATH_MAX] = "", prev_cttfarch[PATH_MAX] = "";
 
-	use_ttf = 0;
+	config.usettf = false;
 	memset(disp_ewidth, size / 2, 0x80);
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
 		free(book_efont_buffer);
@@ -491,7 +444,7 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 		return false;
 
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
-	use_ttf = 1;
+	config.usettf = true;
 	return true;
 #else
 	return false;
@@ -538,7 +491,7 @@ extern bool disp_load_font(const char *efont, const char *cfont)
 extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 									   const char *cfont)
 {
-	use_ttf = 0;
+	config.usettf = false;
 #ifdef ENABLE_TTF
 	disp_ttf_close();
 #endif
@@ -603,7 +556,7 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 
 extern bool disp_load_book_font(const char *efont, const char *cfont)
 {
-	use_ttf = 0;
+	config.usettf = false;
 #ifdef ENABLE_TTF
 	disp_ttf_close();
 #endif
@@ -665,7 +618,6 @@ extern void disp_free_font(void)
 		free(cfont_buffer);
 		cfont_buffer = NULL;
 	}
-	use_ttf = 0;
 #ifdef ENABLE_TTF
 	memset(disp_ewidth, 0, 0x80);
 	disp_ttf_close();
@@ -1289,7 +1241,7 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 	const byte *ccur, *cend;
 
 #ifdef ENABLE_TTF
-	if (use_ttf) {
+	if (config.usettf) {
 		disp_putnstring_reversal_truetype(cttf, ettf, x, y, color, str,
 										  count, wordspace, top, height, bot);
 		return;
@@ -1528,7 +1480,7 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 								int bot)
 {
 #ifdef ENABLE_TTF
-	if (use_ttf) {
+	if (config.usettf) {
 		disp_putnstring_horz_truetype(cttf, ettf, x, y, color, str,
 									  count, wordspace, top, height, bot);
 		return;
@@ -1658,7 +1610,7 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 								 int height, int bot)
 {
 #ifdef ENABLE_TTF
-	if (use_ttf) {
+	if (config.usettf) {
 		disp_putnstring_lvert_truetype(cttf, ettf, x, y, color, str,
 									   count, wordspace, top, height, bot);
 		return;
@@ -1786,7 +1738,7 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 								 int height, int bot)
 {
 #ifdef ENABLE_TTF
-	if (use_ttf) {
+	if (config.usettf) {
 		disp_putnstring_rvert_truetype(cttf, ettf, x, y, color, str,
 									   count, wordspace, top, height, bot);
 		return;
@@ -1957,7 +1909,7 @@ pixel *disp_swizzle_image(pixel * buf, int width, int height)
 }
 
 #ifdef ENABLE_TTF
-extern void disp_ttf_reload(void)
+extern bool disp_ttf_reload(void)
 {
 	if (config.cttfarch[0] != '\0') {
 		cttf =
@@ -1969,8 +1921,11 @@ extern void disp_ttf_reload(void)
 			ttf_open(config.cttfpath, config.bookfontsize,
 					 config.ttf_load_to_memory);
 	}
-	if (cttf == NULL)
-		return;
+
+	if (cttf == NULL) {
+		return false;
+	}
+
 	if (!strcmp(config.ettfarch, config.cttfarch)
 		&& !strcmp(config.ettfpath, config.cttfpath)) {
 		ettf = cttf;
@@ -1991,5 +1946,7 @@ extern void disp_ttf_reload(void)
 	}
 
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
+
+	return true;
 }
 #endif

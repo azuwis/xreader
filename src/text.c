@@ -47,8 +47,6 @@
 #include "dmalloc.h"
 #endif
 
-extern int use_ttf;
-
 /**
  * 计算电子书内容所对应GI值
  *
@@ -630,7 +628,7 @@ static p_text text_open(const char *filename, t_fs_filetype ft,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -698,7 +696,7 @@ extern p_text chapter_open_in_umd(const char *umdfile, const char *chaptername,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, rowpixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -777,7 +775,7 @@ extern p_text text_open_in_umd(const char *umdfile, const char *chaptername,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, rowpixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -832,7 +830,7 @@ extern p_text text_open_in_pdb(const char *pdbfile, const char *chaptername,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, rowpixels, wordspace, use_ttf)) {
+	if (!text_format(txt, rowpixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -1012,7 +1010,7 @@ static p_text text_open_in_gz(const char *gzfile, const char *filename,
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
 
-	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -1172,7 +1170,7 @@ extern p_text text_open_in_raw(const char *filename, const unsigned char *data,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -1224,7 +1222,7 @@ static p_text text_open_in_zip(const char *zipfile, const char *filename,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -1394,7 +1392,7 @@ static p_text text_open_in_rar(const char *rarfile, const char *filename,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
@@ -1444,7 +1442,7 @@ static p_text text_open_in_chm(const char *chmfile, const char *filename,
 		txt->size = text_reorder(txt->buf, txt->size);
 		txt->size = text_paragraph_join_alloc_memory(&txt->buf, txt->size);
 	}
-	if (!text_format(txt, max_pixels, wordspace, use_ttf)) {
+	if (!text_format(txt, max_pixels, wordspace, config.usettf)) {
 		text_close(txt);
 		return NULL;
 	}
