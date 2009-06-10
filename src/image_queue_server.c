@@ -537,7 +537,7 @@ static int start_cache(dword selidx)
 
 		// wait until user notify cache delete
 		re = xrKernelWaitEventFlag(cache_del_event, CACHE_EVENT_DELETED,
-							  PSP_EVENT_WAITAND, NULL, &timeout);
+								   PSP_EVENT_WAITAND, NULL, &timeout);
 
 		if (re == SCE_KERNEL_ERROR_WAIT_TIMEOUT) {
 			return 0;
@@ -703,4 +703,3 @@ void cache_reload_all(void)
 	xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
 	cache_unlock();
 }
-

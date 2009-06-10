@@ -632,6 +632,7 @@ static void scene_draw_mp3bar(bool * firstdup)
 #ifdef _DEBUG
 	if (config.use_image_queue) {
 		char temp[80];
+
 		SPRINTF_S(temp, " %u/%dKB", cache_get_loaded_size(),
 				  ccacher.memory_usage / 1024);
 		STRCAT_S(infostr, temp);
