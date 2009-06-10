@@ -35,13 +35,6 @@ volatile cacher_context ccacher;
 static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
 
-#if 0
-static dword total_filesize;
-static dword total_datasize;
-
-static bool alarm1 = false, alarm2 = false;
-#endif
-
 enum
 {
 	CACHE_EVENT_DELETED = 1,
@@ -56,13 +49,6 @@ static unsigned get_avail_memory(void)
 	extern unsigned int get_free_mem(void);
 
 	memory = get_free_mem();
-
-	if (memory >= 1024 * 1024L) {
-		// reverse for 1MB
-		memory -= 1024 * 1024L;
-	} else {
-		memory = 0;
-	}
 
 	return memory;
 }
@@ -86,14 +72,6 @@ void cache_on(bool on)
 		cache_next_image();
 		ccacher.first_run = true;
 		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
-
-#if 0
-		total_filesize = 0;
-		total_datasize = 0;
-
-		alarm1 = false;
-		alarm2 = false;
-#endif
 
 		ccacher.on = on;
 	} else {
@@ -300,84 +278,13 @@ int start_cache_next_image(void)
 	cache_image_t *p = NULL;
 	cache_image_t tmp;
 	t_fs_filetype ft;
-	dword memory_used;
-
-#if 0
-	dword used_memory, free_memory;
+	dword free_memory;
 
 	free_memory = get_avail_memory();
 
-	if (kuKernelGetModel() == PSP_MODEL_SLIM_AND_LITE) {
-		used_memory = 45 * 1024 * 1024L - free_memory;
-	} else {
-		used_memory = 13 * 1024 * 1024L - free_memory;
-	}
-
-	if (ccacher.memory_usage >= used_memory) {
-		if (!alarm1) {
-			dbg_printf(d,
-					   "SERVER: %s: memory usage %uKB >= used memory %uKB, refuse to cache",
-					   __func__, (unsigned) ccacher.memory_usage / 1024,
-					   (unsigned) used_memory / 1024);
-		}
-
-		alarm1 = true;
-
+	if (free_memory < 1024 * 1024) {
 		return -1;
-	} else {
-		if (alarm1) {
-			dbg_printf(d,
-					   "SERVER: %s: memory usage %uKB < used memory %uKB, continue",
-					   __func__, (unsigned) ccacher.memory_usage / 1024,
-					   (unsigned) used_memory / 1024);
-		}
-
-		alarm1 = false;
 	}
-
-	// Predict memory usage
-	{
-		double ratio;
-
-		if (total_datasize != 0) {
-			ratio = (double) total_filesize / total_datasize;
-		} else {
-			ratio = 0;
-		}
-
-		if (ratio != 0) {
-			dword predict_usage;
-
-			predict_usage = (dword) (tmp.filesize / ratio);
-
-			if (predict_usage >= free_memory) {
-				// if it is the first image in the queue, then give a chance
-				if (ccacher.memory_usage == 0) {
-					goto load;
-				}
-
-				if (!alarm2)
-					dbg_printf(d,
-							   "SERVER: %s: memory predict usage %dKB >= free_memory %dKB, refuse to cache",
-							   __func__, (unsigned) predict_usage / 1024,
-							   (unsigned) free_memory / 1024);
-
-				alarm2 = true;
-
-				return -1;
-			} else {
-				if (alarm2) {
-					dbg_printf(d,
-							   "SERVER: %s: memory predict usage %dKB < free_memory %dKB, continue",
-							   __func__, (unsigned) predict_usage / 1024,
-							   (unsigned) free_memory / 1024);
-				}
-
-				alarm2 = false;
-			}
-		}
-	}
-#endif
 
 	cache_lock();
 
@@ -442,17 +349,14 @@ int start_cache_next_image(void)
 	}
 
 	if (tmp.result == 0) {
-		// damn you psp-gcc! if you set breakpoint to here it will have incorrent result
+		dword memory_used;
+
 		memory_used = tmp.width * tmp.height * sizeof(pixel);
 
 //      dbg_printf(d, "SERVER: Image %u finished loading", (unsigned)tmp.selidx);
 //      dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) ccacher.memory_usage / 1024);
 		ccacher.memory_usage += memory_used;
 		cacher_cleared = false;
-#if 0
-		total_filesize += tmp.filesize;
-		total_datasize += memory_used;
-#endif
 		tmp.status = CACHE_OK;
 		copy_cache_image(p, &tmp);
 		tmp.data = NULL;
