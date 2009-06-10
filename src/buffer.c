@@ -319,6 +319,10 @@ buffer_array *buffer_array_init(void)
 
 	b = malloc(sizeof(*b));
 
+	if (b == NULL) {
+		return b;
+	}
+
 	b->ptr = NULL;
 	b->size = 0;
 	b->used = 0;
