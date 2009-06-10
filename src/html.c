@@ -260,6 +260,15 @@ extern dword html_to_text(char *string, dword size, bool stripeol)
 			if (size == 0) {
 				return cstr - string;
 			}
+		} else if (len == -1) {
+			if (str != cstr) {
+				memmove(cstr, str, len);
+			}
+
+			cstr += size;
+			size = 0;
+
+			return cstr - string;
 		}
 
 		if (istag) {
