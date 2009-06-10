@@ -601,22 +601,14 @@ static FT_Int32 get_fontconfig_flag(p_ttf ttf, bool is_vertical)
 	}
 
 	if (ttf->config.antialias) {
-		switch (ttf->config.hintstyle) {
-			case 0:
-				flag |= FT_LOAD_NO_HINTING;
-				break;
-			case 1:
-			case 2:
-				flag |= FT_LOAD_TARGET_LIGHT;
-				break;
-			case 3:
-				break;
-		}
-
-		if (is_vertical) {
-			flag |= FT_LOAD_TARGET_LCD_V;
+		if (ttf->config.hintstyle > 0 && ttf->config.hintstyle < 3) {
+			flag |= FT_LOAD_TARGET_LIGHT;
 		} else {
-			flag |= FT_LOAD_TARGET_LCD;
+			if (is_vertical) {
+				flag |= FT_LOAD_TARGET_LCD_V;
+			} else {
+				flag |= FT_LOAD_TARGET_LCD;
+			}
 		}
 	} else {
 		flag |= FT_LOAD_TARGET_MONO;
