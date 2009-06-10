@@ -1370,7 +1370,6 @@ static int image_handle_input(dword * selidx, dword key)
 		if (scene_options(selidx)) {
 			imgreading = false;
 			reset_image_ptr();
-			disp_duptocachealpha(50);
 
 			return *selidx;
 		}
@@ -1467,7 +1466,7 @@ static int image_handle_input(dword * selidx, dword key)
 		} else {
 			imgreading = false;
 			reset_image_ptr();
-			disp_duptocachealpha(50);
+
 			return *selidx;
 		}
 	} else if (key == config.imgkey[8] || key == config.imgkey2[8]) {
@@ -1817,8 +1816,6 @@ dword scene_readimage(dword selidx)
 			imgdata = NULL;
 		}
 	}
-
-	disp_duptocachealpha(50);
 
 	return selidx;
 }
