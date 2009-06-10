@@ -375,7 +375,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 	p_win_menuitem item = NULL;
 	p_fat_info info;
 
-	dword itemcount;
+	dword itemcount = 0;
 	dword count = fat_readdir(dir, sdir, &info);
 	dword i, cur_count = 0;
 
