@@ -34,6 +34,7 @@ volatile cacher_context ccacher;
 
 static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
+static uint16_t curr_times = 0, avoid_times = 0;
 
 enum
 {
@@ -87,6 +88,7 @@ void cache_on(bool on)
 void cache_next_image(void)
 {
 	ccacher.selidx_moved = true;
+	curr_times = avoid_times = 0;
 }
 
 static void cache_clear_without_lock()
@@ -280,6 +282,11 @@ int start_cache_next_image(void)
 	t_fs_filetype ft;
 	dword free_memory;
 
+	if (avoid_times && curr_times++ < avoid_times) {
+//		dbg_printf(d, "%s: curr_times %d avoid time %d", __func__, curr_times, avoid_times);
+		return -1;
+	}
+
 	free_memory = get_avail_memory();
 
 	if (free_memory < 1024 * 1024) {
@@ -361,6 +368,7 @@ int start_cache_next_image(void)
 		copy_cache_image(p, &tmp);
 		tmp.data = NULL;
 		free_cache_image(&tmp);
+		curr_times = avoid_times = 0;
 	} else if ((tmp.result == 4 || tmp.result == 5)
 			   || (tmp.where == scene_in_rar && tmp.result == 6)) {
 		// out of memory
@@ -376,6 +384,14 @@ int start_cache_next_image(void)
 			// retry later
 //          dbg_printf(d, "SERVER: Image %u finished failed(%u), retring", (unsigned)tmp.selidx, tmp.result);
 //          dbg_printf(d, "%s: Memory usage %uKB", __func__, (unsigned) ccacher.memory_usage / 1024);
+			if (avoid_times) {
+				avoid_times *= 2;
+			} else {
+				avoid_times = 1;
+			}
+
+			avoid_times = min(avoid_times, 32767);
+			curr_times = 0;
 		}
 
 		free_cache_image(&tmp);
