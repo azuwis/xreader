@@ -8,12 +8,12 @@
 #include "config.h"
 #include "dbg.h"
 #include "strsafe.h"
-#ifdef DMALLOC
-#include "dmalloc.h"
-#endif
 #include "common/utils.h"
 #include "fontconfig.h"
 #include "scene.h"
+#ifdef DMALLOC
+#include "dmalloc.h"
+#endif
 
 static char g_font_config_path[PATH_MAX];
 
