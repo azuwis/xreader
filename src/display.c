@@ -54,7 +54,7 @@ static int DISP_EFONTSIZE, DISP_CFONTSIZE, DISP_CROWSIZE, DISP_EROWSIZE,
 byte disp_ewidth[0x80];
 
 #ifdef ENABLE_TTF
-static bool g_ttf_share_two_font = false;
+static bool g_ttf_share_buffer = false;
 #endif
 
 #ifdef ENABLE_TTF
@@ -251,9 +251,9 @@ extern bool disp_has_font(const char *efont, const char *cfont)
 extern void disp_ttf_close(void)
 {
 	if (ettf != NULL) {
-		if (g_ttf_share_two_font) {
+		if (g_ttf_share_buffer) {
 			ettf->fileBuffer = NULL;
-			g_ttf_share_two_font = false;
+			g_ttf_share_buffer = false;
 		}
 
 		ttf_close(ettf);
@@ -394,22 +394,25 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 
 	config.usettf = false;
 	memset(disp_ewidth, size / 2, 0x80);
+
 	if (book_efont_buffer != NULL && efont_buffer != book_efont_buffer) {
 		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
+
 	if (book_cfont_buffer != NULL && cfont_buffer != book_cfont_buffer) {
 		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
+
 	if (cttf != NULL && strcmp(prev_cttfarch, config.cttfarch) == 0
 		&& strcmp(prev_cttfpath, config.cttfpath) == 0) {
 		ttf_set_pixel_size(cttf, size);
 	} else {
 		if (cttf != NULL) {
-			if (g_ttf_share_two_font) {
+			if (g_ttf_share_buffer) {
 				cttf->fileBuffer = NULL;
-				g_ttf_share_two_font = false;
+				g_ttf_share_buffer = false;
 			}
 
 			ttf_close(cttf);
@@ -426,24 +429,6 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 				ttf_open(config.cttfpath, config.bookfontsize,
 						 config.ttf_load_to_memory, true);
 		}
-
-		STRCPY_S(prev_cttfarch, config.cttfarch);
-		STRCPY_S(prev_cttfpath, config.cttfpath);
-
-		if (!strcmp(config.ettfarch, config.cttfarch)
-			&& !strcmp(config.ettfpath, config.cttfpath)) {
-			if (cttf) {
-				ettf =
-					ttf_open_buffer(cttf->fileBuffer, cttf->fileSize, size,
-									cttf->fontName, false);
-
-				if (ettf) {
-					g_ttf_share_two_font = true;
-					STRCPY_S(prev_ettfarch, config.ettfarch);
-					STRCPY_S(prev_ettfpath, config.ettfpath);
-				}
-			}
-		}
 	}
 
 	if (ettf != NULL && strcmp(prev_ettfarch, config.ettfarch) == 0
@@ -451,9 +436,9 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 		ttf_set_pixel_size(ettf, size);
 	} else {
 		if (ettf != NULL) {
-			if (g_ttf_share_two_font) {
+			if (g_ttf_share_buffer) {
 				ettf->fileBuffer = NULL;
-				g_ttf_share_two_font = false;
+				g_ttf_share_buffer = false;
 			}
 
 			ttf_close(ettf);
@@ -462,19 +447,18 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 
 		if (!strcmp(config.ettfarch, config.cttfarch)
 			&& !strcmp(config.ettfpath, config.cttfpath)) {
+			if (cttf->fileBuffer != NULL) {
+				ettf =
+					ttf_open_buffer(cttf->fileBuffer, cttf->fileSize, size,
+							cttf->fontName, false);
 
-			ettf =
-				ttf_open(config.ettfpath, config.bookfontsize,
-						 config.ttf_load_to_memory, false);
-
-			if (ettf) {
-				cttf =
-					ttf_open_buffer(ettf->fileBuffer, ettf->fileSize, size,
-									ettf->fontName, true);
-
-				if (cttf) {
-					g_ttf_share_two_font = true;
+				if (ettf) {
+					g_ttf_share_buffer = true;
 				}
+			} else {
+				ettf =
+					ttf_open(config.ettfpath, config.bookfontsize,
+							config.ttf_load_to_memory, false);
 			}
 		} else if (config.ettfarch[0] != '\0') {
 			ettf =
@@ -485,31 +469,51 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 			ettf =
 				ttf_open(config.ettfpath, config.bookfontsize,
 						 config.ttf_load_to_memory, false);
+
+			if (ettf) {
+				g_ttf_share_buffer = true;
+			}
 		}
-		STRCPY_S(prev_ettfarch, config.ettfarch);
-		STRCPY_S(prev_ettfpath, config.ettfpath);
 	}
 
 	if (cttf == NULL && ettf == NULL)
 		return false;
 
 	if (cttf == NULL) {
-		cttf =
-			ttf_open_buffer(ettf->fileBuffer, ettf->fileSize, size,
-							ettf->fontName, true);
+		STRCPY_S(config.cttfarch, config.ettfarch);
+		STRCPY_S(config.cttfarch, config.ettfpath);
+		
+		if (ettf->fileBuffer != NULL) {
+			cttf =
+				ttf_open_buffer(ettf->fileBuffer, ettf->fileSize, size,
+						ettf->fontName, true);
 
-		if (cttf) {
-			g_ttf_share_two_font = true;
+			if (cttf) {
+				g_ttf_share_buffer = true;
+			}
+		} else {
+			cttf =
+				ttf_open(config.cttfpath, config.bookfontsize,
+						 config.ttf_load_to_memory, true);
 		}
 	}
 
 	if (ettf == NULL) {
-		ettf =
-			ttf_open_buffer(cttf->fileBuffer, cttf->fileSize, size,
-							cttf->fontName, false);
+		STRCPY_S(config.ettfarch, config.cttfarch);
+		STRCPY_S(config.ettfarch, config.cttfpath);
+		
+		if (cttf->fileBuffer != NULL) {
+			ettf =
+				ttf_open_buffer(cttf->fileBuffer, cttf->fileSize, size,
+								cttf->fontName, false);
 
-		if (ettf) {
-			g_ttf_share_two_font = true;
+			if (ettf) {
+				g_ttf_share_buffer = true;
+			}
+		} else {
+			ettf =
+				ttf_open(config.ettfpath, config.bookfontsize,
+						 config.ttf_load_to_memory, false);
 		}
 	}
 
@@ -517,6 +521,12 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 		return false;
 
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
+
+	STRCPY_S(prev_cttfarch, config.cttfarch);
+	STRCPY_S(prev_cttfpath, config.cttfpath);
+	STRCPY_S(prev_ettfarch, config.ettfarch);
+	STRCPY_S(prev_ettfpath, config.ettfpath);
+	
 	config.usettf = true;
 	return true;
 #else
