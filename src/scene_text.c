@@ -78,7 +78,7 @@ static byte bgalpha = 0x40, fgalpha = 0xa0;
 static pixel *infobar_saveimage = NULL;
 
 #ifdef ENABLE_TTF
-extern p_ttf cttf, ettf;
+extern p_ttf cttf, ettf, cttfinfo, ettfinfo;
 #endif
 
 static inline int calc_gi(void)
@@ -447,49 +447,15 @@ static inline int ttf_get_infobar_alignment(const char *cr, int wordspace)
 	return s;
 }
 
-static void ttf_clear_cache(p_ttf ttf)
-{
-	size_t i;
-
-	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
-		memset(&ttf->sbitHashRoot[i], 0, sizeof(SBit_HashItem));
-	}
-}
-
-static void dump_ttf(p_ttf ttf1, p_ttf ttf2)
-{
-	memcpy(ttf1, cttf, sizeof(*ttf1));
-	ttf_clear_cache(ttf1);
-	memcpy(ttf2, ettf, sizeof(*ttf2));
-	ttf_clear_cache(ttf2);
-	ttf1->config.embolden = 0;
-	ttf2->config.embolden = 0;
-}
-
-static void clean_ttf_cache(p_ttf ttf)
-{
-	size_t i;
-
-	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
-		if (ttf->sbitHashRoot[i].bitmap.buffer) {
-			free(ttf->sbitHashRoot[i].bitmap.buffer);
-			ttf->sbitHashRoot[i].bitmap.buffer = NULL;
-		}
-	}
-}
-
-static void clean_ttfs_cache(p_ttf ttf1, p_ttf ttf2)
-{
-	clean_ttf_cache(ttf1);
-	clean_ttf_cache(ttf2);
-}
-
 static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 								  int vertread)
 {
 	char cr[512];
 	int wordspace = 0;
-	t_ttf myttf1, myttf2;
+
+	if (cttfinfo == NULL || ettfinfo == NULL) {
+		return;
+	}
 
 	if (config.infobar_style == 0)
 		draw_infobar_rect(vertread);
@@ -502,8 +468,7 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 			{
 				int s = ttf_get_infobar_alignment(cr, wordspace);
 
-				dump_ttf(&myttf1, &myttf2);
-				disp_putnstring_reversal_truetype(&myttf1, &myttf2, s,
+				disp_putnstring_reversal_truetype(cttfinfo, ettfinfo, s,
 												  PSP_SCREEN_HEIGHT -
 												  scene_get_infobar_height() -
 												  1, config.forecolor,
@@ -511,13 +476,11 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 												  960 / config.infobar_fontsize,
 												  wordspace, 0,
 												  config.infobar_fontsize, 0);
-				clean_ttfs_cache(&myttf1, &myttf2);
 			}
 			break;
 		case conf_vertread_lvert:
 			{
-				dump_ttf(&myttf1, &myttf2);
-				disp_putnstring_lvert_truetype(&myttf1, &myttf2,
+				disp_putnstring_lvert_truetype(cttfinfo, ettfinfo,
 											   PSP_SCREEN_WIDTH -
 											   scene_get_infobar_height() - 1,
 											   (PSP_SCREEN_HEIGHT - 1),
@@ -526,28 +489,24 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 											   544 / config.infobar_fontsize,
 											   wordspace, 0,
 											   config.infobar_fontsize, 0);
-				clean_ttfs_cache(&myttf1, &myttf2);
 			}
 			break;
 		case conf_vertread_rvert:
 			{
-				dump_ttf(&myttf1, &myttf2);
-				disp_putnstring_rvert_truetype(&myttf1, &myttf2,
+				disp_putnstring_rvert_truetype(cttfinfo, ettfinfo,
 											   scene_get_infobar_height(), 0,
 											   config.forecolor,
 											   (const byte *) cr,
 											   544 / config.infobar_fontsize,
 											   wordspace, 0,
 											   config.infobar_fontsize, 0);
-				clean_ttfs_cache(&myttf1, &myttf2);
 			}
 			break;
 		case conf_vertread_horz:
 			{
 				int s = ttf_get_infobar_alignment(cr, wordspace);
 
-				dump_ttf(&myttf1, &myttf2);
-				disp_putnstring_horz_truetype(&myttf1, &myttf2, s,
+				disp_putnstring_horz_truetype(cttfinfo, ettfinfo, s,
 											  PSP_SCREEN_HEIGHT -
 											  scene_get_infobar_height() - 1,
 											  config.forecolor,
@@ -555,7 +514,6 @@ static void draw_infobar_info_ttf(PBookViewData pView, dword selidx,
 											  960 / config.infobar_fontsize,
 											  wordspace, 0,
 											  config.infobar_fontsize, 0);
-				clean_ttfs_cache(&myttf1, &myttf2);
 			}
 			break;
 		default:

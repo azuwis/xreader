@@ -60,7 +60,7 @@ static bool g_ttf_share_buffer = false;
 #ifdef ENABLE_TTF
 //static byte *cache = NULL;
 //static void *ttfh = NULL;
-p_ttf ettf = NULL, cttf = NULL;
+p_ttf ettf = NULL, cttf = NULL, cttfinfo = NULL, ettfinfo = NULL;
 #endif
 
 typedef struct _VertexColor
@@ -248,6 +248,29 @@ extern bool disp_has_font(const char *efont, const char *cfont)
 }
 
 #ifdef ENABLE_TTF
+static void ttf_clear_cache(p_ttf ttf)
+{
+	size_t i;
+
+	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
+		memset(&ttf->sbitHashRoot[i], 0, sizeof(SBit_HashItem));
+	}
+}
+
+static void clean_ttf_cache(p_ttf ttf)
+{
+	size_t i;
+
+	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
+		if (ttf->sbitHashRoot[i].bitmap.buffer) {
+			free(ttf->sbitHashRoot[i].bitmap.buffer);
+			ttf->sbitHashRoot[i].bitmap.buffer = NULL;
+		}
+	}
+}
+#endif
+
+#ifdef ENABLE_TTF
 extern void disp_ttf_close(void)
 {
 	if (ettf != NULL) {
@@ -263,6 +286,18 @@ extern void disp_ttf_close(void)
 	if (cttf != NULL) {
 		ttf_close(cttf);
 		cttf = NULL;
+	}
+
+	if (cttfinfo != NULL) {
+		clean_ttf_cache(cttfinfo);
+		free(cttfinfo);
+		cttfinfo = NULL;
+	}
+
+	if (ettfinfo != NULL) {
+		clean_ttf_cache(ettfinfo);
+		free(ettfinfo);
+		ettfinfo = NULL;
 	}
 
 	config.usettf = false;
@@ -512,6 +547,36 @@ extern bool disp_ttf_reload(int size)
 
 	if (cttf == NULL || ettf == NULL)
 		return false;
+
+	if (cttfinfo != NULL) {
+		clean_ttf_cache(cttfinfo);
+		free(cttfinfo);
+		cttfinfo = NULL;
+	}
+
+	cttfinfo = malloc(sizeof(*cttfinfo));
+
+	if (cttfinfo != NULL) {
+		memcpy(cttfinfo, cttf, sizeof(*cttfinfo));
+		cttfinfo->config.embolden = 0;
+	}
+
+	ttf_clear_cache(cttfinfo);
+
+	if (ettfinfo != NULL) {
+		clean_ttf_cache(ettfinfo);
+		free(ettfinfo);
+		ettfinfo = NULL;
+	}
+
+	ettfinfo = malloc(sizeof(*ettfinfo));
+
+	if (ettfinfo != NULL) {
+		memcpy(ettfinfo, ettf, sizeof(*ettfinfo));
+		ettfinfo->config.embolden = 0;
+	}
+
+	ttf_clear_cache(ettfinfo);
 
 	ttf_load_ewidth(ettf, disp_ewidth, 0x80);
 
