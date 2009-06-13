@@ -5356,8 +5356,8 @@ void scene_filelist(void)
 							fs_list_device(config.path, config.shortpath,
 										   &filelist, config.menutextcolor,
 										   config.selicolor,
-										   config.
-										   usedyncolor ? get_bgcolor_by_time() :
+										   config.usedyncolor ?
+										   get_bgcolor_by_time() :
 										   config.menubcolor, config.selbcolor);
 					} else {
 						filecount =
@@ -5462,6 +5462,8 @@ void scene_filelist(void)
 		} else {
 			device_mark = (int) dmalloc_mark();
 		}
+#elif defined (_DEBUG)
+//      malloc_stats();
 #endif
 	}
 	if (p_umdchapter) {
