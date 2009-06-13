@@ -42,8 +42,6 @@
 
 #ifdef ENABLE_WAVPACK
 
-#define WVPACK_BUFFERED_READER_BUFFER_SIZE (256 * 1024)
-
 static int __end(void);
 
 #define MAX_BLOCK_SIZE (1024 * 8)
@@ -146,97 +144,6 @@ static int wv_seek_seconds(double seconds)
 	}
 
 	g_play_time = seconds;
-
-	return 0;
-}
-
-static int handle_seek(void)
-{
-	u64 timer_end;
-
-	if (g_status == ST_FFORWARD) {
-		xrRtcGetCurrentTick(&timer_end);
-
-		generic_lock();
-		if (g_last_seek_is_forward) {
-			generic_unlock();
-
-			if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
-				generic_lock();
-
-				if (g_seek_count > 0) {
-					g_play_time += g_seek_seconds;
-					g_seek_count--;
-				}
-
-				generic_unlock();
-
-				if (g_play_time >= g_info.duration) {
-					return -1;
-				}
-
-				xrKernelDelayThread(100000);
-			} else {
-				generic_lock();
-
-				g_seek_count = 0;
-				generic_set_playback(true);
-
-				if (wv_seek_seconds(g_play_time) < 0) {
-					generic_unlock();
-					return -1;
-				}
-
-				g_status = ST_PLAYING;
-
-				generic_unlock();
-				xrKernelDelayThread(100000);
-			}
-		} else {
-			generic_unlock();
-		}
-	} else if (g_status == ST_FBACKWARD) {
-		xrRtcGetCurrentTick(&timer_end);
-
-		generic_lock();
-		if (!g_last_seek_is_forward) {
-			generic_unlock();
-
-			if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
-				generic_lock();
-
-				if (g_seek_count > 0) {
-					g_play_time -= g_seek_seconds;
-					g_seek_count--;
-				}
-
-				generic_unlock();
-
-				if (g_play_time < 0) {
-					g_play_time = 0;
-				}
-
-				xrKernelDelayThread(100000);
-			} else {
-				generic_lock();
-
-				g_seek_count = 0;
-				generic_set_playback(true);
-
-				if (wv_seek_seconds(g_play_time) < 0) {
-					generic_unlock();
-					return -1;
-				}
-
-				g_status = ST_PLAYING;
-
-				generic_unlock();
-				xrKernelDelayThread(100000);
-			}
-		} else {
-			generic_unlock();
-		}
-	}
 
 	return 0;
 }

@@ -5009,16 +5009,6 @@ static void scene_enter_dir(dword * idx)
 						   config.selicolor,
 						   config.usedyncolor ? get_bgcolor_by_time() :
 						   config.menubcolor, config.selbcolor);
-
-#ifdef DMALLOC
-		static int device_mark = -1;
-
-		if (device_mark != -1) {
-			dmalloc_log_changed((unsigned)device_mark, 1, 0, 1);
-		}
-
-		device_mark = (int)dmalloc_mark();
-#endif
 	} else if (strnicmp(config.path, "ms0:/", 5) == 0) {
 		if (fat_inited == false) {
 			fat_init();
