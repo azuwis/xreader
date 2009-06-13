@@ -50,6 +50,8 @@
 #define HEXDUMP_HEXSTUFF_PER_LINE \
     (HEXDUMP_HEXSTUFF_PER_SHORT * HEXDUMP_SHORTS_PER_LINE)
 
+int conv_gbk_to_current_locale(const char* gbkstr, size_t size, char **ptr, int *outputsize);
+
 static void dbg_set_handle(dbg_handle * p, void (*init) (void *),
 						   dbg_func writer, void (*cleanup) (void *), void *arg)
 {
@@ -407,10 +409,20 @@ int dbg_printf(DBG * d, const char *fmt, ...)
 	}
 	strcat_s(buf, size + timelen + 2, "\n");
 	va_end(ap);
-	for (i = 0; i < d->otsize; ++i) {
-		if (d->ot[i].write)
-			(*d->ot[i].write) (d->ot[i].arg, buf);
+
+	int tsize;
+	char *t = NULL;
+
+	conv_gbk_to_current_locale(buf, strlen(buf), &t, &tsize);
+	
+	if (t != NULL) {
+		for (i = 0; i < d->otsize; ++i) {
+			if (d->ot[i].write)
+				(*d->ot[i].write) (d->ot[i].arg, t);
+		}
 	}
+
+	free(t);
 	free(buf);
 	return l;
 }
@@ -439,10 +451,20 @@ int dbg_printf_raw(DBG * d, const char *fmt, ...)
 	}
 	strcat_s(buf, size, "\n");
 	va_end(ap);
-	for (i = 0; i < d->otsize; ++i) {
-		if (d->ot[i].write)
-			(*d->ot[i].write) (d->ot[i].arg, buf);
+
+	int tsize;
+	char *t = NULL;
+
+	conv_gbk_to_current_locale(buf, strlen(buf), &t, &tsize);
+	
+	if (t != NULL) {
+		for (i = 0; i < d->otsize; ++i) {
+			if (d->ot[i].write)
+				(*d->ot[i].write) (d->ot[i].arg, t);
+		}
 	}
+
+	free(t);
 	free(buf);
 	return l;
 }

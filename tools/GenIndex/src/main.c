@@ -24,12 +24,17 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#ifndef WIN32
+#include <iconv.h>
+#endif
 #include "strsafe.h"
 #include "config.h"
 #include "dbg.h"
-#include <errno.h>
 
 #if !(defined(MAGICTOKEN) && defined(SPLITTOKEN))
 #error 没有定义MAGICTOKEN 或 SPLITTOKEN
@@ -109,12 +114,98 @@ int detect_unix_dos(const char *fn)
 	return cdos > cunix;
 }
 
+char to_locale[20];
+
+void set_output_locale(const char *p)
+{
+	if (strchr(p, '.')) {
+		STRCPY_S(to_locale, strchr(p, '.') + 1);
+	} else {
+		STRCPY_S(to_locale, p);
+	}
+}
+
+int conv_gbk_to_current_locale(const char* gbkstr, size_t size, char **ptr, int *outputsize)
+{
+#ifdef WIN32
+	*outputsize = size;
+	*ptr = strdup(gbkstr);
+
+	return 0;
+#else
+	iconv_t ic;
+	int ret = 0;
+
+	if (ptr == NULL) {
+		return -1;
+	}
+
+	ic = iconv_open(to_locale, "GBK");
+
+	if (ic == (iconv_t) (-1)) {
+		return -1;
+	}
+
+	size_t len = size * 2;
+	*ptr = malloc(len);
+
+	if (*ptr == NULL) {
+		ret = -1;
+		goto exit;
+	}
+
+	char *p = (char*) gbkstr;
+	char *q = *ptr;
+	int left = size, oleft = len;
+
+	while (left > 0 && (ret = (int)iconv(ic, &p, &left, &q, &oleft)) != -1) {
+	}
+
+	*q++ = '\0';
+
+	*outputsize = q - *ptr;
+
+	ret = 0;
+exit:
+	iconv_close(ic);
+	return ret;
+#endif
+}
+
+static int err_msg(const char* fmt, ...)
+{
+	char buf[65536];
+	va_list ap;
+	
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	buf[sizeof(buf) - 1] = '\0';
+
+	char *t = NULL;
+	int tsize;
+
+	conv_gbk_to_current_locale(buf, strlen(buf), &t, &tsize);
+
+	fprintf(stderr, t);
+
+	free(t);
+
+	va_end(ap);
+
+	return 0;
+}
+
 int main(int argc, char* argv[])
 {
 	struct stat statbuf;
 	d = dbg_init();
 	dbg_open_stream(d, stderr);
 	dbg_switch(d, 0);
+
+	if (getenv("LANG") != NULL) {
+		set_output_locale(getenv("LANG"));
+	}
+
 #ifdef WIN32
 	if(stricmp(argv[argc-1], "-d") == 0)
 		dbg_switch(d, 1);
@@ -124,31 +215,30 @@ int main(int argc, char* argv[])
 #endif
 
 	if(argc < 2) {
-		fprintf(stderr, "xReader 目录生成工具 GenIndex (version 0.1)\n");
-		fprintf(stderr, "用法: GenIndex.exe 文件名.txt [-d]\n");
-		fprintf(stderr, "                               -d: 调试模式\n");
-		fprintf(stderr, "使用方法\n");
-		fprintf(stderr, "1. 在你的TXT电子书里加入<<<<符号标注每章开始\n");
-		fprintf(stderr, "如\n");
-		fprintf(stderr, "<<<<第一章 XXX\n");
-		fprintf(stderr, "....\n");
-		fprintf(stderr, "<<<<第二章 YYY\n");
-		fprintf(stderr, "2. 保存后，将TXT拖到GenIndex图标中，GenIndex就会为你的电子书生成\n");
-		fprintf(stderr, "一个简便的目录：\n");
-		fprintf(stderr, "===================\n");
-		fprintf(stderr, "页数 目录\n");
-		fprintf(stderr, "1    第一章 XXX\n");
-		fprintf(stderr, "2    第二章 YYY\n");
-		fprintf(stderr, "===================\n");
-		fprintf(stderr, "3. 页数数字就是GI值，看书时在信息栏里有显示，如果你要移动到某章，翻页直到GI相等即可找到该章。GI是绝对页码，不会因为字体大小而改变。\n");
+		err_msg("xReader 目录生成工具 GenIndex (version 0.1)\n");
+		err_msg("用法: GenIndex.exe 文件名.txt [-d]\n");
+		err_msg("                               -d: 调试模式\n");
+		err_msg("使用方法\n");
+		err_msg("1. 在你的TXT电子书里加入<<<<符号标注每章开始\n");
+		err_msg("如\n");
+		err_msg("<<<<第一章 XXX\n");
+		err_msg("....\n");
+		err_msg("<<<<第二章 YYY\n");
+		err_msg("2. 保存后，将TXT拖到GenIndex图标中，GenIndex就会为你的电子书生成\n");
+		err_msg("一个简便的目录：\n");
+		err_msg("===================\n");
+		err_msg("页数 目录\n");
+		err_msg("1    第一章 XXX\n");
+		err_msg("2    第二章 YYY\n");
+		err_msg("===================\n");
+		err_msg("3. 页数数字就是GI值，看书时在信息栏里有显示，如果你要移动到某章，翻页直到GI相等即可找到该章。GI是绝对页码，不会因为字体大小而改变。\n");
 #ifdef WIN32
 		system("pause");
 #endif
 		return -1;
 	}
-	dbg_printf(d, "处理文件名: %s", argv[1]);
 	if(stat(argv[1], &statbuf) != 0) {
-		fprintf(stderr, "文件%s没有找到", argv[1]);
+		err_msg("文件%s没有找到", argv[1]);
 		return -1;
 	}
 	else  {
@@ -307,13 +397,13 @@ void ParseFile(void)
 	char buf[BUFSIZ];
 	FILE *fp, *foutp;
 	char *szOutFn = 0;
-	dbg_printf(d, "处理TXT文件: 路径 %s 名字 %s 大小 %d", g_file.path, g_file.name, g_file.size);
+	dbg_printf(d, "处理TXT文件: 大小 %d", g_file.size);
 	fp = fopen(g_file.path, "rb");
 	char str[4];
 	fgets(str, 4, fp);
 	if(str[0] == '\xef' && str[1] == '\xbb' && str[2] == '\xbf')
 	{
-		fprintf(stderr, "GenIndex不能处理UTF8 TXT文件，请先转换为GBK编码\n");
+		err_msg("GenIndex不能处理UTF8 TXT文件，请先转换为GBK编码\n");
 #ifdef WIN32
 		system("pause");
 #endif
@@ -362,16 +452,16 @@ void ParseFile(void)
 		if (errno == EXDEV) {
 			ret = copy_file(szOutFn, g_file.path);
 			if (ret != 0) {
-				fprintf(stderr, "copy_file failed\n");
+				err_msg("copy_file failed\n");
 				return;
 			}
 		} else {
-			fprintf(stderr, "rename failed\n");
+			err_msg("rename failed\n");
 			return;
 		}
 	}
 #endif
-	dbg_printf(d, "目录生成器 GenIndex: %s 目录大小%d字节 完成生成\n", g_file.name, g_file.dirsize);
+	dbg_printf(d, "目录大小%d字节 完成生成\n", g_file.dirsize);
 	free(szOutFn);
 }
 
