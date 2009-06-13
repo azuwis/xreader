@@ -17,7 +17,7 @@ AC_DEFUN([AC_PSPDEV_PATH],
         AC_MSG_ERROR(can't find the pspdev toolchain.  Use --with-pspdev or set PSPDEV)
      fi
      # Strip both the /psp-gcc and /bin portions from the path.
-     pspdev=`echo $psp_gcc_path | sed 's/\/psp-gcc//' | sed 's/\/bin//'`
+     pspdev=`echo $psp_gcc_path | sed 's/\/psp-gcc$//' | sed 's/\/bin$//'`
   fi
   AC_MSG_RESULT($pspdev)
 
