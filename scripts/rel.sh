@@ -48,6 +48,8 @@ cp -u "$SRCDIR/../Changelog.txt" "$DESTDIR/"
 if [ x$LITE != xy ]; then
 echo "\t\tbg.png"
 cp -u "$SRCDIR/../resource/bg.png" "$DESTDIR/"
+echo "\t\tfonts.conf"
+cp -u "$SRCDIR/../resource/fonts.conf" "$DESTDIR/"
 fi
 echo "\t\tmsg/zh_CN.so"
 cp -u "$SRCDIR/../msg/zh_CN.so" "$DESTDIR/msg"
