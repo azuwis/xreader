@@ -5197,6 +5197,9 @@ static void scene_open_font(dword * idx)
 	if (win_msgbox
 		(_("是否为中文字体？"), _("是"), _("否"),
 		 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
+		// clean ettf in case of insuffient memory
+		STRCPY_S(config.ettfarch, "");
+		STRCPY_S(config.ettfpath, "");
 		STRCPY_S(config.cttfpath, fn);
 		if (where == scene_in_dir)
 			STRCPY_S(config.cttfarch, "");
