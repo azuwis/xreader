@@ -44,14 +44,12 @@
 #include <stdarg.h>
 #include "strsafe.h"
 
-size_t
-strnlen(const char *s, size_t len)
+size_t strnlen(const char *s, size_t len)
 {
-    size_t i;
+	size_t i;
 
-    for(i = 0; i < len && s[i]; i++)
-	;
-    return i;
+	for (i = 0; i < len && s[i]; i++);
+	return i;
 }
 
 size_t
@@ -65,7 +63,7 @@ strncpy_s(char *strDest,
 		dbg_printf(d, "strncpy_s: strDest可能退化为指针: %s", strSource);
 	}
 #endif
-	size_t copied = numberOfElements - 1 < count ?  numberOfElements - 1 : count;
+	size_t copied = numberOfElements - 1 < count ? numberOfElements - 1 : count;
 	strncpy(strDest, strSource, copied);
 	strDest[copied] = '\0';
 

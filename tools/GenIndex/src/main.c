@@ -43,23 +43,25 @@
 DBG *d;
 
 // 目录项
-typedef struct {
+typedef struct
+{
 	char *name;
 	size_t page;
 } DirEntry;
 
-typedef struct {
-	char* path;
-	char* name;
+typedef struct
+{
+	char *path;
+	char *name;
 	size_t size;
 	size_t dirsize;
 	size_t context;
 	int newline_style;
 } TxtFile;
 
-DirEntry * AddDirEntry(const char* name, int page);
+DirEntry *AddDirEntry(const char *name, int page);
 void ParseFile(void);
-int PrintDir(FILE *fp);
+int PrintDir(FILE * fp);
 int VPrintDir(void);
 void FreeDirEntry(void);
 
@@ -68,16 +70,15 @@ DirEntry *g_dirs = 0;
 size_t g_dircnt = 0;
 size_t g_dircap = 0;
 
-
 #if defined(WIN32) || defined(_MSC_VER)
 #include <windows.h>
-void GetTempFilename(char* str, size_t size)
+void GetTempFilename(char *str, size_t size)
 {
 	GetTempPath(size, str);
 	GetTempFileName(str, ("GenIndex_"), 0, str);
 }
 #else
-void GetTempFilename(char* str, size_t size)
+void GetTempFilename(char *str, size_t size)
 {
 	strcpy_s(str, size, "/tmp/genXXXXXX");
 	mktemp(str);
@@ -96,7 +97,6 @@ int detect_unix_dos(const char *fn)
 	if (fp == NULL) {
 		return -1;
 	}
-
 
 	cunix = cdos = 0;
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -125,7 +125,8 @@ void set_output_locale(const char *p)
 	}
 }
 
-int conv_gbk_to_current_locale(const char* gbkstr, size_t size, char **ptr, int *outputsize)
+int conv_gbk_to_current_locale(const char *gbkstr, size_t size, char **ptr,
+							   int *outputsize)
 {
 #ifdef WIN32
 	*outputsize = size;
@@ -154,11 +155,11 @@ int conv_gbk_to_current_locale(const char* gbkstr, size_t size, char **ptr, int 
 		goto exit;
 	}
 
-	char *p = (char*) gbkstr;
+	char *p = (char *) gbkstr;
 	char *q = *ptr;
 	int left = size, oleft = len;
 
-	while (left > 0 && (ret = (int)iconv(ic, &p, &left, &q, &oleft)) != -1) {
+	while (left > 0 && (ret = (int) iconv(ic, &p, &left, &q, &oleft)) != -1) {
 	}
 
 	*q++ = '\0';
@@ -166,17 +167,17 @@ int conv_gbk_to_current_locale(const char* gbkstr, size_t size, char **ptr, int 
 	*outputsize = q - *ptr;
 
 	ret = 0;
-exit:
+  exit:
 	iconv_close(ic);
 	return ret;
 #endif
 }
 
-static int err_msg(const char* fmt, ...)
+static int err_msg(const char *fmt, ...)
 {
 	char buf[65536];
 	va_list ap;
-	
+
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	buf[sizeof(buf) - 1] = '\0';
@@ -195,7 +196,7 @@ static int err_msg(const char* fmt, ...)
 	return 0;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	struct stat statbuf;
 	d = dbg_init();
@@ -205,16 +206,15 @@ int main(int argc, char* argv[])
 	if (getenv("LANG") != NULL) {
 		set_output_locale(getenv("LANG"));
 	}
-
 #ifdef WIN32
-	if(stricmp(argv[argc-1], "-d") == 0)
+	if (stricmp(argv[argc - 1], "-d") == 0)
 		dbg_switch(d, 1);
 #else
-	if(strcasecmp(argv[argc-1], "-d") == 0)
+	if (strcasecmp(argv[argc - 1], "-d") == 0)
 		dbg_switch(d, 1);
 #endif
 
-	if(argc < 2) {
+	if (argc < 2) {
 		err_msg("xReader 目录生成工具 GenIndex (version 0.1)\n");
 		err_msg("用法: GenIndex.exe 文件名.txt [-d]\n");
 		err_msg("                               -d: 调试模式\n");
@@ -224,28 +224,30 @@ int main(int argc, char* argv[])
 		err_msg("<<<<第一章 XXX\n");
 		err_msg("....\n");
 		err_msg("<<<<第二章 YYY\n");
-		err_msg("2. 保存后，将TXT拖到GenIndex图标中，GenIndex就会为你的电子书生成\n");
+		err_msg
+			("2. 保存后，将TXT拖到GenIndex图标中，GenIndex就会为你的电子书生成\n");
 		err_msg("一个简便的目录：\n");
 		err_msg("===================\n");
 		err_msg("页数 目录\n");
 		err_msg("1    第一章 XXX\n");
 		err_msg("2    第二章 YYY\n");
 		err_msg("===================\n");
-		err_msg("3. 页数数字就是GI值，看书时在信息栏里有显示，如果你要移动到某章，翻页直到GI相等即可找到该章。GI是绝对页码，不会因为字体大小而改变。\n");
+		err_msg
+			("3. 页数数字就是GI值，看书时在信息栏里有显示，如果你要移动到某章，翻页直到GI相等即可找到该章。GI是绝对页码，不会因为字体大小而改变。\n");
 #ifdef WIN32
 		system("pause");
 #endif
 		return -1;
 	}
-	if(stat(argv[1], &statbuf) != 0) {
+	if (stat(argv[1], &statbuf) != 0) {
 		err_msg("文件%s没有找到", argv[1]);
 		return -1;
-	}
-	else  {
+	} else {
 		dbg_printf(d, "文件: %s 大小: %ld字节", argv[1], statbuf.st_size);
 		g_file.name = strdup(argv[1]);
-		if(strrchr(g_file.name, '\\') != 0) {
-			memmove(g_file.name, strrchr(g_file.name, '\\')+1, strlen(strrchr(g_file.name, '\\')+1) + 1);
+		if (strrchr(g_file.name, '\\') != 0) {
+			memmove(g_file.name, strrchr(g_file.name, '\\') + 1,
+					strlen(strrchr(g_file.name, '\\') + 1) + 1);
 		}
 		g_file.path = strdup(argv[1]);
 		g_file.size = statbuf.st_size;
@@ -279,18 +281,17 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-int GetCurPageNum(FILE *fp, int offset) {
+int GetCurPageNum(FILE * fp, int offset)
+{
 	size_t pos;
 	pos = ftell(fp) + offset;
-	if(pos/1023 != 0)
-	{
-		return (int)((double)(pos) / 1023.0 + 0.5);
-	}
-	else
-		return 1; /* 避免返回0页 */
+	if (pos / 1023 != 0) {
+		return (int) ((double) (pos) / 1023.0 + 0.5);
+	} else
+		return 1;				/* 避免返回0页 */
 }
 
-void SearchDir(FILE *fp)
+void SearchDir(FILE * fp)
 {
 	int iSplitCnt = 0;
 	char buf[65536];
@@ -299,10 +300,10 @@ void SearchDir(FILE *fp)
 	FreeDirEntry();
 
 	fseek(fp, 0, SEEK_SET);
-	
+
 	// 找到目录后地址
-	while(!feof(fp)) {
-		if(fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
+	while (!feof(fp)) {
+		if (fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
 			size_t len = strlen(buf);
 
 			if (len >= 2) {
@@ -315,16 +316,16 @@ void SearchDir(FILE *fp)
 				}
 			}
 
-			if(strcmp(buf, SPLITTOKEN) == 0)
+			if (strcmp(buf, SPLITTOKEN) == 0)
 				iSplitCnt++;
 		}
-		if(iSplitCnt >= 2)
+		if (iSplitCnt >= 2)
 			break;
 	}
 
-	if(iSplitCnt == 0)
+	if (iSplitCnt == 0)
 		g_file.context = 0;
-	if(iSplitCnt >= 2) {
+	if (iSplitCnt >= 2) {
 		g_file.context = ftell(fp);
 	}
 
@@ -333,26 +334,29 @@ void SearchDir(FILE *fp)
 	fseek(fp, g_file.context, SEEK_SET);
 
 	dbg_printf(d, "扫描文件,以%d字节偏移", g_file.dirsize);
-	while(!feof(fp)) {
-		if(fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
+	while (!feof(fp)) {
+		if (fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
 			size_t len = strlen(buf);
 
 			if (len >= 2) {
-				if(buf[len - 1] == '\n')
+				if (buf[len - 1] == '\n')
 					buf[len - 1] = '\0';
 
 				if (buf[len - 2] == '\r') {
 					buf[len - 2] = '\0';
 				}
 			}
-			
-			if(strstr(buf, MAGICTOKEN) != 0) {
+
+			if (strstr(buf, MAGICTOKEN) != 0) {
 				char *p;
 				dbg_printf(d, "查找到标记: %s", buf);
 
 				p = strstr(buf, MAGICTOKEN) + strlen(MAGICTOKEN);
-				AddDirEntry(p, GetCurPageNum(fp, g_file.dirsize - g_file.context));
-				dbg_printf(d, "添加记录项到%d个(名字: %s 页数 %d)", g_dircnt, g_dirs[g_dircnt-1].name, g_dirs[g_dircnt-1].page);
+				AddDirEntry(p,
+							GetCurPageNum(fp, g_file.dirsize - g_file.context));
+				dbg_printf(d, "添加记录项到%d个(名字: %s 页数 %d)", g_dircnt,
+						   g_dirs[g_dircnt - 1].name,
+						   g_dirs[g_dircnt - 1].page);
 			}
 		}
 	}
@@ -401,15 +405,14 @@ void ParseFile(void)
 	fp = fopen(g_file.path, "rb");
 	char str[4];
 	fgets(str, 4, fp);
-	if(str[0] == '\xef' && str[1] == '\xbb' && str[2] == '\xbf')
-	{
+	if (str[0] == '\xef' && str[1] == '\xbb' && str[2] == '\xbf') {
 		err_msg("GenIndex不能处理UTF8 TXT文件，请先转换为GBK编码\n");
 #ifdef WIN32
 		system("pause");
 #endif
 		return;
 	}
-	
+
 	g_file.dirsize = 0;
 	fseek(fp, 0, SEEK_SET);
 	SearchDir(fp);
@@ -419,11 +422,11 @@ void ParseFile(void)
 
 	SearchDir(fp);
 
-	szOutFn = (char*)malloc(MAX_PATH+1);
+	szOutFn = (char *) malloc(MAX_PATH + 1);
 	GetTempFilename(szOutFn, MAX_PATH);
 	dbg_printf(d, "得到临时文件名%s", szOutFn);
 	foutp = fopen(szOutFn, "wb");
-	if(!foutp) {
+	if (!foutp) {
 		dbg_printf(d, "创建文件%s失败", szOutFn);
 		return;
 	}
@@ -436,7 +439,7 @@ void ParseFile(void)
 			break;
 		}
 	}
-	
+
 	fclose(fp);
 	fclose(foutp);
 #ifdef WIN32
@@ -469,41 +472,41 @@ int VPrintDirDOS()
 {
 	int i, bytes;
 	char buf[BUFSIZ];
-	if(g_dircnt == 0)
+	if (g_dircnt == 0)
 		return 0;
 	bytes = SPRINTF_S(buf, "%s\r\n", SPLITTOKEN);
 	bytes += SPRINTF_S(buf, "页数 目录\r\n");
-	for(i=0; i<g_dircnt; ++i) {
+	for (i = 0; i < g_dircnt; ++i) {
 		bytes += SPRINTF_S(buf, "%-4d %s\r\n", g_dirs[i].page, g_dirs[i].name);
 	}
 	bytes += SPRINTF_S(buf, "%s\r\n", SPLITTOKEN);
 	return bytes;
 }
 
-int PrintDirDOS(FILE *fp)
+int PrintDirDOS(FILE * fp)
 {
 	int i, bytes;
 	dbg_printf(d, "开始打印目录:");
-	if(g_dircnt == 0)
+	if (g_dircnt == 0)
 		return 0;
 	bytes = fprintf(fp, "%s\r\n", SPLITTOKEN);
 	bytes += fprintf(fp, "页数 目录\r\n");
-	for(i=0; i<g_dircnt; ++i) {
+	for (i = 0; i < g_dircnt; ++i) {
 		bytes += fprintf(fp, "%-4d %s\r\n", g_dirs[i].page, g_dirs[i].name);
 	}
 	bytes += fprintf(fp, "%s\r\n", SPLITTOKEN);
 	return bytes;
 }
 
-int PrintDirUNIX(FILE *fp)
+int PrintDirUNIX(FILE * fp)
 {
 	int i, bytes;
 	dbg_printf(d, "开始打印目录:");
-	if(g_dircnt == 0)
+	if (g_dircnt == 0)
 		return 0;
 	bytes = fprintf(fp, "%s\n", SPLITTOKEN);
 	bytes += fprintf(fp, "页数 目录\n");
-	for(i=0; i<g_dircnt; ++i) {
+	for (i = 0; i < g_dircnt; ++i) {
 		bytes += fprintf(fp, "%-4d %s\n", g_dirs[i].page, g_dirs[i].name);
 	}
 	bytes += fprintf(fp, "%s\n", SPLITTOKEN);
@@ -514,11 +517,11 @@ int VPrintDirUNIX()
 {
 	int i, bytes;
 	char buf[BUFSIZ];
-	if(g_dircnt == 0)
+	if (g_dircnt == 0)
 		return 0;
 	bytes = SPRINTF_S(buf, "%s\n", SPLITTOKEN);
 	bytes += SPRINTF_S(buf, "页数 目录\n");
-	for(i=0; i<g_dircnt; ++i) {
+	for (i = 0; i < g_dircnt; ++i) {
 		bytes += SPRINTF_S(buf, "%-4d %s\n", g_dirs[i].page, g_dirs[i].name);
 	}
 	bytes += SPRINTF_S(buf, "%s\n", SPLITTOKEN);
@@ -534,7 +537,7 @@ int VPrintDir(void)
 	}
 }
 
-int PrintDir(FILE *fp)
+int PrintDir(FILE * fp)
 {
 	if (g_file.newline_style == 0) {
 		return PrintDirUNIX(fp);
@@ -543,21 +546,20 @@ int PrintDir(FILE *fp)
 	}
 }
 
-DirEntry * AddDirEntry(const char* name, int page)
+DirEntry *AddDirEntry(const char *name, int page)
 {
 	DirEntry *p;
 
 	dbg_printf(d, "g_dircnt %d g_dircap %d", g_dircnt, g_dircap);
-	if(g_dirs == NULL) {
-		g_dirs = (DirEntry*) malloc(sizeof(DirEntry));
+	if (g_dirs == NULL) {
+		g_dirs = (DirEntry *) malloc(sizeof(DirEntry));
 		g_dirs->name = strdup(name);
 		g_dirs->page = page;
 		g_dircap = 1;
-	}
-	else {
-		if(g_dircnt >= g_dircap) {
+	} else {
+		if (g_dircnt >= g_dircap) {
 			g_dircap += 16;
-			p = (DirEntry*) realloc(g_dirs, sizeof(DirEntry)*g_dircap);
+			p = (DirEntry *) realloc(g_dirs, sizeof(DirEntry) * g_dircap);
 
 			if (p != NULL) {
 				g_dirs = p;
@@ -578,7 +580,7 @@ void FreeDirEntry(void)
 
 	if (g_dirs == NULL || g_dircnt == 0)
 		return;
-	for(i=0; i<g_dircnt; ++i) {
+	for (i = 0; i < g_dircnt; ++i) {
 		free(g_dirs[i].name);
 	}
 	free(g_dirs);
