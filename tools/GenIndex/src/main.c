@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <string.h>
+#include "strsafe.h"
 #include "config.h"
 #include "dbg.h"
 #include <errno.h>
@@ -73,7 +74,7 @@ void GetTempFilename(char* str, size_t size)
 #else
 void GetTempFilename(char* str, size_t size)
 {
-	strcpy(str, "/tmp/genXXXXXX");
+	strcpy_s(str, size, "/tmp/genXXXXXX");
 	mktemp(str);
 }
 #endif
@@ -154,7 +155,7 @@ int main(int argc, char* argv[])
 		dbg_printf(d, "文件: %s 大小: %ld字节", argv[1], statbuf.st_size);
 		g_file.name = strdup(argv[1]);
 		if(strrchr(g_file.name, '\\') != 0) {
-			strcpy(g_file.name, strrchr(g_file.name, '\\')+1);
+			memmove(g_file.name, strrchr(g_file.name, '\\')+1, strlen(strrchr(g_file.name, '\\')+1) + 1);
 		}
 		g_file.path = strdup(argv[1]);
 		g_file.size = statbuf.st_size;
@@ -212,12 +213,16 @@ void SearchDir(FILE *fp)
 	// 找到目录后地址
 	while(!feof(fp)) {
 		if(fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
-			if (buf[strlen(buf) - 1] == '\n') {
-				buf[strlen(buf) - 1] = '\0';
-			}
+			size_t len = strlen(buf);
 
-			if (buf[strlen(buf) - 1] == '\r') {
-				buf[strlen(buf) - 1] = '\0';
+			if (len >= 2) {
+				if (buf[len - 1] == '\n') {
+					buf[len - 1] = '\0';
+				}
+
+				if (buf[len - 2] == '\r') {
+					buf[len - 2] = '\0';
+				}
 			}
 
 			if(strcmp(buf, SPLITTOKEN) == 0)
@@ -237,14 +242,18 @@ void SearchDir(FILE *fp)
 
 	fseek(fp, g_file.context, SEEK_SET);
 
-	dbg_printf(d, "扫描文件%s,以%d字节偏移", g_file.name, g_file.dirsize);
+	dbg_printf(d, "扫描文件,以%d字节偏移", g_file.dirsize);
 	while(!feof(fp)) {
 		if(fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
-			if(buf[strlen(buf)-1] == '\n')
-				buf[strlen(buf)-1] = '\0';
+			size_t len = strlen(buf);
 
-			if (buf[strlen(buf) - 1] == '\r') {
-				buf[strlen(buf) - 1] = '\0';
+			if (len >= 2) {
+				if(buf[len - 1] == '\n')
+					buf[len - 1] = '\0';
+
+				if (buf[len - 2] == '\r') {
+					buf[len - 2] = '\0';
+				}
 			}
 			
 			if(strstr(buf, MAGICTOKEN) != 0) {
@@ -372,12 +381,12 @@ int VPrintDirDOS()
 	char buf[BUFSIZ];
 	if(g_dircnt == 0)
 		return 0;
-	bytes = sprintf(buf, "%s\r\n", SPLITTOKEN);
-	bytes += sprintf(buf, "页数 目录\r\n");
+	bytes = SPRINTF_S(buf, "%s\r\n", SPLITTOKEN);
+	bytes += SPRINTF_S(buf, "页数 目录\r\n");
 	for(i=0; i<g_dircnt; ++i) {
-		bytes += sprintf(buf, "%-4d %s\r\n", g_dirs[i].page, g_dirs[i].name);
+		bytes += SPRINTF_S(buf, "%-4d %s\r\n", g_dirs[i].page, g_dirs[i].name);
 	}
-	bytes += sprintf(buf, "%s\r\n", SPLITTOKEN);
+	bytes += SPRINTF_S(buf, "%s\r\n", SPLITTOKEN);
 	return bytes;
 }
 
@@ -417,12 +426,12 @@ int VPrintDirUNIX()
 	char buf[BUFSIZ];
 	if(g_dircnt == 0)
 		return 0;
-	bytes = sprintf(buf, "%s\n", SPLITTOKEN);
-	bytes += sprintf(buf, "页数 目录\n");
+	bytes = SPRINTF_S(buf, "%s\n", SPLITTOKEN);
+	bytes += SPRINTF_S(buf, "页数 目录\n");
 	for(i=0; i<g_dircnt; ++i) {
-		bytes += sprintf(buf, "%-4d %s\n", g_dirs[i].page, g_dirs[i].name);
+		bytes += SPRINTF_S(buf, "%-4d %s\n", g_dirs[i].page, g_dirs[i].name);
 	}
-	bytes += sprintf(buf, "%s\n", SPLITTOKEN);
+	bytes += SPRINTF_S(buf, "%s\n", SPLITTOKEN);
 	return bytes;
 }
 
