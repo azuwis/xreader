@@ -245,4 +245,6 @@ AC_CONFIG_FILES([Makefile
                  testsuite/Makefile
                  conf_cmdline.h
                  ])
+AC_CONFIG_FILES([scripts/t.sh], [chmod +x scripts/t.sh])
+AC_CONFIG_FILES([scripts/rel.sh], [chmod +x scripts/rel.sh])
 AC_OUTPUT
