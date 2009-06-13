@@ -91,7 +91,7 @@ extern unsigned int get_free_mem(void)
 	return 25 * 1024 * 1024 - allocated;
 #else
 	unsigned int flags = pspSdkDisableInterrupts();
-	
+
 	void *p[512];
 	unsigned int block_size = 0x04000000;	//最大内存:64MB,必需是2的N次方
 	unsigned int block_free = 0;
@@ -194,7 +194,7 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 				struct music_file *p;
 
 				if ((p = music_get(*index)) != NULL) {
-					music_directplay(p->shortpath, p->longpath);
+					music_directplay(p->shortpath->ptr, p->longpath->ptr);
 				}
 				return win_menu_op_continue;
 			}
@@ -246,7 +246,7 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex,
 
 	if (fl == NULL)
 		return;
-	fname = fl->longpath;
+	fname = fl->longpath->ptr;
 #else
 	fname = _("音乐已关闭");
 #endif
@@ -308,7 +308,7 @@ void scene_mp3_list(void)
 
 		if (fl == NULL)
 			continue;
-		char *rname = strrchr(fl->longpath, '/');
+		char *rname = strrchr(fl->longpath->ptr, '/');
 
 		if (rname == NULL)
 			rname = (char *) music_get(i);
@@ -582,10 +582,10 @@ static void scene_draw_mp3bar_music_staff(void)
 			struct music_file *fl = music_get(i);
 
 			if (fl) {
-				const char *p = strrchr(fl->longpath, '/');
+				const char *p = strrchr(fl->longpath->ptr, '/');
 
 				if (p == NULL || *(p + 1) == '\0') {
-					SPRINTF_S(tag, "%s", fl->longpath);
+					SPRINTF_S(tag, "%s", fl->longpath->ptr);
 				} else {
 					SPRINTF_S(tag, "%s", p + 1);
 				}

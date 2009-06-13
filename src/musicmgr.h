@@ -22,10 +22,12 @@
 
 #include "lyric.h"
 
+struct _buffer;
+
 struct music_file
 {
-	char shortpath[PATH_MAX];
-	char longpath[PATH_MAX];
+	struct _buffer *shortpath;
+	struct _buffer *longpath;
 
 	struct music_file *next;
 };

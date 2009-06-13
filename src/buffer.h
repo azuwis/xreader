@@ -26,7 +26,7 @@
 
 #define BUFFER_MAX_REUSE_SIZE  (4 * 1024)
 
-typedef struct
+typedef struct _buffer
 {
 	char *ptr;
 

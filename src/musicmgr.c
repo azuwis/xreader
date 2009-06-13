@@ -271,8 +271,24 @@ static struct music_file *new_music_file(const char *spath, const char *lpath)
 	if (p == NULL)
 		return p;
 
-	strcpy(p->shortpath, spath);
-	strcpy(p->longpath, lpath);
+	p->shortpath = buffer_init();
+
+	if (p->shortpath == NULL) {
+		free(p);
+		return NULL;
+	}
+
+	p->longpath = buffer_init();
+
+	if (p->longpath == NULL) {
+		buffer_free(p->shortpath);
+		free(p);
+		return NULL;
+	}
+
+	buffer_copy_string(p->shortpath, spath);
+	buffer_copy_string(p->longpath, lpath);
+
 	p->next = NULL;
 
 	return p;
@@ -280,6 +296,8 @@ static struct music_file *new_music_file(const char *spath, const char *lpath)
 
 static void free_music_file(struct music_file *p)
 {
+	buffer_free(p->shortpath);
+	buffer_free(p->longpath);
 	free(p);
 }
 
@@ -299,8 +317,8 @@ int music_add(const char *spath, const char *lpath)
 	count = 0;
 
 	while (*tmp) {
-		if (!strcmp((*tmp)->shortpath, spath) &&
-			!strcmp((*tmp)->longpath, lpath)) {
+		if (!strcmp((*tmp)->shortpath->ptr, spath) &&
+			!strcmp((*tmp)->longpath->ptr, lpath)) {
 			return -EBUSY;
 		}
 		tmp = &(*tmp)->next;
@@ -328,7 +346,8 @@ int music_find(const char *spath, const char *lpath)
 
 	count = 0;
 	for (tmp = g_music_files; tmp; tmp = tmp->next) {
-		if (!strcmp(tmp->shortpath, spath) && !strcmp(tmp->longpath, lpath)) {
+		if (!strcmp(tmp->shortpath->ptr, spath)
+			&& !strcmp(tmp->longpath->ptr, lpath)) {
 			return count;
 		}
 		count++;
@@ -1085,8 +1104,8 @@ int music_list_save(const char *path)
 		file = music_get(i);
 		if (file == NULL)
 			continue;
-		fprintf(fp, "%s\n", file->shortpath);
-		fprintf(fp, "%s\n", file->longpath);
+		fprintf(fp, "%s\n", file->shortpath->ptr);
+		fprintf(fp, "%s\n", file->longpath->ptr);
 	}
 	fclose(fp);
 
@@ -1173,13 +1192,13 @@ int music_load(int i)
 	ret = music_stop();
 	if (ret < 0)
 		return ret;
-	ret = music_setupdriver(file->shortpath, file->longpath);
+	ret = music_setupdriver(file->shortpath->ptr, file->longpath->ptr);
 	if (ret < 0)
 		return ret;
 	ret = music_load_config();
 	if (ret < 0)
 		return ret;
-	ret = musicdrv_load(file->shortpath, file->longpath);
+	ret = musicdrv_load(file->shortpath->ptr, file->longpath->ptr);
 	if (ret < 0)
 		return ret;
 	lyric_close(&lyric);
@@ -1192,7 +1211,7 @@ int music_load(int i)
 		buffer_free(tag_lyric);
 		tag_lyric = NULL;
 	} else {
-		strncpy_s(lyricname, NELEMS(lyricname), file->longpath, PATH_MAX);
+		strncpy_s(lyricname, NELEMS(lyricname), file->longpath->ptr, PATH_MAX);
 		int lsize = strlen(lyricname);
 
 		lyricname[lsize - 3] = 'l';
@@ -1266,7 +1285,7 @@ int music_resume(void)
 		return -1;
 	}
 
-	ret = musicdrv_resume(fl->shortpath, fl->longpath);
+	ret = musicdrv_resume(fl->shortpath->ptr, fl->longpath->ptr);
 
 	if (ret < 0) {
 		dbg_printf(d, "%s %d: Resume failed!", __func__, __LINE__);
