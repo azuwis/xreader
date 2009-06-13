@@ -283,7 +283,7 @@ int start_cache_next_image(void)
 	dword free_memory;
 
 	if (avoid_times && curr_times++ < avoid_times) {
-//		dbg_printf(d, "%s: curr_times %d avoid time %d", __func__, curr_times, avoid_times);
+//      dbg_printf(d, "%s: curr_times %d avoid time %d", __func__, curr_times, avoid_times);
 		return -1;
 	}
 

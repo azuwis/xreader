@@ -80,7 +80,7 @@ int main_thr(unsigned int args, void *argp)
 		extern int dmalloc_test_fs(void);
 
 		dmalloc_test_fs();
-//		image_queue_test();
+//      image_queue_test();
 //      jpeg_speed_test();
 //      rar_speed_test();
 //      hprm_test();

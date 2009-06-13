@@ -29,8 +29,9 @@ extern dword filecount;
 
 int dmalloc_test_fs(void)
 {
-	dmalloc_debug_setup("log-stats,log-non-free,check-fence,check-heap,check-funcs,check-blank,print-messages,inter=100");
-	
+	dmalloc_debug_setup
+		("log-stats,log-non-free,check-fence,check-heap,check-funcs,check-blank,print-messages,inter=100");
+
 	unsigned dmark = dmalloc_mark();
 
 	win_item_destroy(&filelist, &filecount);
@@ -48,7 +49,8 @@ int dmalloc_test_fs(void)
 	filecount = fs_chm_to_menu("ms0:/temp/WinRAR.chm", &filelist, 0, 0, 0, 0);
 
 	// test flash0 dir
-	filecount = fs_flashdir_to_menu("flash0:/", "flash0:/", &filelist, 0, 0, 0, 0);
+	filecount =
+		fs_flashdir_to_menu("flash0:/", "flash0:/", &filelist, 0, 0, 0, 0);
 
 	win_item_destroy(&filelist, &filecount);
 

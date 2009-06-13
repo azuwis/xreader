@@ -291,7 +291,6 @@ int start_cache_next_image(void)
 		dbg_printf(d, "SERVER: %s: Memory usage %uKB, OK to go now", __func__,
 				   (unsigned) ccacher.memory_usage / 1024);
 
-
 	cache_lock();
 
 	// Select first unloaded image

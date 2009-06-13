@@ -117,7 +117,7 @@ extern unsigned int get_free_mem(void)
 		}
 	}
 
-abort:
+  abort:
 	while (i--) {
 		free(p[i]);
 	}
@@ -644,9 +644,8 @@ static void scene_draw_mp3bar(bool * firstdup)
 		char temp[80];
 
 		if (cache_get_loaded_size() != 0 || ccacher.memory_usage != 0) {
-			SPRINTF_S(temp, "   %s: %u/%dKB", _("»º´æ"), 
-					cache_get_loaded_size(),
-					ccacher.memory_usage / 1024);
+			SPRINTF_S(temp, "   %s: %u/%dKB", _("»º´æ"),
+					  cache_get_loaded_size(), ccacher.memory_usage / 1024);
 			STRCAT_S(infostr, temp);
 		}
 	}

@@ -48,7 +48,7 @@ static long has_id3(FILE * fp)
 
 	if (fread(bytes, 3, 1, fp) == 1) {
 		if (memcmp(bytes, "TAG", 3) == 0) {
-//			dbg_printf(d, "发现ID3v1 标记，位置 %ld", p);
+//          dbg_printf(d, "发现ID3v1 标记，位置 %ld", p);
 			return p;
 		}
 	}
@@ -166,7 +166,7 @@ static int read_apetag(FILE * fp, APETag * tag)
 			}
 
 			fseek(fp, -tag->footer.tag_size, SEEK_CUR);
-//			dbg_printf(d, "转到MP3位置 %ld", ftell(fp));
+//          dbg_printf(d, "转到MP3位置 %ld", ftell(fp));
 
 			char *raw_tag = (char *) malloc(tag->footer.tag_size);
 
@@ -186,9 +186,9 @@ static int read_apetag(FILE * fp, APETag * tag)
 			for (i = 0; i < tag->footer.item_count; ++i) {
 				int size = APE_ITEM_GET_VALUE_LEN((APETagItem *) p);
 				int m = APE_ITEM_GET_KEY_LEN((APETagItem *) p);
-//				char str[80];
+//              char str[80];
 
-//				sprintf(str, "项目 %%d 大小 %%d %%.%ds: %%.%ds", m, size);
+//              sprintf(str, "项目 %%d 大小 %%d %%.%ds: %%.%ds", m, size);
 //              dbg_printf(d, str, i+1, size, p+8, p + 8 + 1 + m);
 				append_item(tag->items, (void *) p, size + m + 1 + 8);
 				p += size + m + 1 + 8;
@@ -197,14 +197,14 @@ static int read_apetag(FILE * fp, APETag * tag)
 			free(raw_tag);
 
 			/*
-			dbg_printf(d,
-					   "发现APE标记: 版本(%d) 项目个数: %d 项目+尾字节大小: %u",
-					   (int) tag->footer.version, tag->item_count,
-					   (size_t) tag->footer.tag_size);
-			for (i = 0; i < tag->items->item_count; ++i) {
-				print_item_type(tag->items->items[i]);
-			}
-			*/
+			   dbg_printf(d,
+			   "发现APE标记: 版本(%d) 项目个数: %d 项目+尾字节大小: %u",
+			   (int) tag->footer.version, tag->item_count,
+			   (size_t) tag->footer.tag_size);
+			   for (i = 0; i < tag->items->item_count; ++i) {
+			   print_item_type(tag->items->items[i]);
+			   }
+			 */
 			apetag_errno = APETAG_OK;
 			tag->is_header_or_footer = APE_FOOTER;
 
@@ -222,10 +222,10 @@ static int search_apetag(FILE * fp, APETag * tag)
 	// 首先搜索文件尾处，ID3V1标签之前，是否有APE标签
 	if (has_id3(fp) != -1) {
 		fseek(fp, -160, SEEK_END);
-//		dbg_printf(d, "转到MP3位置 %ld", ftell(fp));
+//      dbg_printf(d, "转到MP3位置 %ld", ftell(fp));
 	} else {
 		fseek(fp, -32, SEEK_END);
-//		dbg_printf(d, "转到MP3位置 %ld", ftell(fp));
+//      dbg_printf(d, "转到MP3位置 %ld", ftell(fp));
 	}
 
 	int ret;
@@ -316,4 +316,3 @@ char *apetag_get(APETag * tag, const char *key)
 
 	return t;
 }
-
