@@ -260,7 +260,6 @@ extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color);
 extern bool check_range(int x, int y);
 extern void disp_fix_osk(void *buffer);
 pixel *disp_swizzle_image(pixel * buf, int width, int height);
-extern bool disp_ttf_reload(void);
 
 #ifdef ENABLE_TTF
 extern void disp_ttf_close(void);

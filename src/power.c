@@ -114,6 +114,7 @@ extern const char *power_get_battery_charging(void)
 extern p_ttf cttf, ettf;
 
 static volatile bool has_run_suspend = false;
+static volatile bool has_close_font = false;
 
 extern void power_down(void)
 {
@@ -122,8 +123,11 @@ extern void power_down(void)
 	else
 		return;
 
+	has_close_font = false;
+
 #ifdef ENABLE_TTF
 	if (config.usettf && !config.ttf_load_to_memory) {
+		has_close_font = true;
 		ttf_lock();
 		disp_ttf_close();
 	}
@@ -146,10 +150,13 @@ extern void power_up(void)
 	music_resume();
 #endif
 #ifdef ENABLE_TTF
-	if (config.usettf && !config.ttf_load_to_memory) {
-		if (!disp_ttf_reload()) {
-			config.usettf = false;
-		}
+	if (has_close_font && !config.ttf_load_to_memory) {
+		disp_load_zipped_truetype_book_font(config.ettfarch,
+											config.cttfarch,
+											config.ettfpath,
+											config.cttfpath,
+											config.bookfontsize);
+		has_close_font = false;
 		ttf_unlock();
 	}
 #endif
