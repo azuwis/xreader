@@ -81,7 +81,7 @@ void GetTempFilename(char *str, size_t size)
 void GetTempFilename(char *str, size_t size)
 {
 	strcpy_s(str, size, "/tmp/genXXXXXX");
-	mktemp(str);
+	const char *p = mktemp(str);
 }
 #endif
 
@@ -187,7 +187,7 @@ static int err_msg(const char *fmt, ...)
 
 	conv_gbk_to_current_locale(buf, strlen(buf), &t, &tsize);
 
-	fprintf(stderr, t);
+	fprintf(stderr, "%s", t);
 
 	free(t);
 
@@ -221,7 +221,7 @@ int do_each_file(const char *fn)
 	} else if (g_file.newline_style == 1) {
 		dbg_printf(d, "%s: DOS", g_file.name);
 	} else {
-		dbg_printf(d, "%s: Unknown, assume DOS");
+		dbg_printf(d, "%s: Unknown, assume DOS", g_file.name);
 		g_file.newline_style = 1;
 	}
 
@@ -431,7 +431,10 @@ void ParseFile(void)
 	dbg_printf(d, "处理TXT文件: 大小 %d", g_file.size);
 	fp = fopen(g_file.path, "rb");
 	char str[4];
-	fgets(str, 4, fp);
+	if (fgets(str, 4, fp) == NULL) {
+		return;
+	}
+
 	if (str[0] == '\xef' && str[1] == '\xbb' && str[2] == '\xbf') {
 		err_msg("GenIndex不能处理UTF8 TXT文件，请先转换为GBK编码\n");
 #ifdef WIN32
