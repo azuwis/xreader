@@ -420,6 +420,8 @@ static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 
 extern bool disp_ttf_reload(int size)
 {
+	dbg_printf(d, "%s", __func__);
+	
 #ifdef ENABLE_TTF
 	static char prev_ettfpath[PATH_MAX] = "", prev_ettfarch[PATH_MAX] = "";
 	static char prev_cttfpath[PATH_MAX] = "", prev_cttfarch[PATH_MAX] = "";

@@ -53,6 +53,8 @@ static SceUID fat_sema = -1;
 
 void fat_powerdown(void)
 {
+	dbg_printf(d, "%s", __func__);
+	
 	fat_lock();
 	xrIoClose(fatfd);
 	fatfd = -1;
@@ -60,6 +62,8 @@ void fat_powerdown(void)
 
 void fat_powerup(void)
 {
+	dbg_printf(d, "%s", __func__);
+	
 	fatfd = xrIoOpen("msstor:", PSP_O_RDONLY, 0777);
 	fat_unlock();
 }

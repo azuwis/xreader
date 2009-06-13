@@ -33,6 +33,7 @@
 #include "ctrl.h"
 #include "power.h"
 #include "xrhal.h"
+#include "dbg.h"
 
 PSP_MODULE_INFO("XREADER", 0x0200, 1, 6);
 PSP_MAIN_THREAD_PARAMS(45, 256, PSP_THREAD_ATTR_USER);
@@ -61,6 +62,8 @@ void __malloc_unlock(struct _reent *ptr)
 
 static int power_callback(int arg1, int powerInfo, void *arg)
 {
+	dbg_printf(d, "%s: arg1 0x%08x powerInfo 0x%08x", __func__, arg1, powerInfo);
+
 	if ((powerInfo & (PSP_POWER_CB_POWER_SWITCH | PSP_POWER_CB_STANDBY)) > 0) {
 		power_down();
 	} else if ((powerInfo & PSP_POWER_CB_RESUME_COMPLETE) > 0) {
