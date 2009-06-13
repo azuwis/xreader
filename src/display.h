@@ -131,22 +131,15 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 									   const char *cfont);
 
 /**
- * 从ZIP档案中读取文件作为文本TTF字体
+ * 重新装载ttf字体
  *
  * @note 如果同上次装载的文件相同就不重复装载，只改变字体大小
  *
- * @param ezipfile
- * @param czipfile
- * @param ettffile
- * @param cttffile
- * @param size
+ * @param size 字体大小
  *
  * @return
  */
-extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
-												const char *czipfile,
-												const char *ettffile,
-												const char *cttffile, int size);
+extern bool disp_ttf_reload(int size);
 
 /**
  * 检查中英文字体文件是否都存在

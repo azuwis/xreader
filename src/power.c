@@ -151,11 +151,7 @@ extern void power_up(void)
 #endif
 #ifdef ENABLE_TTF
 	if (has_close_font && !config.ttf_load_to_memory) {
-		disp_load_zipped_truetype_book_font(config.ettfarch,
-											config.cttfarch,
-											config.ettfpath,
-											config.cttfpath,
-											config.bookfontsize);
+		disp_ttf_reload(config.bookfontsize);
 		has_close_font = false;
 		ttf_unlock();
 	}

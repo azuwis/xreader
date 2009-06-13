@@ -238,12 +238,7 @@ bool scene_load_book_font(void)
 	if (config.usettf) {
 		int fid = freq_enter_hotzone();
 
-		loaded =
-			disp_load_zipped_truetype_book_font(config.ettfarch,
-												config.cttfarch,
-												config.ettfpath,
-												config.cttfpath,
-												config.bookfontsize);
+		loaded = disp_ttf_reload(config.bookfontsize);
 		freq_leave(fid);
 	}
 #endif

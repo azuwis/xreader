@@ -383,10 +383,7 @@ static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 }
 #endif
 
-extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
-												const char *czipfile,
-												const char *ettffile,
-												const char *cttffile, int size)
+extern bool disp_ttf_reload(int size)
 {
 #ifdef ENABLE_TTF
 	static char prev_ettfpath[PATH_MAX] = "", prev_ettfarch[PATH_MAX] = "";
@@ -447,7 +444,7 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 
 		if (!strcmp(config.ettfarch, config.cttfarch)
 			&& !strcmp(config.ettfpath, config.cttfpath)) {
-			if (cttf->fileBuffer != NULL) {
+			if (cttf != NULL && cttf->fileBuffer != NULL) {
 				ettf =
 					ttf_open_buffer(cttf->fileBuffer, cttf->fileSize, size,
 							cttf->fontName, false);
@@ -469,10 +466,6 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 			ettf =
 				ttf_open(config.ettfpath, config.bookfontsize,
 						 config.ttf_load_to_memory, false);
-
-			if (ettf) {
-				g_ttf_share_buffer = true;
-			}
 		}
 	}
 
@@ -481,9 +474,9 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 
 	if (cttf == NULL) {
 		STRCPY_S(config.cttfarch, config.ettfarch);
-		STRCPY_S(config.cttfarch, config.ettfpath);
+		STRCPY_S(config.cttfpath, config.ettfpath);
 		
-		if (ettf->fileBuffer != NULL) {
+		if (ettf != NULL && ettf->fileBuffer != NULL) {
 			cttf =
 				ttf_open_buffer(ettf->fileBuffer, ettf->fileSize, size,
 						ettf->fontName, true);
@@ -500,9 +493,9 @@ extern bool disp_load_zipped_truetype_book_font(const char *ezipfile,
 
 	if (ettf == NULL) {
 		STRCPY_S(config.ettfarch, config.cttfarch);
-		STRCPY_S(config.ettfarch, config.cttfpath);
+		STRCPY_S(config.ettfpath, config.cttfpath);
 		
-		if (cttf->fileBuffer != NULL) {
+		if (cttf != NULL && cttf->fileBuffer != NULL) {
 			ettf =
 				ttf_open_buffer(cttf->fileBuffer, cttf->fileSize, size,
 								cttf->fontName, false);
