@@ -70,7 +70,7 @@ void GetTempFilename(char* str, size_t size)
 #else
 void GetTempFilename(char* str, size_t size)
 {
-	strcpy(str, "/tmp/");
+	strcpy(str, "/tmp/genXXXXXX");
 	mktemp(str);
 }
 #endif
