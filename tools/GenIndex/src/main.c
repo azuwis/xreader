@@ -196,9 +196,54 @@ static int err_msg(const char *fmt, ...)
 	return 0;
 }
 
+int do_each_file(const char *fn)
+{
+	struct stat statbuf;
+
+	if (stat(fn, &statbuf) != 0) {
+		err_msg("文件%s没有找到", fn);
+		return -1;
+	} else {
+		dbg_printf(d, "文件: %s 大小: %ld字节", fn, statbuf.st_size);
+		g_file.name = strdup(fn);
+		if (strrchr(g_file.name, '\\') != 0) {
+			memmove(g_file.name, strrchr(g_file.name, '\\') + 1,
+					strlen(strrchr(g_file.name, '\\') + 1) + 1);
+		}
+		g_file.path = strdup(fn);
+		g_file.size = statbuf.st_size;
+	}
+
+	g_file.newline_style = detect_unix_dos(g_file.name);
+
+	if (g_file.newline_style == 0) {
+		dbg_printf(d, "%s: UNIX", g_file.name);
+	} else if (g_file.newline_style == 1) {
+		dbg_printf(d, "%s: DOS", g_file.name);
+	} else {
+		dbg_printf(d, "%s: Unknown, assume DOS");
+		g_file.newline_style = 1;
+	}
+
+	ParseFile();
+	FreeDirEntry();
+
+	if (g_file.name != NULL) {
+		free(g_file.name);
+		g_file.name = NULL;
+	}
+
+	if (g_file.path != NULL) {
+		free(g_file.path);
+		g_file.path = NULL;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	struct stat statbuf;
+	int i;
+
 	d = dbg_init();
 	dbg_open_stream(d, stderr);
 	dbg_switch(d, 0);
@@ -206,13 +251,6 @@ int main(int argc, char *argv[])
 	if (getenv("LANG") != NULL) {
 		set_output_locale(getenv("LANG"));
 	}
-#ifdef WIN32
-	if (stricmp(argv[argc - 1], "-d") == 0)
-		dbg_switch(d, 1);
-#else
-	if (strcasecmp(argv[argc - 1], "-d") == 0)
-		dbg_switch(d, 1);
-#endif
 
 	if (argc < 2) {
 		err_msg("xReader 目录生成工具 GenIndex (version 0.1)\n");
@@ -239,42 +277,31 @@ int main(int argc, char *argv[])
 #endif
 		return -1;
 	}
-	if (stat(argv[1], &statbuf) != 0) {
-		err_msg("文件%s没有找到", argv[1]);
-		return -1;
-	} else {
-		dbg_printf(d, "文件: %s 大小: %ld字节", argv[1], statbuf.st_size);
-		g_file.name = strdup(argv[1]);
-		if (strrchr(g_file.name, '\\') != 0) {
-			memmove(g_file.name, strrchr(g_file.name, '\\') + 1,
-					strlen(strrchr(g_file.name, '\\') + 1) + 1);
+
+	for (i = 1; i < argc; ++i) {
+#ifdef WIN32
+		if (stricmp(argv[i], "-d") == 0) {
+			dbg_switch(d, 1);
 		}
-		g_file.path = strdup(argv[1]);
-		g_file.size = statbuf.st_size;
+#else
+		if (strcasecmp(argv[i], "-d") == 0) {
+			dbg_switch(d, 1);
+		}
+#endif
 	}
 
-	g_file.newline_style = detect_unix_dos(g_file.name);
+	for (i = 1; i < argc; ++i) {
+#ifdef WIN32
+		if (stricmp(argv[i], "-d") == 0) {
+			continue;
+		}
+#else
+		if (strcasecmp(argv[i], "-d") == 0) {
+			continue;
+		}
+#endif
 
-	if (g_file.newline_style == 0) {
-		dbg_printf(d, "%s: UNIX", g_file.name);
-	} else if (g_file.newline_style == 1) {
-		dbg_printf(d, "%s: DOS", g_file.name);
-	} else {
-		dbg_printf(d, "%s: Unknown, assume DOS");
-		g_file.newline_style = 1;
-	}
-
-	ParseFile();
-	FreeDirEntry();
-
-	if (g_file.name != NULL) {
-		free(g_file.name);
-		g_file.name = NULL;
-	}
-
-	if (g_file.path != NULL) {
-		free(g_file.path);
-		g_file.path = NULL;
+		do_each_file(argv[i]);
 	}
 
 	dbg_close(d);
