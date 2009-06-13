@@ -20,7 +20,7 @@ AH_TOP([/*
 #define TODO assert("TODO" && 0)
 
 #define MAGICTOKEN	">>>>"
-#define SPLITTOKEN	"======================\n"
+#define SPLITTOKEN	"======================"
 #define MAX_PATH 1024
 ])
 

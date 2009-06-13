@@ -28,6 +28,7 @@
 #include <string.h>
 #include "config.h"
 #include "dbg.h"
+#include <errno.h>
 
 #if !(defined(MAGICTOKEN) && defined(SPLITTOKEN))
 #error 没有定义MAGICTOKEN 或 SPLITTOKEN
@@ -47,18 +48,20 @@ typedef struct {
 	size_t size;
 	size_t dirsize;
 	size_t context;
+	int newline_style;
 } TxtFile;
-
-TxtFile g_file;
-DirEntry *g_dirs = 0;
-size_t g_dircnt = 0;
-size_t g_dircap = 0;
 
 DirEntry * AddDirEntry(const char* name, int page);
 void ParseFile(void);
 int PrintDir(FILE *fp);
 int VPrintDir(void);
 void FreeDirEntry(void);
+
+TxtFile g_file;
+DirEntry *g_dirs = 0;
+size_t g_dircnt = 0;
+size_t g_dircap = 0;
+
 
 #if defined(WIN32) || defined(_MSC_VER)
 #include <windows.h>
@@ -74,6 +77,34 @@ void GetTempFilename(char* str, size_t size)
 	mktemp(str);
 }
 #endif
+
+/* return 0 if newline is unix style, return 1 if newline is dos style, return -1 on error */
+int detect_unix_dos(const char *fn)
+{
+	char buf[65536];
+	unsigned cunix, cdos;
+	FILE *fp;
+
+	fp = fopen(fn, "rb");
+
+	if (fp == NULL) {
+		return -1;
+	}
+
+
+	cunix = cdos = 0;
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		size_t len = strlen(buf);
+
+		if (len >= 2 && buf[len - 1] == '\n' && buf[len - 2] == '\r') {
+			cdos++;
+		} else if (len >= 1 && buf[len - 1] == '\n') {
+			cunix++;
+		}
+	}
+
+	return cdos > cunix;
+}
 
 int main(int argc, char* argv[])
 {
@@ -127,6 +158,17 @@ int main(int argc, char* argv[])
 		g_file.size = statbuf.st_size;
 	}
 
+	g_file.newline_style = detect_unix_dos(g_file.name);
+
+	if (g_file.newline_style == 0) {
+		dbg_printf(d, "%s: UNIX", g_file.name);
+	} else if (g_file.newline_style == 1) {
+		dbg_printf(d, "%s: DOS", g_file.name);
+	} else {
+		dbg_printf(d, "%s: Unknown, assume DOS");
+		g_file.newline_style = 1;
+	}
+
 	ParseFile();
 	FreeDirEntry();
 
@@ -158,6 +200,14 @@ void SearchDir(FILE *fp)
 	// 找到目录后地址
 	while(!feof(fp)) {
 		if(fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
+			if (buf[strlen(buf) - 1] == '\n') {
+				buf[strlen(buf) - 1] = '\0';
+			}
+
+			if (buf[strlen(buf) - 1] == '\r') {
+				buf[strlen(buf) - 1] = '\0';
+			}
+
 			if(strcmp(buf, SPLITTOKEN) == 0)
 				iSplitCnt++;
 		}
@@ -180,6 +230,11 @@ void SearchDir(FILE *fp)
 		if(fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
 			if(buf[strlen(buf)-1] == '\n')
 				buf[strlen(buf)-1] = '\0';
+
+			if (buf[strlen(buf) - 1] == '\r') {
+				buf[strlen(buf) - 1] = '\0';
+			}
+			
 			if(strstr(buf, MAGICTOKEN) != 0) {
 				char *p;
 				dbg_printf(d, "查找到标记: %s", buf);
@@ -192,13 +247,47 @@ void SearchDir(FILE *fp)
 	}
 }
 
+static int copy_file(const char *srcfile, const char *dstfile)
+{
+	FILE *fout, *fin;
+	char buf[BUFSIZ];
+
+	fout = fopen(dstfile, "wb");
+
+	if (fout == NULL)
+		return -1;
+
+	fin = fopen(srcfile, "rb");
+
+	if (fin == NULL) {
+		fclose(fout);
+		return -1;
+	}
+
+	size_t r;
+
+	while ((r = fread(buf, 1, sizeof(buf), fin)) != 0) {
+		if (fwrite(buf, 1, r, fout) != r) {
+			fclose(fin);
+			fclose(fout);
+			return -1;
+		}
+	}
+
+	fclose(fin);
+	fclose(fout);
+
+	return 0;
+}
+
 void ParseFile(void)
 {
+	int r;
 	char buf[BUFSIZ];
 	FILE *fp, *foutp;
 	char *szOutFn = 0;
 	dbg_printf(d, "处理TXT文件: 路径 %s 名字 %s 大小 %d", g_file.path, g_file.name, g_file.size);
-	fp = fopen(g_file.path, "r");
+	fp = fopen(g_file.path, "rb");
 	char str[4];
 	fgets(str, 4, fp);
 	if(str[0] == '\xef' && str[1] == '\xbb' && str[2] == '\xbf')
@@ -222,7 +311,7 @@ void ParseFile(void)
 	szOutFn = (char*)malloc(MAX_PATH+1);
 	GetTempFilename(szOutFn, MAX_PATH);
 	dbg_printf(d, "得到临时文件名%s", szOutFn);
-	foutp = fopen(szOutFn, "w");
+	foutp = fopen(szOutFn, "wb");
 	if(!foutp) {
 		dbg_printf(d, "创建文件%s失败", szOutFn);
 		return;
@@ -230,11 +319,13 @@ void ParseFile(void)
 	PrintDir(foutp);
 	// 打印其他内容
 	fseek(fp, g_file.context, SEEK_SET);
-	while(!feof(fp)) {
-		if(fgets(buf, sizeof(buf) / sizeof(buf[0]), fp)) {
-			fprintf(foutp, "%s", buf);
+
+	while ((r = fread(buf, 1, sizeof(buf), fp)) != 0) {
+		if (fwrite(buf, 1, r, foutp) != r) {
+			break;
 		}
 	}
+	
 	fclose(fp);
 	fclose(foutp);
 #ifdef WIN32
@@ -245,40 +336,100 @@ void ParseFile(void)
 #ifdef WIN32
 	MoveFile(szOutFn, g_file.path);
 #else
-	rename(szOutFn, g_file.path);
+	int ret = rename(szOutFn, g_file.path);
+	if (ret != 0) {
+		if (errno == EXDEV) {
+			ret = copy_file(szOutFn, g_file.path);
+			if (ret != 0) {
+				fprintf(stderr, "copy_file failed\n");
+				return;
+			}
+		} else {
+			fprintf(stderr, "rename failed\n");
+			return;
+		}
+	}
 #endif
-	dbg_printf(d, "M630目录生成器 GenIndex: %s 目录大小%d字节 完成生成\n", g_file.name, g_file.dirsize);
+	dbg_printf(d, "目录生成器 GenIndex: %s 目录大小%d字节 完成生成\n", g_file.name, g_file.dirsize);
 	free(szOutFn);
 }
 
-int VPrintDir()
+int VPrintDirDOS()
 {
 	int i, bytes;
 	char buf[BUFSIZ];
 	if(g_dircnt == 0)
 		return 0;
-	bytes = sprintf(buf, SPLITTOKEN);
-	bytes += sprintf(buf, "页数 目录\n");
+	bytes = sprintf(buf, "%s\r\n", SPLITTOKEN);
+	bytes += sprintf(buf, "页数 目录\r\n");
 	for(i=0; i<g_dircnt; ++i) {
-		bytes += sprintf(buf, "%-4d %s\n", g_dirs[i].page, g_dirs[i].name);
+		bytes += sprintf(buf, "%-4d %s\r\n", g_dirs[i].page, g_dirs[i].name);
 	}
-	bytes += sprintf(buf, SPLITTOKEN);
+	bytes += sprintf(buf, "%s\r\n", SPLITTOKEN);
 	return bytes;
 }
 
-int PrintDir(FILE *fp)
+int PrintDirDOS(FILE *fp)
 {
 	int i, bytes;
 	dbg_printf(d, "开始打印目录:");
 	if(g_dircnt == 0)
 		return 0;
-	bytes = fprintf(fp, SPLITTOKEN);
+	bytes = fprintf(fp, "%s\r\n", SPLITTOKEN);
+	bytes += fprintf(fp, "页数 目录\r\n");
+	for(i=0; i<g_dircnt; ++i) {
+		bytes += fprintf(fp, "%-4d %s\r\n", g_dirs[i].page, g_dirs[i].name);
+	}
+	bytes += fprintf(fp, "%s\r\n", SPLITTOKEN);
+	return bytes;
+}
+
+int PrintDirUNIX(FILE *fp)
+{
+	int i, bytes;
+	dbg_printf(d, "开始打印目录:");
+	if(g_dircnt == 0)
+		return 0;
+	bytes = fprintf(fp, "%s\n", SPLITTOKEN);
 	bytes += fprintf(fp, "页数 目录\n");
 	for(i=0; i<g_dircnt; ++i) {
 		bytes += fprintf(fp, "%-4d %s\n", g_dirs[i].page, g_dirs[i].name);
 	}
-	bytes += fprintf(fp, SPLITTOKEN);
+	bytes += fprintf(fp, "%s\n", SPLITTOKEN);
 	return bytes;
+}
+
+int VPrintDirUNIX()
+{
+	int i, bytes;
+	char buf[BUFSIZ];
+	if(g_dircnt == 0)
+		return 0;
+	bytes = sprintf(buf, "%s\n", SPLITTOKEN);
+	bytes += sprintf(buf, "页数 目录\n");
+	for(i=0; i<g_dircnt; ++i) {
+		bytes += sprintf(buf, "%-4d %s\n", g_dirs[i].page, g_dirs[i].name);
+	}
+	bytes += sprintf(buf, "%s\n", SPLITTOKEN);
+	return bytes;
+}
+
+int VPrintDir(void)
+{
+	if (g_file.newline_style == 0) {
+		return VPrintDirUNIX();
+	} else {
+		return VPrintDirDOS();
+	}
+}
+
+int PrintDir(FILE *fp)
+{
+	if (g_file.newline_style == 0) {
+		return PrintDirUNIX(fp);
+	} else {
+		return PrintDirDOS(fp);
+	}
 }
 
 DirEntry * AddDirEntry(const char* name, int page)
