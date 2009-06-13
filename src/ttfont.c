@@ -270,8 +270,13 @@ extern void ttf_close(p_ttf ttf)
 		}
 	}
 
-	FT_Done_Face(ttf->face);
-	FT_Done_FreeType(ttf->library);
+	if (ttf->face != NULL) {
+		FT_Done_Face(ttf->face);
+	}
+
+	if (ttf->library != NULL) {
+		FT_Done_FreeType(ttf->library);
+	}
 
 	ttf_lock();
 
