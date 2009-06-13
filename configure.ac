@@ -8,8 +8,11 @@ m4_include([aclocal/pspdev.m4])
 m4_include([aclocal/version.m4])
 AC_XREADER_VERSION
 AC_XREADER_VERSIONNUM
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AC_PSPDEV_PATH
+
+CONFIGURE_CMDLINE=$@
+AC_SUBST(CONFIGURE_CMDLINE)
 
 ${srcdir}/Revision.sh ${srcdir}
 
@@ -240,5 +243,6 @@ AC_CONFIG_FILES([Makefile
                  xrPrx/Makefile
                  xr_rdriver/Makefile
                  testsuite/Makefile
+                 conf_cmdline.h
                  ])
 AC_OUTPUT

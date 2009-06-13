@@ -73,6 +73,7 @@
 #include "musicdrv.h"
 #include "xrhal.h"
 #include "image_queue.h"
+#include "conf_cmdline.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -5573,6 +5574,7 @@ extern void scene_init(void)
 			  PACKAGE_NAME, VERSION, __GNUC__, __GNUC_MINOR__,
 			  __GNUC_PATCHLEVEL__, "Built " __TIME__ " " __DATE__);
 	dbg_printf(d, infomsg);
+	dbg_printf(d, "configure as %s", CONFIGURE_CMDLINE);
 	u64 dbgnow, dbglasttick;
 	u64 start, end;
 
