@@ -103,6 +103,8 @@ int detect_unix_dos(const char *fn)
 		}
 	}
 
+	fclose(fp);
+
 	return cdos > cunix;
 }
 
@@ -172,6 +174,16 @@ int main(int argc, char* argv[])
 	ParseFile();
 	FreeDirEntry();
 
+	if (g_file.name != NULL) {
+		free(g_file.name);
+		g_file.name = NULL;
+	}
+
+	if (g_file.path != NULL) {
+		free(g_file.path);
+		g_file.path = NULL;
+	}
+
 	dbg_close(d);
 	return 0;
 }
@@ -193,7 +205,7 @@ void SearchDir(FILE *fp)
 	char buf[65536];
 
 	// Çå³ýÄ¿Â¼
-	g_dircnt = 0;
+	FreeDirEntry();
 
 	fseek(fp, 0, SEEK_SET);
 	
@@ -434,8 +446,10 @@ int PrintDir(FILE *fp)
 
 DirEntry * AddDirEntry(const char* name, int page)
 {
+	DirEntry *p;
+
 	dbg_printf(d, "g_dircnt %d g_dircap %d", g_dircnt, g_dircap);
-	if(g_dircnt == 0) {
+	if(g_dirs == NULL) {
 		g_dirs = (DirEntry*) malloc(sizeof(DirEntry));
 		g_dirs->name = strdup(name);
 		g_dirs->page = page;
@@ -444,7 +458,13 @@ DirEntry * AddDirEntry(const char* name, int page)
 	else {
 		if(g_dircnt >= g_dircap) {
 			g_dircap += 16;
-			g_dirs = (DirEntry*) realloc(g_dirs, sizeof(DirEntry)*g_dircap);
+			p = (DirEntry*) realloc(g_dirs, sizeof(DirEntry)*g_dircap);
+
+			if (p != NULL) {
+				g_dirs = p;
+			} else {
+				return NULL;
+			}
 		}
 		g_dirs[g_dircnt].name = strdup(name);
 		g_dirs[g_dircnt].page = page;
