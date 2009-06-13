@@ -126,10 +126,11 @@ extern void power_down(void)
 	has_close_font = false;
 
 #ifdef ENABLE_TTF
+	ttf_lock();
+
 	if (config.usettf && !config.ttf_load_to_memory) {
-		has_close_font = true;
-		ttf_lock();
 		disp_ttf_close();
+		has_close_font = true;
 	}
 #endif
 #ifdef ENABLE_MUSIC
@@ -150,10 +151,11 @@ extern void power_up(void)
 	music_resume();
 #endif
 #ifdef ENABLE_TTF
-	if (has_close_font && !config.ttf_load_to_memory) {
+	if (has_close_font) {
 		disp_ttf_reload(config.bookfontsize);
 		has_close_font = false;
-		ttf_unlock();
 	}
+
+	ttf_unlock();
 #endif
 }

@@ -2184,7 +2184,9 @@ extern void ttf_init(void)
 extern void ttf_free(void)
 {
 #ifdef ENABLE_TTF
-	if (ttf_sema >= 0)
+	if (ttf_sema >= 0) {
 		xrKernelDeleteSema(ttf_sema);
+		ttf_sema = -1;
+	}
 #endif
 }

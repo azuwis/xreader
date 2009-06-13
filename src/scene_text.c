@@ -1880,32 +1880,24 @@ static void _redraw_infobar(dword selidx)
 
 static void redraw_book(dword selidx)
 {
-	if (config.usettf && !config.ttf_load_to_memory) {
-		ttf_lock();
-	}
+	ttf_lock();
 	scene_printbook(&cur_book_view, selidx);
 	save_infobar_image();
 	_redraw_infobar(selidx);
 	scene_draw_scrollbar();
 	disp_flip();
 	cur_book_view.text_needrp = false;
-	if (config.usettf && !config.ttf_load_to_memory) {
-		ttf_unlock();
-	}
+	ttf_unlock();
 }
 
 static void redraw_infobar(dword selidx)
 {
-	if (config.usettf && !config.ttf_load_to_memory) {
-		ttf_lock();
-	}
+	ttf_lock();
 	disp_duptocache();
 	load_infobar_image();
 	_redraw_infobar(selidx);
 	disp_flip();
-	if (config.usettf && !config.ttf_load_to_memory) {
-		ttf_unlock();
-	}
+	ttf_unlock();
 }
 
 dword scene_readbook_raw(const char *title, const unsigned char *data,
