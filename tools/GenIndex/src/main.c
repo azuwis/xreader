@@ -485,6 +485,7 @@ void ParseFile(void)
 				err_msg("copy_file failed\n");
 				return;
 			}
+			unlink(szOutFn);
 		} else {
 			err_msg("rename failed\n");
 			return;
