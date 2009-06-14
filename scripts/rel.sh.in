@@ -4,7 +4,7 @@
 AUTHOR=hrimfaxi
 EMAIL=outmatch@gmail.com
 DIRS="msg fonts"
-SRCDIR=@top_srcdir@/src
+SRCDIR=@abs_top_srcdir@/src
 BUILDDIR=@abs_top_builddir@/src
 ROOTDIR=@abs_top_builddir@/rar
 DESTDIR=@abs_top_builddir@/rar/PSP/GAME/xReader
