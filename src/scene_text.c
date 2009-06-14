@@ -321,7 +321,7 @@ static void get_infobar_system_string(char *dest, int size)
 	xrRtcGetCurrentClockLocalTime(&tm);
 
 	power_get_battery(&percent, &unused, &unused, &unused);
-	if (tm.seconds % 2 == 0 || (config.infobar_use_ttf_mode && config.usettf)) {
+	if (tm.seconds % 2 == 0 || (config.infobar_use_ttf_mode && using_ttf)) {
 		if (percent == 100)
 			SPRINTF_S(t, "[%02u:%02u]", tm.hour, tm.minutes);
 		else
@@ -1076,7 +1076,7 @@ static void scene_draw_infobar(PBookViewData pView, dword selidx)
 {
 	if (config.infobar == conf_infobar_info) {
 #ifdef ENABLE_TTF
-		if (config.infobar_use_ttf_mode && config.usettf)
+		if (config.infobar_use_ttf_mode && using_ttf)
 			draw_infobar_info_ttf(pView, selidx, config.vertread);
 		else
 #endif
@@ -1085,7 +1085,7 @@ static void scene_draw_infobar(PBookViewData pView, dword selidx)
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
 	else if (config.infobar == conf_infobar_lyric) {
 #ifdef ENABLE_TTF
-		if (config.infobar_use_ttf_mode && config.usettf)
+		if (config.infobar_use_ttf_mode && using_ttf)
 			draw_infobar_lyric_ttf(pView, selidx, config.vertread);
 		else
 #endif

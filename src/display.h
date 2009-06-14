@@ -258,4 +258,6 @@ pixel *disp_swizzle_image(pixel * buf, int width, int height);
 extern void disp_ttf_close(void);
 #endif
 
+extern bool using_ttf;
+
 #endif

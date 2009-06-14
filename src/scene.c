@@ -2289,14 +2289,14 @@ dword scene_fontsel(dword * selidx)
 	if (orgfontindex != fontindex || orgusettf != config.usettf
 		|| (!config.usettf && orgbookfontindex != bookfontindex)
 		|| (config.usettf && orgttfsize != ttfsize)) {
-		bool orgusettf2 = config.usettf;
+		bool orgusettf2 = using_ttf;
 
 		if (orgfontindex != fontindex)
 			scene_load_font();
 
 		scene_load_book_font();
 
-		if (orgusettf2 != config.usettf) {
+		if (orgusettf2 == using_ttf && orgusettf2 == false) {
 			char infomsg[80];
 
 			SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
@@ -5209,7 +5209,7 @@ static void scene_open_font(dword * idx)
 
 	scene_load_book_font();
 
-	if (!config.usettf) {
+	if (!using_ttf) {
 		char infomsg[80];
 
 		SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);

@@ -128,7 +128,7 @@ extern void power_down(void)
 #ifdef ENABLE_TTF
 	ttf_lock();
 
-	if (config.usettf && !config.ttf_load_to_memory) {
+	if (using_ttf && !config.ttf_load_to_memory) {
 		disp_ttf_close();
 		has_close_font = true;
 	}
