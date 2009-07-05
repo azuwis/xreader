@@ -1880,24 +1880,32 @@ static void _redraw_infobar(dword selidx)
 
 static void redraw_book(dword selidx)
 {
+#ifdef ENABLE_TTF
 	ttf_lock();
+#endif
 	scene_printbook(&cur_book_view, selidx);
 	save_infobar_image();
 	_redraw_infobar(selidx);
 	scene_draw_scrollbar();
 	disp_flip();
 	cur_book_view.text_needrp = false;
+#ifdef ENABLE_TTF
 	ttf_unlock();
+#endif
 }
 
 static void redraw_infobar(dword selidx)
 {
+#ifdef ENABLE_TTF
 	ttf_lock();
+#endif
 	disp_duptocache();
 	load_infobar_image();
 	_redraw_infobar(selidx);
 	disp_flip();
+#ifdef ENABLE_TTF
 	ttf_unlock();
+#endif
 }
 
 dword scene_readbook_raw(const char *title, const unsigned char *data,
@@ -2005,6 +2013,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 	scene_readbook_in_raw_mode = prev_raw;
 	free_infobar_image();
 
+#ifdef ENABLE_TTF
 	if (cttf != NULL)
 		ttf_close_cache(cttf);
 
@@ -2016,6 +2025,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 
 	if (ettfinfo != NULL)
 		ttf_close_cache(ettfinfo);
+#endif
 
 	return INVALID;
 }
@@ -2125,6 +2135,7 @@ dword scene_readbook(dword selidx)
 	g_bm = NULL;
 	freq_leave(fid);
 
+#ifdef ENABLE_TTF
 	if (cttf != NULL)
 		ttf_close_cache(cttf);
 
@@ -2136,6 +2147,7 @@ dword scene_readbook(dword selidx)
 
 	if (ettfinfo != NULL)
 		ttf_close_cache(ettfinfo);
+#endif
 
 	return selidx;
 }

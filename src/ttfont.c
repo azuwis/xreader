@@ -2133,7 +2133,6 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 	if (fid >= 0)
 		freq_leave(fid);
 }
-#endif
 
 extern void ttf_lock(void)
 {
@@ -2154,3 +2153,5 @@ extern void ttf_free(void)
 {
 	xr_lock_destroy(&ttf_l);
 }
+
+#endif

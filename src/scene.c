@@ -3350,6 +3350,7 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 						  config_num, ".ini");
 				conf_set_file(conffile);
 
+#ifdef ENABLE_MUSIC
 				if (config_num == 0) {
 					SPRINTF_S(musiclst_path, "%s%s", scene_appdir(),
 							  "music.lst");
@@ -3357,12 +3358,15 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 					SPRINTF_S(musiclst_path, "%s%s%d%s", scene_appdir(),
 							  "music", config_num, ".lst");
 				}
+#endif
 
 				if (*index == 0) {
 					t_conf prev_config;
 
+#ifdef ENABLE_MUSIC
 					music_list_clear();
 					music_list_load(musiclst_path);
+#endif
 					memcpy(&prev_config, &config, sizeof(t_conf));
 
 					// load
@@ -3375,8 +3379,10 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 
 					detect_config_change(&prev_config, &config);
 				} else if (*index == 1) {
+#ifdef ENABLE_MUSIC
 					// save
 					music_list_save(musiclst_path);
+#endif
 					load_fontsize_to_config();
 					save_passwords();
 
@@ -3387,7 +3393,9 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 					}
 				} else {
 					// delete
+#ifdef ENABLE_MUSIC
 					utils_del_file(musiclst_path);
+#endif
 					if (!utils_del_file(conffile)) {
 						win_msg(_("…æ≥˝…Ë÷√ ß∞‹!"), COLOR_WHITE,
 								COLOR_WHITE, config.msgbcolor);
