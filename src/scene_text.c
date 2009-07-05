@@ -2004,6 +2004,19 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 
 	scene_readbook_in_raw_mode = prev_raw;
 	free_infobar_image();
+
+	if (cttf != NULL)
+		ttf_close_cache(cttf);
+
+	if (ettf != NULL)
+		ttf_close_cache(ettf);
+
+	if (cttfinfo != NULL)
+		ttf_close_cache(cttfinfo);
+
+	if (ettfinfo != NULL)
+		ttf_close_cache(ettfinfo);
+
 	return INVALID;
 }
 
@@ -2111,6 +2124,19 @@ dword scene_readbook(dword selidx)
 	bookmark_close(g_bm);
 	g_bm = NULL;
 	freq_leave(fid);
+
+	if (cttf != NULL)
+		ttf_close_cache(cttf);
+
+	if (ettf != NULL)
+		ttf_close_cache(ettf);
+
+	if (cttfinfo != NULL)
+		ttf_close_cache(cttfinfo);
+
+	if (ettfinfo != NULL)
+		ttf_close_cache(ettfinfo);
+
 	return selidx;
 }
 

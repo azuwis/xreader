@@ -246,10 +246,26 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 	return ttf;
 }
 
+extern void ttf_close_cache(p_ttf ttf)
+{
+	size_t i;
+
+	ttf_lock();
+
+	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
+		if (ttf->sbitHashRoot[i].bitmap.buffer) {
+			free(ttf->sbitHashRoot[i].bitmap.buffer);
+			ttf->sbitHashRoot[i].bitmap.buffer = NULL;
+		}
+
+		memset(&ttf->sbitHashRoot[i], 0, sizeof(ttf->sbitHashRoot[i]));
+	}
+
+	ttf_unlock();
+}
+
 extern void ttf_close(p_ttf ttf)
 {
-	int i;
-
 	if (ttf == NULL)
 		return;
 
@@ -260,12 +276,7 @@ extern void ttf_close(p_ttf ttf)
 		ttf->fileBuffer = NULL;
 	}
 
-	for (i = 0; i < SBIT_HASH_SIZE; ++i) {
-		if (ttf->sbitHashRoot[i].bitmap.buffer) {
-			free(ttf->sbitHashRoot[i].bitmap.buffer);
-			ttf->sbitHashRoot[i].bitmap.buffer = NULL;
-		}
-	}
+	ttf_close_cache(ttf);
 
 	if (ttf->face != NULL) {
 		FT_Done_Face(ttf->face);

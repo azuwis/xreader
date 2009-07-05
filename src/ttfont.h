@@ -107,6 +107,13 @@ extern p_ttf ttf_open_buffer(void *ttfBuf, size_t ttfLength, int pixelSize,
 							 const char *ttfName, bool cjkmode);
 
 /**
+ * 关闭TTF字形缓存
+ *
+ * @param ttf ttf指针
+ */
+extern void ttf_close_cache(p_ttf ttf);
+
+/**
  * 释放TTF字体
  *
  * @param ttf ttf指针
