@@ -87,6 +87,8 @@ if test $lite = "yes"; then
 	image=yes
 	bg=no
 fi
+AM_CONDITIONAL([LITE], [test x$lite = "xyes"])
+
 if test $debug = "yes"; then
 	AC_DEFINE([_DEBUG], 1, [Debug option])
 	usb=no

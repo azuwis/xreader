@@ -19,6 +19,10 @@ AM_CPPFLAGS += -I $(srcdir)/include/mac
 endif
 
 if OPTIMIZE
+if LITE
+AM_CFLAGS = -Os -G0 -Wall
+AM_CFLAGS += -ffast-math
+else
 AM_CFLAGS = -O3 -G0 -fomit-frame-pointer -ffast-math -frename-registers -Wall
 AM_CFLAGS += \
 -funsigned-char -ffast-math -fforce-addr -fmerge-all-constants \
@@ -192,7 +196,13 @@ endif
 TARGET = xReader
 EXTRA_TARGETS = EBOOT.PBP
 EXTRA_CLEAN = -r __SCE__xReader %__SCE__xReader xReader xReader% xReader.prx
+
+if LITE
+PSP_EBOOT_TITLE = xReader lite $(xReader_version)
+else
 PSP_EBOOT_TITLE = xReader $(xReader_version)
+endif
+
 PSP_EBOOT_ICON = $(top_srcdir)/resource/ICON0.png
 
 PSPSDK=$(shell psp-config --pspsdk-path)
