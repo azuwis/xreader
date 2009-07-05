@@ -76,7 +76,11 @@ struct music_list
 static struct music_file *g_music_files = NULL;
 static int g_thread_actived = 0;
 static int g_thread_exited = 0;
+
+#ifdef ENABLE_LYRIC
 static t_lyric lyric;
+#endif
+
 static bool g_music_hprm_enable = false;
 static struct psp_mutex_t music_l;
 
@@ -1091,6 +1095,7 @@ int music_add_dir(const char *spath, const char *lpath)
 	return 0;
 }
 
+#ifdef ENABLE_LYRIC
 p_lyric music_get_lyric(void)
 {
 	struct music_info info;
@@ -1108,6 +1113,7 @@ p_lyric music_get_lyric(void)
 
 	return &lyric;
 }
+#endif
 
 int music_list_save(const char *path)
 {
@@ -1254,8 +1260,9 @@ int music_load(int i)
 	ret = musicdrv_load(file->shortpath->ptr, file->longpath->ptr);
 	if (ret < 0)
 		return ret;
-	lyric_close(&lyric);
 #ifdef ENABLE_LYRIC
+	lyric_close(&lyric);
+
 	char lyricname[PATH_MAX];
 	char lyricshortname[PATH_MAX];
 
