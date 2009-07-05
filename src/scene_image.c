@@ -232,8 +232,17 @@ static int scene_reloadimage(dword selidx)
 
 static dword scene_rotateimage(void)
 {
-	image_rotate(imgdata, &width, &height, oldangle,
-				 (dword) config.rotate * 90);
+	int ret;
+
+	ret = image_rotate(imgdata, &width, &height, oldangle,
+					 (dword) config.rotate * 90);
+
+	if (ret < 0) {
+		win_msg("内存不足无法完成旋转!", COLOR_WHITE, COLOR_WHITE,
+				config.msgbcolor);
+		config.rotate = conf_rotate_0;
+	}
+
 	oldangle = (dword) config.rotate * 90;
 
 	if (config.fit > 0

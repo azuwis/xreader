@@ -314,7 +314,7 @@ extern void image_zoom_bilinear(pixel * src, int srcwidth, int srcheight,
 	}
 }
 
-extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
+extern int image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 						 dword organgle, dword newangle)
 {
 	dword ca;
@@ -325,16 +325,15 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 	} else
 		ca = newangle - organgle;
 	if (ca == 0)
-		return;
+		return 0;
 	pixel *newdata = memalign(16, sizeof(pixel) * *pwidth * *pheight);
 
 	if (newdata == NULL) {
-		win_msg("内存不足无法完成旋转!", COLOR_WHITE, COLOR_WHITE,
-				config.msgbcolor);
 		dbg_printf(d, "%s: 内存不足无法完成旋转!", __func__);
-		config.rotate = conf_rotate_0;
-		return;
+//		config.rotate = conf_rotate_0;
+		return -1;
 	}
+
 	dword i, j;
 
 	switch (ca) {
@@ -363,10 +362,12 @@ extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 			*pwidth = temp;
 			break;
 		default:
-			return;
+			return -1;
 	}
 	memcpy(imgdata, newdata, sizeof(pixel) * *pwidth * *pheight);
 	free(newdata);
+
+	return 0;
 }
 
 static unsigned image_umd_fread(void *buf, unsigned r, unsigned n, void *stream)

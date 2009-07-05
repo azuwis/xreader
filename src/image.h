@@ -31,7 +31,7 @@ extern void image_zoom_bicubic(pixel * src, int srcwidth, int srcheight,
 							   pixel * dest, int destwidth, int destheight);
 extern void image_zoom_bilinear(pixel * src, int srcwidth, int srcheight,
 								pixel * dest, int destwidth, int destheight);
-extern void image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
+extern int image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 						 dword organgle, dword newangle);
 extern int image_readpng(const char *filename, dword * pwidth, dword * pheight,
 						 pixel ** image_data, pixel * bgcolor);
