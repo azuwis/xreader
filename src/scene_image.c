@@ -90,10 +90,6 @@ static int open_image(dword selidx)
 	bool shareimg;
 	int result;
 
-	if (exif_array) {
-		buffer_array_reset(exif_array);
-	}
-
 	shareimg = (imgshow == imgdata) ? true : false;
 
 	if (scene_in_umd == where) {
@@ -1828,6 +1824,11 @@ dword scene_readimage(dword selidx)
 			free(imgdata);
 			imgdata = NULL;
 		}
+	}
+
+	if (exif_array) {
+		buffer_array_free(exif_array);
+		exif_array = NULL;
 	}
 
 	return selidx;

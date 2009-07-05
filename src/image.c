@@ -1762,10 +1762,16 @@ void exif_context_viewer(ExifContent * pcontext, void *user_data)
 void exif_viewer(ExifData * data)
 {
 	if (exif_array) {
-		buffer_array_reset(exif_array);
-	} else {
-		exif_array = buffer_array_init();
+		buffer_array_free(exif_array);
+		exif_array = NULL;
 	}
+	
+	exif_array = buffer_array_init();
+
+	if (exif_array == NULL) {
+		return;
+	}
+
 	if (data) {
 		// 打印所有EXIF数据
 		exif_data_foreach_content(data, exif_context_viewer, 0);

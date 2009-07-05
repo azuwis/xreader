@@ -4540,6 +4540,8 @@ static t_win_menu_op scene_fileops_handle_input(dword key, bool * inop,
 									   fs_filetype_txt);
 					g_force_text_view_mode = false;
 					buffer_free(b);
+					buffer_array_free(exif_array);
+					exif_array = NULL;
 				} else
 					win_msg(_("ŒﬁEXIF–≈œ¢"), COLOR_WHITE,
 							COLOR_WHITE, config.msgbcolor);

@@ -83,6 +83,13 @@ void cache_on(bool on)
 		while (!cacher_cleared) {
 			xrKernelDelayThread(100000);
 		}
+
+		if (ccacher.caches != NULL) {
+			free(ccacher.caches);
+			ccacher.caches = NULL;
+		}
+
+		ccacher.caches_size = ccacher.caches_cap = 0;
 	}
 }
 
@@ -564,13 +571,6 @@ void cache_free(void)
 		xrKernelDeleteEventFlag(cache_del_event);
 		cache_del_event = -1;
 	}
-
-	if (ccacher.caches != NULL) {
-		free(ccacher.caches);
-		ccacher.caches = NULL;
-	}
-
-	ccacher.caches_size = ccacher.caches_cap = 0;
 }
 
 /**
