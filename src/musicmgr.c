@@ -1139,15 +1139,36 @@ int music_list_clear(void)
 	return 0;
 }
 
+static int music_list_refesh(void)
+{
+	g_list.curr_pos = 0;
+
+	if (music_maxindex() > 0) {
+		music_load(g_list.curr_pos);
+	} else {
+		set_musicdrv(NULL);
+	}
+
+	g_list.first_time = true;
+
+	return 0;
+}
+
 int music_list_load(const char *path)
 {
-	if (path == NULL)
-		return -EINVAL;
+	int ret = 0;
+
+	if (path == NULL) {
+		ret = -EINVAL;
+		goto end;
+	}
 
 	FILE *fp = fopen(path, "rt");
 
-	if (fp == NULL)
-		return -EBADFD;
+	if (fp == NULL) {
+		ret = -EBADFD;
+		goto end;
+	}
 
 	char fname[PATH_MAX];
 	char lfname[PATH_MAX];
@@ -1168,8 +1189,13 @@ int music_list_load(const char *path)
 			continue;
 		music_add(fname, lfname);
 	}
+
 	fclose(fp);
-	return 0;
+
+end:
+	music_list_refesh();
+
+	return ret;
 }
 
 int music_set_cycle_mode(int mode)

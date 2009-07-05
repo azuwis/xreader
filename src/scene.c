@@ -3363,7 +3363,6 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 
 					music_list_clear();
 					music_list_load(musiclst_path);
-					music_load(0);
 					memcpy(&prev_config, &config, sizeof(t_conf));
 
 					// load
@@ -5731,7 +5730,6 @@ extern void scene_init(void)
 				   pspDiffTime(&dbgnow, &dbglasttick));
 	}
 	xrRtcGetCurrentTick(&dbglasttick);
-	music_load(0);
 #ifdef ENABLE_HPRM
 	music_set_hprm(!config.hprmctrl);
 #endif
