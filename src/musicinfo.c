@@ -143,6 +143,7 @@ static void id3v2_read_ttag(SceUID fd, int taglen, char *dst, int dstlen,
 							MusicTagInfo * info)
 {
 	int len;
+	uint8_t b;
 
 	if (dstlen > 0)
 		dst[0] = 0;
@@ -151,8 +152,6 @@ static void id3v2_read_ttag(SceUID fd, int taglen, char *dst, int dstlen,
 
 	taglen--;					/* account for encoding type byte */
 	dstlen--;					/* Leave space for zero terminator */
-
-	uint8_t b;
 
 	if (xrIoRead(fd, &b, sizeof(b)) != sizeof(b)) {
 		return;

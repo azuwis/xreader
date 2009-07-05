@@ -291,6 +291,9 @@ static int wave_skip_n_bytes(SceUID fd, int n)
  */
 static int wav_load(const char *spath, const char *lpath)
 {
+	uint32_t temp;
+	uint32_t fmt_chunk_size;
+
 	__init();
 
 	if (g_buff != NULL) {
@@ -313,8 +316,6 @@ static int wav_load(const char *spath, const char *lpath)
 
 	g_info.filesize = xrIoLseek(data.fd, 0, PSP_SEEK_END);
 	xrIoLseek(data.fd, 0, PSP_SEEK_SET);
-
-	uint32_t temp;
 
 	// 'RIFF' keyword
 	if (wave_get_32(data.fd, &temp) != 0) {
@@ -348,7 +349,6 @@ static int wav_load(const char *spath, const char *lpath)
 		__end();
 		return -1;
 	}
-	uint32_t fmt_chunk_size;
 
 	if (wave_get_32(data.fd, &fmt_chunk_size) != 0) {
 		__end();

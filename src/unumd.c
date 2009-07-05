@@ -88,12 +88,13 @@ p_umd_chapter umd_chapter_init()
 
 void umd_chapter_reset(p_umd_chapter pchap)
 {
+	u_int i = 0;
+	buffer *p = NULL;
+	
 	if (!pchap)
 		return;
 	if (pchap->umdfile)
 		buffer_free(pchap->umdfile);
-	u_int i = 0;
-	buffer *p = NULL;
 
 	for (i = 0; i < pchap->chapter_count; i++) {
 		if (pchap->pchapters[i].name) {
@@ -111,11 +112,12 @@ void umd_chapter_reset(p_umd_chapter pchap)
 
 void umd_chapter_free(p_umd_chapter pchap)
 {
+	u_int i = 0;
+	
 	if (!pchap)
 		return;
 	if (pchap->umdfile)
 		buffer_free(pchap->umdfile);
-	u_int i = 0;
 
 	for (i = 0; i < pchap->chapter_count; i++) {
 		if (pchap->pchapters[i].name)
@@ -131,6 +133,7 @@ int umd_inflate(Byte * compr, Byte * uncompr, uLong comprLen, uLong uncomprLen)
 {
 	int err;
 	static z_stream d_stream;	/* decompression stream */
+	uLong l;
 
 	d_stream.zalloc = (alloc_func) 0;
 	d_stream.zfree = (free_func) 0;
@@ -157,7 +160,8 @@ int umd_inflate(Byte * compr, Byte * uncompr, uLong comprLen, uLong uncomprLen)
 			return -2;
 		}
 	}
-	uLong l = d_stream.total_out;
+
+	l = d_stream.total_out;
 
 	err = inflateEnd(&d_stream);
 	if (err != Z_OK)
@@ -171,9 +175,12 @@ int umd_inflate(Byte * compr, Byte * uncompr, uLong comprLen, uLong uncomprLen)
 //extern DBG *d;
 int read_umd_buf(SceUID fd, buffer ** pbuf)
 {
+	buffer *p;
+
 	if (fd < 0 || !pbuf || !(*pbuf) || !(*pbuf)->ptr || (*pbuf)->used < 0)
 		return -1;
-	buffer *p = *pbuf;
+
+	p = *pbuf;
 
 	if ((p->used = xrIoRead(fd, p->ptr, p->used)) < 0) {
 		dbg_printf(d, "%s read umd file chunk error,ret:%d!", __func__,
@@ -187,11 +194,15 @@ int read_umd_buf(SceUID fd, buffer ** pbuf)
 
 int get_chunk_buf(SceUID fd, buffer ** pbuf, char **pchunk, size_t stwant)
 {
+	buffer *p;
+	size_t stremain;
+
 	if (fd < 0 || !pbuf || !(*pbuf) || !(*pbuf)->ptr || !pchunk || !(*pchunk)
 		|| buf_offset < 0 || umdfile_remain < 0)
 		return -1;
-	buffer *p = *pbuf;
-	size_t stremain = p->size - buf_offset;
+
+	p = *pbuf;
+	stremain = p->size - buf_offset;
 
 	if (stremain < 0)
 		return -2;
@@ -230,11 +241,15 @@ int get_chunk_buf(SceUID fd, buffer ** pbuf, char **pchunk, size_t stwant)
 int get_offset_chunk_buf(SceUID fd, buffer ** pbuf, char **pchunk,
 						 size_t stpre_offset, size_t stwant)
 {
+	buffer *p;
+	size_t stremain;
+
 	if (fd < 0 || !pbuf || !(*pbuf) || !(*pbuf)->ptr || !pchunk || !(*pchunk)
 		|| buf_offset < 0 || umdfile_remain < 0)
 		return -1;
-	buffer *p = *pbuf;
-	size_t stremain = p->size - buf_offset;
+
+	p = *pbuf;
+	stremain = p->size - buf_offset;
 
 	if (stremain < 0 || stpre_offset > umdfile_remain || stwant > umdfile_remain
 		|| (stpre_offset + stwant) > umdfile_remain)
@@ -294,9 +309,12 @@ int get_offset_chunk_buf(SceUID fd, buffer ** pbuf, char **pchunk,
 
 int ReadSection(char **pSe, buffer ** buf, u_short * pType, u_short * phdType)
 {
+	struct UMDHeaderData *pHead;
+
 	if (!pSe || !(*pSe) || !phdType)
 		return -1;
-	struct UMDHeaderData *pHead = (struct UMDHeaderData *) (*pSe);
+
+	pHead = (struct UMDHeaderData *) (*pSe);
 
 	if (!pHead || pHead->Length < 5) {
 		//cout << "invalid length:" << pHead->Length << endl;
@@ -370,20 +388,23 @@ int ReadSection(char **pSe, buffer ** buf, u_short * pType, u_short * phdType)
 int ReadAdditionalSession(char **pSe, buffer ** buf, p_umd_chapter * pchapter,
 						  const u_short hdType, bool b_get_chapter)
 {
+	u_int ulTotalLength = 0;
+	struct UMDHeaderDataEx *pHead;
+	u_int i = 0;
+	
 	if (!pSe || !(*pSe))
 		return -1;
 	if (b_get_chapter && (!pchapter || !(*pchapter)))
 		return -2;
-	u_int ulTotalLength = 0;
-	struct UMDHeaderDataEx *pHead = (struct UMDHeaderDataEx *) (*pSe);
+
+	pHead = (struct UMDHeaderDataEx *) (*pSe);
 
 	if (!pHead || pHead->Length < 9) {
 		//cout << "invalid additional length:" << pHead->Length << endl;
 		return -2;
 	}
-	pHead->Length -= 9;
 
-	u_int i = 0;
+	pHead->Length -= 9;
 
 	switch (hdType) {
 		case 14:
@@ -402,17 +423,19 @@ int ReadAdditionalSession(char **pSe, buffer ** buf, p_umd_chapter * pchapter,
 					struct UMDHeaderDataEx *pEx =
 						(struct UMDHeaderDataEx *) (*pSe);
 					u_int ZipLength = pEx->Length;
+					u_int len;
 
 					if (ZipLength < 9) {
 						//dbg_printf(d,"%s zipLength %d  < 9",__func__,ZipLength);
 						break;
 					}
-					(*pSe) += 9;
-					u_int len = ZipLength - 9;
 
+					(*pSe) += 9;
+					len = ZipLength - 9;
 					buffer_append_memory(*buf, *pSe, len);
 					(*pSe) += len;
 					ulTotalLength += len;
+
 					if (**pSe == '#') {
 						struct UMDHeaderData *ps =
 							(struct UMDHeaderData *) (*pSe);
@@ -444,13 +467,15 @@ int ReadAdditionalSession(char **pSe, buffer ** buf, p_umd_chapter * pchapter,
 			pHead->Length /= 4;
 			//cout << "total " << pHead->Length << " chapters" << endl;
 			if (b_get_chapter) {
+				struct t_chapter *p;
+
 				(*pchapter)->chapter_count = pHead->Length;
 				(*pchapter)->pchapters =
 					(struct t_chapter *) calloc(pHead->Length,
 												sizeof(struct t_chapter));
 				if (!(*pchapter)->pchapters)
 					return -4;
-				struct t_chapter *p = (*pchapter)->pchapters;
+				p = (*pchapter)->pchapters;
 
 				for (i = 0; i < pHead->Length; i++) {
 					//cout << "chapter " << i << " is " << *(u_int*)(*pSe) << endl;
@@ -486,6 +511,10 @@ int ReadAdditionalSession(char **pSe, buffer ** buf, p_umd_chapter * pchapter,
 					}
 					return stlen;
 				} else {
+					size_t stUnzipSize = 0;
+					Byte *p = NULL;
+					buffer *pRaw;
+					
 					(*pSe) = (*pSe) + pHead->Length;
 					if (pchapter && 1 != (*pchapter)->umd_mode)
 						break;
@@ -493,15 +522,16 @@ int ReadAdditionalSession(char **pSe, buffer ** buf, p_umd_chapter * pchapter,
 						//printlog("ms0:/PSP/GAME371/xReader/xlog.txt","not $\n");
 						break;
 					}
-					size_t stUnzipSize = 0;
-					Byte *p = NULL;
-					buffer *pRaw = (buffer *) calloc(1, sizeof(*pRaw));
+
+					pRaw = buffer_init();
 
 					if (pRaw == NULL)
 						return -1;
 					while (*(*pSe) == '$') {
 						struct UMDHeaderDataEx *pEx =
 							(struct UMDHeaderDataEx *) (*pSe);
+						u_int len;
+						u_int outlen;
 						u_int ZipLength = pEx->Length;
 
 						if (ZipLength < 9) {
@@ -509,9 +539,10 @@ int ReadAdditionalSession(char **pSe, buffer ** buf, p_umd_chapter * pchapter,
 							//printlog("ms0:/PSP/GAME371/xReader/xlog.txt",&ZipLength);
 							break;
 						}
+
 						(*pSe) += 9;
-						u_int len = ZipLength - 9;
-						u_int outlen = len * 2;
+						len = ZipLength - 9;
+						outlen = len * 2;
 
 						buffer_prepare_copy(pRaw, outlen);
 						stUnzipSize =
@@ -550,12 +581,13 @@ int ReadAdditionalSession(char **pSe, buffer ** buf, p_umd_chapter * pchapter,
 
 int umd_readdata(char **pf, buffer ** buf)
 {
-	if (!pf || !(*pf) || !buf || !(*buf))
-		return -1;
 	u_short hdType = 0;
 	u_short hdUmdMode = 0;
 	int nRet = -1;
 	p_umd_chapter *pchapter = NULL;
+	
+	if (!pf || !(*pf) || !buf || !(*buf))
+		return -1;
 
 	while (**pf == '#') {
 		if ((nRet = ReadSection(pf, buf, &hdUmdMode, &hdType)) < 0)
@@ -579,6 +611,8 @@ int locate_umd_img1(const char *umdfile, size_t file_offset, SceUID * pfd)
 		return -1;
 	*pfd = -1;
 	do {
+		struct UMDHeaderDataEx *pEx;
+
 		if ((*pfd = xrIoOpen(umdfile, PSP_O_RDONLY, 0777)) < 0) {
 			return -2;
 		}
@@ -588,7 +622,8 @@ int locate_umd_img1(const char *umdfile, size_t file_offset, SceUID * pfd)
 			dbg_printf(d, "%s read umd file head chunk error!", __func__);
 			break;
 		}
-		struct UMDHeaderDataEx *pEx = (struct UMDHeaderDataEx *) &buf;
+
+		pEx = (struct UMDHeaderDataEx *) &buf;
 
 		if (!pEx || pEx->Mark != '$' || pEx->Length < 9)
 			break;
@@ -611,6 +646,8 @@ int locate_umd_img(const char *umdfile, size_t file_offset, FILE ** fp)
 		return -1;
 	*fp = NULL;
 	do {
+		struct UMDHeaderDataEx *pEx;
+
 		if (!(*fp = fopen(umdfile, "r")))
 			return -2;
 		if (0 != fseek(*fp, file_offset, SEEK_SET))
@@ -619,7 +656,8 @@ int locate_umd_img(const char *umdfile, size_t file_offset, FILE ** fp)
 			//dbg_printf(d, "%s read umd file head chunk error!",__func__);
 			break;
 		}
-		struct UMDHeaderDataEx *pEx = (struct UMDHeaderDataEx *) &buf;
+
+		pEx = (struct UMDHeaderDataEx *) &buf;
 
 		if (!pEx || pEx->Mark != '$' || pEx->Length < 9)
 			break;
@@ -641,23 +679,31 @@ int read_umd_chapter_content(const char *umdfile, u_int index,
 	SceUID fd = -1;
 	SceIoStat sta;
 	char buf[9] = { 0 };
-	if (!umdfile || !pchapter || index + 1 > pchapter->chapter_count
-		|| !pchapter->pchapters || !(pchapter->pchapters + index) || !pbuf
-		|| !(*pbuf))
-		return -1;
-
-	struct t_chapter *pchap = pchapter->pchapters + index;
-	size_t chunk_pos = pchap->chunk_pos;
-	size_t chunk_offset = pchap->chunk_offset;
-	size_t length = pchap->length;
 	size_t stlen = 0;
 	size_t stoutlen = 0;
 	size_t stUnzipSize = 0;
 	buffer *pzbuf = NULL;
 	buffer *puzbuf = NULL;
 	bool bok = false;
+	struct t_chapter *pchap;
+	size_t chunk_pos;
+	size_t chunk_offset;
+	size_t length;
+	
+	if (!umdfile || !pchapter || index + 1 > pchapter->chapter_count
+		|| !pchapter->pchapters || !(pchapter->pchapters + index) || !pbuf
+		|| !(*pbuf))
+		return -1;
+
+	pchap = pchapter->pchapters + index;
+	chunk_pos = pchap->chunk_pos;
+	chunk_offset = pchap->chunk_offset;
+	length = pchap->length;
 
 	do {
+		char *p;
+		struct UMDHeaderDataEx *pEx;
+
 		if (xrIoGetstat(umdfile, &sta) < 0 || sta.st_size < chunk_pos) {
 			return -1;
 		}
@@ -671,16 +717,20 @@ int read_umd_chapter_content(const char *umdfile, u_int index,
 			//dbg_printf(d, "%s read umd file head chunk error!",__func__);
 			break;
 		}
-		char *p = &buf[0];
 
-		pzbuf = (buffer *) calloc(1, sizeof(*pzbuf));
+		p = &buf[0];
+
+		pzbuf = buffer_init();
+
 		if (pzbuf == NULL)
 			break;
-		puzbuf = (buffer *) calloc(1, sizeof(*puzbuf));
+
+		puzbuf = buffer_init();
+
 		if (puzbuf == NULL)
 			break;
 
-		struct UMDHeaderDataEx *pEx = (struct UMDHeaderDataEx *) p;
+		pEx = (struct UMDHeaderDataEx *) p;
 
 		if (!pEx || pEx->Mark != '$' || pEx->Length < 9)
 			break;
@@ -690,6 +740,10 @@ int read_umd_chapter_content(const char *umdfile, u_int index,
 		umdfile_offset = chunk_pos + 9;
 		umdfile_remain = sta.st_size - umdfile_offset;
 		if (stlen < length + chunk_offset) {
+			bool bfirst_chunk = true;
+			size_t stHeadSize = sizeof(struct UMDHeaderData);
+			size_t stHeadExSize = sizeof(struct UMDHeaderDataEx);
+
 			//buffer_prepare_copy(pzbuf,stlen);
 			buffer_prepare_copy(pzbuf, umdfile_remain);
 			pzbuf->used = pzbuf->size;
@@ -698,9 +752,6 @@ int read_umd_chapter_content(const char *umdfile, u_int index,
 				break;
 			}
 			buffer_prepare_copy(*pbuf, length);
-			size_t stHeadSize = sizeof(struct UMDHeaderData);
-			size_t stHeadExSize = sizeof(struct UMDHeaderDataEx);
-			bool bfirst_chunk = true;
 
 			while (*p == '$') {
 				bok = false;
@@ -751,12 +802,15 @@ int read_umd_chapter_content(const char *umdfile, u_int index,
 				if (*(pzbuf->ptr + buf_offset) == '#') {
 					bok = true;
 					while (*(pzbuf->ptr + buf_offset) == '#') {
+						struct UMDHeaderData *pHead;
+						
 						if (0 > get_chunk_buf(fd, &pzbuf, &p, stHeadSize)) {
 							bok = false;
 							break;
 						}
-						struct UMDHeaderData *pHead =
-							(struct UMDHeaderData *) p;
+
+						pHead = (struct UMDHeaderData *) p;
+
 						if (pHead->hdType == 0xf1 || pHead->hdType == 10) {
 							if (*
 								(pzbuf->ptr + buf_offset + pHead->Length -
@@ -833,6 +887,15 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 	buffer *pzbuf = NULL;
 
 	do {
+		size_t stHeadSize = sizeof(struct UMDHeaderData);
+		size_t stHeadExSize = sizeof(struct UMDHeaderDataEx);
+		char *p;
+		int Reserve;
+		struct UMDHeaderData *pHead;
+		struct UMDHeaderDataEx *pHeadEx;
+		u_int i;
+		size_t stlen;
+		
 		if (!umdfile || !pchapter || !(*pchapter))
 			break;
 		if (xrIoGetstat(umdfile, &sta) < 0) {
@@ -841,12 +904,13 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 		if ((fd = xrIoOpen(umdfile, PSP_O_RDONLY, 0777)) < 0) {
 			return -2;
 		}
-		pRaw = (buffer *) calloc(1, sizeof(*pRaw));
+
+		pRaw = buffer_init();
+
 		if (pRaw == NULL)
 			break;
+
 		buffer_prepare_copy(pRaw, (10240 > sta.st_size) ? sta.st_size : 10240);
-		size_t stHeadSize = sizeof(struct UMDHeaderData);
-		size_t stHeadExSize = sizeof(struct UMDHeaderDataEx);
 
 		pRaw->used = pRaw->size;
 		if (0 > read_umd_buf(fd, &pRaw)) {
@@ -854,8 +918,9 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 			break;
 		}
 
-		char *p = pRaw->ptr;
-		int Reserve = *(int *) p;
+		p = pRaw->ptr;
+		Reserve = *(int *) p;
+
 		if (Reserve != (int) 0xde9a9b89 || *(p + sizeof(int)) != '#') {
 			//dbg_printf(d, "%s not start with 0xde9a9b89,or not start with '#',that umd must be corrupted!",__func__);
 			buffer_free(pRaw);
@@ -865,10 +930,8 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 		buf_offset = sizeof(int);
 		umdfile_offset = buf_offset;
 		umdfile_remain = sta.st_size - buf_offset;
-		struct UMDHeaderData *pHead = NULL;
-		struct UMDHeaderDataEx *pHeadEx = NULL;
-		u_int i = 0;
-		size_t stlen = 0;
+		pHead = NULL;
+		pHeadEx = NULL;
 
 		////dbg_printf(d,"%s start to parse\n",__func__);
 		while (umdfile_remain > 0) {
@@ -880,6 +943,10 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 				break;
 			}
 			if (pHead->hdType == 0x0e || pHead->hdType == 0x0f) {
+				size_t stChapterCount;
+				bool bchapterless;	//no chapters listed
+				struct t_chapter *pchap;
+				
 				/*if((14 == hdType && 2 != (*pchapter)->umd_mode) || (15 == hdType && 3 != (*pchapter)->umd_mode) || *(*pSe) != '$')
 				   {
 				   ////dbg_printf(d,"%s umd mode:%d not fit for hdType %d or not start from $\n",__func__,(*pchapter)->umd_mode,hdType);
@@ -892,9 +959,9 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 				//cout << "umd mode:" << (*pchapter)->umd_mode << endl;
 				if (0 > get_chunk_buf(fd, &pRaw, &p, stHeadExSize))
 					break;
-				size_t stChapterCount = (*pchapter)->chapter_count;
-				bool bchapterless = false;	//no chapters listed
-				struct t_chapter *pchap = (*pchapter)->pchapters;
+				stChapterCount = (*pchapter)->chapter_count;
+				bchapterless = false;	//no chapters listed
+				pchap = (*pchapter)->pchapters;
 
 				if (1 > stChapterCount) {
 					bchapterless = true;
@@ -987,6 +1054,8 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 				xrIoClose(fd);
 				return -1;
 			} else if (pHead->hdType == 0x83) {
+				size_t stChapterCount;
+				
 				if (0 >
 					get_offset_chunk_buf(fd, &pRaw, &p,
 										 pHead->Length - stHeadSize,
@@ -995,9 +1064,11 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 				pHeadEx = (struct UMDHeaderDataEx *) p;
 				if (pHeadEx->Length < stHeadExSize)
 					break;
-				size_t stChapterCount = (pHeadEx->Length - stHeadExSize) / 4;
+				stChapterCount = (pHeadEx->Length - stHeadExSize) / 4;
 
 				if (0 < stChapterCount) {
+					struct t_chapter *pchap;
+					
 					if (0 >
 						get_chunk_buf(fd, &pRaw, &p,
 									  pHeadEx->Length - stHeadExSize))
@@ -1008,7 +1079,8 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 													sizeof(struct t_chapter));
 					if (!(*pchapter)->pchapters)
 						break;
-					struct t_chapter *pchap = (*pchapter)->pchapters;
+
+					pchap = (*pchapter)->pchapters;
 
 					for (i = 0; i < stChapterCount; i++) {
 						if (!(pchap[i].name = buffer_init()))
@@ -1019,6 +1091,13 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 				} else
 					continue;
 			} else if (pHead->hdType == 0x84) {
+				struct t_chapter *pchap;
+				size_t stChapterCount;
+				size_t stcontent_length = 0;
+				bool bok = true;
+				size_t stoutlen = 0;
+				size_t stUnzipSize = 0;
+				
 				if (0 >
 					get_offset_chunk_buf(fd, &pRaw, &p,
 										 pHead->Length - stHeadSize,
@@ -1031,8 +1110,9 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 					get_chunk_buf(fd, &pRaw, &p,
 								  pHeadEx->Length - stHeadExSize))
 					break;
-				struct t_chapter *pchap = (*pchapter)->pchapters;
-				size_t stChapterCount = (*pchapter)->chapter_count;
+
+				pchap = (*pchapter)->pchapters;
+				stChapterCount = (*pchapter)->chapter_count;
 
 				if (0 < stChapterCount) {
 					for (i = 0; i < stChapterCount; i++) {
@@ -1049,16 +1129,13 @@ int parse_umd_chapters(const char *umdfile, p_umd_chapter * pchapter)
 				if (0 > get_chunk_buf(fd, &pRaw, &p, stHeadExSize))
 					break;
 				i = 0;
-				size_t stcontent_length = 0;
 
 				if (*p == '$')
 					(*pchapter)->content_pos = umdfile_offset - 9;
-				pchap = (*pchapter)->pchapters;
-				bool bok = true;
-				size_t stoutlen = 0;
-				size_t stUnzipSize = 0;
 
+				pchap = (*pchapter)->pchapters;
 				pzbuf = buffer_init();
+
 				if (!pzbuf)
 					break;
 				while (*p == '$') {

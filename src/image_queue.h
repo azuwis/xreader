@@ -41,6 +41,7 @@ typedef struct _cache_image_t
 	int result;
 	dword selidx;
 	dword filesize;
+	buffer_array *exif_array;
 } cache_image_t;
 
 typedef struct _cacher_context

@@ -58,8 +58,9 @@ static const unsigned char regName[32][5] = {
 
 void ExceptionHandler(PspDebugRegBlock * regs)
 {
-	int i;
+	int i, found;
 	SceCtrlData pad;
+	PspDebugStackTrace traces[MAX_BACKTRACE_NUM];
 
 	pspDebugScreenInit();
 	pspDebugScreenSetBackColor(0x00FF0000);
@@ -96,8 +97,7 @@ void ExceptionHandler(PspDebugRegBlock * regs)
 
 	pspDebugScreenPrintf("\n");
 
-	PspDebugStackTrace traces[MAX_BACKTRACE_NUM];
-	int found = pspDebugGetStackTrace2(regs, traces, MAX_BACKTRACE_NUM);
+	found = pspDebugGetStackTrace2(regs, traces, MAX_BACKTRACE_NUM);
 
 	pspDebugScreenPrintf("Call Trace:\n");
 	for (i = 0; i < found; ++i) {
@@ -118,14 +118,14 @@ void ExceptionHandler(PspDebugRegBlock * regs)
 	for (;;) {
 		xrCtrlReadBufferPositive(&pad, 1);
 		if (pad.Buttons & PSP_CTRL_CIRCLE) {
+			char testo[512];
+			char timestr[80];
 			FILE *log = fopen("exception.log", "w");
+			pspTime tm;
 
 			if (log == NULL) {
 				break;
 			}
-			char testo[512];
-			char timestr[80];
-			pspTime tm;
 
 			SPRINTF_S(testo, "%-21s: %s %s\r\n", "xReader version",
 					  XREADER_VERSION_LONG,

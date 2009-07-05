@@ -130,9 +130,10 @@ static int main_thread(unsigned int args, void *argp)
 
 int main(int argc, char *argv[])
 {
-	SetupCallbacks();
+	int thid;
 
-	int thid = xrKernelCreateThread("User Thread", main_thread, 45, 0x40000,
+	SetupCallbacks();
+	thid = xrKernelCreateThread("User Thread", main_thread, 45, 0x40000,
 									PSP_THREAD_ATTR_USER, NULL);
 
 	if (thid < 0)

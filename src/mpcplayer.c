@@ -90,13 +90,13 @@ static void send_to_sndbuf(void *buf, MPC_SAMPLE_FORMAT * srcbuf, int frames,
 	unsigned bps = 16;
 	signed short *p = buf;
 	int clip_min = -1 << (bps - 1), clip_max = (1 << (bps - 1)) - 1;
+#ifndef MPC_FIXED_POINT
+	int float_scale = 1 << (bps - 1);
+#endif
 
 	if (frames <= 0)
 		return;
 
-#ifndef MPC_FIXED_POINT
-	int float_scale = 1 << (bps - 1);
-#endif
 	for (n = 0; n < frames * channels; n++) {
 		int val;
 
@@ -181,16 +181,14 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
+			mpc_frame_info frame;
+
 			send_to_sndbuf(audio_buf,
 						   &g_buff[g_buff_frame_start * g_info.channels],
 						   avail_frame, g_info.channels);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
-
-			mpc_frame_info frame;
-
 			frame.buffer = (MPC_SAMPLE_FORMAT *) g_buff;
-
 			ret = mpc_demux_decode(demux, &frame);
 
 			if (frame.bits == -1) {
@@ -342,18 +340,17 @@ static int mpc_load(const char *spath, const char *lpath)
 	g_info.channels = info.channels;
 	g_info.filesize = info.total_file_length;
 
+#if 0
 	static bool gain_on = true;
 
-#if 0
 	if (gain_on)
 		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_TRUE, MPC_TRUE,
 							 MPC_TRUE);
 	else
 		mpc_set_replay_level(demux, MPC_OLD_GAIN_REF, MPC_FALSE, MPC_FALSE,
 							 MPC_FALSE);
-#endif
-
 	gain_on = !gain_on;
+#endif
 
 	generic_readtag(&g_info, spath);
 	if (xAudioInit() < 0) {

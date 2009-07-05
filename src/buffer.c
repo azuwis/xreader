@@ -83,10 +83,10 @@ void buffer_free(buffer * b)
 
 char *buffer_free_weak(buffer * b)
 {
+	char *ptr = b->ptr;
+
 	if (!b)
 		return NULL;
-
-	char *ptr = b->ptr;
 
 	free(b);
 
@@ -158,12 +158,14 @@ int buffer_prepare_append(buffer * b, size_t size)
 		b->ptr = malloc(b->size);
 		b->used = 0;
 	} else if (b->used + size > b->size) {
+		char *ptr;
+
 		b->size += size;
 
 		/* always allocate a multiply of BUFFER_PIECE_SIZE */
 		b->size += BUFFER_PIECE_SIZE - (b->size % BUFFER_PIECE_SIZE);
 
-		char *ptr = safe_realloc(b->ptr, b->size);
+		ptr = safe_realloc(b->ptr, b->size);
 
 		b->ptr = ptr;
 

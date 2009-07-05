@@ -668,8 +668,10 @@ int music_list_play(void)
 
 int music_list_stop(void)
 {
+	int ret;
+
 	music_lock();
-	int ret = music_stop();
+	ret = music_stop();
 
 	if (ret < 0) {
 		music_unlock();
@@ -1062,29 +1064,33 @@ int music_next(void)
 int music_add_dir(const char *spath, const char *lpath)
 {
 	p_fat_info info;
+	dword i, count;
 
 	if (spath == NULL || lpath == NULL)
 		return -EINVAL;
 
-	dword i, count = fat_readdir(lpath, (char *) spath, &info);
+	count = fat_readdir(lpath, (char *) spath, &info);
 
 	if (count == INVALID)
 		return -EBADF;
 	for (i = 0; i < count; i++) {
+		char sfn[PATH_MAX];
+		char lfn[PATH_MAX];
+		
 		if ((info[i].attr & FAT_FILEATTR_DIRECTORY) > 0) {
+			char lpath2[PATH_MAX], spath2[PATH_MAX];
+
 			if (info[i].filename[0] == '.')
 				continue;
-			char lpath2[PATH_MAX], spath2[PATH_MAX];
 
 			SPRINTF_S(lpath2, "%s%s/", lpath, info[i].longname);
 			SPRINTF_S(spath2, "%s%s/", spath, info[i].filename);
 			music_add_dir(spath2, lpath2);
 			continue;
 		}
+
 		if (fs_is_music(info[i].filename, info[i].longname) == false)
 			continue;
-		char sfn[PATH_MAX];
-		char lfn[PATH_MAX];
 
 		SPRINTF_S(sfn, "%s%s", spath, info[i].filename);
 		SPRINTF_S(lfn, "%s%s", lpath, info[i].longname);
@@ -1117,11 +1123,11 @@ p_lyric music_get_lyric(void)
 
 int music_list_save(const char *path)
 {
-	if (path == NULL)
-		return -EINVAL;
-
 	FILE *fp;
 	int i;
+
+	if (path == NULL)
+		return -EINVAL;
 
 	fp = fopen(path, "wt");
 	if (fp == NULL)
@@ -1174,26 +1180,30 @@ int music_list_clear(void)
 int music_list_load(const char *path)
 {
 	int ret = 0;
+	FILE *fp;
+	char fname[PATH_MAX];
+	char lfname[PATH_MAX];
 
 	if (path == NULL) {
 		ret = -EINVAL;
 		goto end;
 	}
 
-	FILE *fp = fopen(path, "rt");
+	fp = fopen(path, "rt");
 
 	if (fp == NULL) {
 		ret = -EBADFD;
 		goto end;
 	}
 
-	char fname[PATH_MAX];
-	char lfname[PATH_MAX];
-
 	while (fgets(fname, PATH_MAX, fp) != NULL) {
+		dword len1, len2;
+
 		if (fgets(lfname, PATH_MAX, fp) == NULL)
 			break;
-		dword len1 = strlen(fname), len2 = strlen(lfname);
+
+		len1 = strlen(fname);
+		len2 = strlen(lfname);
 
 		if (len1 > 1 && len2 > 1) {
 			if (fname[len1 - 1] == '\n')
@@ -1245,6 +1255,8 @@ int music_load(int i)
 {
 	struct music_file *file = music_get(i);
 	int ret;
+	char lyricname[PATH_MAX];
+	char lyricshortname[PATH_MAX];
 
 	if (file == NULL)
 		return -EINVAL;
@@ -1263,16 +1275,15 @@ int music_load(int i)
 #ifdef ENABLE_LYRIC
 	lyric_close(&lyric);
 
-	char lyricname[PATH_MAX];
-	char lyricshortname[PATH_MAX];
-
 	if (tag_lyric && tag_lyric->used != 0) {
 		lyric_open_raw(&lyric, tag_lyric->ptr, tag_lyric->used);
 		buffer_free(tag_lyric);
 		tag_lyric = NULL;
 	} else {
+		int lsize;
+
 		strncpy_s(lyricname, NELEMS(lyricname), file->longpath->ptr, PATH_MAX);
-		int lsize = strlen(lyricname);
+		lsize = strlen(lyricname);
 
 		lyricname[lsize - 3] = 'l';
 		lyricname[lsize - 2] = 'r';

@@ -76,11 +76,12 @@ extern void bg_load(const char *filename, const char *archname, pixel bgcolor,
 
 	if (archname == NULL || archname[0] == '\0' || where == scene_in_dir)
 		result =
-			image_open_normal(filename, ft, &width, &height, &imgdata, &bgc);
+			image_open_normal(filename, ft, &width, &height, &imgdata, &bgc,
+							  NULL);
 	else
 		result =
 			image_open_archive(filename, archname, ft, &width, &height,
-							   &imgdata, &bgc, where);
+							   &imgdata, &bgc, where, NULL);
 
 	if (result != 0) {
 		// if load bg image fail, continue to set bgcolor

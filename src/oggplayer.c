@@ -130,6 +130,7 @@ static void ogg_seek_seconds(OggVorbis_File * decoder, double npt)
  */
 static int ogg_process_single(void)
 {
+	int samplesdecoded;
 	int bytes;
 	int current_section;
 
@@ -154,7 +155,7 @@ static int ogg_process_single(void)
 			break;
 	}
 
-	int samplesdecoded = bytes / 2 / g_info.channels;
+	samplesdecoded = bytes / 2 / g_info.channels;
 
 	g_buff_frame_size = samplesdecoded;
 	g_buff_frame_start = 0;
@@ -333,6 +334,7 @@ static void get_ogg_tag(OggVorbis_File * decoder)
 static int ogg_load(const char *spath, const char *lpath)
 {
 	vorbis_info *vi;
+	ogg_int64_t duration;
 
 	__init();
 
@@ -378,8 +380,6 @@ static int ogg_load(const char *spath, const char *lpath)
 
 	g_info.sample_freq = vi->rate;
 	g_info.channels = vi->channels;
-
-	ogg_int64_t duration;
 
 	duration = ov_time_total(decoder, -1);
 

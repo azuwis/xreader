@@ -84,6 +84,7 @@ static int g_current_spd = 0;
 static int destx = 0, desty = 0, srcx = 0, srcy = 0;
 static bool in_move_z_mode = false;
 static int z_mode_cnt = 0;
+static buffer_array *exif_array = 0;
 
 static int open_image(dword selidx)
 {
@@ -98,12 +99,13 @@ static int open_image(dword selidx)
 		pos += filelist[selidx].data2[0];
 		result = image_open_umd(filename, config.shortpath,
 								(t_fs_filetype) filelist[selidx].data, pos, 0,
-								&width, &height, &imgdata, &bgcolor);
+								&width, &height, &imgdata, &bgcolor,
+								&exif_array);
 	} else {
 		result =
 			image_open_archive(filename, config.shortpath,
 							   (t_fs_filetype) filelist[selidx].data, &width,
-							   &height, &imgdata, &bgcolor, where);
+							   &height, &imgdata, &bgcolor, where, &exif_array);
 	}
 
 	if (imgdata == NULL && shareimg) {
@@ -192,6 +194,91 @@ static void recalc_brightness(void)
 	}
 }
 
+static int cache_wait_avail()
+{
+	dword key;
+
+	while (ccacher.caches_size == 0) {
+		key = ctrl_read();
+
+		if (key == PSP_CTRL_CROSS) {
+			return -1;
+		}
+
+		xrKernelDelayThread(10000);
+	}
+
+	return 0;
+}
+
+static int cache_wait_loaded()
+{
+	cache_image_t *img = &ccacher.caches[0];
+	dword key;
+
+	while (img->status == CACHE_INIT) {
+//      dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
+		key = ctrl_read();
+
+		if (key == PSP_CTRL_CROSS) {
+			return -1;
+		}
+
+		xrKernelDelayThread(10000);
+	}
+
+	return 0;
+}
+
+static int cache_get_image(dword selidx)
+{
+	cache_image_t *img;
+	u64 start, now;
+	int ret;
+
+	xrRtcGetCurrentTick(&start);
+
+	if (cache_wait_avail() != 0) {
+		return -1;
+	}
+
+	img = &ccacher.caches[0];
+
+	DBG_ASSERT(d, "CLIENT: img->selidx == selidx", img->selidx == selidx);
+
+	if (cache_wait_loaded() != 0) {
+		return -1;
+	}
+
+	xrRtcGetCurrentTick(&now);
+
+	if (img->status == CACHE_OK && img->result == 0) {
+		dbg_printf(d, "CLIENT: Image %u load OK in %.3f s, %ux%u",
+				   (unsigned) img->selidx, pspDiffTime(&now, &start),
+				   (unsigned) img->width, (unsigned) img->height);
+		ret = 0;
+	} else {
+		dbg_printf(d,
+				   "CLIENT: Image %u load FAILED in %.3f s, %ux%u, status %u, result %u",
+				   (unsigned) img->selidx, pspDiffTime(&now, &start),
+				   (unsigned) img->width, (unsigned) img->height, img->status,
+				   img->result);
+		ret = img->result;
+	}
+
+	if (ret == 0) {
+		imgdata = img->data;
+	} else {
+		imgdata = NULL;
+	}
+
+	width = img->width;
+	height = img->height;
+	exif_array = img->exif_array;
+
+	return ret;
+}
+
 static int scene_reloadimage(dword selidx)
 {
 	int result;
@@ -205,14 +292,18 @@ static int scene_reloadimage(dword selidx)
 		STRCAT_S(filename, filelist[selidx].shortname->ptr);
 	}
 
-	result = open_image(selidx);
+	if (config.use_image_queue) {
+		result = cache_get_image(selidx);
+	} else {
+		result = open_image(selidx);
+	}
 
 	if (result != 0) {
 		report_image_error(result);
 		return -1;
 	}
-
-	if (config.imgbrightness != 100) {
+	// already calc brightness in cacher
+	if (!config.use_image_queue && config.imgbrightness != 100) {
 		recalc_brightness();
 	}
 
@@ -231,7 +322,7 @@ static dword scene_rotateimage(void)
 	int ret;
 
 	ret = image_rotate(imgdata, &width, &height, oldangle,
-					 (dword) config.rotate * 90);
+					   (dword) config.rotate * 90);
 
 	if (ret < 0) {
 		win_msg("内存不足无法完成旋转!", COLOR_WHITE, COLOR_WHITE,
@@ -377,15 +468,15 @@ static dword scene_rotateimage(void)
 
 static int exif_max_width(void)
 {
+	int i, max_h, height, line_num;
+
 	if (exif_array == NULL)
 		return 0;
 
-	int i;
+	max_h = 0;
 
-	int max_h = 0;
-
-	int height = PSP_SCREEN_HEIGHT / DISP_FONTSIZE - 1;
-	int line_num = exif_array->used <= height ? exif_array->used : height;
+	height = PSP_SCREEN_HEIGHT / DISP_FONTSIZE - 1;
+	line_num = exif_array->used <= height ? exif_array->used : height;
 
 	for (i = 0; i < line_num; ++i) {
 		int len = text_get_string_width_sys((const unsigned char *)
@@ -419,27 +510,28 @@ static void scene_show_info(int selidx)
 	if (config.imginfobar) {
 		if (config.load_exif && exif_array && exif_array->used > 0) {
 			int width = exif_max_width();
+			int height, line_num, top, left, right;
+			int i;
 
 			width =
 				width > PSP_SCREEN_WIDTH - 10 ? PSP_SCREEN_WIDTH - 10 : width;
-			int height = PSP_SCREEN_HEIGHT / DISP_FONTSIZE - 1;
-			int line_num =
+			height = PSP_SCREEN_HEIGHT / DISP_FONTSIZE - 1;
+			line_num =
 				exif_array->used <= height ? exif_array->used : height;
-			int top =
+			top =
 				(PSP_SCREEN_HEIGHT -
 				 (1 + height) * DISP_FONTSIZE) / 2 >
 				1 ? (PSP_SCREEN_HEIGHT - (1 + height) * DISP_FONTSIZE) / 2 : 1;
-			int left =
+			left =
 				(PSP_SCREEN_WIDTH - width) / 4 - 10 <
 				1 ? 1 : (PSP_SCREEN_WIDTH - width) / 4 - 10;
-			int right =
+			right =
 				(PSP_SCREEN_WIDTH + 3 * width) / 4 >=
 				PSP_SCREEN_WIDTH - 1 ? PSP_SCREEN_WIDTH -
 				2 : (PSP_SCREEN_WIDTH + 3 * width) / 4;
 			disp_fillrect(left, top, right, top + DISP_FONTSIZE * line_num, 0);
 			disp_rectangle(left - 1, top - 1, right + 1,
 						   top + DISP_FONTSIZE * line_num + 1, COLOR_WHITE);
-			int i;
 
 			for (i = 0; i < line_num; ++i) {
 				const char *teststr = exif_array->ptr[i]->ptr;
@@ -475,6 +567,8 @@ static void scene_show_exif(void)
 {
 	if (!config.imginfobar
 		|| !(config.load_exif && exif_array && exif_array->used > 0)) {
+		short b;
+
 		dword top =
 			(PSP_SCREEN_HEIGHT - thumb_height) / 2, bottom = top + thumb_height;
 		dword thumbl = 0, thumbr = 0, thumbt = 0, thumbb = 0;
@@ -501,8 +595,7 @@ static void scene_show_exif(void)
 		disp_line(32 + thumb_width, top + 2, 32 + thumb_width, bottom - 1, 0);
 		disp_rectangle(33 + thumbl, top + thumbt + 1,
 					   33 + thumbr, top + thumbb + 1, 0);
-		short b = 75 - config.imgbrightness > 0 ? 75 - config.imgbrightness : 0;
-
+		b = 75 - config.imgbrightness > 0 ? 75 - config.imgbrightness : 0;
 		disp_rectangle(32 + thumbl, top + thumbt, 32 + thumbr,
 					   top + thumbb, disp_grayscale(COLOR_WHITE, 0, 0, 0, b));
 	}
@@ -1564,90 +1657,6 @@ static int scene_slideshow_forward(dword * selidx)
 	return -1;
 }
 
-static int cache_wait_avail()
-{
-	dword key;
-
-	while (ccacher.caches_size == 0) {
-		key = ctrl_read();
-
-		if (key == PSP_CTRL_CROSS) {
-			return -1;
-		}
-
-		xrKernelDelayThread(10000);
-	}
-
-	return 0;
-}
-
-static int cache_wait_loaded()
-{
-	cache_image_t *img = &ccacher.caches[0];
-	dword key;
-
-	while (img->status == CACHE_INIT) {
-//      dbg_printf(d, "CLIENT: Wait image %u %s load finish", (unsigned) selidx, filename);
-		key = ctrl_read();
-
-		if (key == PSP_CTRL_CROSS) {
-			return -1;
-		}
-
-		xrKernelDelayThread(10000);
-	}
-
-	return 0;
-}
-
-static int cache_get_image(dword selidx)
-{
-	cache_image_t *img;
-	u64 start, now;
-	int ret;
-
-	xrRtcGetCurrentTick(&start);
-
-	if (cache_wait_avail() != 0) {
-		return -1;
-	}
-
-	img = &ccacher.caches[0];
-
-	DBG_ASSERT(d, "CLIENT: img->selidx == selidx", img->selidx == selidx);
-
-	if (cache_wait_loaded() != 0) {
-		return -1;
-	}
-
-	xrRtcGetCurrentTick(&now);
-
-	if (img->status == CACHE_OK && img->result == 0) {
-		dbg_printf(d, "CLIENT: Image %u load OK in %.3f s, %ux%u",
-				   (unsigned) img->selidx, pspDiffTime(&now, &start),
-				   (unsigned) img->width, (unsigned) img->height);
-		ret = 0;
-	} else {
-		dbg_printf(d,
-				   "CLIENT: Image %u load FAILED in %.3f s, %ux%u, status %u, result %u",
-				   (unsigned) img->selidx, pspDiffTime(&now, &start),
-				   (unsigned) img->width, (unsigned) img->height, img->status,
-				   img->result);
-		ret = img->result;
-	}
-
-	if (ret == 0) {
-		imgdata = img->data;
-	} else {
-		imgdata = NULL;
-	}
-
-	width = img->width;
-	height = img->height;
-
-	return ret;
-}
-
 dword scene_readimage(dword selidx)
 {
 	u64 timer_start, timer_end;
@@ -1680,42 +1689,26 @@ dword scene_readimage(dword selidx)
 	while (1) {
 		u64 dbgnow, dbglasttick;
 		dword key = 0;
+		int ret;
 
 		if (img_needrf) {
-			if (config.use_image_queue) {
-				int ret;
+			int fid;
+			dword ret;
 
-				reset_image_show_ptr();
-				ret = cache_get_image(selidx);
+			fid = freq_enter_hotzone();
+			xrRtcGetCurrentTick(&dbglasttick);
+			ret = scene_reloadimage(selidx);
 
-				if (ret != 0) {
-					report_image_error(ret);
-					break;
-				}
-
-				if (config.imgbrightness != 100) {
-					recalc_brightness();
-				}
-
-				img_needrf = false;
-			} else {
-				int fid;
-
-				fid = freq_enter_hotzone();
-				xrRtcGetCurrentTick(&dbglasttick);
-				dword ret = scene_reloadimage(selidx);
-
-				if (ret == -1) {
-					freq_leave(fid);
-					break;
-				}
-
-				img_needrf = false;
-				xrRtcGetCurrentTick(&dbgnow);
-				dbg_printf(d, _("装载图像时间: %.2f秒"),
-						   pspDiffTime(&dbgnow, &dbglasttick));
+			if (ret == -1) {
 				freq_leave(fid);
+				break;
 			}
+
+			img_needrf = false;
+			xrRtcGetCurrentTick(&dbgnow);
+			dbg_printf(d, _("装载图像时间: %.2f秒"),
+					   pspDiffTime(&dbgnow, &dbglasttick));
+			freq_leave(fid);
 		}
 
 		if (img_needrc) {
@@ -1744,8 +1737,7 @@ dword scene_readimage(dword selidx)
 		}
 
 		key = ctrl_read_cont();
-
-		int ret = image_handle_input(&selidx, key);
+		ret = image_handle_input(&selidx, key);
 
 		if (ret == -1 && slideshow && !slideshow_move) {
 			if (key == PSP_CTRL_CIRCLE) {
@@ -1826,9 +1818,14 @@ dword scene_readimage(dword selidx)
 		}
 	}
 
-	if (exif_array) {
-		buffer_array_free(exif_array);
+	if (config.use_image_queue) {
+		// let cacher delete exif data
 		exif_array = NULL;
+	} else {
+		if (exif_array) {
+			buffer_array_free(exif_array);
+			exif_array = NULL;
+		}
 	}
 
 	return selidx;
@@ -1838,6 +1835,10 @@ static t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item,
 										 dword * count, dword max_height,
 										 dword * topindex, dword * index)
 {
+	dword key1, key2;
+	SceCtrlData ctl;
+	int i;
+	
 	switch (key) {
 		case (PSP_CTRL_SELECT | PSP_CTRL_START):
 			return exit_confirm();
@@ -1846,28 +1847,25 @@ static t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item,
 			disp_waitv();
 			prompt_press_any_key();
 			disp_flip();
-			dword key, key2;
-			SceCtrlData ctl;
 
 			ctrl_waitrelease();
 			do {
 				xrCtrlReadBufferPositive(&ctl, 1);
-				key = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
-			} while (key == 0);
-			key2 = key;
-			while ((key2 & key) == key) {
-				key = key2;
+				key1 = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
+			} while (key1 == 0);
+			key2 = key1;
+			while ((key2 & key1) == key1) {
+				key1 = key2;
 				xrCtrlReadBufferPositive(&ctl, 1);
 				key2 = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
 			}
-			if (config.imgkey[*index] == key || config.imgkey2[*index] == key)
+			if (config.imgkey[*index] == key1 || config.imgkey2[*index] == key1)
 				return win_menu_op_force_redraw;
-			int i;
 
 			for (i = 0; i < NELEMS(config.imgkey); i++) {
 				if (i == *index)
 					continue;
-				if (config.imgkey[i] == key) {
+				if (config.imgkey[i] == key1) {
 					config.imgkey[i] = config.imgkey2[*index];
 					if (config.imgkey[i] == 0) {
 						config.imgkey[i] = config.imgkey2[i];
@@ -1875,13 +1873,13 @@ static t_win_menu_op scene_imgkey_menucb(dword key, p_win_menuitem item,
 					}
 					break;
 				}
-				if (config.imgkey2[i] == key) {
+				if (config.imgkey2[i] == key1) {
 					config.imgkey2[i] = config.imgkey2[*index];
 					break;
 				}
 			}
 			config.imgkey2[*index] = config.imgkey[*index];
-			config.imgkey[*index] = key;
+			config.imgkey[*index] = key1;
 			do {
 				xrCtrlReadBufferPositive(&ctl, 1);
 			} while (ctl.Buttons != 0);
@@ -1903,10 +1901,10 @@ static void scene_imgkey_predraw(p_win_menuitem item, dword index,
 {
 	char keyname[256];
 	int left, right, upper, bottom, lines = 0;
+	dword i;
 
 	default_predraw(&g_predraw, _("按键设置   △ 删除"), max_height, &left,
 					&right, &upper, &bottom, 8 * DISP_FONTSIZE + 4);
-	dword i;
 
 	for (i = topindex; i < topindex + max_height; i++) {
 		conf_get_keyname(config.imgkey[i], keyname);
@@ -1929,9 +1927,10 @@ static void scene_imgkey_predraw(p_win_menuitem item, dword index,
 dword scene_imgkey(dword * selidx)
 {
 	win_menu_predraw_data prev;
+	t_win_menuitem item[16];
+	dword i, index;
 
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
-	t_win_menuitem item[16];
 
 	STRCPY_S(item[0].name, _("上一张图"));
 	STRCPY_S(item[1].name, _("下一张图"));
@@ -1949,7 +1948,6 @@ dword scene_imgkey(dword * selidx)
 	STRCPY_S(item[13].name, _("下"));
 	STRCPY_S(item[14].name, _("左"));
 	STRCPY_S(item[15].name, _("右"));
-	dword i, index;
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
 

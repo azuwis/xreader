@@ -114,11 +114,13 @@ void get_screen_shot(void)
 	int x, y;
 	char filename[PATH_MAX];
 	int i = 0;
+	int fd;
 
 	do {
 		SPRINTF_S(filename, "ms0:/get_screen_shot%02d.tga", i++);
 	} while (utils_is_file_exists(filename));
-	int fd = xrIoOpen(filename, PSP_O_CREAT | PSP_O_TRUNC | PSP_O_WRONLY, 0777);
+
+	fd = xrIoOpen(filename, PSP_O_CREAT | PSP_O_TRUNC | PSP_O_WRONLY, 0777);
 
 	if (!fd)
 		return;
@@ -612,20 +614,21 @@ static void draw_infobar_info(PBookViewData pView, dword selidx, int vertread)
 static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 								   int vertread)
 {
+	const char *ls[1];
+	dword ss[1];
+	int wordspace = 0;
+
 	if (config.infobar_style == 0)
 		draw_infobar_rect(vertread);
 	else
 		draw_infobar_single_line(vertread);
 
-	const char *ls[1];
-	dword ss[1];
-	int wordspace = 0;
-
 	if (lyric_get_cur_lines(music_get_lyric(), 0, ls, ss)
 		&& ls[0] != NULL) {
+		char t[BUFSIZ];
+
 		if (ss[0] > 960 / config.infobar_fontsize)
 			ss[0] = 960 / config.infobar_fontsize;
-		char t[BUFSIZ];
 
 		lyric_decode(ls[0], t, &ss[0]);
 		switch (vertread) {
@@ -677,20 +680,21 @@ static void draw_infobar_lyric_ttf(PBookViewData pView, dword selidx,
 
 static void draw_infobar_lyric(PBookViewData pView, dword selidx, int vertread)
 {
+	const char *ls[1];
+	dword ss[1];
+	int wordspace = (config.infobar_fontsize == 10 ? 1 : 0);
+
 	if (config.infobar_style == 0)
 		draw_infobar_rect(vertread);
 	else
 		draw_infobar_single_line(vertread);
 
-	const char *ls[1];
-	dword ss[1];
-	int wordspace = (config.infobar_fontsize == 10 ? 1 : 0);
-
 	if (lyric_get_cur_lines(music_get_lyric(), 0, ls, ss)
 		&& ls[0] != NULL) {
+		char t[BUFSIZ];
+
 		if (ss[0] > 960 / config.infobar_fontsize)
 			ss[0] = 960 / config.infobar_fontsize;
-		char t[BUFSIZ];
 
 		lyric_decode(ls[0], t, &ss[0]);
 		switch (vertread) {
@@ -765,6 +769,10 @@ PBookViewData new_book_view(PBookViewData p)
 
 int scene_book_reload(PBookViewData pView, dword selidx)
 {
+	int fid;
+	extern bool g_force_text_view_mode;
+	extern p_umd_chapter p_umdchapter;
+
 	if (where == scene_in_zip || where == scene_in_chm || where == scene_in_umd
 		|| where == scene_in_rar) {
 		STRCPY_S(pView->filename, filelist[selidx].compname->ptr);
@@ -819,10 +827,7 @@ int scene_book_reload(PBookViewData pView, dword selidx)
 		fs = NULL;
 	}
 
-	int fid = freq_enter_hotzone();
-
-	extern bool g_force_text_view_mode;
-	extern p_umd_chapter p_umdchapter;
+	fid = freq_enter_hotzone();
 
 	if (g_force_text_view_mode == false) {
 		if (scene_in_umd == where && p_umdchapter) {
@@ -1481,6 +1486,7 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 				(_("是否要导出书签？"), _("是"), _("否"),
 				 COLOR_WHITE, COLOR_WHITE, config.msgbcolor)) {
 				char bmfn[PATH_MAX];
+				bool ret;
 
 				if (where == scene_in_zip || where == scene_in_chm
 					|| where == scene_in_rar) {
@@ -1488,8 +1494,9 @@ t_win_menu_op scene_bookmark_menucb(dword key, p_win_menuitem item,
 					STRCAT_S(bmfn, fs->filename);
 				} else
 					STRCPY_S(bmfn, fs->filename);
+
 				STRCAT_S(bmfn, ".ebm");
-				bool ret = bookmark_export(g_bm, bmfn);
+				ret = bookmark_export(g_bm, bmfn);
 
 				if (ret) {
 					win_msg(_("已导出书签!"), COLOR_WHITE, COLOR_WHITE,
@@ -1547,7 +1554,9 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 				   _("SELECT 删除全部书签    START 导出书签"));
 	if (g_bm->row[index] < fs->size
 		&& fs_file_get_type(fs->filename) != fs_filetype_unknown) {
+		byte bp[0x80];
 		t_text preview;
+		int old_book_fontsize = DISP_BOOK_FONTSIZE;
 
 		memset(&preview, 0, sizeof(t_text));
 		preview.buf = fs->buf + min(fs->size, g_bm->row[index]);
@@ -1557,11 +1566,9 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 		else
 			preview.size =
 				8 * ((347 - 7 * DISP_FONTSIZE / 2) / (DISP_FONTSIZE / 2));
-		byte bp[0x80];
 
 		memcpy(bp, disp_ewidth, 0x80);
 		memset(disp_ewidth, DISP_FONTSIZE / 2, 0x80);
-		int old_book_fontsize = DISP_BOOK_FONTSIZE;
 
 		DISP_BOOK_FONTSIZE = DISP_FONTSIZE;
 		text_format(&preview, 347 - 7 * DISP_FONTSIZE / 2,
@@ -1589,13 +1596,14 @@ void scene_bookmark_predraw(p_win_menuitem item, dword index, dword topindex,
 bool scene_bookmark(PBookViewData pView)
 {
 	dword *orgp = &pView->rrow;
+	dword i;
+	t_win_menuitem item[9];
+	dword index;
 
 	if (g_bm == NULL) {
 		win_msg(_("无法打开书签!"), COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
 		return 0;
 	}
-	dword i;
-	t_win_menuitem item[9];
 
 	for (i = 0; i < 9; i++) {
 		if (g_bm->row[i + 1] != INVALID) {
@@ -1611,9 +1619,9 @@ bool scene_bookmark(PBookViewData pView)
 			config.usedyncolor ? get_bgcolor_by_time() : config.menubcolor;
 		item[i].selbcolor = config.selbcolor;
 	}
+
 	item[0].data = (void *) orgp;
 	item[1].data = (void *) false;
-	dword index;
 
 	if ((index =
 		 win_menu(64, 62, 7, 9, item, 9, 0, 0,
@@ -1799,8 +1807,9 @@ int book_handle_input(PBookViewData pView, dword * selidx, dword key)
 		if (get_osk_input(buf, 128) == 1 && strcmp(buf, "") != 0) {
 			dbg_printf(d, "%s: input %s", __func__, buf);
 			if (strchr(buf, '%') != NULL) {
-				dbg_printf(d, "%s: 输入百分率%s", __func__, buf);
 				float percent;
+
+				dbg_printf(d, "%s: 输入百分率%s", __func__, buf);
 
 				if (sscanf(buf, "%f%%", &percent) == 1)
 					jump_to_percent(percent);
@@ -1912,19 +1921,19 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 						 size_t size, t_fs_filetype ft)
 {
 	bool prev_raw = scene_readbook_in_raw_mode;
-
-	scene_readbook_in_raw_mode = true;
-
 	// dummy selidx
 	dword selidx = 0;
 	p_text prev_text = NULL;
+	u64 timer_start, timer_end;
+	dword key;
+	int ret;
+	
+	scene_readbook_in_raw_mode = true;
 
 	STRCPY_S(g_titlename, title);
 
 	copy_book_view(&prev_book_view, &cur_book_view);
 	new_book_view(&cur_book_view);
-
-	u64 timer_start, timer_end;
 
 	xrRtcGetCurrentTick(&timer_start);
 	scene_mountrbkey(ctlkey, ctlkey2, &ku, &kd, &kl, &kr);
@@ -1956,8 +1965,6 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 			redraw_book(selidx);
 		}
 
-		dword key;
-
 		while ((key = ctrl_read()) == 0) {
 			xrKernelDelayThread(20000);
 			xrRtcGetCurrentTick(&timer_end);
@@ -1988,8 +1995,6 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 
 			scene_text_delay_action();
 		}
-		dword selidx = 0;
-		int ret;
 
 		ret = book_handle_input(&cur_book_view, &selidx, key);
 
@@ -2033,6 +2038,7 @@ dword scene_readbook_raw(const char *title, const unsigned char *data,
 dword scene_readbook(dword selidx)
 {
 	u64 timer_start, timer_end;
+	int fid;
 
 	xrRtcGetCurrentTick(&timer_start);
 
@@ -2122,7 +2128,8 @@ dword scene_readbook(dword selidx)
 	  redraw:
 		;
 	}
-	int fid = freq_enter_hotzone();
+
+	fid = freq_enter_hotzone();
 
 	if (config.autobm)
 		update_auto_bookmark();
@@ -2156,6 +2163,10 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 								  dword max_height, dword * topindex,
 								  dword * index)
 {
+	dword key1, key2;
+	SceCtrlData ctl;
+	int i;
+	
 	switch (key) {
 		case (PSP_CTRL_SELECT | PSP_CTRL_START):
 			if (win_msgbox
@@ -2170,32 +2181,29 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 			disp_waitv();
 			prompt_press_any_key();
 			disp_flip();
-			dword key, key2;
-			SceCtrlData ctl;
 
 			do {
 				xrCtrlReadBufferPositive(&ctl, 1);
 			} while (ctl.Buttons != 0);
 			do {
 				xrCtrlReadBufferPositive(&ctl, 1);
-				key = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
-			} while ((key &
+				key1 = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
+			} while ((key1 &
 					  ~(PSP_CTRL_UP | PSP_CTRL_DOWN | PSP_CTRL_LEFT |
 						PSP_CTRL_RIGHT)) == 0);
-			key2 = key;
-			while ((key2 & key) == key) {
-				key = key2;
+			key2 = key1;
+			while ((key2 & key1) == key1) {
+				key1 = key2;
 				xrCtrlReadBufferPositive(&ctl, 1);
 				key2 = (ctl.Buttons & ~PSP_CTRL_SELECT) & ~PSP_CTRL_START;
 			}
-			if (config.txtkey[*index] == key || config.txtkey2[*index] == key)
+			if (config.txtkey[*index] == key1 || config.txtkey2[*index] == key1)
 				return win_menu_op_force_redraw;
-			int i;
 
 			for (i = 0; i < MAX_TXT_KEY; i++) {
 				if (i == *index)
 					continue;
-				if (config.txtkey[i] == key) {
+				if (config.txtkey[i] == key1) {
 					config.txtkey[i] = config.txtkey2[*index];
 					if (config.txtkey[i] == 0) {
 						config.txtkey[i] = config.txtkey2[i];
@@ -2203,13 +2211,13 @@ t_win_menu_op scene_txtkey_menucb(dword key, p_win_menuitem item, dword * count,
 					}
 					break;
 				}
-				if (config.txtkey2[i] == key) {
+				if (config.txtkey2[i] == key1) {
 					config.txtkey2[i] = config.txtkey2[*index];
 					break;
 				}
 			}
 			config.txtkey2[*index] = config.txtkey[*index];
-			config.txtkey[*index] = key;
+			config.txtkey[*index] = key1;
 			do {
 				xrCtrlReadBufferPositive(&ctl, 1);
 			} while (ctl.Buttons != 0);
@@ -2229,13 +2237,11 @@ void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex,
 						  dword max_height)
 {
 	char keyname[256];
-
 	int left, right, upper, bottom, lines = 0;
+	dword i;
 
 	default_predraw(&g_predraw, _("按键设置   △ 删除"), max_height, &left,
 					&right, &upper, &bottom, 8 * DISP_FONTSIZE + 4);
-
-	dword i;
 
 	for (i = topindex; i < topindex + max_height; i++) {
 		conf_get_keyname(config.txtkey[i], keyname);
@@ -2258,9 +2264,10 @@ void scene_txtkey_predraw(p_win_menuitem item, dword index, dword topindex,
 dword scene_txtkey(dword * selidx)
 {
 	win_menu_predraw_data prev;
+	t_win_menuitem item[14];
+	dword i, index;
 
 	memcpy(&prev, &g_predraw, sizeof(win_menu_predraw_data));
-	t_win_menuitem item[14];
 
 	STRCPY_S(item[0].name, _("书签菜单"));
 	STRCPY_S(item[1].name, _("  上一页"));
@@ -2276,7 +2283,6 @@ dword scene_txtkey(dword * selidx)
 	STRCPY_S(item[11].name, _("退出阅读"));
 	STRCPY_S(item[12].name, _("切换翻页"));
 	STRCPY_S(item[13].name, _("输入GI值"));
-	dword i, index;
 
 	g_predraw.max_item_len = win_get_max_length(item, NELEMS(item));
 

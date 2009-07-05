@@ -57,9 +57,10 @@ extern bool utils_string2dword(const char *src, dword * dw)
 
 extern bool utils_string2double(const char *src, double *db)
 {
-	*db = 0.0;
 	bool doted = false;
 	double p = 0.1;
+
+	*db = 0.0;
 
 	while ((*src >= '0' && *src <= '9') || *src == '.') {
 		if (*src == '.') {
@@ -116,16 +117,17 @@ extern dword utils_del_dir(const char *dir)
 {
 	dword count = 0;
 	int dl = xrIoDopen(dir);
+	SceIoDirent sid;
 
 	if (dl < 0)
 		return count;
-	SceIoDirent sid;
 
 	memset(&sid, 0, sizeof(SceIoDirent));
 	while (xrIoDread(dl, &sid)) {
+		char compPath[260];
+
 		if (sid.d_name[0] == '.')
 			continue;
-		char compPath[260];
 
 		SPRINTF_S(compPath, "%s/%s", dir, sid.d_name);
 		if (FIO_S_ISDIR(sid.d_stat.st_mode)) {
@@ -147,10 +149,10 @@ extern dword utils_del_dir(const char *dir)
 
 bool utils_is_file_exists(const char *filename)
 {
+	SceUID uid;
+
 	if (!filename)
 		return false;
-
-	SceUID uid;
 
 	uid = xrIoOpen(filename, PSP_O_RDONLY, 0777);
 	if (uid < 0)

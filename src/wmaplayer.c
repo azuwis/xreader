@@ -509,6 +509,7 @@ static int parse_ex_tag(struct WMAExTag *tag)
 	u64 start;
 	u64 size;
 	u8 *framedata, *p;
+	int i;
 
 	tag->tag_size = 0;
 	tag->key = NULL;
@@ -567,8 +568,6 @@ static int parse_ex_tag(struct WMAExTag *tag)
 	tag->flag = calloc(tag->tag_size, sizeof(tag->flag[0]));
 	tag->key_size = calloc(tag->tag_size, sizeof(tag->key_size[0]));
 	tag->value_size = calloc(tag->tag_size, sizeof(tag->value_size[0]));
-
-	int i;
 
 	for (i = 0; i < tag->tag_size; ++i) {
 		tag->key_size[i] = *(u16 *) p;
@@ -749,6 +748,7 @@ static void get_wma_tag(void)
 {
 	struct WMAStdTag tag;
 	struct WMAExTag ex_tag;
+	int r;
 
 	memset(&tag, 0, sizeof(tag));
 	memset(&ex_tag, 0, sizeof(ex_tag));
@@ -774,8 +774,6 @@ static void get_wma_tag(void)
 			   min(2 * (ucslen(tag.comment) + 1), sizeof(g_info.tag.comment)));
 	}
 
-	int r;
-
 	r = lookup_value(&ex_tag, "WM/AlbumTitle");
 
 	if (r >= 0) {
@@ -789,6 +787,8 @@ static void get_wma_tag(void)
 
 static int load_modules()
 {
+	int modid;
+
 	if (load_me_prx() < 0) {
 		return -1;
 	}
@@ -808,7 +808,7 @@ static int load_modules()
 		}
 	}
 
-	int modid = pspSdkLoadStartModule("flash0:/kd/libasfparser.prx",
+	modid = pspSdkLoadStartModule("flash0:/kd/libasfparser.prx",
 									  PSP_MEMORY_PARTITION_USER);
 
 	if (modid < 0 && (u32) modid != 0x80020139) {
@@ -826,12 +826,13 @@ static int load_modules()
 static int unload_modules()
 {
 	int status;
+	int ret;
 
 	if (g_asfparser_mod_id < 0) {
 		return 0;
 	}
 
-	int ret = xrKernelStopModule(g_asfparser_mod_id, 0, NULL, &status, NULL);
+	ret = xrKernelStopModule(g_asfparser_mod_id, 0, NULL, &status, NULL);
 
 	if (ret < 0) {
 		dbg_printf(d, "xrKernelStopModule@0x%08x, modid %d", ret,
@@ -894,6 +895,7 @@ static int check_asf_codecdata(SceAsfParser * parser)
 static int init_audiocodec()
 {
 	int ret;
+	u16 *p16;
 
 	memset(wma_codec_buffer, 0, sizeof(wma_codec_buffer));
 	wma_codec_buffer[5] = 1;
@@ -913,7 +915,7 @@ static int init_audiocodec()
 
 	wma_getEDRAM = 1;
 
-	u16 *p16 = (u16 *) (&wma_codec_buffer[10]);
+	p16 = (u16 *) (&wma_codec_buffer[10]);
 
 	p16[0] = wma_format_tag;
 	p16[1] = g_info.channels;

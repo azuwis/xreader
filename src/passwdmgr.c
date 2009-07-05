@@ -70,9 +70,11 @@ bool load_passwords(void)
 
 	list = malloc(sizeof(list[0]) * t);
 	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		char *t;
+
 		if (buf[0] == '\0' || buf[0] == '\r' || buf[0] == '\n')
 			continue;
-		char *t = chopper(buf);
+		t = chopper(buf);
 
 		add_password(t);
 		free(t);
@@ -120,10 +122,10 @@ void free_passwords(void)
 
 static int find_password(const char *password)
 {
+	int i, n;
+
 	if (list == NULL || password == NULL)
 		return -1;
-
-	int i, n;
 
 	for (i = 0, n = get_password_count(); i < n; ++i) {
 		if (list[i]->ptr && strcmp(password, list[i]->ptr) == 0)
@@ -151,16 +153,20 @@ void add_password(const char *passwd)
 	}
 
 	if (list == NULL) {
+		char *t;
+
 		list = malloc(sizeof(list[0]));
-		char *t = chopper(passwd);
+		t = chopper(passwd);
 
 		list[0] = buffer_init_string(t);
 		free(t);
 		list_count = 1;
 	} else {
+		char *t;
+
 		list = safe_realloc(list, sizeof(list[0]) * (list_count + 1));
 		memmove(list + 1, list, sizeof(list[0]) * list_count);
-		char *t = chopper(passwd);
+		t = chopper(passwd);
 
 		list[0] = buffer_init_string(t);
 		free(t);

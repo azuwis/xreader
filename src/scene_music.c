@@ -80,6 +80,9 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 									dword * count, dword max_height,
 									dword * topindex, dword * index)
 {
+	dword orgidx;
+	t_win_menu_op op;
+
 	switch (key) {
 		case (PSP_CTRL_SELECT | PSP_CTRL_START):
 			if (win_msgbox
@@ -150,9 +153,9 @@ t_win_menu_op scene_mp3_list_menucb(dword key, p_win_menuitem item,
 			ctrl_waitrelease();
 			return win_menu_op_cancel;
 	}
-	dword orgidx = *index;
-	t_win_menu_op op =
-		win_menu_defcb(key, item, count, max_height, topindex, index);
+
+	orgidx = *index;
+	op = win_menu_defcb(key, item, count, max_height, topindex, index);
 	if (*index != orgidx && ((orgidx - *topindex < 6 && *index - *topindex >= 6)
 							 || (orgidx - *topindex >= 6
 								 && *index - *topindex < 6)))
@@ -164,12 +167,13 @@ void scene_mp3_list_predraw(p_win_menuitem item, dword index, dword topindex,
 							dword max_height)
 {
 	int left, right, upper, bottom;
+	int pos, posend;
 
 	default_predraw(&g_predraw, _(" ○删除 □下移 △上移 ×退出 START播放"),
 					max_height, &left, &right, &upper, &bottom, 4);
-	int pos =
+	pos =
 		get_center_pos(0, 480, _("要添加乐曲请到文件列表选取音乐文件按○"));
-	int posend =
+	posend =
 		pos + 1 +
 		strlen(_("要添加乐曲请到文件列表选取音乐文件按○")) * DISP_FONTSIZE / 2;
 	upper = bottom + 1;
@@ -234,15 +238,15 @@ void scene_mp3_list(void)
 {
 #ifdef ENABLE_MUSIC
 	t_win_menuitem item[music_maxindex()];
+	dword i;
+	dword index = 0;
+
+	win_menu_predraw_data prev;
 
 	if (item == NULL)
 		return;
 
-	win_menu_predraw_data prev;
-
 	memcpy(&prev, &g_predraw, sizeof(prev));
-
-	dword i;
 
 	if (strcmp(simple_textdomain(NULL), "zh_CN") == 0)
 		g_predraw.max_item_len = WRR * 4;
@@ -251,10 +255,12 @@ void scene_mp3_list(void)
 
 	for (i = 0; i < music_maxindex(); i++) {
 		struct music_file *fl = music_get(i);
+		char *rname;
 
 		if (fl == NULL)
 			continue;
-		char *rname = strrchr(fl->longpath->ptr, '/');
+
+		rname = strrchr(fl->longpath->ptr, '/');
 
 		if (rname == NULL)
 			rname = (char *) music_get(i);
@@ -283,8 +289,6 @@ void scene_mp3_list(void)
 		g_predraw.x - DISP_FONTSIZE * g_predraw.max_item_len / 2 / 2;
 	g_predraw.upper = g_predraw.y - DISP_FONTSIZE * g_predraw.item_count / 2;
 	g_predraw.linespace = 0;
-
-	dword index = 0;
 
 	while ((index =
 			win_menu(g_predraw.left, g_predraw.upper,
@@ -351,15 +355,15 @@ static void draw_lyric_string(const char **ly, dword lidx, dword * ss,
 static void scene_draw_lyric(void)
 {
 #if defined(ENABLE_MUSIC) && defined(ENABLE_LYRIC)
+	const char *ly[config.lyricex * 2 + 1];
+	dword ss[config.lyricex * 2 + 1];
+
 	disp_rectangle(5, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex), 474,
 				   136 + (DISP_FONTSIZE + 1) * config.lyricex, COLOR_WHITE);
 	disp_fillrect(6, 136 - (DISP_FONTSIZE + 1) * (1 + config.lyricex) + 1,
 				  473, 136 + (DISP_FONTSIZE + 1) * config.lyricex - 1,
 				  config.usedyncolor ? get_bgcolor_by_time() : config.
 				  msgbcolor);
-	const char *ly[config.lyricex * 2 + 1];
-	dword ss[config.lyricex * 2 + 1];
-
 	if (lyric_get_cur_lines(music_get_lyric(), config.lyricex, ly, ss)) {
 		int lidx;
 		dword cpl = 936 / DISP_FONTSIZE;
@@ -827,18 +831,20 @@ static int scene_mp3bar_handle_input(dword key, pixel ** saveimage)
 void scene_mp3bar(void)
 {
 	bool firstdup = true;
+	u64 timer_start, timer_end;
 	pixel *saveimage = (pixel *) memalign(16,
 										  PSP_SCREEN_WIDTH *
 										  PSP_SCREEN_HEIGHT * sizeof(pixel));
 	if (saveimage != NULL)
 		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
-	u64 timer_start, timer_end;
 
 	xrRtcGetCurrentTick(&start);
 	xrRtcGetCurrentTick(&end);
 	xrRtcGetCurrentTick(&timer_start);
 
 	while (1) {
+		dword key;
+
 		xrRtcGetCurrentTick(&timer_end);
 #ifdef ENABLE_MUSIC
 		if (pspDiffTime(&timer_end, &timer_start) >= 1.0) {
@@ -857,7 +863,7 @@ void scene_mp3bar(void)
 
 		scene_draw_mp3bar(&firstdup);
 		disp_flip();
-		dword key = ctrl_read_cont();
+		key = ctrl_read_cont();
 
 		if (key != 0) {
 			secticks = 0;

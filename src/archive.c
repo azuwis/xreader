@@ -47,6 +47,7 @@ static void extract_zip_file_into_buffer_with_password(buffer * buf,
 {
 	unzFile unzf = unzOpen(archname);
 	int ret;
+	unz_file_info info;
 
 	if (unzf == NULL)
 		return;
@@ -55,8 +56,6 @@ static void extract_zip_file_into_buffer_with_password(buffer * buf,
 		unzClose(unzf);
 		return;
 	}
-
-	unz_file_info info;
 
 	if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK) {
 		unzCloseCurrentFile(unzf);
@@ -94,6 +93,9 @@ static void extract_zip_file_into_buffer(buffer * buf, const char *archname,
 										 const char *archpath)
 {
 	unzFile unzf = unzOpen(archname);
+	unz_file_info info;
+	char pass[128];
+	int ret;
 
 	if (unzf == NULL)
 		return;
@@ -102,8 +104,6 @@ static void extract_zip_file_into_buffer(buffer * buf, const char *archname,
 		unzClose(unzf);
 		return;
 	}
-
-	unz_file_info info;
 
 	if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK) {
 		unzCloseCurrentFile(unzf);
@@ -135,9 +135,8 @@ static void extract_zip_file_into_buffer(buffer * buf, const char *archname,
 				}
 			}
 		}
-		// if all passwords failed, ask user input password
-		char pass[128];
 
+		// if all passwords failed, ask user input password
 		if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
 			dbg_printf(d, "%s: input %s", __func__, pass);
 			extract_zip_file_into_buffer_with_password(buf, archname,
@@ -166,7 +165,7 @@ static void extract_zip_file_into_buffer(buffer * buf, const char *archname,
 	}
 
 	buf->ptr[info.uncompressed_size] = '\0';
-	int ret = unzReadCurrentFile(unzf, buf->ptr, info.uncompressed_size);
+	ret = unzReadCurrentFile(unzf, buf->ptr, info.uncompressed_size);
 
 	if (ret < 0) {
 		free(buf->ptr);
@@ -200,12 +199,13 @@ static void extract_rar_file_into_buffer_with_password(buffer * buf,
 {
 	struct RAROpenArchiveData arcdata;
 	int code = 0;
+	HANDLE hrar;
 
 	arcdata.ArcName = (char *) archname;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
 	arcdata.CmtBuf = NULL;
 	arcdata.CmtBufSize = 0;
-	HANDLE hrar = RAROpenArchive(&arcdata);
+	hrar = RAROpenArchive(&arcdata);
 
 	if (hrar == NULL)
 		return;
@@ -234,6 +234,9 @@ static void extract_rar_file_into_buffer_with_password(buffer * buf,
 static bool test_rar_file_password(buffer * buf,
 								   const char *archname, const char *archpath)
 {
+	char pass[128];
+	bool result = false;
+
 	dbg_printf(d, "%s: bad data, wrong password?", __func__);
 	// retry with loaded passwords
 	if (get_password_count()) {
@@ -255,10 +258,8 @@ static bool test_rar_file_password(buffer * buf,
 			}
 		}
 	}
-	// if all passwords failed, ask user input password
-	char pass[128];
-	bool result = false;
 
+	// if all passwords failed, ask user input password
 	if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
 		dbg_printf(d, "%s: input %s", __func__, pass);
 		extract_rar_file_into_buffer_with_password(buf, archname,
@@ -285,12 +286,13 @@ static void extract_rar_file_into_buffer(buffer * buf, const char *archname,
 	struct RAROpenArchiveData arcdata;
 	int code = 0;
 	int ret;
+	HANDLE hrar;
 
 	arcdata.ArcName = (char *) archname;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
 	arcdata.CmtBuf = NULL;
 	arcdata.CmtBufSize = 0;
-	HANDLE hrar = RAROpenArchive(&arcdata);
+	hrar = RAROpenArchive(&arcdata);
 
 	if (hrar == NULL)
 		return;
@@ -376,6 +378,8 @@ extern void extract_archive_file_into_buffer(buffer ** buf,
 											 const char *archpath,
 											 t_fs_filetype filetype)
 {
+	buffer *b;
+
 	if (buf == NULL)
 		return;
 
@@ -383,8 +387,6 @@ extern void extract_archive_file_into_buffer(buffer ** buf,
 		*buf = NULL;
 		return;
 	}
-
-	buffer *b;
 
 	b = buffer_init();
 
@@ -434,12 +436,13 @@ static void extract_rar_file_into_image_with_password(t_image_rar * image,
 {
 	struct RAROpenArchiveData arcdata;
 	int code = 0;
+	HANDLE hrar;
 
 	arcdata.ArcName = (char *) archname;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
 	arcdata.CmtBuf = NULL;
 	arcdata.CmtBufSize = 0;
-	HANDLE hrar = RAROpenArchive(&arcdata);
+	hrar = RAROpenArchive(&arcdata);
 
 	if (hrar == NULL)
 		return;
@@ -478,6 +481,9 @@ static void extract_rar_file_into_image_with_password(t_image_rar * image,
 static bool test_rar_image_password(t_image_rar * image,
 									const char *archname, const char *archpath)
 {
+	char pass[128];
+	bool result = false;
+
 	dbg_printf(d, "%s: bad data, wrong password?", __func__);
 	// retry with loaded passwords
 	if (get_password_count()) {
@@ -499,10 +505,8 @@ static bool test_rar_image_password(t_image_rar * image,
 			}
 		}
 	}
-	// if all passwords failed, ask user input password
-	char pass[128];
-	bool result = false;
 
+	// if all passwords failed, ask user input password
 	if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
 		dbg_printf(d, "%s: input %s", __func__, pass);
 		extract_rar_file_into_image_with_password(image, archname,
@@ -536,14 +540,14 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 {
 	struct RAROpenArchiveData arcdata;
 	int code = 0, ret;
+	HANDLE hrar;
 
 	memset(image, 0, sizeof(*image));
-
 	arcdata.ArcName = (char *) archname;
 	arcdata.OpenMode = RAR_OM_EXTRACT;
 	arcdata.CmtBuf = NULL;
 	arcdata.CmtBufSize = 0;
-	HANDLE hrar = RAROpenArchive(&arcdata);
+	hrar = RAROpenArchive(&arcdata);
 
 	if (hrar == NULL)
 		return;
@@ -589,15 +593,14 @@ extern void extract_rar_file_into_image(t_image_rar * image,
 extern HANDLE reopen_rar_with_passwords(struct RAROpenArchiveData *arcdata)
 {
 	struct RARHeaderData header;
-
 	HANDLE hrar = 0;
+	int ret = -1, n, i;
+	buffer *b = NULL;
+	char pass[128];
 
 	hrar = RAROpenArchive(arcdata);
 	if (hrar == 0)
 		return hrar;
-
-	int ret = -1, n, i;
-	buffer *b = NULL;
 
 	for (n = get_password_count(), i = 0; i < n; ++i) {
 		b = get_password(i);
@@ -621,9 +624,8 @@ extern HANDLE reopen_rar_with_passwords(struct RAROpenArchiveData *arcdata)
 		RARSetPassword(hrar, b->ptr);
 		return hrar;
 	}
-	// if all passwords failed, ask user input password
-	char pass[128];
 
+	// if all passwords failed, ask user input password
 	if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
 		dbg_printf(d, "%s: input %s", __func__, pass);
 		RARSetPassword(hrar, pass);

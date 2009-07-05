@@ -39,10 +39,11 @@ extern bool copy_file(const char *src, const char *dest, t_copy_cb cb,
 					  t_copy_overwritecb ocb, void *data)
 {
 	byte *buf = malloc(1024 * 1024);
+	int fd1, fd2;
+	int readbytes;
 
 	if (buf == NULL)
 		return false;
-	int fd2;
 
 	if (ocb != NULL) {
 		fd2 = xrIoOpen(dest, PSP_O_RDONLY, 0777);
@@ -54,7 +55,8 @@ extern bool copy_file(const char *src, const char *dest, t_copy_cb cb,
 			xrIoClose(fd2);
 		}
 	}
-	int fd1 = xrIoOpen(src, PSP_O_RDONLY, 0777);
+
+	fd1 = xrIoOpen(src, PSP_O_RDONLY, 0777);
 
 	if (fd1 < 0) {
 		if (cb != NULL)
@@ -68,7 +70,6 @@ extern bool copy_file(const char *src, const char *dest, t_copy_cb cb,
 		xrIoClose(fd1);
 		return false;
 	}
-	int readbytes;
 
 	while ((readbytes = xrIoRead(fd1, buf, 1024 * 1024)) > 0)
 		if (xrIoWrite(fd2, buf, readbytes) != readbytes) {
@@ -90,21 +91,23 @@ extern dword copy_dir(const char *src, const char *dest, t_copy_cb cb,
 					  t_copy_overwritecb ocb, void *data)
 {
 	int dl = xrIoDopen(src);
+	dword result = 0;
+	SceIoDirent sid;
 
 	if (dl < 0) {
 		if (cb != NULL)
 			cb(src, dest, false, data);
 		return 0;
 	}
-	xrIoMkdir(dest, 0777);
-	dword result = 0;
-	SceIoDirent sid;
 
+	xrIoMkdir(dest, 0777);
 	memset(&sid, 0, sizeof(SceIoDirent));
+
 	while (xrIoDread(dl, &sid)) {
+		char copysrc[260], copydest[260];
+
 		if (sid.d_name[0] == '.')
 			continue;
-		char copysrc[260], copydest[260];
 
 		SPRINTF_S(copysrc, "%s/%s", src, sid.d_name);
 		SPRINTF_S(copydest, "%s/%s", dest, sid.d_name);
@@ -169,10 +172,17 @@ extern bool extract_archive_file(const char *archname, const char *archpath,
 								 const char *dest, t_copy_cb cb,
 								 t_copy_overwritecb ocb, void *data)
 {
+	t_fs_filetype ft;
+	SceUID fd;
+	bool result = false;
+	buffer *archdata = NULL;
+	int buffer_cache;
+	char *ptr;
+
 	if (archname == NULL || archpath == NULL || dest == NULL)
 		return false;
 
-	t_fs_filetype ft = get_archive_type(archname);
+	ft = get_archive_type(archname);
 
 	if (ft == fs_filetype_unknown)
 		return false;
@@ -193,26 +203,20 @@ extern bool extract_archive_file(const char *archname, const char *archpath,
 	dbg_printf(d, "extract_archive_file: %s %s %s, ft = %d", archname,
 			   archpath, dest, ft);
 
-	SceUID fd;
-
 	fd = xrIoOpen(dest, PSP_O_CREAT | PSP_O_RDWR, 0777);
 
 	if (fd < 0)
 		return false;
-
-	bool result = false;
-
-	buffer *archdata = NULL;
 
 	extract_archive_file_into_buffer(&archdata, archname, archpath, ft);
 
 	if (archdata == NULL || archdata->ptr == NULL)
 		goto exit;
 
-	int buffer_cache =
+	buffer_cache =
 		archdata->used >= 1024 * 1024 ? 1024 * 1024 : archdata->used;
 
-	char *ptr = archdata->ptr;
+	ptr = archdata->ptr;
 
 	while (buffer_cache > 0) {
 		int bytes = xrIoWrite(fd, ptr, buffer_cache);

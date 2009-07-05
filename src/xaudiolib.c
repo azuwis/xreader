@@ -77,9 +77,10 @@ void xAudioSetVolume(int channel, int left, int right)
 
 void xAudioChannelThreadCallback(int channel, void *buf, unsigned int reqn)
 {
+	xAudioCallback_t callback;
+
 	if (channel >= PSP_NUM_AUDIO_CHANNELS)
 		return;
-	xAudioCallback_t callback;
 
 	callback = AudioStatus[channel].callback;
 }
@@ -87,10 +88,12 @@ void xAudioChannelThreadCallback(int channel, void *buf, unsigned int reqn)
 void xAudioSetChannelCallback(int channel, xAudioCallback_t callback,
 								 void *pdata)
 {
+	volatile psp_audio_channelinfo *pci;
+
 	if (channel >= PSP_NUM_AUDIO_CHANNELS)
 		return;
-	volatile psp_audio_channelinfo *pci = &AudioStatus[channel];
 
+	pci = &AudioStatus[channel];
 	pci->callback = 0;
 	pci->pdata = pdata;
 	pci->callback = callback;

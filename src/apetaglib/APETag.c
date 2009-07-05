@@ -68,16 +68,17 @@ static APETagItems *new_item(void)
 
 static int free_item(APETagItems * items)
 {
+	int i;
+
 	if (items == NULL) {
 		return -1;
 	}
-
-	int i;
 
 	for (i = 0; i < items->item_count; ++i) {
 		free(items->items[i]);
 		items->items[i] = NULL;
 	}
+
 	items->item_count = 0;
 	free(items->items);
 	items->items = NULL;
@@ -107,8 +108,10 @@ static int append_item(APETagItems * items, void *ptr, int size)
 		}
 		memcpy(items->items[0], ptr, size);
 	} else {
+		APETagItem **t;
+
 		items->item_count++;
-		APETagItem **t = (APETagItem **) realloc(items->items,
+		t = (APETagItem **) realloc(items->items,
 												 sizeof(APETagItem *) *
 												 items->item_count);
 		if (t != NULL)
@@ -132,10 +135,10 @@ static int append_item(APETagItems * items, void *ptr, int size)
 
 static APETagItem *find_item(const APETagItems * items, const char *searchstr)
 {
+	int i;
+
 	if (items == NULL)
 		return NULL;
-
-	int i;
 
 	for (i = 0; i < items->item_count; ++i) {
 		if (strcmp(APE_ITEM_GET_KEY(items->items[i]), searchstr) == 0) {
@@ -150,6 +153,10 @@ static int read_apetag(FILE * fp, APETag * tag)
 {
 	if (fread(&tag->footer, sizeof(APETagHeader), 1, fp) == 1) {
 		if (memcmp(&tag->footer.preamble, "APETAGEX", 8) == 0) {
+			char *raw_tag;
+			int i;
+			const char *p;
+
 			/*
 			   if (tag->footer.version != 2000) {
 			   apetag_errno = APETAG_UNSUPPORT_TAGVERSION;
@@ -168,7 +175,7 @@ static int read_apetag(FILE * fp, APETag * tag)
 			fseek(fp, -tag->footer.tag_size, SEEK_CUR);
 //          dbg_printf(d, "转到MP3位置 %ld", ftell(fp));
 
-			char *raw_tag = (char *) malloc(tag->footer.tag_size);
+			raw_tag = (char *) malloc(tag->footer.tag_size);
 
 			if (raw_tag == NULL) {
 				apetag_errno = APETAG_MEMORY_NOT_ENOUGH;
@@ -180,8 +187,7 @@ static int read_apetag(FILE * fp, APETag * tag)
 				return -1;
 			}
 
-			int i;
-			const char *p = raw_tag;
+			p = raw_tag;
 
 			for (i = 0; i < tag->footer.item_count; ++i) {
 				int size = APE_ITEM_GET_VALUE_LEN((APETagItem *) p);
@@ -217,6 +223,8 @@ static int read_apetag(FILE * fp, APETag * tag)
 
 static int search_apetag(FILE * fp, APETag * tag)
 {
+	int ret;
+
 	apetag_errno = APETAG_NOT_IMPLEMENTED;
 
 	// 首先搜索文件尾处，ID3V1标签之前，是否有APE标签
@@ -227,8 +235,6 @@ static int search_apetag(FILE * fp, APETag * tag)
 		fseek(fp, -32, SEEK_END);
 //      dbg_printf(d, "转到MP3位置 %ld", ftell(fp));
 	}
-
-	int ret;
 
 	if ((ret = read_apetag(fp, tag)) == 0)
 		return 0;
@@ -251,17 +257,20 @@ static int search_apetag(FILE * fp, APETag * tag)
 
 APETag *apetag_load(const char *filename)
 {
+	FILE *fp;
+	APETag *p;
+
 	if (filename == NULL)
 		return 0;
 
-	FILE *fp = fopen(filename, "rb");
+	fp = fopen(filename, "rb");
 
 	if (fp == NULL) {
 		apetag_errno = APETAG_ERROR_OPEN;
 		return 0;
 	}
 
-	APETag *p = (APETag *) malloc(sizeof(APETag));
+	p = (APETag *) malloc(sizeof(APETag));
 
 	if (p == NULL) {
 		apetag_errno = APETAG_MEMORY_NOT_ENOUGH;
@@ -298,12 +307,13 @@ char *apetag_get(APETag * tag, const char *key)
 {
 	int size;
 	char *t;
+	APETagItem *pItem;
 
 	if (tag == NULL || key == NULL) {
 		return NULL;
 	}
 
-	APETagItem *pItem = find_item(tag->items, key);
+	pItem = find_item(tag->items, key);
 
 	if (pItem == NULL || !APE_ITEM_IS_UTF8(pItem)) {
 		return NULL;

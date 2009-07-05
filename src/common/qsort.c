@@ -36,10 +36,11 @@ void _quicksort(void *data, int left, int right, int datasize,
 				qsort_compare compare)
 {
 	int i, last;
+	byte(*qdata)[datasize];
 
 	if (left >= right)
 		return;
-	byte(*qdata)[datasize];
+
 	qdata = (byte(*)[datasize]) data;
 	if (right - left > 1)
 		swap_data(&qdata[left], &qdata[(left + right) / 2], datasize);

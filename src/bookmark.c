@@ -76,7 +76,10 @@ extern void bookmark_init(const char *fn)
 static p_bookmark bookmark_open_hash(dword hash)
 {
 	int fd;
+	dword count;
 	p_bookmark bm = calloc(1, sizeof(*bm));
+	t_bm_index bi;
+	dword i, j;
 
 	if (bm == NULL)
 		return NULL;
@@ -88,14 +91,11 @@ static p_bookmark bookmark_open_hash(dword hash)
 
 	if (fd < 0)
 		return bm;
-	dword count;
 
 	if (xrIoRead(fd, &count, sizeof(dword)) < sizeof(dword)) {
 		xrIoClose(fd);
 		return bm;
 	}
-	t_bm_index bi;
-	dword i, j;
 
 	for (i = 0; i < count; i++) {
 		if (xrIoRead(fd, &bi, sizeof(t_bm_index)) < sizeof(t_bm_index)) {
@@ -152,29 +152,34 @@ extern p_bookmark bookmark_open(const char *filename)
 
 extern void bookmark_save(p_bookmark bm)
 {
+	int fd;
+	dword count;
+	t_bm_index bi;
+
 	if (!bm)
 		return;
 
 	if (!memcmp(&g_oldbm, bm, sizeof(g_oldbm)))
 		return;
 
-	int fd = xrIoOpen(bmfile, PSP_O_CREAT | PSP_O_RDWR, 0777);
+	fd = xrIoOpen(bmfile, PSP_O_CREAT | PSP_O_RDWR, 0777);
 
 	if (fd < 0)
 		return;
-	dword count;
-	t_bm_index bi;
 
 	if (xrIoRead(fd, &count, sizeof(dword)) < sizeof(dword)) {
+		dword *temp;
+		dword cur_pos;
+
 		count = 1;
 		xrIoLseek(fd, 0, PSP_SEEK_SET);
 		xrIoWrite(fd, &count, sizeof(dword));
 		memset(&bi, 0, sizeof(t_bm_index));
 		xrIoWrite(fd, &bi, sizeof(t_bm_index));
-		dword *temp = calloc(32 * 10, sizeof(*temp));
+		temp = calloc(32 * 10, sizeof(*temp));
 
 		memset(temp, 0, 32 * 10 * sizeof(dword));
-		dword cur_pos = xrIoLseek(fd, 0, PSP_SEEK_CUR);
+		cur_pos = xrIoLseek(fd, 0, PSP_SEEK_CUR);
 
 		dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
 		xrIoWrite(fd, temp, 32 * 10 * sizeof(dword));
@@ -191,6 +196,8 @@ extern void bookmark_save(p_bookmark bm)
 
 			for (j = 0; j < 32; j++)
 				if ((bi.flag & flagbits[j]) == 0) {
+					dword cur_pos;
+
 					bi.flag |= flagbits[j];
 					bi.hash[j] = bm->hash;
 					bm->index = (count - 1) * 32 + j;
@@ -201,7 +208,7 @@ extern void bookmark_save(p_bookmark bm)
 							   32 * 10 * sizeof(dword)), PSP_SEEK_SET);
 					xrIoWrite(fd, &bi, sizeof(t_bm_index));
 					xrIoLseek(fd, j * 10 * sizeof(dword), PSP_SEEK_CUR);
-					dword cur_pos = xrIoLseek(fd, 0, PSP_SEEK_CUR);
+					cur_pos = xrIoLseek(fd, 0, PSP_SEEK_CUR);
 
 					dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__,
 							   cur_pos);
@@ -209,6 +216,9 @@ extern void bookmark_save(p_bookmark bm)
 					break;
 				}
 		} else {
+			dword cur_pos;
+			dword *temp;
+
 			xrIoLseek(fd,
 					  sizeof(dword) + count * (sizeof(t_bm_index) +
 											   32 * 10 *
@@ -218,11 +228,11 @@ extern void bookmark_save(p_bookmark bm)
 			bi.hash[0] = bm->hash;
 			bm->index = count * 32;
 			xrIoWrite(fd, &bi, sizeof(t_bm_index));
-			dword cur_pos = xrIoLseek(fd, 0, PSP_SEEK_CUR);
+			cur_pos = xrIoLseek(fd, 0, PSP_SEEK_CUR);
 
 			dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
 			xrIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
-			dword *temp = calloc(31 * 10, sizeof(*temp));
+			temp = calloc(31 * 10, sizeof(*temp));
 
 			memset(temp, 0, 31 * 10 * sizeof(dword));
 			xrIoWrite(fd, temp, 31 * 10 * sizeof(dword));
@@ -232,6 +242,9 @@ extern void bookmark_save(p_bookmark bm)
 			xrIoWrite(fd, &count, sizeof(dword));
 		}
 	} else {
+		dword cur_pos;
+		int ret;
+
 		xrIoLseek(fd,
 				  sizeof(dword) +
 				  (bm->index / 32) * (sizeof(t_bm_index) +
@@ -239,10 +252,9 @@ extern void bookmark_save(p_bookmark bm)
 				  sizeof(t_bm_index) +
 				  ((bm->index % 32) * 10 * sizeof(dword)), PSP_SEEK_SET);
 
-		dword cur_pos = xrIoLseek(fd, 0, PSP_SEEK_CUR);
+		cur_pos = xrIoLseek(fd, 0, PSP_SEEK_CUR);
 
 		dbg_printf(d, "%s: Writing bookmark at 0x%08lx", __func__, cur_pos);
-		int ret;
 
 		ret = xrIoWrite(fd, &bm->row[0], 10 * sizeof(dword));
 
@@ -257,6 +269,7 @@ extern void bookmark_save(p_bookmark bm)
 extern void bookmark_delete(p_bookmark bm)
 {
 	int fd = xrIoOpen(bmfile, PSP_O_RDWR, 0777);
+	t_bm_index bi;
 
 	if (fd < 0)
 		return;
@@ -264,7 +277,6 @@ extern void bookmark_delete(p_bookmark bm)
 			  sizeof(dword) + (bm->index / 32) * (sizeof(t_bm_index) +
 												  32 * 10 * sizeof(dword)),
 			  PSP_SEEK_SET);
-	t_bm_index bi;
 
 	memset(&bi, 0, sizeof(t_bm_index));
 	xrIoRead(fd, &bi, sizeof(t_bm_index));
@@ -286,10 +298,12 @@ extern void bookmark_close(p_bookmark bm)
 
 extern bool bookmark_export(p_bookmark bm, const char *filename)
 {
+	int fd;
+
 	if (!bm || !filename)
 		return false;
 
-	int fd = xrIoOpen(filename, PSP_O_CREAT | PSP_O_WRONLY, 0777);
+	fd = xrIoOpen(filename, PSP_O_CREAT | PSP_O_WRONLY, 0777);
 
 	if (fd < 0)
 		return false;
@@ -302,20 +316,22 @@ extern bool bookmark_export(p_bookmark bm, const char *filename)
 
 extern bool bookmark_import(const char *filename)
 {
+	int fd;
+	dword hash;
+	p_bookmark bm = NULL;
+
 	if (!filename)
 		return false;
 
-	int fd = xrIoOpen(filename, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(filename, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
-	dword hash;
 
 	if (xrIoRead(fd, &hash, sizeof(dword)) < sizeof(dword)) {
 		xrIoClose(fd);
 		return false;
 	}
-	p_bookmark bm = NULL;
 
 	if ((bm = bookmark_open_hash(hash)) == NULL) {
 		xrIoClose(fd);

@@ -146,6 +146,8 @@ extern void disp_putpixel(int x, int y, pixel color)
 
 extern void disp_set_fontsize(int fontsize)
 {
+	extern int MAX_ITEM_NAME_LEN;
+
 	if (!using_ttf)
 		memset(disp_ewidth, 0, 0x80);
 	DISP_FONTSIZE = fontsize;
@@ -169,8 +171,6 @@ extern void disp_set_fontsize(int fontsize)
 	DISP_EFONTSIZE = DISP_FONTSIZE * DISP_EROWSIZE;
 	HRR = 100 / DISP_FONTSIZE;
 	WRR = config.filelistwidth / DISP_FONTSIZE;
-
-	extern int MAX_ITEM_NAME_LEN;
 
 	MAX_ITEM_NAME_LEN = WRR * 4 - 1;
 }
@@ -329,10 +329,12 @@ extern void disp_assign_book_font(void)
 extern bool disp_load_zipped_font(const char *zipfile, const char *efont,
 								  const char *cfont)
 {
-	disp_free_font();
-	unzFile unzf = unzOpen(zipfile);
-	unz_file_info info;
+	unzFile unzf;
 	dword size;
+	unz_file_info info;
+
+	disp_free_font();
+	unzf = unzOpen(zipfile);
 
 	if (unzf == NULL)
 		return false;
@@ -424,11 +426,11 @@ static p_ttf load_archieve_truetype_book_font(const char *zipfile,
 
 extern bool disp_ttf_reload(int size)
 {
-	dbg_printf(d, "%s", __func__);
-
 #ifdef ENABLE_TTF
 	static char prev_ettfpath[PATH_MAX] = "", prev_ettfarch[PATH_MAX] = "";
 	static char prev_cttfpath[PATH_MAX] = "", prev_cttfarch[PATH_MAX] = "";
+
+	dbg_printf(d, "%s", __func__);
 
 	using_ttf = false;
 	memset(disp_ewidth, size / 2, 0x80);
@@ -551,29 +553,6 @@ extern bool disp_ttf_reload(int size)
 		}
 	}
 
-	if (cttf == NULL && ettf == NULL)
-		return false;
-
-	if (cttf == NULL) {
-		cttf =
-			ttf_open_buffer(ettf->fileBuffer, ettf->fileSize, size,
-					ettf->fontName, true);
-
-		if (cttf) {
-			g_ttf_share_two_font = true;
-		}
-	}
-
-	if (ettf == NULL) {
-		ettf =
-			ttf_open_buffer(cttf->fileBuffer, cttf->fileSize, size,
-					cttf->fontName, false);
-
-		if (ettf) {
-			g_ttf_share_two_font = true;
-		}
-	}
-
 	if (cttf == NULL || ettf == NULL)
 		return false;
 
@@ -627,33 +606,42 @@ extern bool disp_ttf_reload(int size)
 
 extern bool disp_load_font(const char *efont, const char *cfont)
 {
-	disp_free_font();
 	int size;
-	int fd = xrIoOpen(efont, PSP_O_RDONLY, 0777);
+	int fd;
+
+	disp_free_font();
+   	fd = xrIoOpen(efont, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
+
 	size = xrIoLseek32(fd, 0, PSP_SEEK_END);
+
 	if ((efont_buffer = calloc(1, size)) == NULL) {
 		xrIoClose(fd);
 		return false;
 	}
+
 	xrIoLseek32(fd, 0, PSP_SEEK_SET);
 	xrIoRead(fd, efont_buffer, size);
 	xrIoClose(fd);
 	book_efont_buffer = efont_buffer;
 
 	fd = xrIoOpen(cfont, PSP_O_RDONLY, 0777);
+
 	if (fd < 0) {
 		disp_free_font();
 		return false;
 	}
+
 	size = xrIoLseek32(fd, 0, PSP_SEEK_END);
+
 	if ((cfont_buffer = calloc(1, size)) == NULL) {
 		disp_free_font();
 		xrIoClose(fd);
 		return false;
 	}
+
 	xrIoLseek32(fd, 0, PSP_SEEK_SET);
 	xrIoRead(fd, cfont_buffer, size);
 	xrIoClose(fd);
@@ -665,6 +653,10 @@ extern bool disp_load_font(const char *efont, const char *cfont)
 extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 									   const char *cfont)
 {
+	unzFile unzf;
+	unz_file_info info;
+	dword size;
+
 	using_ttf = false;
 #ifdef ENABLE_TTF
 	disp_ttf_close();
@@ -673,9 +665,8 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
-	unzFile unzf = unzOpen(zipfile);
-	unz_file_info info;
-	dword size;
+
+	unzf = unzOpen(zipfile);
 
 	if (unzf == NULL)
 		return false;
@@ -730,6 +721,9 @@ extern bool disp_load_zipped_book_font(const char *zipfile, const char *efont,
 
 extern bool disp_load_book_font(const char *efont, const char *cfont)
 {
+	int size;
+	int fd;
+	
 	using_ttf = false;
 #ifdef ENABLE_TTF
 	disp_ttf_close();
@@ -738,16 +732,19 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 		free(book_efont_buffer);
 		book_efont_buffer = NULL;
 	}
-	int size;
-	int fd = xrIoOpen(efont, PSP_O_RDONLY, 0777);
+
+	fd = xrIoOpen(efont, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
+
 	size = xrIoLseek32(fd, 0, PSP_SEEK_END);
+
 	if ((book_efont_buffer = calloc(1, size)) == NULL) {
 		xrIoClose(fd);
 		return false;
 	}
+
 	xrIoLseek32(fd, 0, PSP_SEEK_SET);
 	xrIoRead(fd, book_efont_buffer, size);
 	xrIoClose(fd);
@@ -756,17 +753,22 @@ extern bool disp_load_book_font(const char *efont, const char *cfont)
 		free(book_cfont_buffer);
 		book_cfont_buffer = NULL;
 	}
+
 	fd = xrIoOpen(cfont, PSP_O_RDONLY, 0777);
+
 	if (fd < 0) {
 		disp_free_font();
 		return false;
 	}
+
 	size = xrIoLseek32(fd, 0, PSP_SEEK_END);
+
 	if ((book_cfont_buffer = calloc(1, size)) == NULL) {
 		disp_free_font();
 		xrIoClose(fd);
 		return false;
 	}
+
 	xrIoLseek32(fd, 0, PSP_SEEK_SET);
 	xrIoRead(fd, book_cfont_buffer, size);
 	xrIoClose(fd);
@@ -855,11 +857,13 @@ extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
 							 int starty, int ow, int oh, pixel * buf,
 							 bool swizzled)
 {
+	Vertex *vertices;
+
 	xrGuStart(GU_DIRECT, list);
 	xrGuTexFilter(GU_LINEAR, GU_LINEAR);
 	xrGuShadeModel(GU_SMOOTH);
 	xrGuAmbientColor(0xFFFFFFFF);
-	Vertex *vertices = (Vertex *) xrGuGetMemory(2 * sizeof(Vertex));
+	vertices = (Vertex *) xrGuGetMemory(2 * sizeof(Vertex));
 
 	xrGuTexMode(GU_PSM_8888, 0, 0, swizzled ? 1 : 0);
 	xrGuTexImage(0, 512, 512, bufw, buf);
@@ -898,6 +902,9 @@ extern void disp_newputimage(int x, int y, int w, int h, int bufw, int startx,
 extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx,
 						  dword starty, pixel * buf)
 {
+	pixel *lines, *linesend;
+	dword rw;
+
 	if (x < 0) {
 		w += x;
 		startx -= x;
@@ -917,10 +924,10 @@ extern void disp_putimage(dword x, dword y, dword w, dword h, dword startx,
 		return;
 	}
 
-	pixel *lines = disp_get_vaddr(x, y), *linesend =
-		lines + (min(PSP_SCREEN_HEIGHT - y, h - starty) << 9);
+	lines = disp_get_vaddr(x, y);
+   	linesend = lines + (min(PSP_SCREEN_HEIGHT - y, h - starty) << 9);
 	buf = buf + starty * w + startx;
-	dword rw = min(512 - x, w - startx) * PIXEL_BYTES;
+	rw = min(512 - x, w - startx) * PIXEL_BYTES;
 
 	for (; lines < linesend; lines += 512) {
 		memcpy(lines, buf, rw);
@@ -1069,12 +1076,17 @@ typedef struct
 
 static inline int putnstring_hanzi(disp_draw_string_inf * inf)
 {
+	pixel *vaddr;
+	const byte *ccur, *cend;
+	int d;
+
 	if (inf == NULL)
 		return 0;
+
 	if (!check_range(inf->x, inf->y))
 		return 0;
-	pixel *vaddr = disp_get_vaddr(inf->x, inf->y);
-	const byte *ccur, *cend;
+
+	vaddr = disp_get_vaddr(inf->x, inf->y);
 
 	if (inf->is_system)
 		ccur =
@@ -1095,6 +1107,7 @@ static inline int putnstring_hanzi(disp_draw_string_inf * inf)
 		int b;
 		pixel *vpoint = vaddr;
 		int bitsleft;
+		int t;
 
 		if (inf->is_system)
 			bitsleft = DISP_FONTSIZE - 8;
@@ -1110,7 +1123,8 @@ static inline int putnstring_hanzi(disp_draw_string_inf * inf)
 			++ccur;
 			bitsleft -= 8;
 		}
-		int t = inf->is_system ? fbits_last : fbits_book_last;
+
+		t = inf->is_system ? fbits_last : fbits_book_last;
 
 		for (b = 0x80; b > t; b >>= 1) {
 			if (((*ccur) & b) != 0)
@@ -1131,7 +1145,7 @@ static inline int putnstring_hanzi(disp_draw_string_inf * inf)
 	inf->str += 2;
 	inf->count -= 2;
 
-	int d =
+	d = 
 		inf->is_system ? DISP_FONTSIZE +
 		inf->wordspace * 2 : DISP_BOOK_FONTSIZE + inf->wordspace * 2;
 
@@ -1155,10 +1169,14 @@ static inline int putnstring_hanzi(disp_draw_string_inf * inf)
 
 static inline int putnstring_ascii(disp_draw_string_inf * inf)
 {
+	pixel *vaddr;
+	const byte *ccur, *cend;
+	int t, d;
+
 	if (!check_range(inf->x, inf->y))
 		return 0;
-	pixel *vaddr = disp_get_vaddr(inf->x, inf->y);
-	const byte *ccur, *cend;
+
+	vaddr = disp_get_vaddr(inf->x, inf->y);
 
 	if (inf->is_system)
 		ccur =
@@ -1192,7 +1210,8 @@ static inline int putnstring_ascii(disp_draw_string_inf * inf)
 			++ccur;
 			bitsleft -= 8;
 		}
-		int t = inf->is_system ? febits_last : febits_book_last;
+
+		t = inf->is_system ? febits_last : febits_book_last;
 
 		for (b = 0x80; b > t; b >>= 1) {
 			if (((*ccur) & b) != 0)
@@ -1201,6 +1220,7 @@ static inline int putnstring_ascii(disp_draw_string_inf * inf)
 		}
 		next_row(inf->direction, &vaddr);
 	}
+
 	switch (inf->direction) {
 		case LVERT:
 			vaddr++;
@@ -1213,7 +1233,7 @@ static inline int putnstring_ascii(disp_draw_string_inf * inf)
 	inf->str++;
 	inf->count--;
 
-	int d =
+	d =
 		inf->is_system ? DISP_FONTSIZE / 2 +
 		inf->wordspace : DISP_BOOK_FONTSIZE / 2 + inf->wordspace;
 
@@ -1283,6 +1303,8 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 							int count, dword wordspace, int top, int height,
 							int bot)
 {
+	disp_draw_string_inf inf;
+
 	if (bot) {
 		if (y >= bot)
 			return;
@@ -1299,8 +1321,6 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
 		return;
 	}
-
-	disp_draw_string_inf inf;
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
@@ -1327,12 +1347,13 @@ extern void disp_putnstring(int x, int y, pixel color, const byte * str,
 			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
 									  &wordspace, &top, &height, NULL);
 		} else {
+			int j;
+
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE / 2) {
 				break;
 			}
 			if (!check_range(x, y))
 				return;
-			int j;
 
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				x += DISP_FONTSIZE / 2 + wordspace;
@@ -1347,6 +1368,8 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 										dword wordspace, int top, int height,
 										int bot)
 {
+	disp_draw_string_inf inf;
+
 	if (bot) {
 		if (y >= bot)
 			return;
@@ -1368,8 +1391,6 @@ extern void disp_putnstringreversal_sys(int x, int y, pixel color,
 
 	if (x < 0 || y < 0)
 		return;
-
-	disp_draw_string_inf inf;
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
@@ -1446,13 +1467,17 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
+			dword pos;
+
 			if (x < 0) {
 				break;
 			}
+
 			if (!check_range(x, y))
 				return;
+
 			vaddr = disp_get_vaddr(x, y);
-			dword pos =
+			pos =
 				(((dword) (*str - 0x81)) * 0xBF +
 				 ((dword) (*(str + 1) - 0x40)));
 			ccur =
@@ -1523,13 +1548,13 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 			str++;
 			count--;
 		} else {
+			int j;
+
 			if (x < 0) {
 				break;
 			}
 			if (!check_range(x, y))
 				return;
-			int j;
-
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				x -= DISP_BOOK_FONTSIZE / 2 + wordspace;
 			str++;
@@ -1564,13 +1589,15 @@ extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
+			dword pos;
+
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_FONTSIZE) {
 				break;
 			}
 			if (!check_range(x, y))
 				return;
 			vaddr = disp_get_vaddr(x, y);
-			dword pos =
+			pos =
 				(((dword) (*str - 0x81)) * 0xBF +
 				 ((dword) (*(str + 1) - 0x40)));
 			ccur = cfont_buffer + pos * DISP_CFONTSIZE + top * DISP_CROWSIZE;
@@ -1653,6 +1680,8 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 								int count, dword wordspace, int top, int height,
 								int bot)
 {
+	disp_draw_string_inf inf;
+
 #ifdef ENABLE_TTF
 	if (using_ttf) {
 		disp_putnstring_horz_truetype(cttf, ettf, x, y, color, str,
@@ -1678,8 +1707,6 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 		return;
 	}
 
-	disp_draw_string_inf inf;
-
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE) {
@@ -1704,12 +1731,13 @@ extern void disp_putnstringhorz(int x, int y, pixel color, const byte * str,
 			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
 									  &wordspace, &top, &height, NULL);
 		} else {
+			int j;
+
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
 			}
 			if (!check_range(x, y))
 				return;
-			int j;
 
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				x += DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1724,6 +1752,8 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 									 dword wordspace, int top, int height,
 									 int bot)
 {
+	disp_draw_string_inf inf;
+
 	if (bot) {
 		if (x >= bot)
 			return;
@@ -1740,8 +1770,6 @@ extern void disp_putnstringlvert_sys(int x, int y, pixel color,
 		dbg_printf(d, "%s: axis out of screen %d %d", __func__, x, y);
 		return;
 	}
-
-	disp_draw_string_inf inf;
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
@@ -1783,6 +1811,8 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 								 int count, dword wordspace, int top,
 								 int height, int bot)
 {
+	disp_draw_string_inf inf;
+
 #ifdef ENABLE_TTF
 	if (using_ttf) {
 		disp_putnstring_lvert_truetype(cttf, ettf, x, y, color, str,
@@ -1808,8 +1838,6 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 		return;
 	}
 
-	disp_draw_string_inf inf;
-
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
 			if (y < DISP_BOOK_FONTSIZE - 1) {
@@ -1834,12 +1862,13 @@ extern void disp_putnstringlvert(int x, int y, pixel color, const byte * str,
 			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
 									  &wordspace, &top, &height, NULL);
 		} else {
+			int j;
+
 			if (y < DISP_BOOK_FONTSIZE / 2 - 1) {
 				break;
 			}
 			if (!check_range(x, y))
 				return;
-			int j;
 
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1854,6 +1883,8 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 									 dword wordspace, int top, int height,
 									 int bot)
 {
+	disp_draw_string_inf inf;
+
 	if (str == NULL) {
 		dbg_printf(d, "%s: %d/%d output null string", __func__, x, y);
 		return;
@@ -1868,8 +1899,6 @@ extern void disp_putnstringrvert_sys(int x, int y, pixel color,
 		return;
 	if (x + 1 - height < bot)
 		height = x + 1 - bot;
-
-	disp_draw_string_inf inf;
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
@@ -1911,6 +1940,8 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 								 int count, dword wordspace, int top,
 								 int height, int bot)
 {
+	disp_draw_string_inf inf;
+
 #ifdef ENABLE_TTF
 	if (using_ttf) {
 		disp_putnstring_rvert_truetype(cttf, ettf, x, y, color, str,
@@ -1933,8 +1964,6 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 		return;
 	if (x + 1 - height < bot)
 		height = x + 1 - bot;
-
-	disp_draw_string_inf inf;
 
 	while (*str != 0 && count > 0) {
 		if (*str > 0x80) {
@@ -1960,12 +1989,13 @@ extern void disp_putnstringrvert(int x, int y, pixel color, const byte * str,
 			disp_from_draw_string_inf(&inf, &x, &y, &color, &str, &count,
 									  &wordspace, &top, &height, NULL);
 		} else {
+			int j;
+
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
 			}
 			if (!check_range(x, y))
 				return;
-			int j;
 
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				y += DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1986,9 +2016,10 @@ extern void disp_fillvram(pixel color)
 
 extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
-	xrGuStart(GU_DIRECT, list);
-	VertexColor *vertices = xrGuGetMemory(2 * sizeof(*vertices));
+	VertexColor *vertices;
 
+	xrGuStart(GU_DIRECT, list);
+	vertices = xrGuGetMemory(2 * sizeof(*vertices));
 	setVertex(&vertices[0], x1, y1, 0, color);
 	setVertex(&vertices[1], x2 + 1, y2 + 1, 0, color);
 
@@ -2004,9 +2035,10 @@ extern void disp_fillrect(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
-	xrGuStart(GU_DIRECT, list);
-	VertexColor *vertices = xrGuGetMemory(5 * sizeof(*vertices));
+	VertexColor *vertices;
 
+	xrGuStart(GU_DIRECT, list);
+	vertices = xrGuGetMemory(5 * sizeof(*vertices));
 	setVertex(&vertices[0], x1, y1, 0, color);
 	setVertex(&vertices[1], x2, y1, 0, color);
 	setVertex(&vertices[2], x2, y2, 0, color);
@@ -2025,9 +2057,10 @@ extern void disp_rectangle(dword x1, dword y1, dword x2, dword y2, pixel color)
 
 extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 {
-	xrGuStart(GU_DIRECT, list);
-	VertexColor *vertices = xrGuGetMemory(2 * sizeof(*vertices));
+	VertexColor *vertices;
 
+	xrGuStart(GU_DIRECT, list);
+	vertices = xrGuGetMemory(2 * sizeof(*vertices));
 	setVertex(&vertices[0], x1, y1, 0, color);
 	setVertex(&vertices[1], x2, y2, 0, color);
 
@@ -2044,22 +2077,20 @@ extern void disp_line(dword x1, dword y1, dword x2, dword y2, pixel color)
 pixel *disp_swizzle_image(pixel * buf, int width, int height)
 {
 	int pitch = (PIXEL_BYTES * width + 15) & ~0xF;
-
 	pixel *out;
+	unsigned blockx, blocky;
+	unsigned j;
+	unsigned width_blocks = pitch / 16;
+	unsigned height_blocks = (height + 7) / 8;
+	unsigned src_pitch = (pitch - 16) / 4;
+	unsigned src_row = pitch * 8;
+	const byte *ysrc = (const byte *) buf;
+	u32 *dst;
 
 	if ((out = (pixel *) memalign(16, pitch * ((height + 7) & ~0x7))) == NULL)
 		return out;
-	unsigned blockx, blocky;
-	unsigned j;
 
-	unsigned width_blocks = pitch / 16;
-	unsigned height_blocks = (height + 7) / 8;
-
-	unsigned src_pitch = (pitch - 16) / 4;
-	unsigned src_row = pitch * 8;
-
-	const byte *ysrc = (const byte *) buf;
-	u32 *dst = (u32 *) out;
+	dst = (u32 *) out;
 
 	for (blocky = 0; blocky < height_blocks; ++blocky) {
 		const byte *xsrc = ysrc;

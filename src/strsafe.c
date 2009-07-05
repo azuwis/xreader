@@ -34,6 +34,8 @@ size_t
 strncpy_s(char *strDest,
 		  size_t numberOfElements, const char *strSource, size_t count)
 {
+	size_t copied;
+
 	if (!strDest || !strSource || numberOfElements == 0) {
 #ifdef _DEBUG
 		dbg_printf(d, "%s: invalid argument.", __func__);
@@ -45,7 +47,7 @@ strncpy_s(char *strDest,
 		dbg_printf(d, "%s: strDest may be a pointer: %s", __func__, strSource);
 	}
 #endif
-	size_t copied = numberOfElements - 1 < count ? numberOfElements - 1 : count;
+	copied = numberOfElements - 1 < count ? numberOfElements - 1 : count;
 	strncpy(strDest, strSource, copied);
 	strDest[copied] = '\0';
 	return strnlen(strDest, numberOfElements);
@@ -88,6 +90,9 @@ strcat_s(char *strDestination, size_t numberOfElements, const char *strSource)
 
 int snprintf_s(char *buffer, size_t sizeOfBuffer, const char *format, ...)
 {
+	va_list va;
+	int ret;
+
 	if (!buffer || sizeOfBuffer == 0) {
 #ifdef _DEBUG
 		dbg_printf(d, "%s: invalid argument.", __func__);
@@ -100,14 +105,9 @@ int snprintf_s(char *buffer, size_t sizeOfBuffer, const char *format, ...)
 	}
 #endif
 
-	va_list va;
-
 	va_start(va, format);
-
-	int ret = vsnprintf(buffer, sizeOfBuffer, format, va);
-
+	ret = vsnprintf(buffer, sizeOfBuffer, format, va);
 	buffer[sizeOfBuffer - 1] = '\0';
-
 	va_end(va);
 
 	return ret;

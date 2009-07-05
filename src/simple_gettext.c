@@ -53,10 +53,10 @@ static PTextDomainEntry find_domain(const char *domainname)
 
 const char *simple_gettext(const char *msgid)
 {
+	char *p;
+
 	if (msgid == NULL)
 		return NULL;
-
-	char *p;
 
 	if ((p = lookup_transitem(g_curr_transitem, msgid)) != NULL) {
 		return p;
@@ -70,6 +70,8 @@ const char *simple_gettext(const char *msgid)
 
 char *simple_bindtextdomain(const char *domainname, const char *dirname)
 {
+	PTextDomainEntry p = NULL;
+
 	if (domainname == NULL)
 		return NULL;
 
@@ -80,8 +82,6 @@ char *simple_bindtextdomain(const char *domainname, const char *dirname)
 			return NULL;
 		return p->dirname;
 	}
-
-	PTextDomainEntry p = NULL;
 
 	p = calloc(1, sizeof(*p));
 	if (p == NULL)
@@ -106,18 +106,20 @@ char *simple_bindtextdomain(const char *domainname, const char *dirname)
 
 char *simple_textdomain(const char *domainname)
 {
+	PTextDomainEntry p;
+	char path[BUFSIZ];
+	int size = 0;
+
 	if (domainname == NULL) {
 		return g_simple_curr_domainname;
 	}
 
-	PTextDomainEntry p = find_domain(domainname);
+	p = find_domain(domainname);
 
 	if (p == NULL)
 		return NULL;
 
 	STRCPY_S(g_simple_curr_domainname, domainname);
-
-	char path[BUFSIZ];
 
 	STRCPY_S(path, p->dirname);
 	STRCAT_S(path, "/");
@@ -128,8 +130,6 @@ char *simple_textdomain(const char *domainname)
 		simple_gettext_destroy();
 		g_curr_transitem = NULL;
 	}
-
-	int size = 0;
 
 	if (read_sofile(path, &g_curr_transitem, &size) != 0) {
 		return NULL;

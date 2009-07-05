@@ -175,6 +175,7 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 	const uint32_t xing_offtbl[2][2] = { {32, 17}, {17, 9} };
 	uint32_t b, frames;
 	MPADecodeContext ctx;
+	char *p;
 
 	frames = -1;
 
@@ -256,9 +257,6 @@ static int mp3_parse_vbr_tags(mp3_reader_data * data, struct MP3Info *info,
 		}
 
 		info->lame_str[9] = '\0';
-
-		char *p;
-
 		p = &info->lame_str[strlen(info->lame_str) - 1];
 
 		if (p >= info->lame_str) {
@@ -666,6 +664,8 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	int size, br = 0, dcount = 0;
 	int end;
 	int level;
+	static uint8_t *buf;
+	uint32_t first_frame = (uint32_t) - 1;
 
 	if (data->fd < 0)
 		return -1;
@@ -674,8 +674,6 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 
 	if (skip_id3v2_tag(data) == -1)
 		return -1;
-
-	static uint8_t *buf;
 
 	buf = malloc(65536 + 4);
 
@@ -689,8 +687,6 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 		free(buf);
 		return -1;
 	}
-
-	uint32_t first_frame = (uint32_t) - 1;
 
 	level = info->sample_freq = info->channels = info->frames = 0;
 	info->frameoff = NULL;

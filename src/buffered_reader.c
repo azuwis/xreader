@@ -83,6 +83,7 @@ buffered_reader_t *buffered_reader_open(const char *path, int32_t buffer_size,
 										int32_t seek_mode)
 {
 	buffered_reader_t *reader = malloc(sizeof(buffered_reader_t));
+	long long result;
 
 	if (reader == 0)
 		return 0;
@@ -125,8 +126,6 @@ buffered_reader_t *buffered_reader_open(const char *path, int32_t buffer_size,
 	reader->first_buffer = reader->buffer_0;
 	reader->second_buffer = reader->buffer_1;
 	reader->third_buffer = reader->buffer_2;
-
-	long long result;
 
 	xrIoLseek(reader->handle, reader->position_0, PSP_SEEK_SET);
 	xrIoReadAsync(reader->handle, reader->first_buffer,

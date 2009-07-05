@@ -125,6 +125,11 @@ static void cache_clear(void)
 			ccacher.caches[i].data = NULL;
 		}
 
+		if (ccacher.caches[i].exif_array) {
+			buffer_array_free(ccacher.caches[i].exif_array);
+			ccacher.caches[i].exif_array = NULL;
+		}
+
 		if (ccacher.caches[i].status == CACHE_OK) {
 			ccacher.memory_usage -=
 				ccacher.caches[i].width * ccacher.caches[i].height *
@@ -155,13 +160,20 @@ void cache_set_forward(bool forward)
  */
 static int cache_delete(size_t pos)
 {
+	cache_image_t *p;
+
 	cache_lock();
-	cache_image_t *p = &ccacher.caches[pos];
+	p = &ccacher.caches[pos];
 
 	if (p->data != NULL) {
 		dbg_printf(d, "%s: data 0x%08x", __func__, (unsigned) p->data);
 		free(p->data);
 		p->data = NULL;
+	}
+
+	if (p->exif_array) {
+		buffer_array_free(p->exif_array);
+		p->exif_array = NULL;
 	}
 
 	if (p->status == CACHE_OK) {
@@ -260,10 +272,11 @@ static int cache_add_by_selidx(dword selidx, int where)
 
 void dbg_dump_cache(void)
 {
-	cache_lock();
-
-	cache_image_t *p = ccacher.caches;
+	cache_image_t *p;
 	dword c;
+
+	cache_lock();
+	p = ccacher.caches;
 
 	for (c = 0; p != ccacher.caches + ccacher.caches_size; ++p) {
 		if (p->status == CACHE_OK || p->status == CACHE_FAILED)
@@ -310,6 +323,7 @@ int start_cache_next_image(void)
 	cache_image_t tmp;
 	t_fs_filetype ft;
 	dword free_memory;
+	int fid;
 
 	if (avoid_times && curr_times++ < avoid_times) {
 //      dbg_printf(d, "%s: curr_times %d avoid time %d", __func__, curr_times, avoid_times);
@@ -342,9 +356,8 @@ int start_cache_next_image(void)
 
 	copy_cache_image(&tmp, p);
 	cache_unlock();
-
 	ft = fs_file_get_type(tmp.filename);
-	int fid = freq_enter_hotzone();
+	fid = freq_enter_hotzone();
 
 	if (tmp.where == scene_in_dir) {
 		char fullpath[PATH_MAX];
@@ -353,11 +366,13 @@ int start_cache_next_image(void)
 		STRCAT_S(fullpath, tmp.filename);
 		tmp.result =
 			image_open_archive(fullpath, tmp.archname, ft, &tmp.width,
-							   &tmp.height, &tmp.data, &tmp.bgc, tmp.where);
+							   &tmp.height, &tmp.data, &tmp.bgc, tmp.where,
+							   &tmp.exif_array);
 	} else {
 		tmp.result =
 			image_open_archive(tmp.filename, tmp.archname, ft, &tmp.width,
-							   &tmp.height, &tmp.data, &tmp.bgc, tmp.where);
+							   &tmp.height, &tmp.data, &tmp.bgc, tmp.where,
+							   &tmp.exif_array);
 	}
 
 	if (tmp.result == 0 && tmp.data != NULL && config.imgbrightness != 100) {
@@ -470,10 +485,10 @@ static dword cache_get_next_image(dword pos, bool forward)
 /* Count how many img in archive */
 static dword count_img(void)
 {
+	dword i = 0;
+
 	if (filecount == 0 || filelist == NULL)
 		return 0;
-
-	dword i = 0;
 
 	if (cache_img_cnt != 0)
 		return cache_img_cnt;

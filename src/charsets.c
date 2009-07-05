@@ -12265,18 +12265,18 @@ extern dword charsets_utf8_conv(const byte * ucs, size_t inputlen, byte * cjk,
 
 	while (i < l && inputlen && outputlen) {
 		ucs4_t u = 0x1FFF;
-		int p = utf8_mbtowc(&u, ucs + i, l - i);
+		int p = utf8_mbtowc(&u, ucs + i, l - i), l2;
 
 		if (p < 0)
 			break;
 		if (u > 0xFFFF)
 			u = 0x1FFF;
-		int l = gbk_wctomb(cjk + j, u, 2);
+		l2 = gbk_wctomb(cjk + j, u, 2);
 
-		j += l;
+		j += l2;
 		i += p;
 		inputlen -= p;
-		outputlen -= l;
+		outputlen -= l2;
 	}
 	cjk[j] = 0;
 	return j;
@@ -12294,18 +12294,21 @@ extern dword charsets_utf16_conv(const byte * ucs, size_t inputlen, byte * cjk,
 
 	while (i < l && inputlen && outputlen) {
 		ucs4_t u = 0x1FFF;
-		int p = utf16_mbtowc(&u, ucs + i, l - i);
+		int p, l2;
+
+		l2 = gbk_wctomb(cjk + j, u, 2);
+		p = utf16_mbtowc(&u, ucs + i, l2 - i);
 
 		if (p < 0)
 			break;
+
 		if (u > 0xFFFF)
 			u = 0x1FFF;
-		int l = gbk_wctomb(cjk + j, u, 2);
 
-		j += l;
+		j += l2;
 		i += p;
 		inputlen -= p;
-		outputlen -= l;
+		outputlen -= l2;
 	}
 	cjk[j] = 0;
 	return j;
@@ -12322,18 +12325,21 @@ extern dword charsets_utf16be_conv(const byte * ucs, size_t inputlen,
 
 	while (i < l && inputlen && outputlen) {
 		ucs4_t u = 0x1FFF;
-		int p = utf16be_mbtowc(&u, ucs + i, l - i);
+		int p, l2;
+
+		l2 = gbk_wctomb(cjk + j, u, 2);
+		p = utf16be_mbtowc(&u, ucs + i, l2 - i);
 
 		if (p < 0)
 			break;
+
 		if (u > 0xFFFF)
 			u = 0x1FFF;
-		int l = gbk_wctomb(cjk + j, u, 2);
 
-		j += l;
+		j += l2;
 		i += p;
 		inputlen -= p;
-		outputlen -= l;
+		outputlen -= l2;
 	}
 	cjk[j] = 0;
 	return j;
@@ -12382,9 +12388,10 @@ extern void charsets_sjis_conv(const byte * jis, byte ** cjk, dword * newsize)
 {
 	int ilen = *newsize, jlen = ilen;
 	int i = 0, j = 0, p = 0;
+	byte *cjks;
 
 	istate = 0;
-	byte *cjks = malloc(ilen + 1);
+	cjks = malloc(ilen + 1);
 
 	if (cjks == NULL) {
 		*cjk = NULL;

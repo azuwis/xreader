@@ -354,22 +354,23 @@ int dbg_printf(DBG * d, const char *fmt, ...)
 	va_list ap;
 	int l, size;
 	size_t i;
+	pspTime tm;
+	char timestr[80];
+	int timelen;
 
 	if (!d)
 		return -1;
 	if (!d->on)
 		return 0;
+
 	va_start(ap, fmt);
-	pspTime tm;
 
 	xrRtcGetCurrentClockLocalTime(&tm);
-
-	char timestr[80];
 
 	SPRINTF_S(timestr, "%u-%u-%u %02u:%02u:%02u", tm.year, tm.month, tm.day,
 			  tm.hour, tm.minutes, tm.seconds);
 
-	int timelen = strlen(timestr);
+	timelen = strlen(timestr);
 
 	size = DBG_BUFSIZE;
 	buf = malloc(size + timelen + 2);
@@ -571,9 +572,12 @@ void dbg_switch(DBG * d, short on)
 
 double pspDiffTime(u64 * t1, u64 * t2)
 {
+	double d;
+
 	if (!t1 || !t2)
 		return 0.0;
-	double d = (*t1 - *t2) * 1.0 / xrRtcGetTickResolution();
+
+	d = (*t1 - *t2) * 1.0 / xrRtcGetTickResolution();
 
 	return d;
 }

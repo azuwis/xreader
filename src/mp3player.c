@@ -486,6 +486,8 @@ static int mp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	int ret;
 	double incr;
 	signed short *audio_buf = buf;
+	unsigned i;
+	uint16_t *output;
 
 	UNUSED(pdata);
 
@@ -587,8 +589,7 @@ static int mp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				}
 			}
 
-			unsigned i;
-			uint16_t *output = &g_buff[0];
+			output = &g_buff[0];
 
 			if (stream.error != MAD_ERROR_NONE) {
 				continue;
@@ -657,6 +658,7 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	int snd_buf_frame_size = (int) reqn;
 	signed short *audio_buf = buf;
 	double incr;
+	uint16_t *output;
 
 	UNUSED(pdata);
 
@@ -682,12 +684,12 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
+			int frame_size, ret, brate = 0;
+
 			send_to_sndbuf(audio_buf,
 						   &g_buff[g_buff_frame_start * 2], avail_frame, 2);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
-
-			int frame_size, ret, brate = 0;
 
 			do {
 				if (mp3_data.use_buffer) {
@@ -720,7 +722,7 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				ret = memp3_decode(memp3_input_buf, ret, memp3_decoded_buf);
 			} while (ret < 0);
 
-			uint16_t *output = &g_buff[0];
+			output = &g_buff[0];
 
 			memcpy(output, memp3_decoded_buf, mp3info.spf * 4);
 			g_buff_frame_size = mp3info.spf;

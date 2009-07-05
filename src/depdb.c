@@ -61,7 +61,7 @@ DWord swap_DWord(DWord r)
 
 #define GET_Word(fd,n)   { xrIoRead(fd, &n, 2); n = swap_Word ( n ); }
 #define GET_DWord(fd,n)  { xrIoRead(fd, &n, 4); n = swap_DWord( n ); }
-#define GET_DDWord(fd,n)  { xrIoRead(fd, &n, 4); n = swap_DWord( n ); int a;xrIoRead(fd, &a, 4);}
+#define GET_DDWord(fd,n)  { int a; xrIoRead(fd, &n, 4); n = swap_DWord( n ); xrIoRead(fd, &a, 4);}
 
 static inline void _zero_fill(byte * p, int len)
 {
@@ -123,17 +123,22 @@ DWord decompress_huge(buffer * m_buf, buffer ** puzbuf)
 long read_pdb_data(const char *pdbfile, buffer ** pbuf)
 {
 	size_t ret = -1;
-
-	if (!pdbfile || !pbuf || !(*pbuf) || !(*pbuf)->ptr)
-		return ret;
 	SceUID fd = -1;
 	SceIoStat sta;
 	bool bCompressed = false;
 	buffer *pzbuf = NULL;
 	DWord *p_records_offset = NULL;
 
+	if (!pdbfile || !pbuf || !(*pbuf) || !(*pbuf)->ptr)
+		return ret;
+
 	selectSwap();
 	do {
+		pdb_header m_header;
+		DWord file_size, offset, cur_size;
+		doc_record0 m_rec0;
+		int num_records;
+		int i = 0;
 
 		if (xrIoGetstat(pdbfile, &sta) < 0) {
 			//printf("stat file:%s error:%s\n",pdbfile,strerror(errno));
@@ -143,10 +148,6 @@ long read_pdb_data(const char *pdbfile, buffer ** pbuf)
 			printf("Could not open file :%s\n", pdbfile);
 			break;
 		}
-		pdb_header m_header;
-		DWord file_size, offset, cur_size;
-		doc_record0 m_rec0;
-
 		if (xrIoRead(fd, &m_header, PDB_HEADER_SIZE) < 0) {
 			//dbg_printf(d, "%s read umd file chunk error,ret:%d!",__func__,p->used);
 			break;
@@ -158,14 +159,14 @@ long read_pdb_data(const char *pdbfile, buffer ** pbuf)
 				 m_header.type, m_header.creator);
 			break;
 		}
+
 		// progressbar
-		int num_records = swap_Word(m_header.numRecords) - 1;
+		num_records = swap_Word(m_header.numRecords) - 1;
 
 		printf("total %d records\n", num_records);
 		GET_DDWord(fd, offset);
 		//printf("offset %d\n",offset);
 		p_records_offset = (DWord *) calloc(num_records, sizeof(DWord));
-		int i = 0;
 
 		for (i = 0; i < num_records; i++)
 			GET_DDWord(fd, p_records_offset[i]);

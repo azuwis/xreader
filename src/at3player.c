@@ -263,15 +263,16 @@ static int at3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
+			int samplesdecoded;
+			unsigned long decode_type = 0x1001;
+			int res;
+			uint16_t *output;
+
 			send_to_sndbuf(audio_buf,
 						   &g_buff[g_buff_frame_start * 2], avail_frame, 2);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
-
-			int samplesdecoded;
-
 			memset(at3_mix_buffer, 0, 2048 * 2 * 2);
-			unsigned long decode_type = 0x1001;
 
 			if (at3_type == TYPE_ATRAC3) {
 				memset(at3_data_buffer, 0, 0x180);
@@ -320,7 +321,7 @@ static int at3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			at3_codec_buffer[6] = (unsigned long) at3_data_buffer;
 			at3_codec_buffer[8] = (unsigned long) at3_mix_buffer;
 
-			int res = xrAudiocodecDecode(at3_codec_buffer, decode_type);
+			res = xrAudiocodecDecode(at3_codec_buffer, decode_type);
 
 			if (res < 0) {
 				__end();
@@ -328,9 +329,7 @@ static int at3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 
 			samplesdecoded = at3_sample_per_frame;
-
-			uint16_t *output = &g_buff[0];
-
+			output = &g_buff[0];
 			memcpy(output, at3_mix_buffer, samplesdecoded * 4);
 			g_buff_frame_size = samplesdecoded;
 			g_buff_frame_start = 0;
@@ -345,6 +344,10 @@ static int at3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 static int at3_load(const char *spath, const char *lpath)
 {
 	int ret;
+	u32 riff_header[2];
+	u32 wavefmt_header[3];
+	u8 *wavefmt_data;
+	u32 data_header[2];
 
 	__init();
 
@@ -353,8 +356,6 @@ static int at3_load(const char *spath, const char *lpath)
 	if (data.fd < 0) {
 		goto failed;
 	}
-
-	u32 riff_header[2];
 
 	if (xrIoRead(data.fd, riff_header, sizeof(riff_header)) !=
 		sizeof(riff_header)) {
@@ -365,8 +366,6 @@ static int at3_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-	u32 wavefmt_header[3];
-
 	if (xrIoRead(data.fd, wavefmt_header, sizeof(wavefmt_header)) !=
 		sizeof(wavefmt_header)) {
 		goto failed;
@@ -376,7 +375,7 @@ static int at3_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-	u8 *wavefmt_data = (u8 *) malloc(wavefmt_header[2]);
+	wavefmt_data = (u8 *) malloc(wavefmt_header[2]);
 
 	if (wavefmt_data == NULL) {
 		goto failed;
@@ -400,8 +399,6 @@ static int at3_load(const char *spath, const char *lpath)
 	free(wavefmt_data);
 
 	// Search for data header
-	u32 data_header[2];
-
 	if (xrIoRead(data.fd, data_header, sizeof(data_header)) !=
 		sizeof(data_header)) {
 		goto failed;
@@ -463,9 +460,12 @@ static int at3_load(const char *spath, const char *lpath)
 			goto failed;
 		}
 	} else if (at3_type == TYPE_ATRAC3PLUS) {
+		int temp_size;
+		int mod_64;
+
 		at3_sample_per_frame = 2048;
-		int temp_size = at3_data_align + 8;
-		int mod_64 = temp_size & 0x3f;
+		temp_size = at3_data_align + 8;
+		mod_64 = temp_size & 0x3f;
 
 		if (mod_64 != 0)
 			temp_size += 64 - mod_64;

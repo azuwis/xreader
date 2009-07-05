@@ -206,16 +206,20 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
+			int samplesdecoded;
+			unsigned char aac_header_buf[7];
+			int aac_header;
+			int frame_size;
+			u8 *aac_data_buffer;
+			int res;
+			uint16_t *output;
+
 			send_to_sndbuf(audio_buf,
 						   &g_buff[g_buff_frame_start * 2], avail_frame, 2);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
 
-			int samplesdecoded;
-
 			memset(aac_mix_buffer, 0, sizeof(aac_mix_buffer));
-
-			unsigned char aac_header_buf[7];
 
 			if (data.use_buffer) {
 				if (buffered_reader_read(data.r, aac_header_buf, 7) != 7) {
@@ -229,18 +233,17 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				}
 			}
 
-			int aac_header = aac_header_buf[3];
+			aac_header = aac_header_buf[3];
 
 			aac_header = (aac_header << 8) | aac_header_buf[4];
 			aac_header = (aac_header << 8) | aac_header_buf[5];
 			aac_header = (aac_header << 8) | aac_header_buf[6];
 
-			int frame_size = aac_header & 67100672;
-
+			frame_size = aac_header & 67100672;
 			frame_size = frame_size >> 13;
 			frame_size = frame_size - 7;
 
-			u8 *aac_data_buffer = (u8 *) memalign(64, frame_size);
+			aac_data_buffer = (u8 *) memalign(64, frame_size);
 
 			if (data.use_buffer) {
 				if (buffered_reader_read(data.r, aac_data_buffer, frame_size) !=
@@ -258,8 +261,6 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				}
 			}
 
-			int res;
-
 			aac_codec_buffer[6] = (unsigned long) aac_data_buffer;
 			aac_codec_buffer[8] = (unsigned long) aac_mix_buffer;
 			aac_codec_buffer[7] = frame_size;
@@ -275,9 +276,7 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 
 			samplesdecoded = aac_sample_per_frame;
-
-			uint16_t *output = &g_buff[0];
-
+			output = &g_buff[0];
 			memcpy(output, aac_mix_buffer, samplesdecoded * 4);
 			g_buff_frame_size = samplesdecoded;
 			g_buff_frame_start = 0;
@@ -298,6 +297,8 @@ static int aac_load(const char *spath, const char *lpath)
 	NeAACDecConfigurationPtr aac_config = NULL;
 	unsigned long buffervalid;
 	unsigned long bufferconsumed;
+	unsigned long tempsamplerate;
+	unsigned char tempchannels;
 
 	__init();
 
@@ -345,9 +346,6 @@ static int aac_load(const char *spath, const char *lpath)
 		fread(aac_buffer, 1, size, aacfp);
 		buffervalid = fread(aac_buffer, 1, AAC_BUFFER_SIZE, aacfp);
 	}
-
-	unsigned long tempsamplerate;
-	unsigned char tempchannels;
 
 	bufferconsumed = NeAACDecInit(decoder,
 								  aac_buffer,

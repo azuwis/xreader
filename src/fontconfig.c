@@ -84,13 +84,14 @@ static int get_token(const char *linebuf, size_t size, const char *p, char *buf,
 {
 	size_t pos;
 	const char *q = p;
+	size_t tsize;
 
 	pos = p - linebuf;
 
 	if (pos >= size)
 		return -1;
 
-	size_t tsize = skip_token(linebuf, size, &q) - pos;
+	tsize = skip_token(linebuf, size, &q) - pos;
 
 	return strncpy_s(buf, bufsize, &linebuf[pos], tsize);
 }
@@ -438,14 +439,16 @@ static int get_var_as_string(font_config * cfg, const token * t,
 static int token_compare(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	int ret = TOKEN_COMPARE_FALSE;
+	size_t left;
+	size_t right;
 
 	if (i < 1 || i + 1 > tsize - 1) {
 		dbg_printf(d, "%s: Missing operand", __func__);
 		return -1;
 	}
 
-	size_t left = i - 1;
-	size_t right = i + 1;
+	left = i - 1;
+	right = i + 1;
 
 	switch (t[left].type) {
 #if 0
@@ -555,14 +558,16 @@ static int token_notcompare(font_config * cfg, token * t, size_t tsize,
 static int token_gt(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	int ret = TOKEN_COMPARE_FALSE;
+	size_t left;
+	size_t right;
 
 	if (i < 1 || i + 1 > tsize - 1) {
 		dbg_printf(d, "%s: Missing operand", __func__);
 		return -1;
 	}
 
-	size_t left = i - 1;
-	size_t right = i + 1;
+	left = i - 1;
+	right = i + 1;
 
 	switch (t[left].type) {
 		case TOKEN_VAR:
@@ -599,14 +604,16 @@ static int token_ngt(font_config * cfg, token * t, size_t tsize, size_t i)
 static int token_lt(font_config * cfg, token * t, size_t tsize, size_t i)
 {
 	int ret = TOKEN_COMPARE_FALSE;
+	size_t left;
+	size_t right;
 
 	if (i < 1 || i + 1 > tsize - 1) {
 		dbg_printf(d, "%s: Missing operand", __func__);
 		return -1;
 	}
 
-	size_t left = i - 1;
-	size_t right = i + 1;
+	left = i - 1;
+	right = i + 1;
 
 	switch (t[left].type) {
 		case TOKEN_VAR:
@@ -768,6 +775,9 @@ int parse_tokens(font_config * cfg, token * t, size_t tsize, bool boolean_mode)
 			return left || right;
 		}
 	} else {
+		size_t j;
+		int elsepos;
+
 		for (i = 0; i < tsize; ++i) {
 			switch (t[i].type) {
 				case TOKEN_IF:
@@ -775,8 +785,6 @@ int parse_tokens(font_config * cfg, token * t, size_t tsize, bool boolean_mode)
 
 					// jump to then
 					{
-						size_t j;
-
 						for (j = start; j < tsize; ++j) {
 							if (t[j].type == TOKEN_THEN
 								|| t[j].type == TOKEN_THEN
@@ -809,8 +817,6 @@ int parse_tokens(font_config * cfg, token * t, size_t tsize, bool boolean_mode)
 					// search for END
 					// note stack use
 
-					size_t j;
-
 					level = 1;
 
 					for (j = start; j < tsize; ++j) {
@@ -829,8 +835,7 @@ int parse_tokens(font_config * cfg, token * t, size_t tsize, bool boolean_mode)
 						return -1;
 					}
 
-					int elsepos = -1;
-
+					elsepos = -1;
 					level = 1;
 
 					// search for ELSE
@@ -984,6 +989,7 @@ font_config *fontconfigmgr_lookup(fontconfig_mgr * font_mgr,
 								  bool cjkmode)
 {
 	size_t i;
+	font_config my_font_config, *p = NULL;
 
 	for (i = 0; i < font_mgr->cnt; ++i) {
 		if (!strcmp(font_mgr->cache[i].fontname, font_name)) {
@@ -993,8 +999,6 @@ font_config *fontconfigmgr_lookup(fontconfig_mgr * font_mgr,
 			}
 		}
 	}
-
-	font_config my_font_config, *p = NULL;
 
 	new_font_config(font_name, &my_font_config, cjkmode);
 	my_font_config.pixelsize = pixelsize;

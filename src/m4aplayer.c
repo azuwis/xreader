@@ -241,20 +241,17 @@ static int m4a_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
+			int samplesdecoded;
+			int res;
+			u_int8_t *buffer = NULL;
+			u_int32_t buffer_size = 0;
+			uint16_t *output;
+
 			send_to_sndbuf(audio_buf,
 						   &g_buff[g_buff_frame_start * 2], avail_frame, 2);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
-
-			int samplesdecoded;
-
 			memset(aac_mix_buffer, 0, sizeof(aac_mix_buffer));
-
-			int res;
-
-			u_int8_t *buffer = NULL;
-			u_int32_t buffer_size = 0;
-
 			res = MP4ReadSample(mp4file,
 								mp4track,
 								mp4sample_id++,
@@ -290,9 +287,7 @@ static int m4a_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			}
 
 			samplesdecoded = aac_sample_per_frame;
-
-			uint16_t *output = &g_buff[0];
-
+			output = &g_buff[0];
 			memcpy(output, aac_mix_buffer, samplesdecoded * 4);
 			g_buff_frame_size = samplesdecoded;
 			g_buff_frame_start = 0;
@@ -336,6 +331,10 @@ static int get_aac_track(MP4FileHandle file)
 static void m4a_get_tag()
 {
 	char *s = NULL;
+	const char *name;
+	u_int8_t *buffer;
+	u_int32_t buffer_size;
+	int i;
 
 	g_info.tag.encode = conf_encode_utf8;
 
@@ -365,11 +364,6 @@ static void m4a_get_tag()
 		free(s);
 		s = NULL;
 	}
-
-	const char *name;
-	u_int8_t *buffer;
-	u_int32_t buffer_size;
-	int i;
 
 	name = NULL;
 	buffer = NULL;
@@ -405,10 +399,16 @@ static void m4a_get_tag()
 static int m4a_load(const char *spath, const char *lpath)
 {
 	int ret;
+	int fd;
+	NeAACDecHandle decoder;
+	u_int8_t *buffer = NULL;
+	u_int32_t buffer_size = 0;
+	mp4AudioSpecificConfig cfg;
+	uint64_t ms_duration;
 
 	__init();
 
-	int fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
 	if (fd < 0) {
 		goto failed;
@@ -430,12 +430,7 @@ static int m4a_load(const char *spath, const char *lpath)
 		goto failed;
 	}
 
-	NeAACDecHandle decoder;
-
 	decoder = NeAACDecOpen();
-
-	u_int8_t *buffer = NULL;
-	u_int32_t buffer_size = 0;
 
 	MP4GetTrackESConfiguration(mp4file, mp4track, &buffer, &buffer_size);
 
@@ -444,8 +439,6 @@ static int m4a_load(const char *spath, const char *lpath)
 		NeAACDecClose(decoder);
 		goto failed;
 	}
-
-	mp4AudioSpecificConfig cfg;
 
 	memset(&cfg, 0, sizeof(cfg));
 
@@ -470,7 +463,7 @@ static int m4a_load(const char *spath, const char *lpath)
 	free(buffer);
 	NeAACDecClose(decoder);
 
-	uint64_t ms_duration = MP4ConvertFromTrackDuration(mp4file, mp4track,
+	ms_duration = MP4ConvertFromTrackDuration(mp4file, mp4track,
 													   MP4GetTrackDuration
 													   (mp4file, mp4track),
 													   MP4_MSECS_TIME_SCALE);

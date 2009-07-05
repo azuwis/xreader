@@ -75,13 +75,14 @@ extern int run_umd(void)
 extern int run_iso(const char *iso)
 {
 	SEConfig config;
+	int r;
 
 	apitype = 0x120;
 	program = "disc0:/PSP_GAME/SYSDIR/EBOOT.BIN";
 	mode = "game";
 
 	SetUmdFile((char *) iso);
-	int r = sctrlSEGetConfigEx(&config, sizeof(config));
+	r = sctrlSEGetConfigEx(&config, sizeof(config));
 
 	dbg_printf(d, "%s: sctrlSEGetConfigEx %08x", __func__, r);
 

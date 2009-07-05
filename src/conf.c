@@ -874,12 +874,16 @@ static void check_empty_imgkey(t_conf * conf)
 
 extern bool ini_conf_load(const char *inifilename, p_conf conf)
 {
+	dictionary *dict;
+	char buf[80];
+	int i;
+	extern void get_language(void);
+
 	if (conf == NULL || inifilename == NULL) {
 		return false;
 	}
 
-	dictionary *dict = iniparser_load(inifilename);
-	char buf[80];
+	dict = iniparser_load(inifilename);
 
 	if (dict == NULL)
 		return false;
@@ -939,7 +943,6 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		stringToRotate(iniparser_getstring
 					   (dict, "Image:rotate",
 						rotateToString(buf, sizeof(buf), conf->rotate)));
-	int i;
 
 	for (i = 0; i < 20; ++i) {
 		char key[20];
@@ -1100,8 +1103,6 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	STRCPY_S(conf->language,
 			 iniparser_getstring(dict, "UI:language", conf->language));
 
-	extern void get_language(void);
-
 	get_language();
 
 	conf->filelistwidth =
@@ -1163,10 +1164,6 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 		conf->use_image_queue = false;
 	}
 
-	if (conf->max_cache_img == 0) {
-		conf->use_image_queue = false;
-	}
-
 	dictionary_del(dict);
 
 	return true;
@@ -1174,17 +1171,22 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 
 extern bool ini_conf_save(p_conf conf)
 {
+	dictionary *dict;
+	FILE *fp;
+	char buf[PATH_MAX];
+	int i;
+
 	if (conf == NULL) {
 		return false;
 	}
-	conf->confver = XREADER_VERSION_NUM;
 
-	dictionary *dict = dictionary_new(0);
+	conf->confver = XREADER_VERSION_NUM;
+	dict = dictionary_new(0);
 
 	if (dict == NULL)
 		return false;
 
-	FILE *fp = fopen(conf_filename, "w");
+	fp = fopen(conf_filename, "w");
 
 	if (fp == NULL) {
 		return false;
@@ -1200,8 +1202,6 @@ extern bool ini_conf_save(p_conf conf)
 		goto error;
 	if (iniparser_setstring(dict, "Music", NULL) != 0)
 		goto error;
-
-	char buf[PATH_MAX];
 
 	iniparser_setstring(dict, "Global:path", conf->path);
 	iniparser_setstring(dict, "UI:forecolor",
@@ -1248,7 +1248,6 @@ extern bool ini_conf_save(p_conf conf)
 						dwordToString(buf, sizeof(buf), conf->scale));
 	iniparser_setstring(dict, "Image:rotate",
 						rotateToString(buf, sizeof(buf), conf->rotate));
-	int i;
 
 	for (i = 0; i < 20; ++i) {
 		char key[20];

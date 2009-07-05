@@ -49,13 +49,19 @@ int _get_osk_input(char *buf, int size, unsigned short desc[128])
 	char tstr[128] = { 0 };
 	unsigned short intext[128] = { 0 };	// text already in the edit box on start
 	unsigned short outtext[128] = { 0 };	// text after input
-
+	SceUtilityOskData data;
+	SceUtilityOskParams osk;
 	pixel *saveimage = (pixel *) memalign(16,
 										  PSP_SCREEN_WIDTH *
 										  PSP_SCREEN_HEIGHT * sizeof(pixel));
+	bool done = false;
+	int rc;
+	void *buffer;
+
 	if (saveimage) {
-		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 		pixel *t;
+
+		disp_getimage(0, 0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, saveimage);
 
 		t = disp_swizzle_image(saveimage, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 		if (t == NULL) {
@@ -67,7 +73,6 @@ int _get_osk_input(char *buf, int size, unsigned short desc[128])
 	} else
 		return -1;
 
-	SceUtilityOskData data;
 
 	memset(&data, 0, sizeof(data));
 	data.language = 2;			// key glyphs: 0-1=hiragana, 2+=western
@@ -78,8 +83,6 @@ int _get_osk_input(char *buf, int size, unsigned short desc[128])
 	data.outtextlength = 128;	// sizeof(outtext) / sizeof(unsigned short)
 	data.outtextlimit = 50;		// just allow 50 chars
 	data.outtext = (unsigned short *) outtext;
-
-	SceUtilityOskParams osk;
 
 	memset(&osk, 0, sizeof(osk));
 	osk.base.size = sizeof(osk);
@@ -94,18 +97,18 @@ int _get_osk_input(char *buf, int size, unsigned short desc[128])
 	osk.datacount = 1;
 	osk.data = &data;
 
-	int rc = xrUtilityOskInitStart(&osk);
+	rc = xrUtilityOskInitStart(&osk);
 
 	if (rc) {
 		free(saveimage);
 		return 0;
 	}
 
-	bool done = false;
-
 	ClearScreen(saveimage);
 
 	while (!done) {
+		int i, j = 0;
+
 		switch (xrUtilityOskGetStatus()) {
 			case PSP_UTILITY_DIALOG_INIT:
 				break;
@@ -124,8 +127,6 @@ int _get_osk_input(char *buf, int size, unsigned short desc[128])
 				break;
 		}
 
-		int i, j = 0;
-
 		for (i = 0; data.outtext[i]; i++) {
 
 			if (data.outtext[i] != '\0' && data.outtext[i] != '\n'
@@ -141,7 +142,7 @@ int _get_osk_input(char *buf, int size, unsigned short desc[128])
 	}
 
 	xrDisplayWaitVblankStart();
-	void *buffer = xrGuSwapBuffers();
+	buffer = xrGuSwapBuffers();
 
 	free(saveimage);
 	disp_fix_osk(buffer);

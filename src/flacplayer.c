@@ -124,6 +124,8 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 
 static int flac_seek_seconds(double seconds)
 {
+	FLAC__StreamDecoderState state;
+
 	if (g_info.duration == 0)
 		return -1;
 
@@ -142,7 +144,7 @@ static int flac_seek_seconds(double seconds)
 		return -1;
 	}
 
-	FLAC__StreamDecoderState state = FLAC__stream_decoder_get_state(g_decoder);
+	state = FLAC__stream_decoder_get_state(g_decoder);
 
 	if (state == FLAC__STREAM_DECODER_SEEK_ERROR) {
 		dbg_printf(d, "Reflush the stream");
@@ -232,6 +234,7 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 													 void *client_data)
 {
 	size_t i;
+	uint16_t *output;
 
 	(void) decoder;
 
@@ -258,7 +261,7 @@ static FLAC__StreamDecoderWriteStatus write_callback(const FLAC__StreamDecoder *
 			return FLAC__STREAM_DECODER_WRITE_STATUS_ABORT;
 	}
 
-	uint16_t *output = (uint16_t *) g_buff;
+	output = (uint16_t *) g_buff;
 
 	if (frame->header.channels == 2) {
 		for (i = 0; i < frame->header.blocksize; i++) {
@@ -449,6 +452,8 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
+			FLAC__StreamDecoderState state;
+
 			send_to_sndbuf(audio_buf,
 						   &g_buff[g_buff_frame_start * g_info.channels],
 						   avail_frame, g_info.channels);
@@ -460,8 +465,7 @@ static int flac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 				return -1;
 			}
 
-			FLAC__StreamDecoderState state =
-				FLAC__stream_decoder_get_state(g_decoder);
+			state = FLAC__stream_decoder_get_state(g_decoder);
 
 			if (state == FLAC__STREAM_DECODER_END_OF_STREAM
 				|| state == FLAC__STREAM_DECODER_ABORTED
@@ -538,6 +542,7 @@ static int flac_load(const char *spath, const char *lpath)
 {
 	int fd;
 	FLAC__StreamDecoderInitStatus init_status;
+	FLAC__StreamMetadata *ptag;
 
 	__init();
 
@@ -569,12 +574,11 @@ static int flac_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	FLAC__StreamMetadata *ptag;
-
 	if (FLAC__metadata_get_tags(spath, &ptag)) {
 		if (ptag->type == FLAC__METADATA_TYPE_VORBIS_COMMENT) {
 			const char *p =
 				(const char *) ptag->data.vorbis_comment.vendor_string.entry;
+			FLAC__uint32 i;
 
 			p = strstr(p, "reference ");
 
@@ -585,8 +589,6 @@ static int flac_load(const char *spath, const char *lpath)
 				p += sizeof("reference ") - 1;
 
 			STRCPY_S(g_encode_name, (const char *) p);
-
-			FLAC__uint32 i;
 
 			for (i = 0; i < ptag->data.vorbis_comment.num_comments; ++i) {
 				const char *p =

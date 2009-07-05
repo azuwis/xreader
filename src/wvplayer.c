@@ -42,8 +42,6 @@
 
 #ifdef ENABLE_WAVPACK
 
-#define WVPACK_BUFFERED_READER_BUFFER_SIZE (256 * 1024)
-
 static int __end(void);
 
 #define MAX_BLOCK_SIZE (1024 * 8)
@@ -146,97 +144,6 @@ static int wv_seek_seconds(double seconds)
 	}
 
 	g_play_time = seconds;
-
-	return 0;
-}
-
-static int handle_seek(void)
-{
-	u64 timer_end;
-
-	if (g_status == ST_FFORWARD) {
-		xrRtcGetCurrentTick(&timer_end);
-
-		generic_lock();
-		if (g_last_seek_is_forward) {
-			generic_unlock();
-
-			if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
-				generic_lock();
-
-				if (g_seek_count > 0) {
-					g_play_time += g_seek_seconds;
-					g_seek_count--;
-				}
-
-				generic_unlock();
-
-				if (g_play_time >= g_info.duration) {
-					return -1;
-				}
-
-				xrKernelDelayThread(100000);
-			} else {
-				generic_lock();
-
-				g_seek_count = 0;
-				generic_set_playback(true);
-
-				if (wv_seek_seconds(g_play_time) < 0) {
-					generic_unlock();
-					return -1;
-				}
-
-				g_status = ST_PLAYING;
-
-				generic_unlock();
-				xrKernelDelayThread(100000);
-			}
-		} else {
-			generic_unlock();
-		}
-	} else if (g_status == ST_FBACKWARD) {
-		xrRtcGetCurrentTick(&timer_end);
-
-		generic_lock();
-		if (!g_last_seek_is_forward) {
-			generic_unlock();
-
-			if (pspDiffTime(&timer_end, (u64 *) & g_last_seek_tick) <= 1.0) {
-				generic_lock();
-
-				if (g_seek_count > 0) {
-					g_play_time -= g_seek_seconds;
-					g_seek_count--;
-				}
-
-				generic_unlock();
-
-				if (g_play_time < 0) {
-					g_play_time = 0;
-				}
-
-				xrKernelDelayThread(100000);
-			} else {
-				generic_lock();
-
-				g_seek_count = 0;
-				generic_set_playback(true);
-
-				if (wv_seek_seconds(g_play_time) < 0) {
-					generic_unlock();
-					return -1;
-				}
-
-				g_status = ST_PLAYING;
-
-				generic_unlock();
-				xrKernelDelayThread(100000);
-			}
-		} else {
-			generic_unlock();
-		}
-	}
 
 	return 0;
 }
@@ -380,18 +287,19 @@ static int wv_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			audio_buf += snd_buf_frame_size * 2;
 			snd_buf_frame_size = 0;
 		} else {
+			int ret;
+
 			send_to_sndbuf(audio_buf,
 						   &g_buff[g_buff_frame_start * g_info.channels],
 						   avail_frame, g_info.channels);
 			snd_buf_frame_size -= avail_frame;
 			audio_buf += avail_frame * 2;
-
-			int ret;
-
 			ret = WavpackUnpackSamples(g_decoder, wv_buffer, MAX_BLOCK_SIZE);
 
 			if (ret > 0) {
-
+				int i;
+				uint8_t *output;
+				
 				if (ret > g_buff_size) {
 					g_buff_size = ret;
 					g_buff =
@@ -405,8 +313,7 @@ static int wv_audiocallback(void *buf, unsigned int reqn, void *pdata)
 					}
 				}
 
-				int i;
-				uint8_t *output = (uint8_t *) g_buff;
+				output = (uint8_t *) g_buff;
 
 				for (i = 0; i < ret; ++i) {
 					*output++ = wv_buffer[2 * i];
@@ -582,6 +489,8 @@ static WavpackStreamReader breader = {
 static WavpackContext *open_wvfile(const char *spath, int flags,
 								   int norm_offset)
 {
+	char error[80];
+
 	if (spath == NULL) {
 		return NULL;
 	}
@@ -602,8 +511,6 @@ static WavpackContext *open_wvfile(const char *spath, int flags,
 	if (wv == NULL) {
 		goto failed;
 	}
-
-	char error[80];
 
 	return WavpackOpenFileInputEx(&breader, (void *) wv, (void *) wvc, error,
 								  flags, norm_offset);

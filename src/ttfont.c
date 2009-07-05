@@ -326,6 +326,8 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 						 int yadvance)
 {
 	int addIndex = 0;
+	SBit_HashItem *item;
+	int pitch;
 
 	if (ttf->cacheSize < SBIT_HASH_SIZE) {
 		addIndex = ttf->cacheSize++;
@@ -335,7 +337,7 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 			ttf->cachePop = 0;
 	}
 
-	SBit_HashItem *item = &ttf->sbitHashRoot[addIndex];
+	item = &ttf->sbitHashRoot[addIndex];
 
 	if (item->bitmap.buffer) {
 		free(item->bitmap.buffer);
@@ -358,7 +360,7 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
 	item->bitmap.format = bitmap->pixel_mode;
 	item->bitmap.max_grays = (bitmap->num_grays - 1);
 
-	int pitch = abs(bitmap->pitch);
+	pitch = abs(bitmap->pitch);
 
 	if (pitch * bitmap->rows > 0) {
 		item->bitmap.buffer = malloc(pitch * bitmap->rows);
@@ -496,11 +498,13 @@ static void _drawBitmap_horz(byte * buffer, int format, int width, int height,
 	} else if (format == FT_PIXEL_MODE_LCD) {
 		for (j = 0; j < height; j++)
 			for (i = 0; i < width / 3; i++) {
+				pixel origcolor;
+
 				if (i + x < 0 || i + x >= scr_width || j + y < 0
 					|| j + y >= scr_height)
 					continue;
 				// RGB or BGR ?
-				pixel origcolor = *disp_get_vaddr((i + x), (j + y));
+				origcolor = *disp_get_vaddr((i + x), (j + y));
 
 				ra = buffer[j * pitch + i * 3];
 				ga = buffer[j * pitch + i * 3 + 1];
@@ -523,11 +527,13 @@ static void _drawBitmap_horz(byte * buffer, int format, int width, int height,
 	} else if (format == FT_PIXEL_MODE_LCD_V) {
 		for (j = 0; j < height / 3; j++)
 			for (i = 0; i < width; i++) {
+				pixel origcolor;
+
 				if (i + x < 0 || i + x >= scr_width || j + y < 0
 					|| j + y >= scr_height)
 					continue;
 				// RGB or BGR ?
-				pixel origcolor = *disp_get_vaddr((i + x), (j + y));
+				origcolor = *disp_get_vaddr((i + x), (j + y));
 
 				ra = buffer[j * 3 * pitch + i];
 				ga = buffer[(j * 3 + 1) * pitch + i];
@@ -683,12 +689,13 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 	FT_Error error;
 	FT_GlyphSlot slot;
 	FT_UInt glyphIndex;
-
 	FT_Bool useKerning;
+	word ucs;
+	SBit_HashItem *cache;
 
 	useKerning = FT_HAS_KERNING(ttf->face);
-	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+	ucs = charsets_gbk_to_ucs(*str);
+	cache = sbitCacheFind(ttf, ucs);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -771,9 +778,13 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 
 	while (*str != 0 && x < maxpixels && bytetable[*(byte *) str] != 1) {
 		if (*str > 0x80) {
+			word ucs;
+			SBit_HashItem *cache;
+
 			useKerning = FT_HAS_KERNING(cttf->face);
-			word ucs = charsets_gbk_to_ucs(str);
-			SBit_HashItem *cache = sbitCacheFind(cttf, ucs);
+			ucs = charsets_gbk_to_ucs(str);
+			cache = sbitCacheFind(cttf, ucs);
+
 			if (cache) {
 				if (useKerning && cprevious && cache->glyph_index) {
 					FT_Vector delta;
@@ -836,9 +847,12 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 			(str) += 2;
 			(count) += 2;
 		} else if (*str > 0x1F) {
+			word ucs;
+			SBit_HashItem *cache;
+
 			useKerning = FT_HAS_KERNING(ettf->face);
-			word ucs = charsets_gbk_to_ucs(str);
-			SBit_HashItem *cache = sbitCacheFind(ettf, ucs);
+			ucs = charsets_gbk_to_ucs(str);
+			cache = sbitCacheFind(ettf, ucs);
 
 			if (cache) {
 				if (useKerning && eprevious && cache->glyph_index) {
@@ -930,6 +944,7 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 	FT_UInt glyphIndex;
 	FT_Bool useKerning;
 	int x = 0;
+	word ucs;
 
 	if (str == NULL)
 		return 0;
@@ -937,7 +952,7 @@ static int ttf_get_char_width(p_ttf cttf, const byte * str)
 		return DISP_BOOK_FONTSIZE;
 
 	useKerning = FT_HAS_KERNING(cttf->face);
-	word ucs = charsets_gbk_to_ucs(str);
+	ucs = charsets_gbk_to_ucs(str);
 
 	glyphIndex = FT_Get_Char_Index(cttf->face, ucs);
 	error = ttf_load_glyph(cttf, glyphIndex, false);
@@ -1089,6 +1104,11 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 										  int count, dword wordspace, int top,
 										  int height, int bot)
 {
+	FT_UInt cprevious, eprevious;
+	dword cpu, bus;
+	int fid = -1;
+
+	
 	if (cttf == NULL || ettf == NULL)
 		return;
 
@@ -1097,17 +1117,13 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			return;
 	}
 
-	FT_UInt cprevious, eprevious;
-
 	cprevious = eprevious = 0;
-
-	dword cpu, bus;
-	int fid = -1;
-
 	power_get_clock(&cpu, &bus);
+
 	if (cpu < 222 && config.ttf_haste_up) {
 		fid = freq_enter(222, 111);
 	}
+
 	while (*str != 0 && count > 0) {
 		if (!check_range(x, y) && fid >= 0) {
 			freq_leave(fid);
@@ -1122,10 +1138,11 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 									 &count, wordspace, top, height,
 									 bot, &eprevious, false);
 		} else {
+			int j;
+
 			if (x > PSP_SCREEN_WIDTH - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
 			}
-			int j;
 
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				x += DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1140,9 +1157,6 @@ extern void disp_putnstring_horz_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 
 extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 {
-	if (ttf == NULL || ewidth == NULL || size == 0)
-		return;
-
 	FT_Error error;
 	FT_GlyphSlot slot;
 	FT_UInt glyphIndex;
@@ -1150,6 +1164,9 @@ extern void ttf_load_ewidth(p_ttf ttf, byte * ewidth, int size)
 	FT_UInt eprevious = 0;
 	byte width;
 	word ucs;
+
+	if (ttf == NULL || ewidth == NULL || size == 0)
+		return;
 
 	for (ucs = 0; ucs < size; ++ucs) {
 		width = 0;
@@ -1253,12 +1270,15 @@ static void _drawBitmap_reversal(byte * buffer, int format, int width,
 //      dbg_printf(d, "%s: %d, %d, %d", __func__, x, y, scr_height);
 		for (j = 0; j < height; j++)
 			for (i = 0; i < width / 3; i++) {
+				pixel origcolor;
+
 				if (x - i < 0 || x - i >= scr_width
 					|| y - j < PSP_SCREEN_HEIGHT - scr_height
 					|| y - j >= PSP_SCREEN_HEIGHT)
 					continue;
+
 				// RGB or BGR ?
-				pixel origcolor = *disp_get_vaddr((x - i), (y - j));
+				origcolor = *disp_get_vaddr((x - i), (y - j));
 
 				ra = buffer[j * pitch + i * 3];
 				ga = buffer[j * pitch + i * 3 + 1];
@@ -1281,12 +1301,15 @@ static void _drawBitmap_reversal(byte * buffer, int format, int width,
 	} else if (format == FT_PIXEL_MODE_LCD_V) {
 		for (j = 0; j < height / 3; j++)
 			for (i = 0; i < width; i++) {
+				pixel origcolor;
+
 				if (x - i < 0 || x - i >= scr_width
 					|| y - j < PSP_SCREEN_HEIGHT - scr_height
 					|| y - j >= PSP_SCREEN_HEIGHT)
 					continue;
+
 				// RGB or BGR ?
-				pixel origcolor = *disp_get_vaddr((x - i), (y - j));
+				origcolor = *disp_get_vaddr((x - i), (y - j));
 
 				ra = buffer[j * 3 * pitch + i];
 				ga = buffer[(j * 3 + 1) * pitch + i];
@@ -1380,12 +1403,13 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 	FT_Error error;
 	FT_GlyphSlot slot;
 	FT_UInt glyphIndex;
-
 	FT_Bool useKerning;
+	word ucs;
+	SBit_HashItem *cache;
 
 	useKerning = FT_HAS_KERNING(ttf->face);
-	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+	ucs = charsets_gbk_to_ucs(*str);
+	cache = sbitCacheFind(ttf, ucs);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1459,6 +1483,10 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 											  dword wordspace, int top,
 											  int height, int bot)
 {
+	FT_UInt cprevious, eprevious;
+	dword cpu, bus;
+	int fid = -1;
+
 	if (cttf == NULL || ettf == NULL)
 		return;
 
@@ -1468,18 +1496,13 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 	}
 
 	x = PSP_SCREEN_WIDTH - x - 1, y = PSP_SCREEN_HEIGHT - y - 1;
-
-	FT_UInt cprevious, eprevious;
-
 	cprevious = eprevious = 0;
-
-	dword cpu, bus;
-	int fid = -1;
-
 	power_get_clock(&cpu, &bus);
+
 	if (cpu < 222 && config.ttf_haste_up) {
 		fid = freq_enter(222, 111);
 	}
+
 	while (*str != 0 && count > 0) {
 		if (!check_range(x, y) && fid >= 0) {
 			freq_leave(fid);
@@ -1496,10 +1519,11 @@ extern void disp_putnstring_reversal_truetype(p_ttf cttf, p_ttf ettf, int x,
 										 &count, wordspace, top,
 										 height, bot, &eprevious, false);
 		} else {
+			int j;
+
 			if (x < 0) {
 				break;
 			}
-			int j;
 
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				x -= DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1570,11 +1594,14 @@ static void _drawBitmap_lvert(byte * buffer, int format, int width, int height,
 //      dbg_printf(d, "%s: %d, %d, %d", __func__, x, y, scr_height);
 		for (j = 0; j < height; j++)
 			for (i = 0; i < width / 3; i++) {
+				pixel origcolor;
+
 				if (y - i < 0 || y - i >= scr_height
 					|| x + j < 0 || x + j >= scr_width)
 					continue;
+
 				// RGB or BGR ?
-				pixel origcolor = *disp_get_vaddr((x + j), (y - i));
+				origcolor = *disp_get_vaddr((x + j), (y - i));
 
 				ra = buffer[j * pitch + i * 3];
 				ga = buffer[j * pitch + i * 3 + 1];
@@ -1597,11 +1624,14 @@ static void _drawBitmap_lvert(byte * buffer, int format, int width, int height,
 	} else if (format == FT_PIXEL_MODE_LCD_V) {
 		for (j = 0; j < height / 3; j++)
 			for (i = 0; i < width; i++) {
+				pixel origcolor;
+
 				if (y - i < 0 || y - i >= scr_height
 					|| x + j < 0 || x + j >= scr_width)
 					continue;
+
 				// RGB or BGR ?
-				pixel origcolor = *disp_get_vaddr((x + j), (y - i));
+				origcolor = *disp_get_vaddr((x + j), (y - i));
 
 				ra = buffer[j * 3 * pitch + i];
 				ga = buffer[(j * 3 + 1) * pitch + i];
@@ -1692,12 +1722,13 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 	FT_Error error;
 	FT_GlyphSlot slot;
 	FT_UInt glyphIndex;
-
 	FT_Bool useKerning;
+	word ucs;
+	SBit_HashItem *cache;
 
 	useKerning = FT_HAS_KERNING(ttf->face);
-	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+	ucs = charsets_gbk_to_ucs(*str);
+	cache = sbitCacheFind(ttf, ucs);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1770,6 +1801,10 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 										   int count, dword wordspace, int top,
 										   int height, int bot)
 {
+	FT_UInt cprevious, eprevious;
+	dword cpu, bus;
+	int fid = -1;
+
 	if (cttf == NULL || ettf == NULL)
 		return;
 
@@ -1778,14 +1813,9 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			return;
 	}
 
-	FT_UInt cprevious, eprevious;
-
 	cprevious = eprevious = 0;
-
-	dword cpu, bus;
-	int fid = -1;
-
 	power_get_clock(&cpu, &bus);
+
 	if (cpu < 222 && config.ttf_haste_up) {
 		fid = freq_enter(222, 111);
 	}
@@ -1807,10 +1837,11 @@ extern void disp_putnstring_lvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 									  &count, wordspace, top,
 									  height, bot, &eprevious, false);
 		} else {
+			int j;
+
 			if (y < DISP_RSPAN + DISP_BOOK_FONTSIZE - 1) {
 				break;
 			}
-			int j;
 
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				y -= DISP_BOOK_FONTSIZE / 2 + wordspace;
@@ -1882,12 +1913,14 @@ static void _drawBitmap_rvert(byte * buffer, int format, int width, int height,
 	} else if (format == FT_PIXEL_MODE_LCD) {
 		for (j = 0; j < height; j++)
 			for (i = 0; i < width / 3; i++) {
+				pixel origcolor;
+
 				if (y + i < 0 || y + i >= scr_height
 					|| x - j < PSP_SCREEN_WIDTH - scr_width
 					|| x - j >= PSP_SCREEN_WIDTH)
 					continue;
 				// RGB or BGR ?
-				pixel origcolor = *disp_get_vaddr((x - j), (y + i));
+				origcolor = *disp_get_vaddr((x - j), (y + i));
 
 				ra = buffer[j * pitch + i * 3];
 				ga = buffer[j * pitch + i * 3 + 1];
@@ -1910,12 +1943,15 @@ static void _drawBitmap_rvert(byte * buffer, int format, int width, int height,
 	} else if (format == FT_PIXEL_MODE_LCD_V) {
 		for (j = 0; j < height / 3; j++)
 			for (i = 0; i < width; i++) {
+				pixel origcolor;
+
 				if (y + i < 0 || y + i >= scr_height
 					|| x - j < PSP_SCREEN_WIDTH - scr_width
 					|| x - j >= PSP_SCREEN_WIDTH)
 					continue;
+
 				// RGB or BGR ?
-				pixel origcolor = *disp_get_vaddr((x - j), (y + i));
+				origcolor = *disp_get_vaddr((x - j), (y + i));
 
 				ra = buffer[j * 3 * pitch + i];
 				ga = buffer[(j * 3 + 1) * pitch + i];
@@ -2006,12 +2042,13 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 	FT_Error error;
 	FT_GlyphSlot slot;
 	FT_UInt glyphIndex;
-
 	FT_Bool useKerning;
+	word ucs;
+	SBit_HashItem *cache;
 
 	useKerning = FT_HAS_KERNING(ttf->face);
-	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
+	ucs = charsets_gbk_to_ucs(*str);
+	cache = sbitCacheFind(ttf, ucs);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -2085,23 +2122,24 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 										   int count, dword wordspace, int top,
 										   int height, int bot)
 {
+	FT_UInt cprevious, eprevious;
+	dword cpu, bus;
+	int fid = -1;
+
 	if (cttf == NULL || ettf == NULL)
 		return;
 
 	if (x < bot)
 		return;
 
-	FT_UInt cprevious, eprevious;
-
 	cprevious = eprevious = 0;
-
-	dword cpu, bus;
-	int fid = -1;
-
 	power_get_clock(&cpu, &bus);
+
 	if (cpu < 222 && config.ttf_haste_up)
 		fid = freq_enter(222, 111);
 	while (*str != 0 && count > 0) {
+		int j;
+
 		if (!check_range(x, y)) {
 			freq_leave(fid);
 			return;
@@ -2122,7 +2160,6 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 			if (y > PSP_SCREEN_HEIGHT - DISP_RSPAN - DISP_BOOK_FONTSIZE / 2) {
 				break;
 			}
-			int j;
 
 			for (j = 0; j < (*str == 0x09 ? config.tabstop : 1); ++j)
 				y += DISP_BOOK_FONTSIZE / 2 + wordspace;

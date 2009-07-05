@@ -147,6 +147,9 @@ size_t array_del_element(Array * arr, size_t pos)
 
 int array_find_element_by_func(Array * arr, ArrayFinder finder, void *userData)
 {
+	size_t i;
+	Element *p;
+
 	assert(arr != NULL);
 	assert(arr->elem != NULL);
 	assert(finder != NULL);
@@ -154,8 +157,7 @@ int array_find_element_by_func(Array * arr, ArrayFinder finder, void *userData)
 	if (arr == NULL || arr->elem == NULL || finder == NULL)
 		return -1;
 
-	size_t i;
-	Element *p = arr->elem;
+	p = arr->elem;
 
 	for (i = 0; i < arr->size; ++i) {
 		if ((*finder) (p++, userData))
@@ -166,14 +168,14 @@ int array_find_element_by_func(Array * arr, ArrayFinder finder, void *userData)
 
 size_t array_swap_element(Array * arr, size_t pos1, size_t pos2)
 {
+	Element elem;
+
 	assert(arr != NULL);
 	assert(arr->elem != NULL);
 
 	if (arr == NULL || arr->elem == NULL || arr->size < 2 || pos1 == pos2
 		|| pos1 >= arr->size || pos2 >= arr->size)
 		return 0;
-
-	Element elem;
 
 	memcpy(&elem, &arr->elem[pos1], sizeof(Element));
 	memcpy(&arr->elem[pos1], &arr->elem[pos2], sizeof(Element));

@@ -51,8 +51,7 @@
 #include "dmalloc.h"
 #endif
 
-ExifData *exif_data = NULL;
-buffer_array *exif_array = 0;
+static ExifData *exif_data = NULL;
 
 /* 
 #define PB  (1.0f/3.0f)
@@ -166,6 +165,8 @@ extern void image_zoom_bicubic(pixel * src, int srcwidth, int srcheight,
 	int x = 0, y, x2, y1, y2, y3, y4, i, j;
 
 	for (i = 0; i < destheight; i++) {
+		float v1, v2, v3, v4;
+
 		x2 = x / destheight;
 		temp2 = src + x2 * srcwidth;
 		if (x2 == 0)
@@ -182,11 +183,13 @@ extern void image_zoom_bicubic(pixel * src, int srcwidth, int srcheight,
 			temp3 = temp2 + srcwidth;
 			temp4 = temp3 + srcwidth;
 		}
-		tempdst = dest;
 
+		tempdst = dest;
 		v = ((float) x / destheight) - x2;
-		float v1 = sinc_2(v + 1.0f), v2 = sinc_1(v), v3 =
-			sinc_n1(v - 1.0f), v4 = sinc_n2(v - 2.0f);
+		v1 = sinc_2(v + 1.0f);
+		v2 = sinc_1(v);
+		v3 = sinc_n1(v - 1.0f);
+		v4 = sinc_n2(v - 2.0f);
 		y = 0;
 
 		if (i == 0) {
@@ -315,10 +318,12 @@ extern void image_zoom_bilinear(pixel * src, int srcwidth, int srcheight,
 }
 
 extern int image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
-						 dword organgle, dword newangle)
+						dword organgle, dword newangle)
 {
 	dword ca;
 	int temp;
+	pixel *newdata;
+	dword i, j;
 
 	if (newangle < organgle) {
 		ca = newangle + 360 - organgle;
@@ -326,15 +331,14 @@ extern int image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 		ca = newangle - organgle;
 	if (ca == 0)
 		return 0;
-	pixel *newdata = memalign(16, sizeof(pixel) * *pwidth * *pheight);
+
+	newdata = memalign(16, sizeof(pixel) * *pwidth * *pheight);
 
 	if (newdata == NULL) {
 		dbg_printf(d, "%s: 内存不足无法完成旋转!", __func__);
-//		config.rotate = conf_rotate_0;
+//      config.rotate = conf_rotate_0;
 		return -1;
 	}
-
-	dword i, j;
 
 	switch (ca) {
 		case 90:
@@ -373,10 +377,12 @@ extern int image_rotate(pixel * imgdata, dword * pwidth, dword * pheight,
 static unsigned image_umd_fread(void *buf, unsigned r, unsigned n, void *stream)
 {
 	FILE **fp = (FILE **) stream;
+	int size;
 
 	if (!buf || !fp || !(*fp))
 		return 0;
-	int size = fread(buf, r, n, (*fp));
+
+	size = fread(buf, r, n, (*fp));
 
 	if (size < 0)
 		return 0;
@@ -411,15 +417,27 @@ static unsigned image_zip_fread(void *buf, unsigned r, unsigned n, void *stream)
 
 static int image_zip_fseek(void *stream, long offset, int origin)
 {
+	int size;
+	byte *buf;
+
 	if (origin != SEEK_SET)
 		return 0;
-	int size = offset - unztell((unzFile) stream);
 
-	if (size <= 0)
+	size = offset - unztell((unzFile) stream);
+
+	if (size <= 0) {
 		return 0;
-	byte buf[size];
+	}
+
+	buf = malloc(size * sizeof(buf[0]));
+
+	if (buf == NULL) {
+		return 0;
+	}
 
 	unzReadCurrentFile((unzFile) stream, buf, size);
+	free(buf);
+
 	return 0;
 }
 
@@ -512,8 +530,11 @@ static int image_readpng2(void *infile, dword * pwidth, dword * pheight,
 {
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
-
+	dword x, y;
+	byte r = 0, g = 0, b = 0;
 	byte sig[8];
+	png_byte **prowtable;
+	pixel *imgdata;
 
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if (!png_ptr)
@@ -579,10 +600,8 @@ static int image_readpng2(void *infile, dword * pwidth, dword * pheight,
 		return 4;
 	}
 
-	png_byte **prowtable = info_ptr->row_pointers;
-	dword x, y;
-	byte r = 0, g = 0, b = 0;
-	pixel *imgdata = *image_data;
+	prowtable = info_ptr->row_pointers;
+	imgdata = *image_data;
 
 	switch (info_ptr->color_type) {
 		case PNG_COLOR_TYPE_GRAY:
@@ -676,13 +695,15 @@ extern int image_readpng(const char *filename, dword * pwidth, dword * pheight,
 						 pixel ** image_data, pixel * bgcolor)
 {
 	FILE *fp = fopen(filename, "rb");
+	int result;
 
 	if (fp == NULL)
 		return -1;
-	int result = image_readpng2(fp, pwidth, pheight, image_data, bgcolor,
-								image_png_read);
 
+	result = image_readpng2(fp, pwidth, pheight, image_data, bgcolor,
+								image_png_read);
 	fclose(fp);
+
 	return result;
 }
 
@@ -693,6 +714,7 @@ static unzFile open_zip_file_with_password(const char *zipfile,
 	unzFile unzf = unzOpen(zipfile);
 	int ret;
 	buffer *buf;
+	unz_file_info info;
 
 	if (unzf == NULL)
 		return NULL;
@@ -702,8 +724,6 @@ static unzFile open_zip_file_with_password(const char *zipfile,
 		unzClose(unzf);
 		return NULL;
 	}
-
-	unz_file_info info;
 
 	if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK) {
 		unzCloseCurrentFile(unzf);
@@ -735,6 +755,8 @@ static unzFile open_zip_file_with_password(const char *zipfile,
 static unzFile open_zip_file(const char *zipfile, const char *filename)
 {
 	unzFile unzf = unzOpen(zipfile);
+	unz_file_info info;
+	char pass[128];
 
 	if (unzf == NULL)
 		return NULL;
@@ -744,8 +766,6 @@ static unzFile open_zip_file(const char *zipfile, const char *filename)
 		unzClose(unzf);
 		return NULL;
 	}
-
-	unz_file_info info;
 
 	if (unzGetCurrentFileInfo(unzf, &info, NULL, 0, NULL, 0, NULL, 0) != UNZ_OK) {
 		unzCloseCurrentFile(unzf);
@@ -777,8 +797,6 @@ static unzFile open_zip_file(const char *zipfile, const char *filename)
 			}
 		}
 		// if all passwords failed, ask user input password
-		char pass[128];
-
 		if (get_osk_input_password(pass, 128) == 1 && strcmp(pass, "") != 0) {
 			dbg_printf(d, "%s: input %s", __func__, pass);
 			unzf = open_zip_file_with_password(zipfile, filename, pass);
@@ -805,15 +823,17 @@ extern int image_readpng_in_zip(const char *zipfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	unzFile unzf = open_zip_file(zipfile, filename);
+	int result;
 
 	if (unzf == NULL)
 		return -1;
-	int result =
+
+	result =
 		image_readpng2((void *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_png_zip_read);
-
 	unzCloseCurrentFile(unzf);
 	unzClose(unzf);
+
 	return result;
 }
 
@@ -822,6 +842,7 @@ extern int image_readpng_in_chm(const char *chmfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_chm chm;
+	int result;
 
 	chm.chm = chm_open(chmfile);
 	if (chm.chm == NULL)
@@ -831,11 +852,11 @@ extern int image_readpng_in_chm(const char *chmfile, const char *filename,
 		return -1;
 	}
 	chm.readpos = 0;
-	int result =
+	result =
 		image_readpng2((void *) &chm, pwidth, pheight, image_data, bgcolor,
 					   image_png_chm_read);
-
 	chm_close(chm.chm);
+
 	return result;
 }
 
@@ -844,17 +865,20 @@ extern int image_readpng_in_rar(const char *rarfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_rar rar;
+	int result;
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
+
 	if (rar.buf == NULL) {
 		return 6;
 	}
+
 	rar.idx = 0;
-	int result = image_readpng2((void *) &rar, pwidth, pheight,
+	result = image_readpng2((void *) &rar, pwidth, pheight,
 								image_data,
 								bgcolor, image_png_rar_read);
-
 	free(rar.buf);
+
 	return result;
 }
 
@@ -879,6 +903,8 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 	*image_data = NULL;
 
 	do {
+		pixel *imgdata;
+
 		if (DGifGetRecordType(GifFileIn, &RecordType) == GIF_ERROR) {
 			DGifCloseFile(GifFileIn);
 			return 1;
@@ -914,7 +940,8 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 					DGifCloseFile(GifFileIn);
 					return 1;
 				}
-				pixel *imgdata = *image_data;
+
+				imgdata = *image_data;
 
 				for (i = 0; i < GifFileIn->Image.Height; i++) {
 					if (DGifGetLine(GifFileIn, LineIn, GifFileIn->Image.Width)
@@ -988,10 +1015,11 @@ extern int image_readgif(const char *filename, dword * pwidth, dword * pheight,
 						 pixel ** image_data, pixel * bgcolor)
 {
 	FILE *fp = fopen(filename, "rb");
+	int result;
 
 	if (fp == NULL)
 		return -1;
-	int result = image_readgif2(fp, pwidth, pheight, image_data, bgcolor,
+	result = image_readgif2(fp, pwidth, pheight, image_data, bgcolor,
 								image_gif_read);
 
 	fclose(fp);
@@ -1003,15 +1031,17 @@ extern int image_readgif_in_zip(const char *zipfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	unzFile unzf = open_zip_file(zipfile, filename);
+	int result;
 
 	if (unzf == NULL)
 		return -1;
-	int result =
+
+	result =
 		image_readgif2((void *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_gif_zip_read);
-
 	unzCloseCurrentFile(unzf);
 	unzClose(unzf);
+
 	return result;
 }
 
@@ -1020,6 +1050,7 @@ extern int image_readgif_in_chm(const char *chmfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_chm chm;
+	int result;
 
 	chm.chm = chm_open(chmfile);
 	if (chm.chm == NULL)
@@ -1029,11 +1060,11 @@ extern int image_readgif_in_chm(const char *chmfile, const char *filename,
 		return -1;
 	}
 	chm.readpos = 0;
-	int result =
+	result =
 		image_readgif2((void *) &chm, pwidth, pheight, image_data, bgcolor,
 					   image_gif_chm_read);
-
 	chm_close(chm.chm);
+
 	return result;
 }
 
@@ -1058,17 +1089,20 @@ extern int image_readgif_in_rar(const char *rarfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_rar rar;
+	int result;
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
+
 	if (rar.buf == NULL) {
 		return 6;
 	}
+
 	rar.idx = 0;
-	int result = image_readgif2((void *) &rar, pwidth, pheight,
+	result = image_readgif2((void *) &rar, pwidth, pheight,
 								image_data,
 								bgcolor, image_gif_rar_read);
-
 	free(rar.buf);
+
 	return result;
 }
 
@@ -1091,6 +1125,8 @@ static int image_readjpg2(FILE * infile, dword * pwidth, dword * pheight,
 	struct jpeg_decompress_struct cinfo;
 	struct jpeg_error_mgr jerr;
 	JSAMPROW sline;
+	pixel *imgdata;
+
 	memset(&cinfo, 0, sizeof(struct jpeg_decompress_struct));
 	cinfo.err = jpeg_std_error(&jerr);
 	jerr.error_exit = my_error_exit;
@@ -1136,7 +1172,7 @@ static int image_readjpg2(FILE * infile, dword * pwidth, dword * pheight,
 	dbg_printf(d, "%s: data 0x%08x", __func__, (unsigned) *image_data);
 
 	xrRtcGetCurrentTick(&dbglasttick);
-	pixel *imgdata = *image_data;
+	imgdata = *image_data;
 
 	while (cinfo.output_scanline < cinfo.output_height) {
 		int i;
@@ -1155,32 +1191,35 @@ static int image_readjpg2(FILE * infile, dword * pwidth, dword * pheight,
 }
 
 extern int exif_readjpg(const char *filename, dword * pwidth, dword * pheight,
-						pixel ** image_data, pixel * bgcolor)
+						pixel ** image_data, pixel * bgcolor,
+						buffer_array ** exif_array)
 {
 	if (!config.load_exif) {
 		return -1;
 	}
 
 	exif_data = exif_data_new_from_file(filename);
-	exif_viewer(exif_data);
+	exif_viewer(exif_data, exif_array);
 
 	return 0;
 }
 
 extern int image_readjpg(const char *filename, dword * pwidth, dword * pheight,
-						 pixel ** image_data, pixel * bgcolor)
+						 pixel ** image_data, pixel * bgcolor,
+						 buffer_array ** exif_array)
 {
 	FILE *fp = fopen(filename, "rb");
+	int result;
 
 	if (fp == NULL)
 		return -1;
-	int result = image_readjpg2(fp, pwidth, pheight, image_data, bgcolor, NULL);
 
+	result = image_readjpg2(fp, pwidth, pheight, image_data, bgcolor, NULL);
 	fclose(fp);
 
 	if (config.load_exif) {
 		exif_data = exif_data_new_from_file(filename);
-		exif_viewer(exif_data);
+		exif_viewer(exif_data, exif_array);
 	}
 
 	return result;
@@ -1188,74 +1227,89 @@ extern int image_readjpg(const char *filename, dword * pwidth, dword * pheight,
 
 extern int exif_readjpg_in_zip(const char *zipfile, const char *filename,
 							   dword * pwidth, dword * pheight,
-							   pixel ** image_data, pixel * bgcolor)
+							   pixel ** image_data, pixel * bgcolor,
+							   buffer_array ** exif_array)
 {
+	unzFile unzf;
+
 	if (!config.load_exif)
 		return -1;
 
-	unzFile unzf = open_zip_file(zipfile, filename);
+	unzf = open_zip_file(zipfile, filename);
 
 	if (unzf == NULL)
 		return -1;
-	exif_data = exif_data_new_from_stream(image_zip_fread, unzf);
-	exif_viewer(exif_data);
 
+	exif_data = exif_data_new_from_stream(image_zip_fread, unzf);
+	exif_viewer(exif_data, exif_array);
 	unzCloseCurrentFile(unzf);
 	unzClose(unzf);
+
 	return 0;
 }
 
 extern int image_readjpg_in_zip(const char *zipfile, const char *filename,
 								dword * pwidth, dword * pheight,
-								pixel ** image_data, pixel * bgcolor)
+								pixel ** image_data, pixel * bgcolor,
+								buffer_array ** exif_array)
 {
 	unzFile unzf = open_zip_file(zipfile, filename);
+	int result;
 
 	if (unzf == NULL)
 		return -1;
-	int result =
+
+	result =
 		image_readjpg2((FILE *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_zip_fread);
 
 	if (config.load_exif) {
 		exif_data = exif_data_new_from_stream(image_zip_fread, unzf);
-		exif_viewer(exif_data);
+		exif_viewer(exif_data, exif_array);
 	}
 
 	unzCloseCurrentFile(unzf);
 	unzClose(unzf);
+
 	return result;
 }
 
 extern int exif_readjpg_in_chm(const char *chmfile, const char *filename,
 							   dword * pwidth, dword * pheight,
-							   pixel ** image_data, pixel * bgcolor)
+							   pixel ** image_data, pixel * bgcolor,
+							   buffer_array ** exif_array)
 {
+	t_image_chm chm;
+
 	if (!config.load_exif) {
 		return -1;
 	}
 
-	t_image_chm chm;
-
 	chm.chm = chm_open(chmfile);
+
 	if (chm.chm == NULL)
 		return -1;
+
 	if (chm_resolve_object(chm.chm, filename, &chm.ui) != CHM_RESOLVE_SUCCESS) {
 		chm_close(chm.chm);
 		return -1;
 	}
+
 	chm.readpos = 0;
 	exif_data = exif_data_new_from_stream(image_chm_fread, &chm);
-	exif_viewer(exif_data);
+	exif_viewer(exif_data, exif_array);
 	chm_close(chm.chm);
+
 	return 0;
 }
 
 extern int image_readjpg_in_chm(const char *chmfile, const char *filename,
 								dword * pwidth, dword * pheight,
-								pixel ** image_data, pixel * bgcolor)
+								pixel ** image_data, pixel * bgcolor,
+								buffer_array ** exif_array)
 {
 	t_image_chm chm;
+	int result;
 
 	chm.chm = chm_open(chmfile);
 	if (chm.chm == NULL)
@@ -1264,95 +1318,111 @@ extern int image_readjpg_in_chm(const char *chmfile, const char *filename,
 		chm_close(chm.chm);
 		return -1;
 	}
+
 	chm.readpos = 0;
-	int result =
+	result =
 		image_readjpg2((FILE *) & chm, pwidth, pheight, image_data, bgcolor,
 					   image_chm_fread);
 
 	if (config.load_exif) {
 		chm.readpos = 0;
 		exif_data = exif_data_new_from_stream(image_chm_fread, &chm);
-		exif_viewer(exif_data);
+		exif_viewer(exif_data, exif_array);
 	}
+
 	chm_close(chm.chm);
+
 	return result;
 }
 
 extern int exif_readjpg_in_umd(const char *umdfile, size_t file_pos,
 							   size_t length, dword * pwidth, dword * pheight,
-							   pixel ** image_data, pixel * bgcolor)
+							   pixel ** image_data, pixel * bgcolor,
+							   buffer_array ** exif_array)
 {
 	return -1;
 }
 
 extern int image_readjpg_in_umd(const char *umdfile, size_t file_pos,
 								size_t length, dword * pwidth, dword * pheight,
-								pixel ** image_data, pixel * bgcolor)
+								pixel ** image_data, pixel * bgcolor,
+								buffer_array ** exif_array)
 {
-	FILE *fp = NULL;
+	FILE *fp = NULL, *fpp;
 	int result = locate_umd_img(umdfile, file_pos, &fp);
 
 	if (0 > result)
 		return result;
-	FILE *fpp = fp;
 
+	fpp = fp;
 	result =
 		image_readjpg2((FILE *) & fpp, pwidth, pheight, image_data, bgcolor,
 					   image_umd_fread);
 	fclose(fp);
+
 	return result;
 }
 
 extern int exif_readjpg_in_rar(const char *rarfile, const char *filename,
 							   dword * pwidth, dword * pheight,
-							   pixel ** image_data, pixel * bgcolor)
+							   pixel ** image_data, pixel * bgcolor,
+							   buffer_array ** exif_array)
 {
+	u64 dbglasttick, dbgnow;
+	t_image_rar rar;
+
 	if (!config.load_exif) {
 		return -1;
 	}
 
-	u64 dbglasttick, dbgnow;
-	t_image_rar rar;
-
 	extract_rar_file_into_image(&rar, rarfile, filename);
+
 	if (rar.buf == NULL) {
 		return 6;
 	}
+
 	rar.idx = 0;
 	xrRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "找到RAR中JPG文件耗时%.2f秒",
 			   pspDiffTime(&dbgnow, &dbglasttick));
 	exif_data = exif_data_new_from_data(rar.buf, rar.size);
-	exif_viewer(exif_data);
+	exif_viewer(exif_data, exif_array);
 	free(rar.buf);
+
 	return 0;
 }
 
 extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
 								dword * pwidth, dword * pheight,
-								pixel ** image_data, pixel * bgcolor)
+								pixel ** image_data, pixel * bgcolor,
+								buffer_array ** exif_array)
 {
 	u64 dbglasttick, dbgnow;
 	t_image_rar rar;
+	int result;
 
 	xrRtcGetCurrentTick(&dbglasttick);
 	extract_rar_file_into_image(&rar, rarfile, filename);
+
 	if (rar.buf == NULL) {
 		return 6;
 	}
+
 	rar.idx = 0;
 	xrRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "解压RAR中JPG文件耗时%.2f秒",
 			   pspDiffTime(&dbgnow, &dbglasttick));
-	int result = image_readjpg2((FILE *) & rar, pwidth, pheight,
+	result = image_readjpg2((FILE *) & rar, pwidth, pheight,
 								image_data,
 								bgcolor, image_rar_fread);
 
 	if (config.load_exif) {
 		exif_data = exif_data_new_from_data(rar.buf, rar.size);
-		exif_viewer(exif_data);
+		exif_viewer(exif_data, exif_array);
 	}
+
 	free(rar.buf);
+
 	return result;
 }
 
@@ -1468,14 +1538,17 @@ static int image_readbmp2(void *handle, dword * pwidth, dword * pheight,
 						  t_bmp_fread readfn)
 {
 	DIB bmp;
+	int result;
 
 	bmp = bmp_read_dib_file(handle, readfn);
+
 	if (bmp == NULL)
 		return 1;
-	*bgcolor = 0;
-	int result = image_bmp_to_32color(bmp, pwidth, pheight, image_data);
 
+	*bgcolor = 0;
+	result = image_bmp_to_32color(bmp, pwidth, pheight, image_data);
 	free(bmp);
+
 	return result;
 }
 
@@ -1483,12 +1556,14 @@ extern int image_readbmp(const char *filename, dword * pwidth, dword * pheight,
 						 pixel ** image_data, pixel * bgcolor)
 {
 	FILE *fp = fopen(filename, "rb");
+	int result;
 
 	if (fp == NULL)
 		return -1;
-	int result = image_readbmp2(fp, pwidth, pheight, image_data, bgcolor, NULL);
 
+	result = image_readbmp2(fp, pwidth, pheight, image_data, bgcolor, NULL);
 	fclose(fp);
+
 	return result;
 }
 
@@ -1497,15 +1572,17 @@ extern int image_readbmp_in_zip(const char *zipfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	unzFile unzf = open_zip_file(zipfile, filename);
+	int result;
 
 	if (unzf == NULL)
 		return -1;
-	int result =
+
+	result =
 		image_readbmp2((FILE *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_zip_fread);
-
 	unzCloseCurrentFile(unzf);
 	unzClose(unzf);
+
 	return result;
 }
 
@@ -1514,20 +1591,24 @@ extern int image_readbmp_in_chm(const char *chmfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_chm chm;
+	int result;
 
 	chm.chm = chm_open(chmfile);
+
 	if (chm.chm == NULL)
 		return -1;
+
 	if (chm_resolve_object(chm.chm, filename, &chm.ui) != CHM_RESOLVE_SUCCESS) {
 		chm_close(chm.chm);
 		return -1;
 	}
+
 	chm.readpos = 0;
-	int result =
+	result =
 		image_readbmp2((FILE *) & chm, pwidth, pheight, image_data, bgcolor,
 					   image_chm_fread);
-
 	chm_close(chm.chm);
+
 	return result;
 }
 
@@ -1552,17 +1633,20 @@ extern int image_readbmp_in_rar(const char *rarfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_rar rar;
+	int result;
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
+
 	if (rar.buf == NULL) {
 		return 6;
 	}
+
 	rar.idx = 0;
-	int result = image_readbmp2((FILE *) & rar, pwidth, pheight,
+	result = image_readbmp2((FILE *) & rar, pwidth, pheight,
 								image_data,
 								bgcolor, image_rar_fread);
-
 	free(rar.buf);
+
 	return result;
 }
 
@@ -1583,15 +1667,22 @@ static int image_readtga2(void *handle, dword * pwidth, dword * pheight,
 {
 	TGA *in;
 	TGAData *data;
+	byte *srcdata;
+	pixel *imgdata;
+	int i, j;
 
 	if ((data = calloc(1, sizeof(*data))) == NULL)
 		return 1;
+
 	in = TGAOpenFd(handle, nfread, nfseek, nftell);
+
 	if (in == NULL) {
 		image_freetgadata(data);
 		return 1;
 	}
+
 	data->flags = TGA_IMAGE_ID | TGA_IMAGE_DATA | TGA_RGB;
+
 	if (in->last != TGA_OK || TGAReadImage(in, data) != TGA_OK) {
 		TGAClose(in);
 		image_freetgadata(data);
@@ -1601,6 +1692,7 @@ static int image_readtga2(void *handle, dword * pwidth, dword * pheight,
 	*pwidth = in->hdr.width;
 	*pheight = in->hdr.height;
 	*bgcolor = 0;
+
 	if ((*image_data =
 		 (pixel *) memalign(16, sizeof(pixel) * *pwidth * *pheight)) == NULL) {
 		TGAClose(in);
@@ -1608,14 +1700,13 @@ static int image_readtga2(void *handle, dword * pwidth, dword * pheight,
 		return 1;
 	}
 
-	byte *srcdata = data->img_data;
-	pixel *imgdata = (*image_data) + in->hdr.x + in->hdr.y * *pwidth;
+	srcdata = data->img_data;
+	imgdata = (*image_data) + in->hdr.x + in->hdr.y * *pwidth;
 
 	if (in->hdr.x == 0)
 		in->hdr.horz = TGA_LEFT;
 	if (in->hdr.y == 0)
 		in->hdr.vert = TGA_TOP;
-	int i, j;
 
 	for (j = 0; j < *pheight; j++) {
 		for (i = 0; i < *pwidth; i++) {
@@ -1655,14 +1746,16 @@ extern int image_readtga(const char *filename, dword * pwidth, dword * pheight,
 						 pixel ** image_data, pixel * bgcolor)
 {
 	FILE *fp = fopen(filename, "rb");
+	int result;
 
 	if (fp == NULL)
 		return -1;
-	int result =
+
+	result =
 		image_readtga2(fp, pwidth, pheight, image_data, bgcolor, NULL, NULL,
 					   NULL);
-
 	fclose(fp);
+
 	return result;
 }
 
@@ -1671,15 +1764,17 @@ extern int image_readtga_in_zip(const char *zipfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	unzFile unzf = open_zip_file(zipfile, filename);
+	int result;
 
 	if (unzf == NULL)
 		return -1;
-	int result =
+
+	result =
 		image_readtga2((FILE *) unzf, pwidth, pheight, image_data, bgcolor,
 					   image_zip_fread, image_zip_fseek, image_zip_ftell);
-
 	unzCloseCurrentFile(unzf);
 	unzClose(unzf);
+
 	return result;
 }
 
@@ -1688,6 +1783,7 @@ extern int image_readtga_in_chm(const char *chmfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_chm chm;
+	int result;
 
 	chm.chm = chm_open(chmfile);
 	if (chm.chm == NULL)
@@ -1696,12 +1792,13 @@ extern int image_readtga_in_chm(const char *chmfile, const char *filename,
 		chm_close(chm.chm);
 		return -1;
 	}
+
 	chm.readpos = 0;
-	int result =
+	result =
 		image_readtga2((FILE *) & chm, pwidth, pheight, image_data, bgcolor,
 					   image_chm_fread, image_chm_fseek, image_chm_ftell);
-
 	chm_close(chm.chm);
+
 	return result;
 }
 
@@ -1710,28 +1807,35 @@ extern int image_readtga_in_rar(const char *rarfile, const char *filename,
 								pixel ** image_data, pixel * bgcolor)
 {
 	t_image_rar rar;
+	int result;
 
 	extract_rar_file_into_image(&rar, rarfile, filename);
+
 	if (rar.buf == NULL) {
 		return 6;
 	}
+
 	rar.idx = 0;
-	int result = image_readtga2((FILE *) & rar, pwidth, pheight,
+	result = image_readtga2((FILE *) & rar, pwidth, pheight,
 								image_data,
 								bgcolor, image_rar_fread,
 								image_rar_fseek,
 								image_rar_ftell);
-
 	free(rar.buf);
+
 	return result;
 }
 
 void exif_entry_viewer(ExifEntry * pentry, void *user_data)
 {
+	char exif_str[512];
+	char msg[512];
+	ExifIfd ifd;
+	buffer_array *exif_array;
+	buffer *b;
+
 	if (pentry == 0)
 		return;
-	;
-	char exif_str[512];
 
 	exif_entry_get_value(pentry, exif_str, 512);
 	exif_str[511] = '\0';
@@ -1739,15 +1843,14 @@ void exif_entry_viewer(ExifEntry * pentry, void *user_data)
 	if (exif_str[0] == '\0')
 		return;
 
-	ExifIfd ifd = exif_entry_get_ifd(pentry);
-	char msg[512];
+	ifd = exif_entry_get_ifd(pentry);
 
 	STRCPY_S(msg, exif_tag_get_title_in_ifd(pentry->tag, ifd));
 	STRCAT_S(msg, ": ");
 	STRCAT_S(msg, exif_str);
 
-	buffer *b = buffer_array_append_get_buffer(exif_array);
-
+	exif_array = (buffer_array *) user_data;
+	b = buffer_array_append_get_buffer(exif_array);
 	buffer_copy_string(b, msg);
 }
 
@@ -1756,27 +1859,32 @@ void exif_context_viewer(ExifContent * pcontext, void *user_data)
 	if (pcontext == NULL)
 		return;
 
-	exif_content_foreach_entry(pcontext, exif_entry_viewer, 0);
+	exif_content_foreach_entry(pcontext, exif_entry_viewer, user_data);
 }
 
-void exif_viewer(ExifData * data)
+void exif_viewer(ExifData * data, buffer_array ** exif_array)
 {
-	if (exif_array) {
-		buffer_array_free(exif_array);
-		exif_array = NULL;
+	if (!data) {
+		return;
 	}
-	
-	exif_array = buffer_array_init();
 
 	if (exif_array == NULL) {
 		return;
 	}
 
-	if (data) {
-		// 打印所有EXIF数据
-		exif_data_foreach_content(data, exif_context_viewer, 0);
-		exif_data_free(data);
+	if (*exif_array) {
+		buffer_array_free(*exif_array);
+		*exif_array = NULL;
 	}
+
+	*exif_array = buffer_array_init();
+
+	if (*exif_array == NULL) {
+		return;
+	}
+	// 打印所有EXIF数据
+	exif_data_foreach_content(data, exif_context_viewer, *exif_array);
+	exif_data_free(data);
 }
 
 /**
@@ -1793,7 +1901,8 @@ void exif_viewer(ExifData * data)
  * - =0 成功
  */
 int image_open_normal(const char *filename, t_fs_filetype ft, dword * pWidth,
-					  dword * pHeight, pixel ** ppImageData, pixel * pBgColor)
+					  dword * pHeight, pixel ** ppImageData, pixel * pBgColor,
+					  buffer_array ** exif_array)
 {
 	int result;
 
@@ -1814,7 +1923,8 @@ int image_open_normal(const char *filename, t_fs_filetype ft, dword * pWidth,
 			break;
 		case fs_filetype_jpg:
 			result =
-				image_readjpg(filename, pWidth, pHeight, ppImageData, pBgColor);
+				image_readjpg(filename, pWidth, pHeight, ppImageData, pBgColor,
+							  exif_array);
 			break;
 		case fs_filetype_tga:
 			result =
@@ -1849,7 +1959,8 @@ int image_open_normal(const char *filename, t_fs_filetype ft, dword * pWidth,
  */
 int image_open_archive(const char *filename, const char *archname,
 					   t_fs_filetype ft, dword * pWidth, dword * pHeight,
-					   pixel ** ppImageData, pixel * pBgColor, int where)
+					   pixel ** ppImageData, pixel * pBgColor, int where,
+					   buffer_array ** exif_array)
 {
 	int result = -1;
 
@@ -1861,12 +1972,8 @@ int image_open_archive(const char *filename, const char *archname,
 	*ppImageData = NULL;
 
 	if (where == scene_in_dir) {
-		char fullpath[PATH_MAX];
-
-		STRCPY_S(fullpath, archname);
-		STRCAT_S(fullpath, filename);
-		return image_open_normal(fullpath, ft, pWidth, pHeight,
-								 ppImageData, pBgColor);
+		return image_open_normal(filename, ft, pWidth, pHeight,
+								 ppImageData, pBgColor, exif_array);
 	}
 
 	switch (ft) {
@@ -1913,17 +2020,20 @@ int image_open_archive(const char *filename, const char *archname,
 				case scene_in_zip:
 					result =
 						image_readjpg_in_zip(archname, filename, pWidth,
-											 pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor,
+											 exif_array);
 					break;
 				case scene_in_chm:
 					result =
 						image_readjpg_in_chm(archname, filename, pWidth,
-											 pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor,
+											 exif_array);
 					break;
 				case scene_in_rar:
 					result =
 						image_readjpg_in_rar(archname, filename, pWidth,
-											 pHeight, ppImageData, pBgColor);
+											 pHeight, ppImageData, pBgColor,
+											 exif_array);
 					break;
 			}
 			break;
@@ -1992,7 +2102,7 @@ int image_open_archive(const char *filename, const char *archname,
 extern int image_open_umd(const char *chaptername, const char *umdfile,
 						  t_fs_filetype ft, size_t file_pos, size_t length,
 						  dword * pWidth, dword * pHeight, pixel ** ppImageData,
-						  pixel * pBgColor)
+						  pixel * pBgColor, buffer_array ** exif_array)
 {
 	int result = -1;
 
@@ -2012,7 +2122,8 @@ extern int image_open_umd(const char *chaptername, const char *umdfile,
 		case fs_filetype_jpg:
 			result =
 				image_readjpg_in_umd(umdfile, file_pos, length, pWidth,
-									 pHeight, ppImageData, pBgColor);
+									 pHeight, ppImageData, pBgColor,
+									 exif_array);
 			break;
 		case fs_filetype_bmp:
 			result =

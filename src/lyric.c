@@ -38,6 +38,9 @@
 __inline bool lyric_add(p_lyric l, dword sec, dword fra, const char *line,
 						dword size)
 {
+	int i;
+	mad_timer_t t;
+
 	if (l->count == 0) {
 		l->lines = malloc(sizeof(*l->lines) * 64);
 	} else if (l->count % 64 == 0) {
@@ -47,11 +50,10 @@ __inline bool lyric_add(p_lyric l, dword sec, dword fra, const char *line,
 		l->count = 0;
 		return false;
 	}
-	int i;
-	mad_timer_t t;
 
 	t.seconds = sec;
 	t.fraction = fra;
+
 	for (i = 0; i < l->count; i++)
 		if (mad_timer_compare(l->lines[i].t, t) > 0)
 			break;
@@ -210,10 +212,13 @@ extern bool lyric_open_raw(p_lyric l, const char *lyric, size_t size)
 
 extern bool lyric_open(p_lyric l, const char *filename)
 {
+	int fd;
+
 	if (l == NULL)
 		return false;
+
 	memset(l, 0, sizeof(t_lyric));
-	int fd = xrIoOpen(filename, PSP_O_RDONLY, 0777);
+	fd = xrIoOpen(filename, PSP_O_RDONLY, 0777);
 
 	if (fd < 0)
 		return false;
@@ -255,10 +260,12 @@ extern void lyric_close(p_lyric l)
 
 extern void lyric_update_pos(p_lyric l, void *tm)
 {
+	mad_timer_t t;
+
 	if (l == NULL || !l->succ)
 		return;
 	xrKernelWaitSema(l->sema, 1, NULL);
-	mad_timer_t t = *(mad_timer_t *) tm;
+	t = *(mad_timer_t *) tm;
 
 	while (l->idx >= 0 && mad_timer_compare(l->lines[l->idx].t, t) > 0) {
 		l->idx--;
@@ -275,12 +282,13 @@ extern void lyric_update_pos(p_lyric l, void *tm)
 extern bool lyric_get_cur_lines(p_lyric l, int extralines, const char **lines,
 								dword * sizes)
 {
+	int i, j = 0;
+
 	if (l == NULL || !l->succ)
 		return false;
 	xrKernelWaitSema(l->sema, 1, NULL);
 	if (l->changed)
 		l->changed = false;
-	int i, j = 0;
 
 	for (i = l->idx - extralines; i <= l->idx + extralines; i++) {
 		if (i > -1 && i < l->count) {
