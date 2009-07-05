@@ -524,7 +524,7 @@ static int ogg_get_info(struct music_info *pinfo)
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
 		pinfo->psp_freq[0] = 66 + (120 - 66) * g_info.avg_bps / 1000 / 320;
-		pinfo->psp_freq[1] = 111;
+		pinfo->psp_freq[1] = pinfo->psp_freq[0] / 2;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
 		if (decoder) {
