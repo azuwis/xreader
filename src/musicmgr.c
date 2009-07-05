@@ -479,8 +479,8 @@ int music_directplay(const char *spath, const char *lpath)
 	int pos;
 	int ret;
 
-	music_add(spath, lpath);
 	music_lock();
+	music_add(spath, lpath);
 	pos = music_find(spath, lpath);
 
 	if (pos < 0) {
