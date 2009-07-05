@@ -408,6 +408,7 @@ int start_cache_next_image(void)
 			tmp.status = CACHE_FAILED;
 			copy_cache_image(p, &tmp);
 			p->data = NULL;
+			p->exif_array = NULL;
 		} else {
 			// retry later
 //          dbg_printf(d, "SERVER: Image %u finished failed(%u), retring", (unsigned)tmp.selidx, tmp.result);
@@ -428,6 +429,7 @@ int start_cache_next_image(void)
 		tmp.status = CACHE_FAILED;
 		copy_cache_image(p, &tmp);
 		p->data = NULL;
+		p->exif_array = NULL;
 		free_cache_image(&tmp);
 	}
 
