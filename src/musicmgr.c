@@ -1192,7 +1192,9 @@ int music_list_load(const char *path)
 	fclose(fp);
 
 end:
+	music_lock();
 	music_list_refresh();
+	music_unlock();
 
 	return ret;
 }
