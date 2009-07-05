@@ -5,72 +5,81 @@
 #include "xrhal.h"
 #include "thread_lock.h"
 
-int xr_lock(struct lock_entry *e)
+#define CURRENT_THREAD xrKernelGetThreadId()
+
+typedef unsigned long dword;
+
+static dword my_InterlockedExchange(dword volatile *dst, dword exchange)
 {
-	if (e == NULL || e->semaid < 0) {
+	unsigned int flags = pspSdkDisableInterrupts();
+	dword origvalue = *dst;
+
+	*dst = exchange;
+
+	pspSdkEnableInterrupts(flags);
+	return origvalue;
+}
+
+int xr_lock(struct psp_mutex_t *s)
+{
+	if (s == NULL) {
 		return -1;
 	}
 
-	for(;;) {
-		SceKernelSemaInfo info;
-
-		memset(&info, 0, sizeof(info));
-		if (sceKernelReferSemaStatus(e->semaid, &info) < 0) {
-			return -1;
-		}
-
-		if (info.currentCount != 0) {
-			if (e->thread_id == xrKernelGetThreadId()) {
-				++e->cnt;
+	for (;;) {
+		if (s->l != 0) {
+			if (s->thread_id == CURRENT_THREAD) {
+				++s->c;
 				return 0;
 			}
 		} else {
-			if (xrKernelWaitSema(e->semaid, 1, NULL) == 0) {
-				e->thread_id = xrKernelGetThreadId();
-				e->cnt = 1;
+			if (!my_InterlockedExchange(&s->l, 1)) {
+				s->thread_id = CURRENT_THREAD;
+				s->c = 1;
 				return 0;
 			}
 		}
+
+		xrKernelDelayThread(1000);
 	}
 
 	return -1;
 }
 
-int xr_unlock(struct lock_entry *e)
+int xr_unlock(struct psp_mutex_t *s)
 {
-	if (e == NULL || e->semaid < 0) {
+	if (s == NULL) {
 		return -1;
 	}
 
-	if (--e->cnt == 0) {
-		e->thread_id = 0;
-		xrKernelWaitSema(e->semaid, 1, NULL);
+	if (--s->c == 0) {
+		s->thread_id = 0;
+		my_InterlockedExchange(&s->l, 0);
 	}
 
-	return -1;
+	return 0;
 }
 
-struct lock_entry* xr_lock_init(struct lock_entry *e, const char* lockname)
+struct psp_mutex_t* xr_lock_init(struct psp_mutex_t *s)
 {
-	if (e == NULL) {
-		return e;
+	if (s == NULL) {
+		return s;
 	}
 	
-	e->cnt = 0;
-	e->thread_id = xrKernelGetThreadId();
-	e->semaid = xrKernelCreateSema(lockname, 0, 1, 1, NULL);
+	s->l = 0;
+	s->c = 0;
+	s->thread_id = CURRENT_THREAD;
 
-	return e->semaid < 0 ? NULL : e;
+	return s;
 }
 
-void xr_lock_destroy(struct lock_entry *e)
+void xr_lock_destroy(struct psp_mutex_t *s)
 {
-	if (e == NULL) {
+	if (s == NULL) {
 		return;
 	}
 	
-	if (e->semaid >= 0) {
-		xrKernelDeleteSema(e->semaid);
-		e->semaid = -1;
-	}
+	s->l = 0;
+	s->c = 0;
+	s->thread_id = 0;
 }

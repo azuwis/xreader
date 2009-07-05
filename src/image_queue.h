@@ -33,7 +33,6 @@ typedef struct _cacher_context
 
 	cache_image_t *caches;
 	size_t caches_cap, caches_size;
-	SceUID cacher_locker;
 } cacher_context;
 
 int cache_init(void);

@@ -39,6 +39,7 @@
 #include "buffered_reader.h"
 #include "genericplayer.h"
 #include "xrhal.h"
+#include "thread_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -86,7 +87,7 @@ int g_status = ST_UNKNOWN;
 /**
  * 当前驱动播放状态写锁
  */
-static SceUID g_status_sema = -1;
+static struct psp_mutex_t generic_l;
 
 /**
  * freq_locker ID
@@ -110,7 +111,7 @@ reader_data data;
  */
 int generic_lock(void)
 {
-	return xrKernelWaitSemaCB(g_status_sema, 1, NULL);
+	return xr_lock(&generic_l);
 }
 
 /**
@@ -118,7 +119,7 @@ int generic_lock(void)
  */
 int generic_unlock(void)
 {
-	return xrKernelSignalSema(g_status_sema, 1);
+	return xr_unlock(&generic_l);
 }
 
 int generic_set_opt(const char *unused, const char *values)
@@ -248,11 +249,7 @@ int generic_fbackward(int sec)
 
 int generic_end(void)
 {
-	if (g_status_sema >= 0) {
-		xrKernelDeleteSema(g_status_sema);
-		g_status_sema = -1;
-	}
-
+	xr_lock_destroy(&generic_l);
 	generic_set_playback(false);
 
 	return 0;
@@ -260,7 +257,7 @@ int generic_end(void)
 
 int generic_init(void)
 {
-	g_status_sema = xrKernelCreateSema("Music Sema", 0, 1, 1, NULL);
+	xr_lock_init(&generic_l);
 	g_seek_count = 0;
 
 	return 0;

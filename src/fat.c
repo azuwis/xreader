@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include "dbg.h"
 #include "xrhal.h"
+#include "thread_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -49,7 +50,8 @@ static enum
 	fat16,
 	fat32
 } fat_type = fat16;
-static SceUID fat_sema = -1;
+
+static struct psp_mutex_t fat_l;
 
 void fat_powerdown(void)
 {
@@ -70,19 +72,17 @@ void fat_powerup(void)
 
 void fat_lock(void)
 {
-	xrKernelWaitSema(fat_sema, 1, NULL);
+	xr_lock(&fat_l);
 }
 
 void fat_unlock(void)
 {
-	xrKernelSignalSema(fat_sema, 1);
+	xr_unlock(&fat_l);
 }
 
 extern bool fat_init(void)
 {
-	fat_sema = xrKernelCreateSema("FAT Sema", 0, 1, 1, NULL);
-	if (fat_sema < 0)
-		return false;
+	xr_lock_init(&fat_l);
 	fat_lock();
 	fatfd = xrIoOpen("msstor:", PSP_O_RDONLY, 0777);
 	if (fatfd < 0) {
@@ -640,7 +640,7 @@ extern void fat_free(void)
 	loadcount = 0;
 	clus_max = 0;
 	fat_type = fat16;
-	xrKernelDeleteSema(fat_sema);
+	xr_lock_destroy(&fat_l);
 }
 
 /**

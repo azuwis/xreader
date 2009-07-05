@@ -32,6 +32,7 @@
 #endif
 #include "ctrl.h"
 #include "xrhal.h"
+#include "thread_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -44,7 +45,7 @@ static unsigned int last_tick = 0;
 static bool hprmenable = false;
 static u32 lasthprmkey = 0;
 static u32 lastkhprmkey = 0;
-static SceUID hprm_sema = -1;
+static struct psp_mutex_t hprm_l;
 #endif
 
 extern void ctrl_init(void)
@@ -56,15 +57,14 @@ extern void ctrl_init(void)
 	xrCtrlSetSamplingMode(PSP_CTRL_MODE_DIGITAL);
 #endif
 #ifdef ENABLE_HPRM
-	hprm_sema = xrKernelCreateSema("hprm sem", 0, 1, 1, NULL);
+	xr_lock_init(&hprm_l);
 #endif
 }
 
 extern void ctrl_destroy(void)
 {
 #ifdef ENABLE_HPRM
-	xrKernelDeleteSema(hprm_sema);
-	hprm_sema = -1;
+	xr_lock_destroy(&hprm_l);
 #endif
 }
 
@@ -95,9 +95,9 @@ extern dword ctrl_read_cont(void)
 	if (hprmenable && xrHprmIsRemoteExist()) {
 		u32 key;
 
-		if (xrKernelWaitSema(hprm_sema, 1, NULL) >= 0) {
+		if (xr_lock(&hprm_l) >= 0) {
 			xrHprmPeekCurrentKey(&key);
-			xrKernelSignalSema(hprm_sema, 1);
+			xr_unlock(&hprm_l);
 
 			if (key > 0) {
 				switch (key) {
@@ -261,17 +261,18 @@ extern dword ctrl_hprm(void)
 
 extern dword ctrl_hprm_raw(void)
 {
+	u32 key = 0;
+
 /*	if(xrKernelDevkitVersion() >= 0x02000010)
 		return 0;*/
 	if (!xrHprmIsRemoteExist())
 		return 0;
 
-	if (xrKernelWaitSema(hprm_sema, 1, NULL) < 0)
-		return 0;
-	u32 key;
+	if (xr_lock(&hprm_l) >= 0) {
+		xrHprmPeekCurrentKey(&key);
+		xr_unlock(&hprm_l);
+	}
 
-	xrHprmPeekCurrentKey(&key);
-	xrKernelSignalSema(hprm_sema, 1);
 	return (dword) key;
 }
 #endif

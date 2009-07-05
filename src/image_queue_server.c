@@ -22,6 +22,7 @@
 #include "xrhal.h"
 #include "kubridge.h"
 #include "common/utils.h"
+#include "thread_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -35,6 +36,8 @@ volatile cacher_context ccacher;
 static volatile bool cacher_cleared = true;
 static dword cache_img_cnt = 0;
 static uint16_t curr_times = 0, avoid_times = 0;
+
+static struct psp_mutex_t cacher_locker;
 
 enum
 {
@@ -57,13 +60,13 @@ static unsigned get_avail_memory(void)
 static inline int cache_lock(void)
 {
 //  dbg_printf(d, "%s", __func__);
-	return xrKernelWaitSema(ccacher.cacher_locker, 1, NULL);
+	return xr_lock(&cacher_locker);
 }
 
 static inline int cache_unlock(void)
 {
 //  dbg_printf(d, "%s", __func__);
-	return xrKernelSignalSema(ccacher.cacher_locker, 1);
+	return xr_unlock(&cacher_locker);
 }
 
 void cache_on(bool on)
@@ -91,9 +94,11 @@ void cache_next_image(void)
 	curr_times = avoid_times = 0;
 }
 
-static void cache_clear_without_lock()
+static void cache_clear(void)
 {
 	int i;
+
+	cache_lock();
 
 	for (i = 0; i < ccacher.caches_size; ++i) {
 		if (ccacher.caches[i].data != NULL) {
@@ -111,12 +116,6 @@ static void cache_clear_without_lock()
 	}
 
 	ccacher.caches_size = 0;
-}
-
-static void cache_clear(void)
-{
-	cache_lock();
-	cache_clear_without_lock();
 	cacher_cleared = true;
 	cache_unlock();
 }
@@ -126,7 +125,7 @@ void cache_set_forward(bool forward)
 	cache_lock();
 
 	if (ccacher.isforward != forward) {
-		cache_clear_without_lock();
+		cache_clear();
 		ccacher.first_run = true;
 	}
 
@@ -137,8 +136,9 @@ void cache_set_forward(bool forward)
 /**
  * 删除缓存, 并释放资源
  */
-static int cache_delete_without_lock(size_t pos)
+static int cache_delete(size_t pos)
 {
+	cache_lock();
 	cache_image_t *p = &ccacher.caches[pos];
 
 	if (p->data != NULL) {
@@ -154,6 +154,7 @@ static int cache_delete_without_lock(size_t pos)
 	memmove(&ccacher.caches[pos], &ccacher.caches[pos + 1],
 			(ccacher.caches_size - pos - 1) * sizeof(ccacher.caches[0]));
 	ccacher.caches_size--;
+	cache_unlock();
 
 	return 0;
 }
@@ -165,7 +166,7 @@ int cache_delete_first(void)
 	if (ccacher.caches_size != 0 && ccacher.caches != NULL) {
 		int ret;
 
-		ret = cache_delete_without_lock(0);
+		ret = cache_delete(0);
 		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
 		cache_unlock();
 
@@ -530,7 +531,7 @@ int cache_routine(void)
 
 int cache_init(void)
 {
-	ccacher.cacher_locker = xrKernelCreateSema("Cache Mutex", 0, 1, 1, 0);
+	xr_lock_init(&cacher_locker);
 	ccacher.caches_size = 0;
 	ccacher.caches_cap = 0;
 
@@ -558,10 +559,7 @@ void cache_free(void)
 {
 	cache_on(false);
 
-	if (ccacher.cacher_locker >= 0) {
-		xrKernelDeleteSema(ccacher.cacher_locker);
-		ccacher.cacher_locker = -1;
-	}
+	xr_lock_destroy(&cacher_locker);
 
 	if (cache_del_event >= 0) {
 		xrKernelDeleteEventFlag(cache_del_event);

@@ -10,6 +10,7 @@
 #include "musicmgr.h"
 #include "dbg.h"
 #include "xrhal.h"
+#include "thread_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -24,11 +25,11 @@ typedef struct _freq_lock_entry freq_lock_entry;
 
 static freq_lock_entry *freqs = NULL;
 static int freqs_cnt = 0;
-static int g_freq_sema;
+static struct psp_mutex_t freq_l;
 
 int freq_init()
 {
-	g_freq_sema = xrKernelCreateSema("Freq Sema", 0, 1, 1, NULL);
+	xr_lock_init(&freq_l);
 
 	if (freqs_cnt != 0 || freqs != NULL) {
 		free(freqs);
@@ -41,22 +42,19 @@ int freq_init()
 
 int freq_free()
 {
-	if (g_freq_sema >= 0) {
-		xrKernelDeleteSema(g_freq_sema);
-		g_freq_sema = -1;
-	}
+	xr_lock_destroy(&freq_l);
 
 	return 0;
 }
 
 int freq_lock()
 {
-	return xrKernelWaitSemaCB(g_freq_sema, 1, NULL);
+	return xr_lock(&freq_l);
 }
 
 int freq_unlock()
 {
-	return xrKernelSignalSema(g_freq_sema, 1);
+	return xr_unlock(&freq_l);
 }
 
 static int generate_id()

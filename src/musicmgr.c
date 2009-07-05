@@ -59,6 +59,7 @@
 #include "power.h"
 #include "image_queue.h"
 #include "xrhal.h"
+#include "thread_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -77,7 +78,7 @@ static int g_thread_actived = 0;
 static int g_thread_exited = 0;
 static t_lyric lyric;
 static bool g_music_hprm_enable = false;
-static SceUID music_sema = -1;
+static struct psp_mutex_t music_l;
 
 static int music_play(int i);
 
@@ -254,14 +255,12 @@ static int shuffle_prev(void)
 
 static void music_lock(void)
 {
-	if (music_sema >= 0)
-		xrKernelWaitSema(music_sema, 1, NULL);
+	xr_lock(&music_l);
 }
 
 static void music_unlock(void)
 {
-	if (music_sema >= 0)
-		xrKernelSignalSema(music_sema, 1);
+	xr_unlock(&music_l);
 }
 
 static struct music_file *new_music_file(const char *spath, const char *lpath)
@@ -817,7 +816,7 @@ int music_init(void)
 
 	xrRtcGetCurrentClockLocalTime(&tm);
 	srand(tm.microseconds);
-	music_sema = xrKernelCreateSema("Music Sema", 0, 1, 1, NULL);
+	xr_lock_init(&music_l);
 
 #ifdef ENABLE_MPC
 	mpc_init();
@@ -915,10 +914,7 @@ int music_free(void)
 		xrKernelDeleteThread(g_music_thread);
 	}
 
-	ret = xrKernelDeleteSema(music_sema);
-
-	if (ret < 0)
-		return ret;
+	xr_lock_destroy(&music_l);
 
 	return 0;
 }
