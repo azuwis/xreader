@@ -74,6 +74,11 @@ extern bool ctrl_analog(int *x, int *y)
 	SceCtrlData ctl;
 
 	xrCtrlReadBufferPositive(&ctl, 1);
+
+	if (ctl.Buttons & PSP_CTRL_HOLD) {
+		return false;
+	}
+
 	*x = ((int) ctl.Lx) - 128;
 	*y = ((int) ctl.Ly) - 128;
 
