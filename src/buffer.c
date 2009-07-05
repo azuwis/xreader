@@ -357,12 +357,12 @@ void buffer_array_free(buffer_array * b)
 	if (!b)
 		return;
 
-	for (i = 0; i < b->size; i++) {
-		if (b->ptr[i])
-			buffer_free(b->ptr[i]);
-	}
-
 	if (b->ptr) {
+		for (i = 0; i < b->size; i++) {
+			if (b->ptr[i])
+				buffer_free(b->ptr[i]);
+		}
+
 		free(b->ptr);
 		b->ptr = NULL;
 	}
