@@ -3360,6 +3360,10 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 				if (*index == 0) {
 					t_conf prev_config;
 
+					music_list_clear();
+					music_list_load(musiclst_path);
+					music_load(0);
+					
 					memcpy(&prev_config, &config, sizeof(t_conf));
 					// load
 					if (!conf_load(&config)) {
@@ -3368,11 +3372,9 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 						return win_menu_op_redraw;
 					}
 					detect_config_change(&prev_config, &config);
-					music_list_clear();
-					music_list_load(musiclst_path);
-					music_load(0);
 				} else if (*index == 1) {
 					// save
+					music_list_save(musiclst_path);
 					load_fontsize_to_config();
 					save_passwords();
 					if (!conf_save(&config)) {
@@ -3380,7 +3382,6 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 								COLOR_WHITE, config.msgbcolor);
 						return win_menu_op_redraw;
 					}
-					music_list_save(musiclst_path);
 				} else {
 					// delete
 					if (!utils_del_file(conffile)) {
