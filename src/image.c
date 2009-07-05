@@ -1743,8 +1743,8 @@ void exif_entry_viewer(ExifEntry * pentry, void *user_data)
 	char msg[512];
 
 	STRCPY_S(msg, exif_tag_get_title_in_ifd(pentry->tag, ifd));
-	strncat(msg, ": ", 512 - strlen(msg) - 1);
-	strncat(msg, exif_str, 512 - strlen(msg) - 1);
+	STRCAT_S(msg, ": ");
+	STRCAT_S(msg, exif_str);
 
 	buffer *b = buffer_array_append_get_buffer(exif_array);
 
