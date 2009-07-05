@@ -648,7 +648,7 @@ static int ovcb_seek(void *datasource, int64_t offset, int whence)
 {
 	buffered_reader_t *p = (buffered_reader_t *) datasource;
 	int ret = -1;
-	
+
 	if (whence == PSP_SEEK_SET) {
 		ret = buffered_reader_seek(p, offset);
 	} else if (whence == PSP_SEEK_CUR) {
@@ -663,7 +663,7 @@ static int ovcb_seek(void *datasource, int64_t offset, int whence)
 static int ovcb_close(void *datasource)
 {
 	buffered_reader_t *p = (buffered_reader_t *) datasource;
-	
+
 	buffered_reader_close(p);
 	return 0;
 }
@@ -671,7 +671,7 @@ static int ovcb_close(void *datasource)
 static long ovcb_tell(void *datasource)
 {
 	buffered_reader_t *p = (buffered_reader_t *) datasource;
-	
+
 	return buffered_reader_position(p);
 }
 
