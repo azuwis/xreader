@@ -564,17 +564,20 @@ static void scene_draw_mp3bar_music_staff(void)
 
 static void scene_draw_mp3bar(bool * firstdup)
 {
-	if (*firstdup) {
-		disp_duptocachealpha(50);
-		*firstdup = false;
-	} else
-		disp_duptocache();
+	static dword memory_free = 0;
+	static u64 mem_prev, mem_now;
 
 	char infostr[80];
 	pspTime tm;
 	dword cpu, bus;
 	dword pos;
 	int percent, lifetime, tempe, volt;
+
+	if (*firstdup) {
+		disp_duptocachealpha(50);
+		*firstdup = false;
+	} else
+		disp_duptocache();
 
 	disp_rectangle(5, 5, 474, 8 + DISP_FONTSIZE * 2, COLOR_WHITE);
 	disp_fillrect(6, 6, 473, 7 + DISP_FONTSIZE * 2,
@@ -601,6 +604,13 @@ static void scene_draw_mp3bar(bool * firstdup)
 		}
 	}
 
+	xrRtcGetCurrentTick(&mem_now);
+
+	if (pspDiffTime(&mem_now, &mem_prev) > 3.0) {
+		memory_free = get_free_mem();
+		xrRtcGetCurrentTick(&mem_prev);
+	}
+
 	disp_putstring(6 + DISP_FONTSIZE * 2, 6, COLOR_WHITE,
 				   (const byte *) infostr);
 	power_get_battery(&percent, &lifetime, &tempe, &volt);
@@ -610,8 +620,7 @@ static void scene_draw_mp3bar(bool * firstdup)
 					  _
 					  ("%s  剩余电量: %d%%(%d小时%d分钟)  电池温度: %d℃   剩余内存: %dKB"),
 					  power_get_battery_charging(), percent,
-					  lifetime / 60, lifetime % 60, tempe,
-					  get_free_mem() / 1024);
+					  lifetime / 60, lifetime % 60, tempe, memory_free / 1024);
 		} else {
 			SPRINTF_S(infostr,
 					  _
@@ -621,7 +630,7 @@ static void scene_draw_mp3bar(bool * firstdup)
 		}
 	} else
 		SPRINTF_S(infostr, _("[电源供电]   剩余内存: %dKB"),
-				  get_free_mem() / 1024);
+				  memory_free / 1024);
 	if (strcmp(simple_textdomain(NULL), "en_US") == 0)
 		disp_putstring(6, 7 + DISP_FONTSIZE, COLOR_WHITE,
 					   (const byte *) infostr);
