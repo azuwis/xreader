@@ -3318,6 +3318,16 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 	cur_book_view.text_needrf = cur_book_view.text_needrp =
 		cur_book_view.text_needrb = true;
 
+#ifdef ENABLE_MUSIC
+	if (prev->mp3cycle != curr->mp3cycle) {
+		music_set_cycle_mode(curr->mp3cycle);
+	}
+
+	if (curr->autoplay) {
+		music_list_play();
+	}
+#endif
+
 	return 0;
 }
 
