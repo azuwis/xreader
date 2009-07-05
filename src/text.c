@@ -633,6 +633,11 @@ static p_text text_open(const char *filename, t_fs_filetype ft,
 		return NULL;
 	}
 
+	if (txt->rows[0] == NULL) {
+		text_close(txt);
+		return NULL;
+	}
+
 	calc_gi(txt);
 	return txt;
 }
