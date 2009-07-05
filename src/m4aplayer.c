@@ -623,7 +623,7 @@ static int m4a_probe(const char *spath)
 }
 
 /**
- * PSP准备休眠时m4ae的操作
+ * PSP准备休眠时m4a的操作
  *
  * @return 成功时返回0
  */
@@ -636,7 +636,7 @@ static int m4a_suspend(void)
 }
 
 /**
- * PSP准备从休眠时恢复的m4ae的操作
+ * PSP准备从休眠时恢复的m4a的操作
  *
  * @param spath 当前播放音乐名，8.3路径形式
  * @param lpath 当前播放音乐名，长文件或形式
