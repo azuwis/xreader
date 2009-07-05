@@ -3370,6 +3370,7 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 					detect_config_change(&prev_config, &config);
 					music_list_clear();
 					music_list_load(musiclst_path);
+					music_load(0);
 				} else if (*index == 1) {
 					// save
 					load_fontsize_to_config();
