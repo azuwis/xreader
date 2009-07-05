@@ -175,3 +175,58 @@ void *safe_realloc(void *ptr, size_t size)
 
 	return p;
 }
+
+// 获取PSP剩余内存，单位为Bytes
+// 作者:诗诺比
+extern unsigned int get_free_mem(void)
+{
+#ifdef DMALLOC
+	unsigned long all = 0;
+	unsigned long allocated = 0;
+
+	dmalloc_get_stats(NULL, NULL, NULL, &all, &allocated, NULL, NULL, NULL,
+					  NULL);
+
+	// return all - allocated;
+	return 25 * 1024 * 1024 - allocated;
+#else
+	unsigned int flags = pspSdkDisableInterrupts();
+
+	void *p[512];
+	unsigned int block_size = 0x04000000;	//最大内存:64MB,必需是2的N次方
+	unsigned int block_free = 0;
+	int i = 0;
+
+	while ((block_size >>= 1) >= 0x0400)	//最小精度:1KB
+	{
+		if (NULL != (p[i] = malloc(block_size))) {
+			block_free |= block_size;
+			++i;
+
+			if (i == sizeof(p) / sizeof(p[0])) {
+				goto abort;
+			}
+		}
+	}
+
+	while (NULL != (p[i] = malloc(0x8000)))	//最小精度:32KB
+	{
+		block_free += 0x8000;
+		++i;
+
+		if (i == sizeof(p) / sizeof(p[0])) {
+			goto abort;
+		}
+	}
+
+  abort:
+	while (i--) {
+		free(p[i]);
+	}
+
+	pspSdkEnableInterrupts(flags);
+
+	return block_free;
+#endif
+}
+

@@ -38,6 +38,7 @@ extern "C"
 	extern dword utils_del_dir(const char *dir);
 	bool utils_is_file_exists(const char *filename);
 	void *safe_realloc(void *ptr, size_t size);
+	extern unsigned int get_free_mem(void);
 
 #define UNUSED(x) ((void)(x))
 

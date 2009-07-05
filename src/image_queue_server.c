@@ -50,7 +50,6 @@ static SceUID cache_del_event = -1;
 static unsigned get_avail_memory(void)
 {
 	int memory;
-	extern unsigned int get_free_mem(void);
 
 	memory = get_free_mem();
 

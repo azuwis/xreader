@@ -5563,8 +5563,6 @@ extern void scene_init(void)
 		dbg_open_psp(d);
 	}
 #ifdef DMALLOC
-	extern unsigned int get_free_mem(void);
-
 	dbg_printf(d, "free memory %dKB", get_free_mem() / 1024);
 #endif
 
