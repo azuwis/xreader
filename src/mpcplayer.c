@@ -58,11 +58,6 @@ static MPC_SAMPLE_FORMAT *g_buff = NULL;
 static unsigned g_buff_frame_size;
 
 /**
- * Musepack mpc_reader_exit_buffered_reader()调用需要一个锁
- */
-static bool reader_inited = false;
-
-/**
  * Musepack音乐播放缓冲当前位置，以帧数计
  */
 static int g_buff_frame_start;
@@ -234,7 +229,6 @@ static int __init(void)
 
 	g_buff_frame_size = g_buff_frame_start = 0;
 	g_seek_seconds = 0;
-	reader_inited = false;
 
 	g_play_time = 0.;
 	demux = NULL;
@@ -329,7 +323,6 @@ static int mpc_load(const char *spath, const char *lpath)
 		return -1;
 	}
 
-	reader_inited = true;
 	demux = mpc_demux_init(&reader);
 
 	if (demux == NULL) {
@@ -428,9 +421,9 @@ static int mpc_end(void)
 		demux = NULL;
 	}
 
-	if (reader_inited == true) {
+	if (reader.data != NULL) {
 		mpc_reader_exit_buffered_reader(&reader);
-		reader_inited = false;
+		reader.data = NULL;
 	}
 
 	free_bitrate(&g_inst_br);
