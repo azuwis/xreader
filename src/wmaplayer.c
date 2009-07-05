@@ -121,8 +121,7 @@ static int64_t asf_read_cb(void *userdata, void *buf, SceSize size)
 	return ret;
 }
 
-static int64_t asf_seek_cb(void *userdata, void *buf, int offset, int dummy,
-						   int whence)
+static int64_t asf_seek_cb(void *userdata, void *buf, SceOff offset, int whence)
 {
 	int ret = -1;
 	reader_data *reader = (reader_data *) userdata;
@@ -205,7 +204,7 @@ static int wma_process_single(void)
 
 	memset(wma_frame_buffer, 0, wma_block_align);
 	frame = (SceAsfFrame *) (((u8 *) & asfparser) + 14536 - 32);
-	frame->data = wma_frame_buffer;
+	frame->pData = wma_frame_buffer;
 	ret = xrAsfGetFrameData(&asfparser, 1, frame);
 
 	if (ret < 0) {
@@ -219,11 +218,11 @@ static int wma_process_single(void)
 	wma_codec_buffer[8] = (unsigned long) wma_mix_buffer;
 	wma_codec_buffer[9] = 16384;
 
-	wma_codec_buffer[15] = frame->unk1;
-	wma_codec_buffer[16] = frame->unk2;
-	wma_codec_buffer[17] = frame->unk4;
-	wma_codec_buffer[18] = frame->unk5;
-	wma_codec_buffer[19] = frame->unk3;
+	wma_codec_buffer[15] = frame->iUnk1;
+	wma_codec_buffer[16] = frame->iUnk2;
+	wma_codec_buffer[17] = frame->iUnk4;
+	wma_codec_buffer[18] = frame->iUnk5;
+	wma_codec_buffer[19] = frame->iUnk3;
 
 	ret = xrAudiocodecDecode(wma_codec_buffer, 0x1005);
 
@@ -403,7 +402,7 @@ static int parse_standard_tag(struct WMAStdTag *tag)
 		return -1;
 	}
 
-	asf_seek_cb(&data, NULL, start, 0, PSP_SEEK_SET);
+	asf_seek_cb(&data, NULL, start, PSP_SEEK_SET);
 	asf_read_cb(&data, framedata, size);
 
 	if (size <= 16) {
@@ -533,7 +532,7 @@ static int parse_ex_tag(struct WMAExTag *tag)
 		return -1;
 	}
 
-	asf_seek_cb(&data, NULL, start, 0, PSP_SEEK_SET);
+	asf_seek_cb(&data, NULL, start, PSP_SEEK_SET);
 	asf_read_cb(&data, framedata, size);
 
 	if (size <= 16) {

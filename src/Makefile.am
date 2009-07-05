@@ -83,7 +83,8 @@ endif
 
 if WMA
 xReader_elf_SOURCES += \
-wmaplayer.c wmaplayer.h sceAsfParser.S $(top_builddir)/cooleyesBridge/cooleyesBridge.S
+wmaplayer.c wmaplayer.h $(top_builddir)/cooleyesBridge/cooleyesBridge.S
+LIBS += -lpspasfparser
 endif
 
 if WAV

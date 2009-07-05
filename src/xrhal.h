@@ -687,7 +687,7 @@ static inline
 	return sceAudioOutputPannedBlocking(channel, leftvol, rightvol, buf);
 }
 
-static inline int xrAsfSeekTime(SceAsfParser * asf, int unk, u32 * ms)
+static inline int xrAsfSeekTime(SceAsfParser * asf, int unk, SceUInt32 * ms)
 {
 	return sceAsfSeekTime(asf, unk, ms);
 }
