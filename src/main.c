@@ -42,6 +42,11 @@ PSP_HEAP_SIZE_MAX();
 static unsigned int lock_count = 0;
 static unsigned int intr_flags = 0;
 
+/**
+ * malloc lock for malloc-2.6.4 in newlib-0.17,
+ * in malloc-2.8.4 newlib port we use our own lock,
+ * so these code may be not used at all
+ */
 void __malloc_lock(struct _reent *ptr)
 {
 	unsigned int flags = pspSdkDisableInterrupts();
