@@ -549,6 +549,29 @@ extern bool disp_ttf_reload(int size)
 		}
 	}
 
+	if (cttf == NULL && ettf == NULL)
+		return false;
+
+	if (cttf == NULL) {
+		cttf =
+			ttf_open_buffer(ettf->fileBuffer, ettf->fileSize, size,
+					ettf->fontName, true);
+
+		if (cttf) {
+			g_ttf_share_two_font = true;
+		}
+	}
+
+	if (ettf == NULL) {
+		ettf =
+			ttf_open_buffer(cttf->fileBuffer, cttf->fileSize, size,
+					cttf->fontName, false);
+
+		if (ettf) {
+			g_ttf_share_two_font = true;
+		}
+	}
+
 	if (cttf == NULL || ettf == NULL)
 		return false;
 
