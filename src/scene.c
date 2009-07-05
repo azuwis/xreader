@@ -5491,7 +5491,7 @@ extern double pspDiffTime(u64 * t1, u64 * t2);
 
 static const bool is_log = true;
 DBG *d = 0;
-bool xreader_scene_inited = false;
+volatile bool xreader_scene_inited = false;
 
 int load_rdriver(void)
 {

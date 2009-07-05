@@ -81,7 +81,7 @@ static int power_callback(int arg1, int powerInfo, void *arg)
 
 static int exit_callback(int arg1, int arg2, void *arg)
 {
-	extern bool xreader_scene_inited;
+	extern volatile bool xreader_scene_inited;
 
 	while (xreader_scene_inited == false) {
 		xrKernelDelayThread(1);
