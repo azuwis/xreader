@@ -87,8 +87,10 @@ p_text fs = NULL;
 t_conf config;
 p_win_menuitem filelist = NULL, copylist = NULL, cutlist = NULL;
 dword filecount = 0, copycount = 0, cutcount = 0;
-
 static bool fat_inited = false;
+#ifdef ENABLE_MUSIC
+char musiclst_path[PATH_MAX];
+#endif
 
 #ifdef ENABLE_BG
 bool repaintbg = true;
@@ -3346,6 +3348,15 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 				SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config",
 						  config_num, ".ini");
 				conf_set_file(conffile);
+
+				if (config_num == 0) {
+					SPRINTF_S(musiclst_path, "%s%s", scene_appdir(),
+							  "music.lst");
+				} else {
+					SPRINTF_S(musiclst_path, "%s%s%d%s", scene_appdir(),
+							  "music", config_num, ".lst");
+				}
+
 				if (*index == 0) {
 					t_conf prev_config;
 
@@ -3357,6 +3368,8 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 						return win_menu_op_redraw;
 					}
 					detect_config_change(&prev_config, &config);
+					music_list_clear();
+					music_list_load(musiclst_path);
 				} else if (*index == 1) {
 					// save
 					load_fontsize_to_config();
@@ -3366,6 +3379,7 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 								COLOR_WHITE, config.msgbcolor);
 						return win_menu_op_redraw;
 					}
+					music_list_save(musiclst_path);
 				} else {
 					// delete
 					if (!utils_del_file(conffile)) {
@@ -5585,11 +5599,7 @@ extern void scene_init(void)
 
 	xrRtcGetCurrentTick(&dbglasttick);
 	char fontzipfile[PATH_MAX], efontfile[PATH_MAX], cfontfile[PATH_MAX],
-		conffile[PATH_MAX], locconf[PATH_MAX], bmfile[PATH_MAX]
-#ifdef ENABLE_MUSIC
-	, mp3conf[PATH_MAX]
-#endif
-	;
+		conffile[PATH_MAX], locconf[PATH_MAX], bmfile[PATH_MAX];
 
 	STRCPY_S(config.path, "ms0:/");
 	STRCPY_S(config.shortpath, "ms0:/");
@@ -5598,13 +5608,13 @@ extern void scene_init(void)
 			  ".ini");
 	conf_set_file(conffile);
 #ifdef ENABLE_MUSIC
-	STRCPY_S(mp3conf, scene_appdir());
-	STRCAT_S(mp3conf, "music.lst");
+	STRCPY_S(musiclst_path, scene_appdir());
+	STRCAT_S(musiclst_path, "music.lst");
 #endif
 
 	if (key == PSP_CTRL_RTRIGGER) {
 #ifdef ENABLE_MUSIC
-		utils_del_file(mp3conf);
+		utils_del_file(musiclst_path);
 #endif
 		utils_del_file(conffile);
 		conf_load(&config);
@@ -5707,7 +5717,7 @@ extern void scene_init(void)
 	xrRtcGetCurrentTick(&dbgnow);
 	dbg_printf(d, "music_init(): %.2fs", pspDiffTime(&dbgnow, &dbglasttick));
 
-	if (config.confver < 0x00090100 || music_list_load(mp3conf) != 0) {
+	if (config.confver < 0x00090100 || music_list_load(musiclst_path) != 0) {
 		xrRtcGetCurrentTick(&dbglasttick);
 		music_add_dir("ms0:/MUSIC/", "ms0:/MUSIC/");
 		xrRtcGetCurrentTick(&dbgnow);
@@ -5804,15 +5814,7 @@ extern void scene_exit(void)
 
 #ifdef ENABLE_MUSIC
 	music_list_stop();
-
-	{
-		char mp3conf[PATH_MAX];
-
-		STRCPY_S(mp3conf, scene_appdir());
-		STRCAT_S(mp3conf, "music.lst");
-		music_list_save(mp3conf);
-	}
-
+	music_list_save(musiclst_path);
 	music_free();
 #endif
 	if (config.save_password)

@@ -61,3 +61,4 @@ int music_load(int i);
 bool music_curr_playing();
 int music_get_current_pos(void);
 int music_set_hprm(bool enable);
+int music_list_clear(void);

@@ -1119,6 +1119,26 @@ static bool music_is_file_exist(const char *filename)
 	return true;
 }
 
+int music_list_clear(void)
+{
+	struct music_file *l, *t;
+
+	music_lock();
+
+	for (l = g_music_files; l != NULL; l = t) {
+		buffer_free(l->shortpath);
+		buffer_free(l->longpath);
+		t = l->next;
+		free(l);
+	}
+
+	g_music_files = NULL;
+
+	music_unlock();
+
+	return 0;
+}
+
 int music_list_load(const char *path)
 {
 	if (path == NULL)
