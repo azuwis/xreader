@@ -621,10 +621,10 @@ void cache_reload_all(void)
 		if (p->status == CACHE_OK) {
 			free_cache_image(p);
 			ccacher.memory_usage -= p->width * p->height * sizeof(pixel);
-			p->status = CACHE_INIT;
 		}
+
+		p->status = CACHE_INIT;
 	}
 
-	xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_DELETED);
 	cache_unlock();
 }
