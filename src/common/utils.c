@@ -190,8 +190,6 @@ extern unsigned int get_free_mem(void)
 	// return all - allocated;
 	return 25 * 1024 * 1024 - allocated;
 #else
-	unsigned int flags = pspSdkDisableInterrupts();
-
 	void *p[512];
 	unsigned int block_size = 0x04000000;	//最大内存:64MB,必需是2的N次方
 	unsigned int block_free = 0;
@@ -223,8 +221,6 @@ extern unsigned int get_free_mem(void)
 	while (i--) {
 		free(p[i]);
 	}
-
-	pspSdkEnableInterrupts(flags);
 
 	return block_free;
 #endif
