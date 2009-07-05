@@ -511,7 +511,10 @@ static int music_list_refresh(void)
 				g_list.is_list_playing = false;
 			}
 		} else {
-			music_load(g_list.curr_pos);
+			// only load information
+			if (music_load(g_list.curr_pos) >= 0) {
+				musicdrv_end();
+			}
 		}
 	} else {
 		musicdrv_end();
