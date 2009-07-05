@@ -785,7 +785,7 @@ static int flac_get_info(struct music_info *pinfo)
 		pinfo->cur_time = g_play_time;
 	}
 	if (pinfo->type & MD_GET_CPUFREQ) {
-		pinfo->psp_freq[0] = 66;
+		pinfo->psp_freq[0] = 96;
 		pinfo->psp_freq[1] = 111;
 	}
 	if (pinfo->type & MD_GET_INSKBPS) {
