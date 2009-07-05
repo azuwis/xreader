@@ -5827,14 +5827,6 @@ extern void scene_exit(void)
 		scene_bookmark_autosave();
 	}
 
-	{
-		// always save to config0.ini
-		char conffile[PATH_MAX];
-
-		SPRINTF_S(conffile, "%s%s%d%s", scene_appdir(), "config", 0, ".ini");
-		conf_set_file(conffile);
-	}
-
 	load_fontsize_to_config();
 	conf_save(&config);
 
