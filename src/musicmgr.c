@@ -512,6 +512,7 @@ static int music_list_refresh(void)
 	}
 
 	g_list.first_time = true;
+	g_shuffle.first_time = true;
 
 	return 0;
 }
