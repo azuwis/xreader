@@ -24,7 +24,7 @@
 #include <assert.h>
 #include "config.h"
 #include "scene.h"
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "musicmgr.h"
 #include "musicdrv.h"
 #include "strsafe.h"
@@ -364,7 +364,7 @@ static int wv_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			return -1;
 		}
 
-		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xAudioClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
 	}
@@ -730,12 +730,12 @@ static int wv_load(const char *spath, const char *lpath)
 		STRCAT_S(g_encode_name, " FAST");
 	}
 
-	if (xMP3AudioInit() < 0) {
+	if (xAudioInit() < 0) {
 		__end();
 		return -1;
 	}
 
-	if (xMP3AudioSetFrequency(g_info.sample_freq) < 0) {
+	if (xAudioSetFrequency(g_info.sample_freq) < 0) {
 		__end();
 		return -1;
 	}
@@ -756,7 +756,7 @@ static int wv_load(const char *spath, const char *lpath)
 	dbg_printf(d, "[%s - %s - %s, wv tag]", g_info.tag.artist, g_info.tag.album,
 			   g_info.tag.title);
 
-	xMP3AudioSetChannelCallback(0, wv_audiocallback, NULL);
+	xAudioSetChannelCallback(0, wv_audiocallback, NULL);
 
 	return 0;
 }
@@ -770,7 +770,7 @@ static int wv_load(const char *spath, const char *lpath)
  */
 static int __end(void)
 {
-	xMP3AudioEndPre();
+	xAudioEndPre();
 
 	generic_lock();
 	g_status = ST_STOPPED;
@@ -792,7 +792,7 @@ static int wv_end(void)
 {
 	__end();
 
-	xMP3AudioEnd();
+	xAudioEnd();
 
 	if (wv_buffer != NULL) {
 		free(wv_buffer);

@@ -37,7 +37,7 @@
 #include "ssv.h"
 #include "strsafe.h"
 #include "musicdrv.h"
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "dbg.h"
 #include "scene.h"
 #include "apetaglib/APETag.h"
@@ -132,7 +132,7 @@ static int __init(void)
  */
 static int __end(void)
 {
-	xMP3AudioEndPre();
+	xAudioEndPre();
 
 	g_play_time = 0.;
 	generic_lock();
@@ -247,7 +247,7 @@ static int at3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			generic_unlock();
 			at3_seek_seconds(g_play_time);
 		}
-		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xAudioClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
 	}
@@ -523,25 +523,25 @@ static int at3_load(const char *spath, const char *lpath)
 		buffered_reader_seek(data.r, cur);
 	}
 
-	ret = xMP3AudioInit();
+	ret = xAudioInit();
 
 	if (ret < 0) {
 		goto failed;
 	}
 
-	ret = xMP3AudioSetFrequency(g_info.sample_freq);
+	ret = xAudioSetFrequency(g_info.sample_freq);
 
 	if (ret < 0) {
 		goto failed;
 	}
 
-	g_buff = xMP3Alloc(0, BUFF_SIZE);
+	g_buff = xAudioAlloc(0, BUFF_SIZE);
 
 	if (g_buff == NULL) {
 		goto failed;
 	}
 
-	xMP3AudioSetChannelCallback(0, at3_audiocallback, NULL);
+	xAudioSetChannelCallback(0, at3_audiocallback, NULL);
 
 	return 0;
 
@@ -556,7 +556,7 @@ static int at3_end(void)
 
 	__end();
 
-	xMP3AudioEnd();
+	xAudioEnd();
 
 	g_status = ST_STOPPED;
 	generic_end();
@@ -582,7 +582,7 @@ static int at3_end(void)
 	}
 
 	if (g_buff != NULL) {
-		xMP3Free(g_buff);
+		xAudioFree(g_buff);
 		g_buff = NULL;
 	}
 

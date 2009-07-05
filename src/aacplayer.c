@@ -37,7 +37,7 @@
 #include "ssv.h"
 #include "strsafe.h"
 #include "musicdrv.h"
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "dbg.h"
 #include "scene.h"
 #include "genericplayer.h"
@@ -124,7 +124,7 @@ static int __init(void)
  */
 static int __end(void)
 {
-	xMP3AudioEndPre();
+	xAudioEndPre();
 
 	g_play_time = 0.;
 	generic_lock();
@@ -190,7 +190,7 @@ static int aac_audiocallback(void *buf, unsigned int reqn, void *pdata)
 	}
 
 	if (g_status == ST_PAUSED) {
-		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xAudioClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
 	}
@@ -426,21 +426,21 @@ static int aac_load(const char *spath, const char *lpath)
 	g_info.avg_bps = 0;
 	g_info.duration = 0;
 
-	ret = xMP3AudioInit();
+	ret = xAudioInit();
 
 	if (ret < 0) {
 		goto failed;
 	}
 
-	ret = xMP3AudioSetFrequency(g_info.sample_freq);
+	ret = xAudioSetFrequency(g_info.sample_freq);
 
 	if (ret < 0) {
 		goto failed;
 	}
 
-	xMP3AudioSetChannelCallback(0, aac_audiocallback, NULL);
+	xAudioSetChannelCallback(0, aac_audiocallback, NULL);
 
-	g_buff = xMP3Alloc(0, BUFF_SIZE);
+	g_buff = xAudioAlloc(0, BUFF_SIZE);
 
 	if (g_buff == NULL) {
 		goto failed;
@@ -476,7 +476,7 @@ static int aac_end(void)
 
 	__end();
 
-	xMP3AudioEnd();
+	xAudioEnd();
 
 	g_status = ST_STOPPED;
 	generic_end();
@@ -499,7 +499,7 @@ static int aac_end(void)
 	}
 
 	if (g_buff != NULL) {
-		xMP3Free(g_buff);
+		xAudioFree(g_buff);
 		g_buff = NULL;
 	}
 

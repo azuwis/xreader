@@ -26,7 +26,7 @@
 #include "config.h"
 #include "ssv.h"
 #include "scene.h"
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "musicmgr.h"
 #include "musicdrv.h"
 #include "strsafe.h"

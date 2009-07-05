@@ -37,7 +37,7 @@
 #include "ssv.h"
 #include "strsafe.h"
 #include "musicdrv.h"
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "dbg.h"
 #include "scene.h"
 #include "apetaglib/APETag.h"
@@ -495,7 +495,7 @@ static int mp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			return -1;
 		}
 
-		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xAudioClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
 	}
@@ -666,7 +666,7 @@ static int memp3_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			return -1;
 		}
 
-		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xAudioClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
 	}
@@ -943,20 +943,20 @@ static int mp3_load(const char *spath, const char *lpath)
 	}
 #endif
 
-	ret = xMP3AudioInit();
+	ret = xAudioInit();
 
 	if (ret < 0) {
 		__end();
 		return -1;
 	}
 
-	ret = xMP3AudioSetFrequency(g_info.sample_freq);
+	ret = xAudioSetFrequency(g_info.sample_freq);
 	if (ret < 0) {
 		__end();
 		return -1;
 	}
 
-	g_buff = xMP3Alloc(0, BUFF_SIZE);
+	g_buff = xAudioAlloc(0, BUFF_SIZE);
 
 	if (g_buff == NULL) {
 		__end();
@@ -964,9 +964,9 @@ static int mp3_load(const char *spath, const char *lpath)
 	}
 
 	if (use_me)
-		xMP3AudioSetChannelCallback(0, memp3_audiocallback, NULL);
+		xAudioSetChannelCallback(0, memp3_audiocallback, NULL);
 	else
-		xMP3AudioSetChannelCallback(0, mp3_audiocallback, NULL);
+		xAudioSetChannelCallback(0, mp3_audiocallback, NULL);
 
 	generic_lock();
 	g_status = ST_LOADED;
@@ -1111,7 +1111,7 @@ static int mp3_end(void)
 
 	__end();
 
-	xMP3AudioEnd();
+	xAudioEnd();
 
 	g_status = ST_STOPPED;
 
@@ -1140,7 +1140,7 @@ static int mp3_end(void)
 	}
 
 	if (g_buff != NULL) {
-		xMP3Free(g_buff);
+		xAudioFree(g_buff);
 		g_buff = NULL;
 	}
 
@@ -1257,7 +1257,7 @@ int mp3_init()
  */
 static int __end(void)
 {
-	xMP3AudioEndPre();
+	xAudioEndPre();
 
 	g_play_time = 0.;
 	generic_lock();

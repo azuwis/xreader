@@ -24,7 +24,7 @@
 #include <assert.h>
 #include "config.h"
 #include "scene.h"
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "musicmgr.h"
 #include "musicdrv.h"
 #include "strsafe.h"
@@ -164,7 +164,7 @@ static int tta_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			generic_unlock();
 			tta_seek_seconds(g_play_time);
 		}
-		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xAudioClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
 	}
@@ -289,17 +289,17 @@ static int tta_load(const char *spath, const char *lpath)
 	g_info.channels = ttainfo.NCH;
 	g_info.filesize = ttainfo.FILESIZE;
 
-	if (xMP3AudioInit() < 0) {
+	if (xAudioInit() < 0) {
 		__end();
 		return -1;
 	}
 
-	if (xMP3AudioSetFrequency(ttainfo.SAMPLERATE) < 0) {
+	if (xAudioSetFrequency(ttainfo.SAMPLERATE) < 0) {
 		__end();
 		return -1;
 	}
 
-	xMP3AudioSetChannelCallback(0, tta_audiocallback, NULL);
+	xAudioSetChannelCallback(0, tta_audiocallback, NULL);
 
 	generic_lock();
 	g_status = ST_LOADED;
@@ -317,7 +317,7 @@ static int tta_load(const char *spath, const char *lpath)
  */
 static int __end(void)
 {
-	xMP3AudioEndPre();
+	xAudioEndPre();
 
 	generic_lock();
 	g_status = ST_STOPPED;
@@ -339,7 +339,7 @@ static int tta_end(void)
 {
 	__end();
 
-	xMP3AudioEnd();
+	xAudioEnd();
 
 	if (g_buff != NULL) {
 		free(g_buff);

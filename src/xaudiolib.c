@@ -29,7 +29,7 @@
  * Copyright (c) 2005 Adresd
  * Copyright (c) 2005 Marcus R. Brown <mrbrown@ocgnet.org>
  *
- * $Id: xmp3audiolib.c 58 2008-02-16 08:53:48Z hrimfaxi $
+ * $Id: xaudiolib.c 58 2008-02-16 08:53:48Z hrimfaxi $
  */
 
 #include <stdlib.h>
@@ -38,7 +38,7 @@
 #include <pspaudio.h>
 #include <malloc.h>
 
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "xrhal.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
@@ -51,7 +51,7 @@ int setFrequency(unsigned short samples, unsigned short freq, char car)
 	return xrAudioSRCChReserve(samples, freq, car);
 }
 
-int xMP3ReleaseAudio(void)
+int xAudioReleaseAudio(void)
 {
 	while (xrAudioOutput2GetRestSample() > 0);
 	return xrAudioSRCChRelease();
@@ -67,7 +67,7 @@ static short audio_sndbuf[PSP_NUM_AUDIO_CHANNELS][2][PSP_NUM_AUDIO_SAMPLES][2];
 static psp_audio_channelinfo AudioStatus[PSP_NUM_AUDIO_CHANNELS];
 static volatile int audio_terminate = 0;
 
-void xMP3AudioSetVolume(int channel, int left, int right)
+void xAudioSetVolume(int channel, int left, int right)
 {
 	if (channel >= PSP_NUM_AUDIO_CHANNELS)
 		return;
@@ -75,16 +75,16 @@ void xMP3AudioSetVolume(int channel, int left, int right)
 	AudioStatus[channel].volumeleft = left;
 }
 
-void xMP3AudioChannelThreadCallback(int channel, void *buf, unsigned int reqn)
+void xAudioChannelThreadCallback(int channel, void *buf, unsigned int reqn)
 {
 	if (channel >= PSP_NUM_AUDIO_CHANNELS)
 		return;
-	xMP3AudioCallback_t callback;
+	xAudioCallback_t callback;
 
 	callback = AudioStatus[channel].callback;
 }
 
-void xMP3AudioSetChannelCallback(int channel, xMP3AudioCallback_t callback,
+void xAudioSetChannelCallback(int channel, xAudioCallback_t callback,
 								 void *pdata)
 {
 	if (channel >= PSP_NUM_AUDIO_CHANNELS)
@@ -96,7 +96,7 @@ void xMP3AudioSetChannelCallback(int channel, xMP3AudioCallback_t callback,
 	pci->callback = callback;
 }
 
-int xMP3AudioOutBlocking(unsigned int channel, unsigned int vol1,
+int xAudioOutBlocking(unsigned int channel, unsigned int vol1,
 						 unsigned int vol2, void *buf)
 {
 	if (!audio_ready)
@@ -120,7 +120,7 @@ static int AudioChannelThread(int args, void *argp)
 	AudioStatus[channel].threadactive = 1;
 	while (audio_terminate == 0) {
 		void *bufptr = &audio_sndbuf[channel][bufidx];
-		xMP3AudioCallback_t callback;
+		xAudioCallback_t callback;
 
 		callback = AudioStatus[channel].callback;
 		if (callback) {
@@ -137,7 +137,7 @@ static int AudioChannelThread(int args, void *argp)
 			for (i = 0; i < PSP_NUM_AUDIO_SAMPLES; ++i)
 				*(ptr++) = 0;
 		}
-		//xMP3AudioOutBlocking(channel,AudioStatus[channel].volumeleft,AudioStatus[channel].volumeright,bufptr);
+		//xAudioOutBlocking(channel,AudioStatus[channel].volumeleft,AudioStatus[channel].volumeright,bufptr);
 		xrKernelWaitSema(play_sema, 1, 0);
 		audioOutpuBlocking(AudioStatus[0].volumeright, bufptr);
 		xrKernelSignalSema(play_sema, 1);
@@ -148,7 +148,7 @@ static int AudioChannelThread(int args, void *argp)
 	return 0;
 }
 
-int xMP3AudioSetFrequency(unsigned short freq)
+int xAudioSetFrequency(unsigned short freq)
 {
 	int ret = 0;
 
@@ -167,20 +167,20 @@ int xMP3AudioSetFrequency(unsigned short freq)
 			return -1;
 	}
 	xrKernelWaitSema(play_sema, 1, 0);
-	xMP3ReleaseAudio();
+	xAudioReleaseAudio();
 	if (setFrequency(PSP_NUM_AUDIO_SAMPLES, freq, 2) < 0)
 		ret = -1;
 	xrKernelSignalSema(play_sema, 1);
 	return ret;
 }
 
-int xMP3AudioInit()
+int xAudioInit()
 {
 	int i, ret;
 	int failed = 0;
 	char str[32];
 
-	xMP3ReleaseAudio();
+	xAudioReleaseAudio();
 	audio_terminate = 0;
 	audio_ready = 0;
 	memset(audio_sndbuf, 0, sizeof(audio_sndbuf));
@@ -198,7 +198,7 @@ int xMP3AudioInit()
 		AudioStatus[i].pdata = 0;
 	}
 	for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
-		if (xMP3AudioSetFrequency(44100) < 0)
+		if (xAudioSetFrequency(44100) < 0)
 			failed = 1;
 		else
 			AudioStatus[i].handle = 0;
@@ -206,7 +206,7 @@ int xMP3AudioInit()
 	if (failed) {
 		for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
 			if (AudioStatus[i].handle != -1)
-				xMP3ReleaseAudio();
+				xAudioReleaseAudio();
 			AudioStatus[i].handle = -1;
 		}
 		return -1;
@@ -248,13 +248,13 @@ int xMP3AudioInit()
 	return 0;
 }
 
-void xMP3AudioEndPre()
+void xAudioEndPre()
 {
 	audio_ready = 0;
 	audio_terminate = 1;
 }
 
-void xMP3AudioEnd()
+void xAudioEnd()
 {
 	int i;
 
@@ -263,7 +263,7 @@ void xMP3AudioEnd()
 
 	for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
 		if (AudioStatus[i].threadhandle != -1) {
-			xMP3ReleaseAudio();
+			xAudioReleaseAudio();
 			//xrKernelWaitThreadEnd(AudioStatus[i].threadhandle,NULL);
 			while (AudioStatus[i].threadactive)
 				xrKernelDelayThread(100000);
@@ -274,7 +274,7 @@ void xMP3AudioEnd()
 
 	for (i = 0; i < PSP_NUM_AUDIO_CHANNELS; i++) {
 		if (AudioStatus[i].handle != -1) {
-			xMP3ReleaseAudio();
+			xAudioReleaseAudio();
 			AudioStatus[i].handle = -1;
 		}
 	}
@@ -290,12 +290,12 @@ void xMP3AudioEnd()
  * @param buf 声音缓冲区指针
  * @param frames 帧数大小
  */
-void xMP3ClearSndBuf(void *buf, int frames)
+void xAudioClearSndBuf(void *buf, int frames)
 {
 	memset(buf, 0, frames * 2 * 2);
 }
 
-void *xMP3Alloc(size_t align, size_t bytes)
+void *xAudioAlloc(size_t align, size_t bytes)
 {
 	void *p = memalign(align, bytes);
 
@@ -305,7 +305,7 @@ void *xMP3Alloc(size_t align, size_t bytes)
 	return p;
 }
 
-void xMP3Free(void *p)
+void xAudioFree(void *p)
 {
 	free(p);
 }

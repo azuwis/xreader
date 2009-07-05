@@ -26,7 +26,7 @@
 #include "config.h"
 #include "ssv.h"
 #include "scene.h"
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "musicmgr.h"
 #include "musicdrv.h"
 #include "strsafe.h"
@@ -165,7 +165,7 @@ static int mpc_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			mpc_demux_seek_second(demux, g_play_time);
 			g_buff_frame_size = g_buff_frame_start = 0;
 		}
-		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xAudioClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
 	}
@@ -356,24 +356,24 @@ static int mpc_load(const char *spath, const char *lpath)
 	gain_on = !gain_on;
 
 	generic_readtag(&g_info, spath);
-	if (xMP3AudioInit() < 0) {
+	if (xAudioInit() < 0) {
 		__end();
 		return -1;
 	}
 
-	if (xMP3AudioSetFrequency(g_info.sample_freq) < 0) {
+	if (xAudioSetFrequency(g_info.sample_freq) < 0) {
 		__end();
 		return -1;
 	}
 
-	g_buff = xMP3Alloc(0, sizeof(*g_buff) * MPC_DECODER_BUFFER_LENGTH);
+	g_buff = xAudioAlloc(0, sizeof(*g_buff) * MPC_DECODER_BUFFER_LENGTH);
 
 	if (g_buff == NULL) {
 		__end();
 		return -1;
 	}
 
-	xMP3AudioSetChannelCallback(0, mpc_audiocallback, NULL);
+	xAudioSetChannelCallback(0, mpc_audiocallback, NULL);
 
 	generic_lock();
 	g_status = ST_LOADED;
@@ -391,7 +391,7 @@ static int mpc_load(const char *spath, const char *lpath)
  */
 static int __end(void)
 {
-	xMP3AudioEndPre();
+	xAudioEndPre();
 
 	generic_lock();
 	g_status = ST_STOPPED;
@@ -412,7 +412,7 @@ static int mpc_end(void)
 {
 	__end();
 
-	xMP3AudioEnd();
+	xAudioEnd();
 
 	g_status = ST_STOPPED;
 
@@ -430,7 +430,7 @@ static int mpc_end(void)
 	generic_end();
 
 	if (g_buff != NULL) {
-		xMP3Free(g_buff);
+		xAudioFree(g_buff);
 		g_buff = NULL;
 	}
 

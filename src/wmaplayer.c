@@ -28,7 +28,7 @@
 #include "config.h"
 #include "ssv.h"
 #include "scene.h"
-#include "xmp3audiolib.h"
+#include "xaudiolib.h"
 #include "musicmgr.h"
 #include "musicdrv.h"
 #include "strsafe.h"
@@ -253,7 +253,7 @@ static int wma_process_single(void)
  */
 static int __end(void)
 {
-	xMP3AudioEndPre();
+	xAudioEndPre();
 
 	generic_lock();
 	g_status = ST_STOPPED;
@@ -309,7 +309,7 @@ static int wma_audiocallback(void *buf, unsigned int reqn, void *pdata)
 			wma_seek_seconds(&asfparser, g_play_time);
 			g_buff_frame_size = g_buff_frame_start = 0;
 		}
-		xMP3ClearSndBuf(buf, snd_buf_frame_size);
+		xAudioClearSndBuf(buf, snd_buf_frame_size);
 		xrKernelDelayThread(100000);
 		return 0;
 	}
@@ -1109,19 +1109,17 @@ static int wma_load(const char *spath, const char *lpath)
 
 	get_wma_tag();
 
-//  xMP3SetUseAudioChReserve(true);
-
-	if (xMP3AudioInit() < 0) {
+	if (xAudioInit() < 0) {
 		__end();
 		return -1;
 	}
 
-	if (xMP3AudioSetFrequency(g_info.sample_freq) < 0) {
+	if (xAudioSetFrequency(g_info.sample_freq) < 0) {
 		__end();
 		return -1;
 	}
 
-	xMP3AudioSetChannelCallback(0, wma_audiocallback, NULL);
+	xAudioSetChannelCallback(0, wma_audiocallback, NULL);
 
 	generic_lock();
 	g_status = ST_LOADED;
@@ -1145,7 +1143,7 @@ static int wma_end(void)
 {
 	__end();
 
-	xMP3AudioEnd();
+	xAudioEnd();
 
 	g_status = ST_STOPPED;
 
