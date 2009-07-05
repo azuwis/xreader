@@ -58,17 +58,17 @@
 #define BUFF_SIZE	8*1152
 
 /**
- * MP3音乐播放缓冲
+ * AT3音乐播放缓冲
  */
 static uint16_t *g_buff = NULL;
 
 /**
- * MP3音乐播放缓冲大小，以帧数计
+ * AT3音乐播放缓冲大小，以帧数计
  */
 static unsigned g_buff_frame_size;
 
 /**
- * MP3音乐播放缓冲当前位置，以帧数计
+ * AT3音乐播放缓冲当前位置，以帧数计
  */
 static int g_buff_frame_start;
 
@@ -206,7 +206,7 @@ static void send_to_sndbuf(void *buf, uint16_t * srcbuf, int frames,
 }
 
 /**
- * MP3音乐播放回调函数，ME版本
+ * AT3音乐播放回调函数
  * 负责将解码数据填充声音缓存区
  *
  * @note 声音缓存区的格式为双声道，16位低字序
