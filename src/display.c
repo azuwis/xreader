@@ -101,8 +101,8 @@ extern void disp_init(void)
 	xrDisplaySetMode(0, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 	vram_page = 0;
 	vram_disp = (pixel *) 0x04000000;
-	vram_draw = (pixel *) (0x44000000 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
-	xrDisplaySetFrameBuf(vram_disp, 512, PSP_DISPLAY_PIXEL_FORMAT_8888,
+	vram_draw = (pixel *) (0x44000000 + PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES);
+	xrDisplaySetFrameBuf(vram_disp, PSP_SCREEN_SCANLINE, PSP_DISPLAY_PIXEL_FORMAT_8888,
 						 PSP_DISPLAY_SETBUF_NEXTFRAME);
 }
 
@@ -110,14 +110,16 @@ unsigned int __attribute__ ((aligned(16))) list[262144];
 
 extern void init_gu(void)
 {
+	void *vram = NULL;
+
 	xrGuInit();
 
 	xrGuStart(GU_DIRECT, list);
-	xrGuDrawBuffer(GU_PSM_8888,
-				   (void *) 0 + 512 * PSP_SCREEN_HEIGHT * PIXEL_BYTES, 512);
-	xrGuDispBuffer(PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, (void *) 0, 512);
-	xrGuDepthBuffer((void *) 0 + (u32) 4 * 512 * PSP_SCREEN_HEIGHT +
-					(u32) 2 * 512 * PSP_SCREEN_HEIGHT, 512);
+	xrGuDispBuffer(PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT, vram, PSP_SCREEN_SCANLINE);
+	vram += PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES;
+	xrGuDrawBuffer(GU_PSM_8888, vram, PSP_SCREEN_SCANLINE);
+	vram += PSP_SCREEN_SCANLINE * PSP_SCREEN_HEIGHT * PIXEL_BYTES * 2;
+	xrGuDepthBuffer(vram, PSP_SCREEN_SCANLINE);
 	xrGuOffset(2048 - (PSP_SCREEN_WIDTH / 2), 2048 - (PSP_SCREEN_HEIGHT / 2));
 	xrGuViewport(2048, 2048, PSP_SCREEN_WIDTH, PSP_SCREEN_HEIGHT);
 	xrGuDepthRange(65535, 0);
