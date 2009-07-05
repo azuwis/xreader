@@ -94,7 +94,6 @@ static SceAsfParser asfparser __attribute__ ((aligned(64)));
 static unsigned long wma_codec_buffer[65] __attribute__ ((aligned(64)));
 
 static short wma_mix_buffer[8192] __attribute__ ((aligned(64)));
-static unsigned long wma_cache_samples = 0;
 static void *wma_frame_buffer;
 
 static u8 wma_getEDRAM = 0;
@@ -225,12 +224,6 @@ static int wma_process_single(void)
 	wma_codec_buffer[17] = frame->unk4;
 	wma_codec_buffer[18] = frame->unk5;
 	wma_codec_buffer[19] = frame->unk3;
-
-#if 0
-	if (frame->unk4 != 2048 || frame->unk5 != 2048) {
-		dbg_printf(d, "unk4 %d unk5 %d", frame->unk4, frame->unk5);
-	}
-#endif
 
 	ret = xrAudiocodecDecode(wma_codec_buffer, 0x1005);
 
@@ -413,11 +406,6 @@ static int parse_standard_tag(struct WMAStdTag *tag)
 	asf_seek_cb(&data, NULL, start, 0, PSP_SEEK_SET);
 	asf_read_cb(&data, framedata, size);
 
-#if 0
-	dbg_printf(d, "frame data: ");
-	hexdump(framedata, size, &hexdump_callback);
-#endif
-
 	if (size <= 16) {
 		free(framedata);
 		return -1;
@@ -547,11 +535,6 @@ static int parse_ex_tag(struct WMAExTag *tag)
 
 	asf_seek_cb(&data, NULL, start, 0, PSP_SEEK_SET);
 	asf_read_cb(&data, framedata, size);
-
-#if 0
-	dbg_printf(d, "frame data: ");
-	hexdump(framedata, size, &hexdump_callback);
-#endif
 
 	if (size <= 16) {
 		free(framedata);
@@ -1306,12 +1289,6 @@ static struct music_ops wma_ops = {
 int wmadrv_init(void)
 {
 	return register_musicdrv(&wma_ops);
-}
-
-// FIX missing llrint
-extern long long llrint(double x)
-{
-	return rint(x);
 }
 
 #endif
