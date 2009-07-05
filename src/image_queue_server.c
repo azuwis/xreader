@@ -300,6 +300,11 @@ static void free_cache_image(cache_image_t * p)
 		free(p->data);
 		p->data = NULL;
 	}
+
+	if (p->exif_array != NULL) {
+		buffer_array_free(p->exif_array);
+		p->exif_array = NULL;
+	}
 }
 
 int start_cache_next_image(void)
@@ -394,6 +399,7 @@ int start_cache_next_image(void)
 		tmp.status = CACHE_OK;
 		copy_cache_image(p, &tmp);
 		tmp.data = NULL;
+		tmp.exif_array = NULL;
 		free_cache_image(&tmp);
 		curr_times = avoid_times = 0;
 	} else if ((tmp.result == 4 || tmp.result == 5)
