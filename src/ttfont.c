@@ -366,8 +366,7 @@ static void sbitCacheAdd(p_ttf ttf, unsigned long ucsCode, int glyphIndex,
  *
  * @return
  */
-static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode,
-									int format)
+static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode)
 {
 	int i;
 
@@ -376,8 +375,7 @@ static SBit_HashItem *sbitCacheFind(p_ttf ttf, unsigned long ucsCode,
 			(ttf->sbitHashRoot[i].size == ttf->pixelSize) &&
 			(ttf->sbitHashRoot[i].anti_alias == ttf->config.antialias) &&
 			(ttf->sbitHashRoot[i].cleartype == ttf->config.cleartype) &&
-			(ttf->sbitHashRoot[i].embolden == ttf->config.embolden) &&
-			(ttf->sbitHashRoot[i].bitmap.format == format)
+			(ttf->sbitHashRoot[i].embolden == ttf->config.embolden)
 			)
 			return (&ttf->sbitHashRoot[i]);
 	}
@@ -704,8 +702,7 @@ static void ttf_disp_putnstring_horz(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache =
-		sbitCacheFind(ttf, ucs, get_pixel_mode(get_render_mode(ttf, false)));
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -790,9 +787,7 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 		if (*str > 0x80) {
 			useKerning = FT_HAS_KERNING(cttf->face);
 			word ucs = charsets_gbk_to_ucs(str);
-			SBit_HashItem *cache = sbitCacheFind(cttf, ucs,
-												 get_pixel_mode(get_render_mode
-																(cttf, false)));
+			SBit_HashItem *cache = sbitCacheFind(cttf, ucs);
 			if (cache) {
 				if (useKerning && cprevious && cache->glyph_index) {
 					FT_Vector delta;
@@ -857,9 +852,7 @@ extern int ttf_get_string_width_hard(p_ttf cttf, p_ttf ettf, const byte * str,
 		} else if (*str > 0x1F) {
 			useKerning = FT_HAS_KERNING(ettf->face);
 			word ucs = charsets_gbk_to_ucs(str);
-			SBit_HashItem *cache = sbitCacheFind(ettf, ucs,
-												 get_pixel_mode(get_render_mode
-																(ettf, false)));
+			SBit_HashItem *cache = sbitCacheFind(ettf, ucs);
 
 			if (cache) {
 				if (useKerning && eprevious && cache->glyph_index) {
@@ -1406,8 +1399,7 @@ static void ttf_disp_putnstring_reversal(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache =
-		sbitCacheFind(ttf, ucs, get_pixel_mode(get_render_mode(ttf, false)));
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -1719,8 +1711,7 @@ static void ttf_disp_putnstring_lvert(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache =
-		sbitCacheFind(ttf, ucs, get_pixel_mode(get_render_mode(ttf, true)));
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {
@@ -2034,8 +2025,7 @@ static void ttf_disp_putnstring_rvert(p_ttf ttf, int *x, int *y, pixel color,
 
 	useKerning = FT_HAS_KERNING(ttf->face);
 	word ucs = charsets_gbk_to_ucs(*str);
-	SBit_HashItem *cache =
-		sbitCacheFind(ttf, ucs, get_pixel_mode(get_render_mode(ttf, true)));
+	SBit_HashItem *cache = sbitCacheFind(ttf, ucs);
 
 	if (cache) {
 		if (useKerning && *previous && cache->glyph_index) {

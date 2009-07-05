@@ -586,6 +586,8 @@ extern bool disp_ttf_reload(int size)
 	if (cttfinfo != NULL) {
 		memcpy(cttfinfo, cttf, sizeof(*cttfinfo));
 		cttfinfo->config.embolden = 0;
+		cttfinfo->pixelSize = cttfinfo->config.pixelsize =
+			config.infobar_fontsize;
 	}
 
 	ttf_clear_cache(cttfinfo);
@@ -601,6 +603,8 @@ extern bool disp_ttf_reload(int size)
 	if (ettfinfo != NULL) {
 		memcpy(ettfinfo, ettf, sizeof(*ettfinfo));
 		ettfinfo->config.embolden = 0;
+		ettfinfo->pixelSize = ettfinfo->config.pixelsize =
+			config.infobar_fontsize;
 	}
 
 	ttf_clear_cache(ettfinfo);
