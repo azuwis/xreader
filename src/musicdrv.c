@@ -117,7 +117,14 @@ struct music_ops *get_musicdrv(const char *name)
 	return tmp;
 }
 
-struct music_ops *set_musicdrv(const char *name)
+struct music_ops *set_musicdrv(struct music_ops *musicdrv)
+{
+	cur_musicdrv = musicdrv;
+
+	return cur_musicdrv;
+}
+
+struct music_ops *set_musicdrv_by_name(const char *name)
 {
 	cur_musicdrv = get_musicdrv(name);
 

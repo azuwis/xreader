@@ -104,7 +104,8 @@ extern "C"
 	int register_musicdrv(struct music_ops *drv);
 	int unregister_musicdrv(struct music_ops *drv);
 	struct music_ops *get_musicdrv(const char *name);
-	struct music_ops *set_musicdrv(const char *name);
+	struct music_ops *set_musicdrv(struct music_ops *musicdrv);
+	struct music_ops *set_musicdrv_by_name(const char *name);
 	int musicdrv_maxindex(void);
 	int musicdrv_set_opt(const char *key, const char *value);
 	int musicdrv_load(const char *spath, const char *lpath);

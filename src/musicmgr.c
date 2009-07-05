@@ -434,12 +434,12 @@ static int music_setupdriver(const char *spath, const char *lpath)
 	struct music_ops *dev = NULL;
 
 	if (ops) {
-		dev = set_musicdrv(ops->name);
+		dev = set_musicdrv_by_name(ops->name);
 	} else {
 		ops = musicdrv_chk_file(lpath);
 
 		if (ops) {
-			dev = set_musicdrv(ops->name);
+			dev = set_musicdrv_by_name(ops->name);
 		}
 	}
 
