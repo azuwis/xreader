@@ -947,7 +947,7 @@ int music_free(void)
 
 int music_prev(void)
 {
-	int ret;
+	int ret = 0;
 
 	music_lock();
 
