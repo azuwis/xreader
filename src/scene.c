@@ -243,7 +243,7 @@ bool scene_load_book_font(void)
 	}
 #endif
 	if (!loaded) {
-		config.usettf = false;
+		using_ttf = false;
 		STRCPY_S(fontzipfile, scene_appdir());
 		STRCAT_S(fontzipfile, "fonts.zip");
 		SPRINTF_S(efontfile, "ASC%d", config.bookfontsize);
@@ -2289,14 +2289,12 @@ dword scene_fontsel(dword * selidx)
 	if (orgfontindex != fontindex || orgusettf != config.usettf
 		|| (!config.usettf && orgbookfontindex != bookfontindex)
 		|| (config.usettf && orgttfsize != ttfsize)) {
-		bool orgusettf2 = using_ttf;
-
 		if (orgfontindex != fontindex)
 			scene_load_font();
 
 		scene_load_book_font();
 
-		if (orgusettf2 == using_ttf && orgusettf2 == false) {
+		if (config.usettf && !using_ttf) {
 			char infomsg[80];
 
 			SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
