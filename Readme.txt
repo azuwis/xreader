@@ -184,26 +184,33 @@ mp3_use_me=on/off
 是否使用MP3硬件解码(Media Engine）功能，否则使用libMAD进行软件解码。默认为是
 mp3_buffer_size=262144
 装载MP3数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
-
 AAC:
 aac_buffer_size=262144
 装载AAC数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
-
 WAV:
 wav_buffer_size=262144
 装载WAVE数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
-
 TTA:
 show_encoder_msg=y/n
 是否显示编码器信息
-
 WMA:
 wma_buffer_size=262144
 装载WMA数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
-
 WavPack:
 wv_buffer_size=262144
 装载WavPack数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
+AT3:
+at3_buffer_size=262144
+装载AT3数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
+AA3:
+aa3_buffer_size=262144
+装载AA3数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
+M4A:
+m4a_buffer_size=262144
+装载M4A数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
+OGG:
+ogg_buffer_size=262144
+装载OGG数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
 
 将它们写成一行，如:
 musicdrv_opts=show_encoder_msg=on mp3_brute_mode=on mp3_use_me=on
@@ -215,5 +222,4 @@ image:max_cache_img
 
 image:use_image_queue
 是否开启图像预读功能，默认为是
-
 
