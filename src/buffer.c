@@ -378,6 +378,11 @@ buffer *buffer_array_append_get_buffer(buffer_array * b)
 	} else if (b->size == b->used) {
 		b->size += 16;
 		b->ptr = safe_realloc(b->ptr, sizeof(*b->ptr) * b->size);
+
+		if (b->ptr == NULL) {
+			return NULL;
+		}
+
 		for (i = b->used; i < b->size; i++) {
 			b->ptr[i] = NULL;
 		}
