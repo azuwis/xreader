@@ -3387,6 +3387,7 @@ t_win_menu_op scene_setting_mgr_menucb(dword key, p_win_menuitem item,
 					}
 				} else {
 					// delete
+					utils_del_file(musiclst_path);
 					if (!utils_del_file(conffile)) {
 						win_msg(_("…æ≥˝…Ë÷√ ß∞‹!"), COLOR_WHITE,
 								COLOR_WHITE, config.msgbcolor);
