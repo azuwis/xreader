@@ -210,7 +210,13 @@ static int cache_add_by_selidx(dword selidx, int where)
 	dword filesize;
 
 	archname = config.shortpath;
-	filename = filelist[selidx].compname->ptr;
+
+	if (where == scene_in_dir) {
+		filename = filelist[selidx].shortname->ptr;
+	} else {
+		filename = filelist[selidx].compname->ptr;
+	}
+
 	filesize = filelist[selidx].data3;
 
 	type = fs_file_get_type(filename);

@@ -32,7 +32,8 @@ else
 AM_CFLAGS = -O0 -G0 -g -Wall
 endif
 
-AM_CXXFLAGS = $(AM_CFLAGS) -fno-exceptions -fno-rtti
+AM_CXXFLAGS := -O0 -G0 -g -Wall -fno-exceptions -fno-rtti
+AM_CFLAGS += -Werror -Wdeclaration-after-statement
 CCASFLAGS = $(CFLAGS) $(INCLUDES)
 
 noinst_PROGRAMS = xReader.elf
