@@ -500,17 +500,27 @@ int music_directplay(const char *spath, const char *lpath)
 	return 0;
 }
 
+static int music_list_refresh(void)
+{
+	g_list.curr_pos = 0;
+
+	if (music_maxindex() > 0) {
+		music_load(g_list.curr_pos);
+	} else {
+		musicdrv_end();
+		set_musicdrv(NULL);
+	}
+
+	g_list.first_time = true;
+
+	return 0;
+}
+
 int music_del(int i)
 {
 	int n;
 	struct music_file **tmp;
-
-	if (i == g_list.curr_pos) {
-		music_next();
-	}
-	if (g_list.curr_pos == 0) {
-		music_stop();
-	}
+	struct music_file *p;
 
 	tmp = &g_music_files;
 	n = i;
@@ -519,15 +529,19 @@ int music_del(int i)
 		tmp = &(*tmp)->next;
 	}
 
-	struct music_file *p;
-
 	p = (*tmp);
 	*tmp = p->next;
 	free_music_file(p);
 	music_lock();
 	rebuild_shuffle_data();
+	n = music_maxindex();
+
+	if (n == 0) {
+		music_list_refresh();
+	}
+
 	music_unlock();
-	return music_maxindex();
+	return n;
 }
 
 int music_moveup(int i)
@@ -1139,21 +1153,6 @@ int music_list_clear(void)
 	return 0;
 }
 
-static int music_list_refesh(void)
-{
-	g_list.curr_pos = 0;
-
-	if (music_maxindex() > 0) {
-		music_load(g_list.curr_pos);
-	} else {
-		set_musicdrv(NULL);
-	}
-
-	g_list.first_time = true;
-
-	return 0;
-}
-
 int music_list_load(const char *path)
 {
 	int ret = 0;
@@ -1193,7 +1192,7 @@ int music_list_load(const char *path)
 	fclose(fp);
 
 end:
-	music_list_refesh();
+	music_list_refresh();
 
 	return ret;
 }
