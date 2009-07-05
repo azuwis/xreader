@@ -25,8 +25,9 @@ AM_CFLAGS += -ffast-math
 else
 AM_CFLAGS = -O3 -G0 -fomit-frame-pointer -ffast-math -frename-registers -Wall
 AM_CFLAGS += \
--funsigned-char -ffast-math -fforce-addr -fmerge-all-constants \
+-ffast-math -fforce-addr -fmerge-all-constants \
 -floop-optimize -funsafe-loop-optimizations -ftree-loop-linear
+endif
 else
 AM_CFLAGS = -O0 -G0 -g -Wall
 endif
