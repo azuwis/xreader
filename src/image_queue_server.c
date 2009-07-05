@@ -67,15 +67,6 @@ enum
 
 static SceUID cache_del_event = -1;
 
-static unsigned get_avail_memory(void)
-{
-	int memory;
-
-	memory = get_free_mem();
-
-	return memory;
-}
-
 static inline int cache_lock(void)
 {
 //  dbg_printf(d, "%s", __func__);
@@ -275,7 +266,7 @@ void dbg_dump_cache(void)
 
 	dbg_printf(d, "CLIENT: Dumping cache[%u] %u/%ukb, %u finished",
 			   ccacher.caches_size, (unsigned) ccacher.memory_usage / 1024,
-			   (unsigned) get_avail_memory() / 1024, (unsigned) c);
+			   (unsigned) get_free_mem() / 1024, (unsigned) c);
 
 	for (p = ccacher.caches; p != ccacher.caches + ccacher.caches_size; ++p) {
 		dbg_printf(d, "%d: %u st %u res %d mem %lukb", p - ccacher.caches,
@@ -319,9 +310,13 @@ int start_cache_next_image(void)
 		return -1;
 	}
 
-	free_memory = get_avail_memory();
+	free_memory = get_free_mem();
 
-	if (free_memory < 1024 * 1024) {
+	if (config.scale >= 100) {
+		if (free_memory < 8 * 1024 * 1024) {
+			return -1;
+		}
+	} else if (free_memory < 1024 * 1024) {
 		return -1;
 	}
 
