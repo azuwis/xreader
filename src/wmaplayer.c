@@ -136,6 +136,10 @@ static int64_t asf_seek_cb(void *userdata, void *buf, int offset, int dummy,
 				buffered_reader_seek(reader->r,
 									 offset +
 									 buffered_reader_position(reader->r));
+		} else if (whence == PSP_SEEK_END) {
+			ret =
+				buffered_reader_seek(reader->r,
+						buffered_reader_length(reader->r) - offset);
 		}
 	} else {
 		ret = xrIoLseek(reader->fd, offset, whence);
