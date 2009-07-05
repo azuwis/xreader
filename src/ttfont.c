@@ -403,31 +403,6 @@ static FT_Render_Mode get_render_mode(p_ttf ttf, bool isVertical)
 }
 
 /**
- * 得到当前字体输出格式
- *
- * @param mode
- * 
- * @return
- */
-static FT_Pixel_Mode get_pixel_mode(FT_Render_Mode mode)
-{
-	switch (mode) {
-		case FT_RENDER_MODE_LCD:
-			return FT_PIXEL_MODE_LCD;
-		case FT_RENDER_MODE_LCD_V:
-			return FT_PIXEL_MODE_LCD_V;
-		case FT_RENDER_MODE_NORMAL:
-			return FT_PIXEL_MODE_GRAY;
-		case FT_RENDER_MODE_MONO:
-			return FT_PIXEL_MODE_MONO;
-		default:
-			break;
-	}
-
-	return FT_PIXEL_MODE_NONE;
-}
-
-/**
  * 8位单通道alpha混合算法
  *
  * @note 目的颜色 = 目的颜色 * alpha + ( 1 - alpha ) * 源颜色
