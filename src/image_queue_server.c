@@ -463,8 +463,6 @@ static int start_cache(dword selidx)
 	dword pos;
 	dword size;
 
-	cache_lock();
-
 	if (ccacher.first_run) {
 		ccacher.first_run = false;
 	} else {
@@ -481,6 +479,8 @@ static int start_cache(dword selidx)
 		xrKernelSetEventFlag(cache_del_event, CACHE_EVENT_UNDELETED);
 	}
 
+	cache_lock();
+
 	pos = selidx;
 	size = ccacher.caches_size;
 
@@ -492,9 +492,9 @@ static int start_cache(dword selidx)
 	dbg_printf(d, "SERVER: start pos %u selidx %u caches_size %u re %u",
 			   (unsigned) pos, (unsigned) selidx,
 			   (unsigned) ccacher.caches_size, (unsigned) re);
-	cache_unlock();
 
 	if (re == 0) {
+		cache_unlock();
 		return 0;
 	}
 	// dbg_printf(d, "SERVER: Wait for new selidx: memory usage %uKB", (unsigned) ccacher.memory_usage / 1024);
@@ -505,6 +505,8 @@ static int start_cache(dword selidx)
 		cache_add_by_selidx(pos, where);
 		pos = cache_get_next_image(pos, ccacher.isforward);
 	}
+
+	cache_unlock();
 
 	return re;
 }
