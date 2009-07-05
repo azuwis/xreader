@@ -177,6 +177,10 @@ endif
 
 if M4A
 LIBS += $(libdir)/libmp4v2.a $(libdir)/libfaad2.a
+else 
+if AAC
+LIBS += $(libdir)/libmp4v2.a $(libdir)/libfaad2.a
+endif
 endif
 
 endif
