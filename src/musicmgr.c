@@ -502,10 +502,17 @@ int music_directplay(const char *spath, const char *lpath)
 
 static int music_list_refresh(void)
 {
+	music_lock();
 	g_list.curr_pos = 0;
 
 	if (music_maxindex() > 0) {
-		music_load(g_list.curr_pos);
+		if (g_list.is_list_playing) {
+			if (music_play(g_list.curr_pos) < 0) {
+				g_list.is_list_playing = false;
+			}
+		} else {
+			music_load(g_list.curr_pos);
+		}
 	} else {
 		musicdrv_end();
 		set_musicdrv(NULL);
@@ -513,6 +520,7 @@ static int music_list_refresh(void)
 
 	g_list.first_time = true;
 	g_shuffle.first_time = true;
+	music_unlock();
 
 	return 0;
 }
@@ -1193,9 +1201,7 @@ int music_list_load(const char *path)
 	fclose(fp);
 
 end:
-	music_lock();
 	music_list_refresh();
-	music_unlock();
 
 	return ret;
 }
