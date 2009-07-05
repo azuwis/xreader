@@ -663,9 +663,42 @@ static int m4a_resume(const char *spath, const char *lpath)
 	return 0;
 }
 
+static int m4a_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "m4a_buffer_size", sizeof("m4a_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	return 0;
+}
+
 static struct music_ops m4a_ops = {
 	.name = "m4a",
-	.set_opt = NULL,
+	.set_opt = m4a_set_opt,
 	.load = m4a_load,
 	.play = NULL,
 	.pause = NULL,

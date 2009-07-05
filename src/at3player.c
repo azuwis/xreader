@@ -680,9 +680,42 @@ static int at3_resume(const char *spath, const char *lpath)
 	return 0;
 }
 
+static int at3_set_opt(const char *unused, const char *values)
+{
+	int argc, i;
+	char **argv;
+
+	g_io_buffer_size = BUFFERED_READER_BUFFER_SIZE;
+
+	dbg_printf(d, "%s: options are %s", __func__, values);
+
+	build_args(values, &argc, &argv);
+
+	for (i = 0; i < argc; ++i) {
+		if (!strncasecmp
+			(argv[i], "at3_buffer_size", sizeof("at3_buffer_size") - 1)) {
+			const char *p = argv[i];
+
+			if ((p = strrchr(p, '=')) != NULL) {
+				p++;
+
+				g_io_buffer_size = atoi(p);
+
+				if (g_io_buffer_size < 8192) {
+					g_io_buffer_size = 8192;
+				}
+			}
+		}
+	}
+
+	clean_args(argc, argv);
+
+	return 0;
+}
+
 static struct music_ops at3_ops = {
 	.name = "at3",
-	.set_opt = NULL,
+	.set_opt = at3_set_opt,
 	.load = at3_load,
 	.play = NULL,
 	.pause = NULL,

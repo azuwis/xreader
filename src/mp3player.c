@@ -1029,14 +1029,6 @@ static int mp3_set_opt(const char *unused, const char *values)
 					g_io_buffer_size = 8192;
 				}
 			}
-		} else if (!strncasecmp
-				   (argv[i], "show_encoder_msg",
-					sizeof("show_encoder_msg") - 1)) {
-			if (opt_is_on(argv[i])) {
-				show_encoder_msg = true;
-			} else {
-				show_encoder_msg = false;
-			}
 		}
 	}
 

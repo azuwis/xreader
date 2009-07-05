@@ -138,6 +138,8 @@ int musicdrv_set_opt(const char *key, const char *value)
 	if (cur_musicdrv == NULL || cur_musicdrv->set_opt == NULL)
 		return generic_set_opt(key, value);
 
+	generic_set_opt(key, value);
+
 	return cur_musicdrv->set_opt(key, value);
 }
 

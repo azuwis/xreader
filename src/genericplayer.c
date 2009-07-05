@@ -127,8 +127,6 @@ int generic_set_opt(const char *unused, const char *values)
 	int argc, i;
 	char **argv;
 
-	dbg_printf(d, "%s: options are %s", __func__, values);
-
 	build_args(values, &argc, &argv);
 
 	for (i = 0; i < argc; ++i) {
@@ -141,8 +139,6 @@ int generic_set_opt(const char *unused, const char *values)
 			}
 		}
 	}
-
-	dbg_printf(d, "%s: %d", __func__, show_encoder_msg);
 
 	clean_args(argc, argv);
 

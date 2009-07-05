@@ -280,10 +280,13 @@ static void conf_default(p_conf conf)
 	SPRINTF_S(conf->musicdrv_opts,
 			  "mp3_brute_mode=off mp3_use_me=on mp3_check_crc=off mp3_buffer_size=%d "
 			  "wma_buffer_size=%d aac_buffer_size=%d wav_buffer_size=%d wv_buffer_size=%d "
+			  "aa3_buffer_size=%d at3_buffer_size=%d m4a_buffer_size=%d"
 			  "flac_buffer_size=%d show_encoder_msg=off",
 			  BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE,
 			  BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE,
-			  WVPACK_BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE);
+			  WVPACK_BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE,
+			  BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE,
+			  BUFFERED_READER_BUFFER_SIZE);
 	conf->magnetic_scrolling = true;
 	conf->use_image_queue = true;
 	conf->max_cache_img = 10;
