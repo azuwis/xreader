@@ -46,8 +46,10 @@
 #include "dmalloc.h"
 #endif
 #include "fontconfig.h"
+#include "thread_lock.h"
 
-static SceUID ttf_sema = -1;
+static struct lock_entry ttf_l;
+// static SceUID ttf_sema = -1;
 
 /**
  * 打开TTF字体文件
@@ -2160,33 +2162,41 @@ extern void disp_putnstring_rvert_truetype(p_ttf cttf, p_ttf ettf, int x, int y,
 
 extern void ttf_lock(void)
 {
-#ifdef ENABLE_TTF
+#if 0
 	if (ttf_sema >= 0)
 		xrKernelWaitSema(ttf_sema, 1, NULL);
 #endif
+
+	xr_lock(&ttf_l);
 }
 
 extern void ttf_unlock(void)
 {
-#ifdef ENABLE_TTF
+#if 0
 	if (ttf_sema >= 0)
 		xrKernelSignalSema(ttf_sema, 1);
 #endif
+
+	xr_unlock(&ttf_l);
 }
 
 extern void ttf_init(void)
 {
-#ifdef ENABLE_TTF
+#if 0
 	ttf_sema = xrKernelCreateSema("TTF Sema", 0, 1, 1, NULL);
 #endif
+
+	xr_lock_init(&ttf_l, "TTF Sema");
 }
 
 extern void ttf_free(void)
 {
-#ifdef ENABLE_TTF
+#if 0
 	if (ttf_sema >= 0) {
 		xrKernelDeleteSema(ttf_sema);
 		ttf_sema = -1;
 	}
 #endif
+
+	xr_lock_destroy(&ttf_l);
 }
