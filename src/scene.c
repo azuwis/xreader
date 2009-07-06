@@ -166,7 +166,7 @@ int default_predraw(const win_menu_predraw_data * pData, const char *str,
 
 static void load_fontsize_to_config(void)
 {
-	if (!config.usettf) {
+	if (!using_ttf) {
 		config.fontsize = fonts[fontindex].size;
 		config.bookfontsize = bookfonts[bookfontindex].size;
 	} else {
@@ -2299,6 +2299,7 @@ dword scene_fontsel(dword * selidx)
 
 			SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
 			win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
+			config.usettf = false;
 		}
 
 		scene_bookmark_autosave();
