@@ -1592,7 +1592,7 @@ static int image_handle_input(dword * selidx, dword key)
 		if (config.scale > 200)
 			config.scale -= 50;
 		else if (config.scale > 10)
-			config.scale -= 10;
+			config.scale -= 5;
 		else
 			goto next;
 
@@ -1601,7 +1601,7 @@ static int image_handle_input(dword * selidx, dword key)
 		ctrl_waitreleasekey(key);
 	} else if (key == config.imgkey[4] || key == config.imgkey2[4]) {
 		if (config.scale < 200)
-			config.scale += 10;
+			config.scale += 5;
 		else if (config.scale < 1000)
 			config.scale += 50;
 		else
