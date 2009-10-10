@@ -77,6 +77,7 @@ static bool slideshow = false;
 static time_t now = 0, lasttime = 0;
 extern void *framebuffer;
 extern win_menu_predraw_data g_predraw;
+extern t_fs_filetype get_image_filetype();
 
 static volatile int secticks = 0;
 static int g_imgpaging_count = 0;
@@ -90,6 +91,7 @@ static int open_image(dword selidx)
 {
 	bool shareimg;
 	int result;
+    t_fs_filetype ft;
 
 	shareimg = (imgshow == imgdata) ? true : false;
 
@@ -106,6 +108,14 @@ static int open_image(dword selidx)
 			image_open_archive(filename, config.shortpath,
 							   (t_fs_filetype) filelist[selidx].data, &width,
 							   &height, &imgdata, &bgcolor, where, &exif_array);
+        if (result != 0) {
+            if ((ft = get_image_filetype(config.shortpath, filename, where)) != -1) {
+                result =
+                    image_open_archive(filename, config.shortpath,
+                            ft, &width,
+                            &height, &imgdata, &bgcolor, where, &exif_array);
+            }
+        }
 	}
 
 	if (imgdata == NULL && shareimg) {

@@ -1220,6 +1220,21 @@ extern int exif_readjpg(const char *filename, dword * pwidth, dword * pheight,
 	return 0;
 }
 
+extern int readheader_in_dir(const char *filename, unsigned size, void *buf)
+{
+	FILE *fp = fopen(filename, "rb");
+	int result = -1;
+
+	if (fp == NULL)
+		return -1;
+
+	if (fread(buf, 1, size, fp) != 0)
+		result = 0;
+
+	fclose(fp);
+	return result;
+}
+
 extern int image_readjpg(const char *filename, dword * pwidth, dword * pheight,
 						 pixel ** image_data, pixel * bgcolor,
 						 buffer_array ** exif_array)
@@ -1258,6 +1273,23 @@ extern int exif_readjpg_in_zip(const char *zipfile, const char *filename,
 
 	exif_data = exif_data_new_from_stream(image_zip_fread, unzf);
 	exif_viewer(exif_data, exif_array);
+	unzCloseCurrentFile(unzf);
+	unzClose(unzf);
+
+	return 0;
+}
+
+extern int readheader_in_zip(const char *zipfile, const char *filename,
+							   unsigned size, void *buf)
+{
+	unzFile unzf;
+
+	unzf = open_zip_file(zipfile, filename);
+
+	if (unzf == NULL)
+		return -1;
+
+    image_zip_fread(buf, 1, size, unzf);
 	unzCloseCurrentFile(unzf);
 	unzClose(unzf);
 
@@ -1314,6 +1346,28 @@ extern int exif_readjpg_in_chm(const char *chmfile, const char *filename,
 	chm.readpos = 0;
 	exif_data = exif_data_new_from_stream(image_chm_fread, &chm);
 	exif_viewer(exif_data, exif_array);
+	chm_close(chm.chm);
+
+	return 0;
+}
+
+extern int readheader_in_chm(const char *chmfile, const char *filename,
+							   unsigned size, void *buf)
+{
+	t_image_chm chm;
+
+	chm.chm = chm_open(chmfile);
+
+	if (chm.chm == NULL)
+		return -1;
+
+	if (chm_resolve_object(chm.chm, filename, &chm.ui) != CHM_RESOLVE_SUCCESS) {
+		chm_close(chm.chm);
+		return -1;
+	}
+
+	chm.readpos = 0;
+    image_chm_fread(buf, 1, size, &chm);
 	chm_close(chm.chm);
 
 	return 0;
@@ -1406,6 +1460,72 @@ extern int exif_readjpg_in_rar(const char *rarfile, const char *filename,
 	free(rar.buf);
 
 	return 0;
+}
+
+extern int readheader_in_rar(const char *rarfile, const char *filename,
+							   unsigned size, void *buf)
+{
+	u64 dbglasttick, dbgnow;
+	t_image_rar rar;
+
+	extract_rar_file_into_image(&rar, rarfile, filename);
+
+	if (rar.buf == NULL) {
+		return 6;
+	}
+
+	rar.idx = 0;
+	xrRtcGetCurrentTick(&dbgnow);
+	dbg_printf(d, "找到RAR中JPG文件耗时%.2f秒",
+			   pspDiffTime(&dbgnow, &dbglasttick));
+    image_rar_fread(buf, 1, size, &rar);
+	free(rar.buf);
+
+	return 0;
+}
+
+extern t_fs_filetype get_image_filetype(const char *archname, const char *filename,
+										int where)
+{
+#define HEADER_SIZE 16
+    int result = -1;
+
+    char buf[HEADER_SIZE];
+
+	t_fs_filetype ft = -1;
+	static const char gif_image[3] = {'G','I','F'};
+	static const char jpg_image[3] = {(char) 0xff, (char) 0xd8, (char) 0xff};
+	static const char png_image[8] = {(char) 0x89, (char) 0x50, (char) 0x4e, (char) 0x47, (char) 0x0d, (char) 0x0a, (char) 0x1a, (char) 0x0a};
+
+	memset(&buf, 0, HEADER_SIZE);
+
+    switch (where) {
+        case scene_in_dir:
+            result =
+                readheader_in_dir(filename, HEADER_SIZE, buf);
+            break;
+        case scene_in_zip:
+            result =
+                readheader_in_zip(archname, filename, HEADER_SIZE, buf);
+            break;
+        case scene_in_chm:
+            result =
+                readheader_in_chm(archname, filename, HEADER_SIZE, buf);
+            break;
+        case scene_in_rar:
+            result =
+                readheader_in_rar(archname, filename, HEADER_SIZE, buf);
+            break;
+    }
+    if (result == 0) {
+        if (strncmp(buf, gif_image, 3) == 0)
+			ft = fs_filetype_gif;
+        if (strncmp(buf, jpg_image, 3) == 0)
+			ft = fs_filetype_jpg;
+        if (strncmp(buf, png_image, 8) == 0)
+			ft = fs_filetype_png;
+    }
+    return ft;
 }
 
 extern int image_readjpg_in_rar(const char *rarfile, const char *filename,
