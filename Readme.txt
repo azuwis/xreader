@@ -168,14 +168,7 @@ text:linenum_style
 music:musicdrv_opts
 音乐系统参数，目前支持：
 
-MPC:
-
-show_encoder_msg=on/off
-是否显示编码器信息
-
 MP3:
-show_encoder_msg=y/n
-是否显示编码器信息
 mp3_brute_mode=on/off
 是否使用暴力法解码MP3，如果MP3播放有问题，试试这个，默认为否
 mp3_check_crc=on/off
@@ -190,9 +183,6 @@ aac_buffer_size=262144
 WAV:
 wav_buffer_size=262144
 装载WAVE数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
-TTA:
-show_encoder_msg=y/n
-是否显示编码器信息
 WMA:
 wma_buffer_size=262144
 装载WMA数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
@@ -221,9 +211,12 @@ wv_buffer_size=262144
 装载WavPack数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
 
 将它们写成一行，如:
-musicdrv_opts=show_encoder_msg=on mp3_brute_mode=on mp3_use_me=on
+musicdrv_opts=mp3_brute_mode=on mp3_use_me=on
 
-将显示编码器信息，并使用暴力法硬件解码MP3
+将使用暴力法硬件解码MP3
+
+music:show_encoder_msg=y/n
+是否显示编码器信息
 
 image:max_cache_img
 图像预读状态下最多缓冲的图像个数，默认为10，如果为0将关闭预读功能
