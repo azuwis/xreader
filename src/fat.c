@@ -83,7 +83,7 @@ void fat_unlock(void)
 extern bool fat_init(void)
 {
 	u64 total_sec, fat_sec, root_sec, data_sec, data_clus;
-	
+
 	xr_lock_init(&fat_l);
 	fat_lock();
 	fatfd = xrIoOpen("msstor:", PSP_O_RDONLY, 0777);
@@ -623,7 +623,11 @@ extern dword fat_readdir(const char *dir, char *sdir, p_fat_info * info)
 			|| entrys[i].norm.filename[0] == 0
 			|| (u8) entrys[i].norm.filename[0] == 0xE5
 			|| (entrys[i].norm.filename[0] == '.'
-				&& entrys[i].norm.filename[1] == 0x20))
+				&& entrys[i].norm.filename[1] == 0x20)
+			|| (entrys[i].norm.filename[0] == '.'
+				&& entrys[i].norm.filename[1] == '.'
+				&& entrys[i].norm.filename[2] == 0x20)
+			)
 			continue;
 		memset(&sid, 0, sizeof(SceIoDirent));
 

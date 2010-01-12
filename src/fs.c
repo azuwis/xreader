@@ -375,7 +375,7 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 	dword itemcount = 0;
 	dword count;
 	dword i, cur_count = 0;
-	
+
 	win_item_destroy(mitem, &filecount);
 	fid = freq_enter_hotzone();
 	count = fat_readdir(dir, sdir, &info);
@@ -385,29 +385,27 @@ extern dword fs_dir_to_menu(const char *dir, char *sdir, p_win_menuitem * mitem,
 		return 0;
 	}
 
-	if (stricmp(dir, "ms0:/") == 0) {
-		itemcount = DIR_INC_SIZE;
-		*mitem = win_realloc_items(NULL, 0, itemcount);
+	itemcount = DIR_INC_SIZE;
+	*mitem = win_realloc_items(NULL, 0, itemcount);
 
-		if (*mitem == NULL) {
-			free(info);
-			freq_leave(fid);
-			return 0;
-		}
-
-		cur_count = 1;
-		item = *mitem;
-		STRCPY_S(item[0].name, "<..>");
-		buffer_copy_string(item[0].compname, "..");
-		buffer_copy_string(item[0].shortname, "..");
-		item[0].data = (void *) fs_filetype_dir;
-		item[0].width = 4;
-		item[0].selected = false;
-		item[0].icolor = icolor;
-		item[0].selicolor = selicolor;
-		item[0].selrcolor = selrcolor;
-		item[0].selbcolor = selbcolor;
+	if (*mitem == NULL) {
+		free(info);
+		freq_leave(fid);
+		return 0;
 	}
+
+	cur_count = 1;
+	item = *mitem;
+	STRCPY_S(item[0].name, "<..>");
+	buffer_copy_string(item[0].compname, "..");
+	buffer_copy_string(item[0].shortname, "..");
+	item[0].data = (void *) fs_filetype_dir;
+	item[0].width = 4;
+	item[0].selected = false;
+	item[0].icolor = icolor;
+	item[0].selicolor = selicolor;
+	item[0].selrcolor = selrcolor;
+	item[0].selbcolor = selbcolor;
 
 	for (i = 0; i < count; i++) {
 		if (!showhidden && (info[i].attr & FAT_FILEATTR_HIDDEN) > 0)
@@ -903,7 +901,7 @@ extern dword fs_umd_to_menu(const char *umdfile, p_win_menuitem * mitem,
 		u_int i = 1;
 		struct t_chapter *p;
 		char pos[20] = { 0 };
-		
+
 		if (!p_umdchapter
 			|| (p_umdchapter->umdfile->ptr
 				&& strcmp(p_umdchapter->umdfile->ptr, umdfile))) {
