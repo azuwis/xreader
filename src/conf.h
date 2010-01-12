@@ -122,6 +122,7 @@ typedef struct
 {
 	char path[PATH_MAX];
 	dword forecolor;
+	dword giftranscolor;
 	dword bgcolor;
 	bool have_bg;
 	dword titlecolor;

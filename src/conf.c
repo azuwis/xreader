@@ -132,6 +132,7 @@ static void conf_default(p_conf conf)
 	conf->bgwhere = scene_in_zip;
 	conf->confver = XREADER_VERSION_NUM;
 	conf->forecolor = 0xFFFFFFFF;
+	conf->giftranscolor = 0xFFFFFFFF;
 	conf->bgcolor = 0;
 	conf->have_bg = true;
 	conf->rowspace = 2;
@@ -894,6 +895,8 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	STRCPY_S(conf->path, iniparser_getstring(dict, "Global:path", conf->path));
 	conf->forecolor =
 		iniparser_getunsigned(dict, "UI:forecolor", conf->forecolor);
+	conf->giftranscolor =
+		iniparser_getunsigned(dict, "Image:giftranscolor", conf->giftranscolor);
 	conf->bgcolor = iniparser_getunsigned(dict, "UI:bgcolor", conf->bgcolor);
 	conf->have_bg = iniparser_getboolean(dict, "UI:have_bg", conf->have_bg);
 	conf->titlecolor =
@@ -1211,6 +1214,8 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Global:path", conf->path);
 	iniparser_setstring(dict, "UI:forecolor",
 						hexToString(buf, sizeof(buf), conf->forecolor));
+	iniparser_setstring(dict, "Image:giftranscolor",
+						hexToString(buf, sizeof(buf), conf->giftranscolor));
 	iniparser_setstring(dict, "UI:bgcolor",
 						hexToString(buf, sizeof(buf), conf->bgcolor));
 	iniparser_setstring(dict, "UI:have_bg",

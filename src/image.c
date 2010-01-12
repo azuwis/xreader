@@ -894,6 +894,7 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 	ColorMapObject *palette;
 	int ExtCode;
 	dword i, j;
+	int trans_num = -1;
 
 	if ((GifFileIn = DGifOpen(handle, readFunc)) == NULL)
 		return 1;
@@ -926,6 +927,12 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 				*pwidth = GifFileIn->Image.Width;
 				*pheight = GifFileIn->Image.Height;
 				*bgcolor = gif_color(GifFileIn->SBackGroundColor);
+				if (trans_num >= 0 && trans_num < palette->ColorCount &&
+					((config.giftranscolor >> 24) & 0xFF) == 0xFF) {
+					palette->Colors[trans_num].Red = RGB_R(config.giftranscolor);
+					palette->Colors[trans_num].Green = RGB_G(config.giftranscolor);
+					palette->Colors[trans_num].Blue = RGB_B(config.giftranscolor);
+				}
 				if ((LineIn = malloc(GifFileIn->Image.Width *
 									 sizeof(*LineIn))) == NULL) {
 					DGifCloseFile(GifFileIn);
@@ -964,6 +971,15 @@ static int image_readgif2(void *handle, dword * pwidth, dword * pheight,
 						free(LineIn);
 					DGifCloseFile(GifFileIn);
 					return 1;
+				}
+				switch (ExtCode)
+				{
+					case GRAPHICS_EXT_FUNC_CODE:
+						if (Extension[0] == 4)
+							trans_num = (Extension[1] & 0x01) ? Extension[4] : -1;
+						break;
+					default:
+						break;
 				}
 				while (Extension != NULL) {
 					if (DGifGetExtensionNext(GifFileIn, &Extension)
