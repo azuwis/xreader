@@ -1101,7 +1101,7 @@ static inline int putnstring_hanzi(disp_draw_string_inf * inf)
 {
 	pixel *vaddr;
 	const byte *ccur, *cend;
-	int d;
+	int delta;
 
 	if (inf == NULL)
 		return 0;
@@ -1111,16 +1111,27 @@ static inline int putnstring_hanzi(disp_draw_string_inf * inf)
 
 	vaddr = disp_get_vaddr(inf->x, inf->y);
 
-	if (inf->is_system)
+	if (inf->is_system) {
+		if (cfont_buffer == NULL) {
+			dbg_printf(d, "%s: cfont_buffer is NULL", __func__);
+			return 0;
+		}
+
 		ccur =
 			cfont_buffer + (((dword) (*inf->str - 0x81)) * 0xBF +
 							((dword) (*(inf->str + 1) - 0x40))) *
 			DISP_CFONTSIZE + inf->top * DISP_CROWSIZE;
-	else
+	} else {
+		if (book_cfont_buffer == NULL) {
+			dbg_printf(d, "%s: book_cfont_buffer is NULL", __func__);
+			return 0;
+		}
+
 		ccur =
 			book_cfont_buffer + (((dword) (*inf->str - 0x81)) * 0xBF +
 								 ((dword) (*(inf->str + 1) - 0x40))) *
 			DISP_BOOK_CFONTSIZE + inf->top * DISP_BOOK_CROWSIZE;
+	}
 
 	if (inf->is_system)
 		cend = ccur + inf->height * DISP_CROWSIZE;
@@ -1168,22 +1179,22 @@ static inline int putnstring_hanzi(disp_draw_string_inf * inf)
 	inf->str += 2;
 	inf->count -= 2;
 
-	d = 
+	delta = 
 		inf->is_system ? DISP_FONTSIZE +
 		inf->wordspace * 2 : DISP_BOOK_FONTSIZE + inf->wordspace * 2;
 
 	switch (inf->direction) {
 		case HORZ:
-			inf->x += d;
+			inf->x += delta;
 			break;
 		case REVERSAL:
-			inf->x -= d;
+			inf->x -= delta;
 			break;
 		case LVERT:
-			inf->y -= d;
+			inf->y -= delta;
 			break;
 		case RVERT:
-			inf->y += d;
+			inf->y += delta;
 			break;
 	}
 
@@ -1194,21 +1205,32 @@ static inline int putnstring_ascii(disp_draw_string_inf * inf)
 {
 	pixel *vaddr;
 	const byte *ccur, *cend;
-	int t, d;
+	int t, delta;
 
 	if (!check_range(inf->x, inf->y))
 		return 0;
 
 	vaddr = disp_get_vaddr(inf->x, inf->y);
 
-	if (inf->is_system)
+	if (inf->is_system) {
+		if (efont_buffer == NULL) {
+			dbg_printf(d, "%s: efont_buffer is NULL", __func__);
+			return 0;
+		}
+
 		ccur =
 			efont_buffer + ((dword) * inf->str) * DISP_EFONTSIZE +
 			inf->top * DISP_EROWSIZE;
-	else
+	} else {
+		if (book_efont_buffer == NULL) {
+			dbg_printf(d, "%s: book_efont_buffer is NULL", __func__);
+			return 0;
+		}
+
 		ccur =
 			book_efont_buffer + ((dword) * inf->str) * DISP_BOOK_EFONTSIZE +
 			inf->top * DISP_BOOK_EROWSIZE;
+	}
 
 	if (inf->is_system)
 		cend = ccur + inf->height * DISP_EROWSIZE;
@@ -1256,22 +1278,22 @@ static inline int putnstring_ascii(disp_draw_string_inf * inf)
 	inf->str++;
 	inf->count--;
 
-	d =
+	delta =
 		inf->is_system ? DISP_FONTSIZE / 2 +
 		inf->wordspace : DISP_BOOK_FONTSIZE / 2 + inf->wordspace;
 
 	switch (inf->direction) {
 		case HORZ:
-			inf->x += d;
+			inf->x += delta;
 			break;
 		case REVERSAL:
-			inf->x -= d;
+			inf->x -= delta;
 			break;
 		case LVERT:
-			inf->y -= d;
+			inf->y -= delta;
 			break;
 		case RVERT:
-			inf->y += d;
+			inf->y += delta;
 			break;
 	}
 
@@ -1503,6 +1525,12 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 			pos =
 				(((dword) (*str - 0x81)) * 0xBF +
 				 ((dword) (*(str + 1) - 0x40)));
+
+			if (book_cfont_buffer == NULL) {
+				dbg_printf(d, "%s: book_cfont_buffer is NULL", __func__);
+				return;
+			}
+
 			ccur =
 				book_cfont_buffer + pos * DISP_BOOK_CFONTSIZE +
 				top * DISP_BOOK_CROWSIZE;
@@ -1540,6 +1568,11 @@ extern void disp_putnstringreversal(int x, int y, pixel color, const byte * str,
 			vaddr = disp_get_vaddr(x, y);
 
 			{
+				if (book_efont_buffer == NULL) {
+					dbg_printf(d, "%s: book_efont_buffer is NULL", __func__);
+					return;
+				}
+
 				ccur =
 					book_efont_buffer +
 					((dword) * str) * DISP_BOOK_EFONTSIZE +
@@ -1623,6 +1656,12 @@ extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
 			pos =
 				(((dword) (*str - 0x81)) * 0xBF +
 				 ((dword) (*(str + 1) - 0x40)));
+
+			if (cfont_buffer == NULL) {
+				dbg_printf(d, "%s: cfont_buffer is NULL", __func__);
+				return;
+			}
+
 			ccur = cfont_buffer + pos * DISP_CFONTSIZE + top * DISP_CROWSIZE;
 
 			for (cend = ccur + height * DISP_CROWSIZE; ccur < cend; ccur++) {
@@ -1658,6 +1697,11 @@ extern void disp_putnstringhorz_sys(int x, int y, pixel color, const byte * str,
 			vaddr = disp_get_vaddr(x, y);
 
 			{
+				if (efont_buffer == NULL) {
+					dbg_printf(d, "%s: efont_buffer is NULL", __func__);
+					return;
+				}
+
 				ccur =
 					efont_buffer +
 					((dword) * str) * DISP_EFONTSIZE + top * DISP_EROWSIZE;
