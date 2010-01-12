@@ -263,6 +263,7 @@ bool scene_load_book_font(void)
 					  config.bookfontsize);
 			if (!disp_load_book_font(efontfile, cfontfile)) {
 				freq_leave(fid);
+
 				return false;
 			}
 		}
@@ -3267,14 +3268,27 @@ int detect_config_change(const p_conf prev, const p_conf curr)
 		if (i != bookfontcount) {
 			bookfontindex = i;
 			scene_load_book_font();
+
+			if (config.usettf && !using_ttf) {
+				config.usettf = false;
+			}
+
 		} else {
 			bookfontindex = 0;
 			scene_load_book_font();
+
+			if (config.usettf && !using_ttf) {
+				config.usettf = false;
+			}
 		}
 	} else {
 		scene_load_font();
 		ttfsize = curr->bookfontsize;
 		scene_load_book_font();
+
+		if (config.usettf && !using_ttf) {
+			config.usettf = false;
+		}
 	}
 
 	scene_bookmark_autosave();
@@ -5267,6 +5281,7 @@ static void scene_open_font(dword * idx)
 
 		SPRINTF_S(infomsg, _("没有指定中、英文TTF字体"), config.path);
 		win_msg(infomsg, COLOR_WHITE, COLOR_WHITE, config.msgbcolor);
+		config.usettf = false;
 	}
 }
 #endif
@@ -5718,6 +5733,11 @@ extern void scene_init(void)
 		ctrl_waitany();
 		xrKernelExitGame();
 	}
+
+	if (config.usettf && !using_ttf) {
+		config.usettf = false;
+	}
+
 	recalc_size(&drperpage, &rowsperpage, &pixelsperrow);
 	cur_book_view.rrow = INVALID;
 	xrRtcGetCurrentTick(&dbgnow);
