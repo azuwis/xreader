@@ -212,6 +212,10 @@ OGG:
 ogg_buffer_size=262144
 装载OGG数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
 
+WavPack:
+wv_buffer_size=262144
+装载WavPack数据的缓冲区字节大小，不得小于8192字节，默认为65536字节
+
 将它们写成一行，如:
 musicdrv_opts=show_encoder_msg=on mp3_brute_mode=on mp3_use_me=on
 
