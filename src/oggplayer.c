@@ -75,7 +75,7 @@ static char g_vendor_str[80];
 /**
  * OGGÎÄ¼þ¾ä±ú
  */
-static buffered_reader_t *g_ogg_reader = NULL;
+static SceUID g_ogg_fd = -1;
 
 static size_t ovcb_read(void *ptr, size_t size, size_t nmemb, void *datasource);
 static int ovcb_seek(void *datasource, int64_t offset, int whence);
@@ -267,7 +267,7 @@ static int __init(void)
 
 	memset(&g_info, 0, sizeof(g_info));
 	decoder = NULL;
-	g_ogg_reader = NULL;
+	g_ogg_fd = -1;
 	g_buff = NULL;
 	g_buff_size = 0;
 	memset(g_vendor_str, 0, sizeof(g_vendor_str));
@@ -354,19 +354,19 @@ static int ogg_load(const char *spath, const char *lpath)
 	}
 
 	ov_clear(decoder);
-	g_ogg_reader = buffered_reader_open(spath, g_io_buffer_size, 1);
+	g_ogg_fd = xrIoOpen(spath, PSP_O_RDONLY, 0777);
 
-	if (g_ogg_reader == NULL) {
+	if (g_ogg_fd < 0) {
 		__end();
 		return -1;
 	}
 
-	g_info.filesize = buffered_reader_length(g_ogg_reader);
+	g_info.filesize = xrIoLseek32(g_ogg_fd, 0, PSP_SEEK_END);
+	xrIoLseek32(g_ogg_fd, 0, PSP_SEEK_SET);
 
 	if (ov_open_callbacks
-		((void *) g_ogg_reader, decoder, NULL, 0, vorbis_callbacks) < 0) {
-		vorbis_callbacks.close_func((void *) g_ogg_reader);
-		g_ogg_reader = NULL;
+		((void *) &g_ogg_fd, decoder, NULL, 0, vorbis_callbacks) < 0) {
+		vorbis_callbacks.close_func((void *) &g_ogg_fd);
 		__end();
 		return -1;
 	}
@@ -453,8 +453,12 @@ static int ogg_end(void)
 	if (decoder != NULL) {
 		ov_clear(decoder);
 		free(decoder);
-		g_ogg_reader = NULL;
 		decoder = NULL;
+	}
+
+	if (g_ogg_fd >= 0) {
+		xrIoClose(g_ogg_fd);
+		g_ogg_fd = -1;
 	}
 
 	if (g_buff != NULL) {
@@ -582,42 +586,9 @@ static int ogg_probe(const char *spath)
 	return 0;
 }
 
-static int ogg_set_opt(const char *unused, const char *values)
-{
-	int argc, i;
-	char **argv;
-
-	dbg_printf(d, "%s: options are %s", __func__, values);
-
-	build_args(values, &argc, &argv);
-
-	for (i = 0; i < argc; ++i) {
-		if (!strncasecmp
-			(argv[i], "ogg_buffer_size", sizeof("ogg_buffer_size") - 1)) {
-			const char *p = argv[i];
-
-			if ((p = strrchr(p, '=')) != NULL) {
-				p++;
-
-				g_io_buffer_size = atoi(p);
-
-				if (g_io_buffer_size < 8192) {
-					g_io_buffer_size = 8192;
-				}
-			}
-		}
-	}
-
-	clean_args(argc, argv);
-
-	generic_set_opt(unused, values);
-
-	return 0;
-}
-
 static struct music_ops ogg_ops = {
 	.name = "ogg",
-	.set_opt = ogg_set_opt,
+	.set_opt = NULL,
 	.load = ogg_load,
 	.play = NULL,
 	.pause = NULL,
@@ -639,40 +610,22 @@ int ogg_init(void)
 
 static size_t ovcb_read(void *ptr, size_t size, size_t nmemb, void *datasource)
 {
-	buffered_reader_t *p = (buffered_reader_t *) datasource;
-
-	return buffered_reader_read(p, ptr, size * nmemb);
+	return xrIoRead(*((int *) datasource), ptr, size * nmemb);
 }
 
 static int ovcb_seek(void *datasource, int64_t offset, int whence)
 {
-	buffered_reader_t *p = (buffered_reader_t *) datasource;
-	int ret = -1;
-
-	if (whence == PSP_SEEK_SET) {
-		ret = buffered_reader_seek(p, offset);
-	} else if (whence == PSP_SEEK_CUR) {
-		ret = buffered_reader_seek(p, offset + buffered_reader_position(p));
-	} else if (whence == PSP_SEEK_END) {
-		ret = buffered_reader_seek(p, buffered_reader_length(p) - offset);
-	}
-
-	return ret;
+	return xrIoLseek32(*((int *) datasource), offset, whence);
 }
 
 static int ovcb_close(void *datasource)
 {
-	buffered_reader_t *p = (buffered_reader_t *) datasource;
-
-	buffered_reader_close(p);
-	return 0;
+	return xrIoClose(*((int *) datasource));
 }
 
 static long ovcb_tell(void *datasource)
 {
-	buffered_reader_t *p = (buffered_reader_t *) datasource;
-
-	return buffered_reader_position(p);
+	return xrIoLseek32(*((int *) datasource), 0, PSP_SEEK_CUR);
 }
 
 #endif
