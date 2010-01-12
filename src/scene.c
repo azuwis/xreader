@@ -4700,8 +4700,6 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 	} else if (key == config.flkey[4] || key == config.flkey2[4]) {
 		return win_menu_op_cancel;
 	} else if (key == config.flkey[7]) {
-		dword idx = 0;
-
 		dbg_printf(d, "%s: 返回到上一个文件", __func__);
 		if (fat_inited == false) {
 			fat_init();
@@ -4718,13 +4716,6 @@ t_win_menu_op scene_filelist_menucb(dword key, p_win_menuitem item,
 		where = prev_where;
 		config.isreading = true;
 
-		scene_open_dir_or_archive(&idx);
-		if (idx >= filecount) {
-			idx = 0;
-			config.isreading = locreading = false;
-		}
-		item[0].data = (void *) true;
-		item[1].data = (void *) idx;
 		return win_menu_op_cancel;
 	} else if (key == PSP_CTRL_SELECT) {
 		{
@@ -5481,7 +5472,10 @@ void scene_filelist(void)
 				config.isreading = false;
 				idx = 0;
 			}
-			continue;
+
+			if (!config.isreading && !locreading) {
+				continue;
+			}
 		}
 		switch ((t_fs_filetype) filelist[idx].data) {
 			case fs_filetype_iso:
