@@ -174,7 +174,7 @@ msgstr "Image brightness"
 
 #: scene.c:881 scene.c:1540
 msgid "  启用类比键"
-msgstr "Enable analog key"
+msgstr "Enable analogy key"
 
 #: scene.c:882
 msgid "查看EXIF信息"
