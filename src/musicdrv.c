@@ -26,6 +26,7 @@
 #include <pspkernel.h>
 #include "musicdrv.h"
 #include "genericplayer.h"
+#include "freq_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -150,7 +151,11 @@ int musicdrv_load(const char *spath, const char *lpath)
 	if (cur_musicdrv == NULL)
 		return -EBUSY;
 	if (cur_musicdrv->load) {
-		int ret = cur_musicdrv->load(spath, lpath);
+		int ret, fid;
+
+		fid = freq_enter_hotzone();
+		ret = cur_musicdrv->load(spath, lpath);
+		freq_leave(fid);
 
 		need_stop = true;
 
