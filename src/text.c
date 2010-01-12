@@ -923,7 +923,7 @@ static p_text text_open_binary(const char *filename, bool vert)
 		txt->rows[curs][i & 0x3FF].start = &txt->buf[bpr * i];
 		txt->rows[curs][i & 0x3FF].count = bpr;
 		if (vert) {
-			sprintf(&txt->buf[bpr * i],
+			snprintf(&txt->buf[bpr * i], bpr,
 					"%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X",
 					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
 					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
@@ -942,7 +942,7 @@ static p_text text_open_binary(const char *filename, bool vert)
 		} else {
 			dword j;
 
-			sprintf(&txt->buf[bpr * i],
+			snprintf(&txt->buf[bpr * i], bpr,
 					"%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ",
 					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
 					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
@@ -1121,7 +1121,7 @@ static p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 		txt->rows[curs][i & 0x3FF].start = &txt->buf[bpr * i];
 		txt->rows[curs][i & 0x3FF].count = bpr;
 		if (vert) {
-			sprintf(&txt->buf[bpr * i],
+			snprintf(&txt->buf[bpr * i], bpr,
 					"%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X",
 					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
 					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
@@ -1140,7 +1140,7 @@ static p_text text_open_binary_in_zip(const char *zipfile, const char *filename,
 		} else {
 			dword j;
 
-			sprintf(&txt->buf[bpr * i],
+			snprintf(&txt->buf[bpr * i], bpr,
 					"%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ",
 					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
 					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
@@ -1336,7 +1336,7 @@ static p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 		txt->rows[curs][i & 0x3FF].start = &txt->buf[bpr * i];
 		txt->rows[curs][i & 0x3FF].count = bpr;
 		if (vert) {
-			sprintf(&txt->buf[bpr * i],
+			snprintf(&txt->buf[bpr * i], bpr,
 					"%08X: %02X%02X%02X%02X%02X%02X%02X%02X %02X%02X%02X%02X%02X%02X%02X%02X",
 					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
 					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
@@ -1355,7 +1355,7 @@ static p_text text_open_binary_in_rar(const char *rarfile, const char *filename,
 		} else {
 			dword j;
 
-			sprintf(&txt->buf[bpr * i],
+			snprintf(&txt->buf[bpr * i], bpr,
 					"%08X: %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X %02X%02X ",
 					(unsigned int) i * 0x10, cbuf[0], cbuf[1],
 					cbuf[2], cbuf[3], cbuf[4], cbuf[5], cbuf[6],
