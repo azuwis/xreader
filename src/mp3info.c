@@ -34,7 +34,6 @@
 #include "dbg.h"
 #include "config.h"
 #include "xrhal.h"
-#include "freq_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -667,7 +666,6 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 	int level;
 	static uint8_t *buf;
 	uint32_t first_frame = (uint32_t) - 1;
-	int fid;
 
 	if (data->fd < 0)
 		return -1;
@@ -690,7 +688,6 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 		return -1;
 	}
 
-	fid = freq_enter_hotzone();
 	level = info->sample_freq = info->channels = info->frames = 0;
 	info->frameoff = NULL;
 
@@ -733,7 +730,6 @@ int read_mp3_info_brute(struct MP3Info *info, mp3_reader_data * data)
 
 	xrIoLseek(data->fd, first_frame, PSP_SEEK_SET);
 	free(buf);
-	freq_leave(fid);
 
 	return 0;
 }
