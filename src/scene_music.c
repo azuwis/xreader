@@ -237,11 +237,14 @@ void scene_mp3_list_postdraw(p_win_menuitem item, dword index, dword topindex,
 void scene_mp3_list(void)
 {
 #ifdef ENABLE_MUSIC
-	t_win_menuitem item[music_maxindex()];
+	p_win_menuitem item;
+
 	dword i;
 	dword index = 0;
 
 	win_menu_predraw_data prev;
+
+	item = malloc(music_maxindex() * sizeof(*item));
 
 	if (item == NULL)
 		return;
@@ -300,6 +303,7 @@ void scene_mp3_list(void)
 			break;
 	memcpy(&g_predraw, &prev, sizeof(g_predraw));
 	ctrl_waitrelease();
+	free(item);
 #endif
 }
 
