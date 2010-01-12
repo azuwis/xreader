@@ -367,7 +367,12 @@ static int seek_valid_frame(void)
 		}
 
 		if ((ret = mad_header_decode(&frame.header, &stream)) == -1) {
-			if (!MAD_RECOVERABLE(stream.error)) {
+			/*
+			 * MAD_ERROR_BUFLEN should be ignored
+			 *
+			 * We haven't reached the EOF as long as xrIoRead returned positive.
+			 */
+			if (!MAD_RECOVERABLE(stream.error) && stream.error != MAD_ERROR_BUFLEN) {
 				return -1;
 			}
 		} else {
