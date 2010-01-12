@@ -1228,9 +1228,7 @@ int music_list_load(const char *path)
 	freq_leave(fid);
 
 end:
-	music_lock();
 	music_list_refresh();
-	music_unlock();
 
 	return ret;
 }
