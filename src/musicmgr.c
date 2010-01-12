@@ -114,9 +114,8 @@ static int stack_push(struct stack *p, int q)
 	if (p->size < STACK_SIZE) {
 		p->a[p->size++] = q;
 	} else {
-		memmove(&p->a[0], &p->a[1], (STACK_SIZE - 1) * sizeof(p->a[0]));
-		p->a[STACK_SIZE - 1] = q;
-		p->size = STACK_SIZE;
+		memmove(&p->a[0], &p->a[1], (p->size - 1) * sizeof(p->a[0]));
+		p->a[p->size - 1] = q;
 	}
 
 	return 0;
