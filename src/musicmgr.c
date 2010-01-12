@@ -60,6 +60,7 @@
 #include "image_queue.h"
 #include "xrhal.h"
 #include "thread_lock.h"
+#include "freq_lock.h"
 #ifdef DMALLOC
 #include "dmalloc.h"
 #endif
@@ -1124,6 +1125,7 @@ int music_list_save(const char *path)
 {
 	FILE *fp;
 	int i;
+	int fid;
 
 	if (path == NULL)
 		return -EINVAL;
@@ -1131,6 +1133,8 @@ int music_list_save(const char *path)
 	fp = fopen(path, "wt");
 	if (fp == NULL)
 		return -EBADFD;
+
+	fid = freq_enter_hotzone();
 	for (i = 0; i < music_maxindex(); i++) {
 		struct music_file *file;
 
@@ -1141,6 +1145,7 @@ int music_list_save(const char *path)
 		fprintf(fp, "%s\n", file->longpath->ptr);
 	}
 	fclose(fp);
+	freq_leave(fid);
 
 	return true;
 }
@@ -1182,6 +1187,7 @@ int music_list_load(const char *path)
 	FILE *fp;
 	char fname[PATH_MAX];
 	char lfname[PATH_MAX];
+	int fid;
 
 	if (path == NULL) {
 		ret = -EINVAL;
@@ -1194,6 +1200,8 @@ int music_list_load(const char *path)
 		ret = -EBADFD;
 		goto end;
 	}
+
+	fid = freq_enter_hotzone();
 
 	while (fgets(fname, PATH_MAX, fp) != NULL) {
 		dword len1, len2;
@@ -1217,6 +1225,7 @@ int music_list_load(const char *path)
 	}
 
 	fclose(fp);
+	freq_leave(fid);
 
 end:
 	music_lock();
