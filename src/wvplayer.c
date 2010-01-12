@@ -806,7 +806,7 @@ static int wv_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "wv");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg && g_status != ST_UNKNOWN) {
+		if (config.show_encoder_msg && g_status != ST_UNKNOWN) {
 			SPRINTF_S(pinfo->encode_msg, "%s %s: %.3f", g_encode_name,
 					  _("Ñ¹ËõÂÊ"),
 					  1.0 * g_info.filesize / (g_info.samples *

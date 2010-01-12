@@ -122,8 +122,6 @@ extern "C"
 
 	bool opt_is_on(const char *str);
 
-	extern bool show_encoder_msg;
-
 	struct instant_bitrate_frame
 	{
 		size_t framebits;

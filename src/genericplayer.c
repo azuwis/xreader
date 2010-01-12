@@ -124,22 +124,10 @@ int generic_unlock(void)
 
 int generic_set_opt(const char *unused, const char *values)
 {
-	int argc, i;
+	int argc;
 	char **argv;
 
 	build_args(values, &argc, &argv);
-
-	for (i = 0; i < argc; ++i) {
-		if (!strncasecmp
-			(argv[i], "show_encoder_msg", sizeof("show_encoder_msg") - 1)) {
-			if (opt_is_on(argv[i])) {
-				show_encoder_msg = true;
-			} else {
-				show_encoder_msg = false;
-			}
-		}
-	}
-
 	clean_args(argc, argv);
 
 	return 0;

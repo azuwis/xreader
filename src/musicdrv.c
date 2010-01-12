@@ -35,8 +35,6 @@ static struct music_ops *music_drivers = NULL;
 static struct music_ops *cur_musicdrv = NULL;
 static bool need_stop = false;
 
-bool show_encoder_msg = false;
-
 /**
  * MP3动态比特率
  */

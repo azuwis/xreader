@@ -277,11 +277,12 @@ static void conf_default(p_conf conf)
 	conf->ttf_haste_up = true;
 	conf->linenum_style = false;
 	conf->infobar_align = conf_align_left;
+	conf->show_encoder_msg = false;
 	SPRINTF_S(conf->musicdrv_opts,
 			  "mp3_brute_mode=off mp3_use_me=on mp3_check_crc=off mp3_buffer_size=%d "
 			  "wma_buffer_size=%d aac_buffer_size=%d wav_buffer_size=%d wv_buffer_size=%d "
 			  "aa3_buffer_size=%d at3_buffer_size=%d m4a_buffer_size=%d "
-			  "flac_buffer_size=%d show_encoder_msg=off",
+			  "flac_buffer_size=%d",
 			  BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE,
 			  BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE,
 			  WVPACK_BUFFERED_READER_BUFFER_SIZE, BUFFERED_READER_BUFFER_SIZE,
@@ -1160,6 +1161,10 @@ extern bool ini_conf_load(const char *inifilename, p_conf conf)
 	conf->max_cache_img =
 		iniparser_getunsigned(dict, "Image:max_cache_img", conf->max_cache_img);
 
+	conf->show_encoder_msg = 
+		iniparser_getboolean(dict, "Music:show_encoder_msg",
+							 conf->show_encoder_msg);
+
 	if (conf->max_cache_img == 0) {
 		conf->use_image_queue = false;
 	}
@@ -1459,6 +1464,10 @@ extern bool ini_conf_save(p_conf conf)
 	iniparser_setstring(dict, "Image:max_cache_img",
 						dwordToString(buf, sizeof(buf), conf->max_cache_img));
 
+	iniparser_setstring(dict, "Music:show_encoder_msg",
+						booleanToString(buf, sizeof(buf),
+										conf->show_encoder_msg));
+	
 	iniparser_dump_ini(dict, fp);
 
 	fclose(fp);

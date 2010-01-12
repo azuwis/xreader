@@ -550,7 +550,7 @@ static int ogg_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "ogg");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg) {
+		if (config.show_encoder_msg) {
 			STRCPY_S(pinfo->encode_msg, g_vendor_str);
 		} else {
 			pinfo->encode_msg[0] = '\0';

@@ -447,7 +447,7 @@ static int tta_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "tta");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg && g_status != ST_UNKNOWN) {
+		if (config.show_encoder_msg && g_status != ST_UNKNOWN) {
 			SPRINTF_S(pinfo->encode_msg, "%s: %.2f", _("Ñ¹ËõÂÊ"),
 					  ttainfo.COMPRESS);
 		} else {

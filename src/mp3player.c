@@ -1065,7 +1065,7 @@ static int mp3_get_info(struct music_info *info)
 		}
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg && mp3info.lame_encoded) {
+		if (config.show_encoder_msg && mp3info.lame_encoded) {
 			char lame_method[80];
 
 			switch (mp3info.lame_mode) {

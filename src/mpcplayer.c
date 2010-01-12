@@ -498,7 +498,7 @@ static int mpc_get_info(struct music_info *pinfo)
 		STRCPY_S(pinfo->decoder_name, "musepack");
 	}
 	if (pinfo->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg) {
+		if (config.show_encoder_msg) {
 			SPRINTF_S(pinfo->encode_msg,
 					  "SV %lu.%lu, Profile %s (%s)", info.stream_version & 15,
 					  info.stream_version >> 4, info.profile_name,

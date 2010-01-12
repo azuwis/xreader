@@ -580,7 +580,7 @@ static int m4a_get_info(struct music_info *info)
 		STRCPY_S(info->decoder_name, "AAC");
 	}
 	if (info->type & MD_GET_ENCODEMSG) {
-		if (show_encoder_msg) {
+		if (config.show_encoder_msg) {
 			STRCPY_S(info->encode_msg, g_vendor_str);
 		} else {
 			info->encode_msg[0] = '\0';
